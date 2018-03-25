@@ -1,0 +1,15 @@
+tox
+isort
+flake8
+mock
+pkgversion
+
+# PyTest for running the tests.
+pytest
+pytest-cov
+pytest-django
+
+# docs
+sphinx
+# sphinxcontrib-plantuml
+sphinx_rtd_theme

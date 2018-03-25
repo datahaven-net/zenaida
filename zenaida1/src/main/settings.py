@@ -131,7 +131,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'raven.contrib.django.middleware.SentryLogMiddleware',
     'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
-    'de.middleware.thread_local.ThreadLocalMiddleware'
 ]
 
 TEMPLATES = [

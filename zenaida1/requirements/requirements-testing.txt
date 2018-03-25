@@ -2,7 +2,6 @@ tox
 isort
 flake8
 mock
-django-debug-toolbar
 pkgversion
 
 # PyTest for running the tests.

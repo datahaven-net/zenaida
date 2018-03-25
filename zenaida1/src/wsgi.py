@@ -17,7 +17,7 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "main.settings"
 # https://code.djangoproject.com/ticket/24492
 
 
-class WSGIRequest(WSGIRequest):
+class MyWSGIRequest(WSGIRequest):
 
     @cached_property
     def COOKIES(self):
@@ -28,13 +28,13 @@ class WSGIRequest(WSGIRequest):
         return cookies
 
 
-class WSGIHandler(WSGIHandler):
-    request_class = WSGIRequest
+class MyWSGIHandler(WSGIHandler):
+    request_class = MyWSGIRequest
 
 
 def get_wsgi_application():
     django.setup()
-    return WSGIHandler()
+    return MyWSGIHandler()
 
 
 application = get_wsgi_application()

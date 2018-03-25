@@ -167,6 +167,10 @@ smoketest:
 	/bin/false
 
 
+runserver: $(VENV_DEV)
+	$(PYTHON) src/manage.py runserver
+
+
 $(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)
 	@$(TOX) -e requirements_txt
 	@echo "Successfully Updated requirements"

@@ -18,16 +18,10 @@ Make virtual environment
 $ make venv
 ```
 
-Activate virtual environment
-
-```
-$ source venv/bin/activate
-```
-
 Launch Django development server
 
 ```
-./src/manage.py runserver
+$ make runserver
 ```
 
 

@@ -6,3 +6,4 @@ raven
 timeexecution
 psycopg2
 django-redis-cache
+uwsgi

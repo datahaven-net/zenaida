@@ -29,7 +29,7 @@ METRICS_ENABLED = False
 CACHE_BACKEND = 'redis_cache.RedisCache'
 CACHE_LOCATION = '127.0.0.1:6379'
 
-CACHE_PREFIX = 'zenaida1'
+CACHE_PREFIX = 'zenaida'
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -169,8 +169,8 @@ if ENV in ['test_exa', 'accept_exa', 'production_exa', 'docker']:  # pragma: no 
 # TODO: Read live configuration here
 
 
-SESSION_COOKIE_NAME = 'zenaida1_sid'
-CSRF_COOKIE_NAME = 'zenaida1_csrftoken'
+SESSION_COOKIE_NAME = 'zenaida_sid'
+CSRF_COOKIE_NAME = 'zenaida_csrftoken'
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases

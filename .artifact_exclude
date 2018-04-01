@@ -2,4 +2,4 @@
 docs/_build*
 venv
 src/test
-zenaida1*.tgz
+zenaida*.tgz

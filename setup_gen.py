@@ -4,7 +4,7 @@ from pkgversion import list_requirements, pep440_version, write_setup_py
 from setuptools import find_packages
 
 write_setup_py(
-    name='zenaida1',
+    name='zenaida',
     version=pep440_version(),
     description="Open source domain registry system built on top of EPP protocol",
     long_description=open('README.md').read(),

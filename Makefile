@@ -13,6 +13,7 @@ DOCKER_COMPOSE=$(shell which docker-compose)
 PIP:="venv/bin/pip"
 TOX="venv/bin/tox"
 PYTHON="venv/bin/python"
+UWSGI="venv/bin/uwsgi"
 TOX_PY_LIST="$(shell $(TOX) -l | grep ^py | xargs | sed -e 's/ /,/g')"
 TOX_LATEST_LIST="latest36"
 
@@ -169,6 +170,10 @@ smoketest:
 
 runserver: $(VENV_DEV)
 	$(PYTHON) src/manage.py runserver
+
+
+runuwsgi: $(VENV_DEV)
+	$(UWSGI) --ini etc/uwsgi.ini --chdir src
 
 
 $(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)

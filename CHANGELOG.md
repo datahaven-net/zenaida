@@ -1,4 +1,4 @@
-# zenaida1 Change Log
+# zenaida Change Log
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and should contain all notable changes to the project made for humans.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# zenaida1 documentation build configuration file, created by
+# zenaida documentation build configuration file, created by
 # sphinx-quickstart on Thu Oct 29 14:40:33 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -58,7 +58,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'zenaida1'
+project = u'zenaida'
 copyright = u'KPN'
 author = u'Veselin Penev'
 
@@ -212,7 +212,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'zenaida1doc'
+htmlhelp_basename = 'zenaidadoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -234,7 +234,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'zenaida1.tex', u'zenaida1 Documentation',
+    (master_doc, 'zenaida.tex', u'zenaida Documentation',
      u'Veselin Penev', 'manual'),
 ]
 
@@ -264,7 +264,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'zenaida1', u'zenaida1 Documentation',
+    (master_doc, 'zenaida', u'zenaida Documentation',
      [author], 1)
 ]
 
@@ -278,8 +278,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'zenaida1', u'zenaida1 Documentation',
-     author, 'zenaida1', 'One line description of project.',
+    (master_doc, 'zenaida', u'zenaida Documentation',
+     author, 'zenaida', 'One line description of project.',
      'Miscellaneous'),
 ]
 

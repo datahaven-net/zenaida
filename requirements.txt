@@ -19,3 +19,4 @@ redis==2.10.6
 requests==2.18.4
 six==1.11.0
 urllib3==1.22
+uWSGI==2.0.17

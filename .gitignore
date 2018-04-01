@@ -176,7 +176,7 @@ build.properties
 build.properties.json
 REVISION
 db.sqlite
-zenaida1-*.tgz
+zenaida-*.tgz
 setup.py
 venv
 src/main/params.py

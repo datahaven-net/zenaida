@@ -1,5 +1,5 @@
 # Base requirements
-Django==2.0.3
+django-2.0.3
 djangorestframework==3.7.7
 fqn-decorators==1.2.0
 raven==6.6.0

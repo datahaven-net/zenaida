@@ -23,7 +23,7 @@ REPO_ROOT = os.path.dirname(SRC_PATH)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
-DEBUG = False
+DEBUG = getattr(params, 'DEBUG', False)
 DEBUGTOOLBAR_ENABLED = False
 METRICS_ENABLED = False
 CACHE_BACKEND = 'redis_cache.RedisCache'

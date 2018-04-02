@@ -187,6 +187,10 @@ createsuperuser: $(VENV_DEPLOY)
 	$(PYTHON) src/manage.py createsuperuser
 
 
+collectstatic: $(VENV_DEPLOY)
+	$(PYTHON) src/manage.py collectstatic
+
+
 ################################################
 # Setting up of different kinds of virtualenvs #
 ################################################

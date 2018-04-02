@@ -173,7 +173,7 @@ runserver: $(VENV_DEV)
 
 
 runuwsgi: $(VENV_DEV)
-	$(UWSGI) --ini etc/uwsgi.ini --chdir src
+	$(UWSGI) --ini etc/local.uwsgi.ini
 
 
 $(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)

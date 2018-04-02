@@ -14,3 +14,4 @@ class MainConfig(AppConfig):
 
     def ready(self):
         """Location for package configurations"""
+        return True

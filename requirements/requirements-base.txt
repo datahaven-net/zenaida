@@ -1,9 +1,9 @@
 # Base requirements
 Django
-djangorestframework
 fqn-decorators
 raven
 timeexecution
 psycopg2
 django-redis-cache
 uwsgi
+djangorestframework

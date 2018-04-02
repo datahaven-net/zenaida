@@ -91,6 +91,31 @@ Launch Django server to test the configuration:
 Now you can navigate your browser to http://127.0.0.1:8000/ and see the web site running locally.
 
 
+On live server run collectstatic command first:
+
+        make collectstatic
+
+
+Install nginx if you do not have it yet installed and update the configuration:
+        
+        sudo cp etc/test.zenaida.ai.conf /etc/nginx/sites-available/test.zenaida.ai
+        sudo ln -s /etc/nginx/sites-available/test.zenaida.ai /etc/nginx/sites-enabled/
+        sudo service nginx restart
+
+
+Copy to global init configuration for UWSGI process:
+
+        sudo cp etc/test.zenaida.uwsgi.conf /etc/init/uwsgi.zenaida.conf
+
+
+Restart UWSGI service for zenaida:
+
+        sudo stop uwsgi.zenaida
+        sudo restart uwsgi.zenaida
+
+
+Your live server should be up and running now, navigate your browser to http://www.yourdomain.com
+
 
 
 ## Requirements Handling

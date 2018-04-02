@@ -78,9 +78,19 @@ Create virtual environement if you do not have yet:
         make venv
 
 
-Run Django migrate process:
+Run Django migrate command:
 
         make migrate
+
+
+Run Django collectstatic command:
+
+        make collectstatic
+
+
+Create Django super user:
+
+        make createsuperuser
 
 
 Launch Django server to test the configuration:
@@ -91,10 +101,11 @@ Launch Django server to test the configuration:
 Now you can navigate your browser to http://127.0.0.1:8000/ and see the web site running locally.
 
 
-On live server run collectstatic command first:
+## Running on production
 
-        make collectstatic
+For production configuration you can take a look at some examples in etc/ folder.
 
+You might want to use your own tweaks for nginx and uwsgi, so those files are just a starting point. 
 
 Install nginx if you do not have it yet installed and update the configuration:
         
@@ -103,7 +114,7 @@ Install nginx if you do not have it yet installed and update the configuration:
         sudo service nginx restart
 
 
-Copy to global init configuration for UWSGI process:
+Also copy configuration for zenaida UWSGI process to global init scripts:
 
         sudo cp etc/test.zenaida.uwsgi.conf /etc/init/uwsgi.zenaida.conf
 
@@ -111,7 +122,7 @@ Copy to global init configuration for UWSGI process:
 Restart UWSGI service for zenaida:
 
         sudo stop uwsgi.zenaida
-        sudo restart uwsgi.zenaida
+        sudo start uwsgi.zenaida
 
 
 Your live server should be up and running now, navigate your browser to http://www.yourdomain.com

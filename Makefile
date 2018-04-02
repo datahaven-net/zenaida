@@ -193,10 +193,7 @@ $(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)
 # these two are the main venvs
 $(VENV_SYSTEM_SITE_PACKAGES):
 	@rm -rf venv
-	# @$(PYTHON_VERSION) -m venv --system-site-packages venv
 	@$(PYTHON_VERSION) -m venv venv
-	# @echo "[easy_install]" > venv/.pydistutils.cfg
-	# @echo "find_links = file://$(PWD)/$(PIP_DOWNLOAD)/" >> venv/.pydistutils.cfg
 	@touch $@
 
 $(VENV_NO_SYSTEM_SITE_PACKAGES):
@@ -206,14 +203,17 @@ $(VENV_NO_SYSTEM_SITE_PACKAGES):
 
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
+	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TEST)
 	@touch $@
 

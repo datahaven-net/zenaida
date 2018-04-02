@@ -35,7 +35,7 @@ CACHE_PREFIX = 'zenaida'
 # SECURITY WARNING: keep the secret key used in production secret!
 # https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-SECRET_KEY
 
-SECRET_KEY = 'q*x-cz!z2e^^fo+i1pkasds&mu2(%eb9@f)g@xq4g9gw@p9^ox'
+SECRET_KEY = getattr(params, 'SECRET_KEY', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
 ALLOWED_HOSTS = ['*']
 
@@ -112,7 +112,7 @@ INSTALLED_APPS = [
 
     'django.contrib.sessions',
     'django.contrib.messages',
-    'raven.contrib.django.raven_compat',
+    # 'raven.contrib.django.raven_compat',
     'rest_framework',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -129,8 +129,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'raven.contrib.django.middleware.SentryLogMiddleware',
-    'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
+    # 'raven.contrib.django.middleware.SentryLogMiddleware',
+    # 'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
 ]
 
 TEMPLATES = [

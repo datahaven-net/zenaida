@@ -96,8 +96,10 @@ check_requirements_txt:
 	fi
 	@touch $(REQUIREMENTS_TXT) # to make sure that REQUIREMENTS_TXT is the requirements file with the latest timestamp
 
+
 sanity_checks: check_requirements_txt check_forgotten_migrations
 	@echo "Checks OK"
+
 
 # Used by the deploy pipeline to do migrations that only have to run
 # on one node only, not all nodes where the software is installed.
@@ -181,14 +183,18 @@ runuwsgi: $(VENV_DEV)
 	$(UWSGI) --ini etc/local.uwsgi.ini
 
 
-$(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)
-	@$(TOX) -e requirements_txt
-	@echo "Successfully Updated requirements"
+createsuperuser: $(VENV_DEPLOY)
+	$(PYTHON) src/manage.py createsuperuser
 
 
 ################################################
 # Setting up of different kinds of virtualenvs #
 ################################################
+
+$(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)
+	@$(TOX) -e requirements_txt
+	@echo "Successfully Updated requirements"
+
 
 # these two are the main venvs
 $(VENV_SYSTEM_SITE_PACKAGES):

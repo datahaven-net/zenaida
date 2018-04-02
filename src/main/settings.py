@@ -152,8 +152,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'wsgi.application'
 
 # DATABASE DEFAULTS
-DATABASES_ENGINE = 'django.db.backends.postgresql_psycopg2'
-DATABASES_NAME = ''
+DATABASES_ENGINE = 'django.db.backends.sqlite3'
+DATABASES_NAME = 'db.sqlite'
 DATABASES_OPTIONS = {}
 DATABASES_TEST = {}
 DATABASES_CONN_MAX_AGE = 0
@@ -184,7 +184,8 @@ DATABASES = {
     }
 }
 
-for key in ('HOST', 'PORT', 'USER', 'PASSWORD'):
+# overwrite live settings if something was set in src/main/params.py
+for key in ('ENGINE', 'HOST', 'PORT', 'USER', 'PASSWORD'):
     try:
         key_with_prefix = 'DATABASES_{}'.format(key)
         DATABASES['default'][key] = locals()[key_with_prefix]

@@ -34,7 +34,7 @@ VENV_DEV=venv/.venv_dev
 # Params for building and installing on the EXA servers
 
 VSN:=$(shell git describe --tags --always)
-ARTIFACT:=zenaida1-$(VSN).tgz
+ARTIFACT:=zenaida-$(VSN).tgz
 PIP_CACHE:=.pip_cache
 PIP_DOWNLOAD:=.pip_download
 PYTHON_VERSION=python3.6
@@ -59,7 +59,7 @@ pyclean:
 	@find . -name *.pyc -delete
 	@rm -rf *.egg-info build
 	@rm -rf coverage.xml .coverage
-	@rm -f zenaida1-*.tgz
+	@rm -f zenaida-*.tgz
 
 docsclean:
 	@rm -fr docs/_build/
@@ -124,8 +124,8 @@ test/%: sanity_checks pyclean venv
 	$(TOX) -e $(TOX_PY_LIST) -- $*
 
 lint: $(VENV_TOX)
-	# @$(TOX) -e lint
-	# @$(TOX) -e isort-check
+	@$(TOX) -e lint
+	@$(TOX) -e isort-check
 
 isort: $(VENV_TOX)
 	# @$(TOX) -e isort-fix
@@ -193,9 +193,10 @@ $(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)
 # these two are the main venvs
 $(VENV_SYSTEM_SITE_PACKAGES):
 	@rm -rf venv
-	@$(PYTHON_VERSION) -m venv --system-site-packages venv
-	@echo "[easy_install]" > venv/.pydistutils.cfg
-	@echo "find_links = file://$(PWD)/$(PIP_DOWNLOAD)/" >> venv/.pydistutils.cfg
+	# @$(PYTHON_VERSION) -m venv --system-site-packages venv
+	@$(PYTHON_VERSION) -m venv venv
+	# @echo "[easy_install]" > venv/.pydistutils.cfg
+	# @echo "find_links = file://$(PWD)/$(PIP_DOWNLOAD)/" >> venv/.pydistutils.cfg
 	@touch $@
 
 $(VENV_NO_SYSTEM_SITE_PACKAGES):
@@ -205,6 +206,7 @@ $(VENV_NO_SYSTEM_SITE_PACKAGES):
 
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt

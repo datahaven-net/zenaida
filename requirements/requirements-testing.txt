@@ -13,3 +13,6 @@ pytest-django
 sphinx
 # sphinxcontrib-plantuml
 sphinx_rtd_theme
+
+Django
+django

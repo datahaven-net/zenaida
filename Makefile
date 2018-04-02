@@ -4,6 +4,11 @@
 # * docker
 # * docker-compose
 
+# On my Apple macOS Sierra I got issues with uwsgi, this helps:
+#
+#     LDFLAGS=-L/usr/local/Cellar/openssl/1.0.2o_1/lib make clean venv
+#
+
 REQUIREMENTS_BASE:=requirements/requirements-base.txt
 REQUIREMENTS_TEST:=requirements/requirements-testing.txt
 REQUIREMENTS_TXT:=requirements.txt
@@ -119,14 +124,14 @@ test/%: sanity_checks pyclean venv
 	$(TOX) -e $(TOX_PY_LIST) -- $*
 
 lint: $(VENV_TOX)
-	@$(TOX) -e lint
-	@$(TOX) -e isort-check
+	# @$(TOX) -e lint
+	# @$(TOX) -e isort-check
 
 isort: $(VENV_TOX)
-	@$(TOX) -e isort-fix
+	# @$(TOX) -e isort-fix
 
 docs: clean $(VENV_TOX) $(PARAMS)
-	@$(TOX) -e docs
+	# @$(TOX) -e docs
 
 # TODO maybe run via uwsgi?
 docker:

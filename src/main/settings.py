@@ -152,8 +152,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'wsgi.application'
 
 # DATABASE DEFAULTS
-DATABASES_ENGINE = 'django.db.backends.sqlite3'
-DATABASES_NAME = 'db.sqlite'
 DATABASES_OPTIONS = {}
 DATABASES_TEST = {}
 DATABASES_CONN_MAX_AGE = 0
@@ -163,10 +161,8 @@ SENTRY_DSN = None
 
 ENV = getattr(params, 'ENV')
 STANDALONE = True
-if ENV in ['test_exa', 'accept_exa', 'production_exa', 'docker']:  # pragma: no cover
+if ENV in ['production', 'docker', ]:  # pragma: no cover
     STANDALONE = False
-
-# TODO: Read live configuration here
 
 
 SESSION_COOKIE_NAME = 'zenaida_sid'
@@ -176,8 +172,8 @@ CSRF_COOKIE_NAME = 'zenaida_csrftoken'
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': DATABASES_ENGINE,
-        'NAME': DATABASES_NAME,
+        'ENGINE': getattr(params, 'DATABASES_ENGINE'),
+        'NAME': getattr(params, 'DATABASES_NAME'),
         'OPTIONS': DATABASES_OPTIONS,
         'TEST': DATABASES_TEST,
         'CONN_MAX_AGE': DATABASES_CONN_MAX_AGE,
@@ -188,7 +184,8 @@ DATABASES = {
 for key in ('ENGINE', 'HOST', 'PORT', 'USER', 'PASSWORD'):
     try:
         key_with_prefix = 'DATABASES_{}'.format(key)
-        DATABASES['default'][key] = locals()[key_with_prefix]
+        if hasattr(params, key_with_prefix):
+            DATABASES['default'][key] = getattr(params, key_with_prefix)
     except KeyError:
         pass
 

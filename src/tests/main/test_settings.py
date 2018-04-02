@@ -4,4 +4,4 @@ from main import settings
 
 
 def test_settings():
-    assert settings.ENV == 'development'
+    assert settings.ENV in ['prod', 'development', ]

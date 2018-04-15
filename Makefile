@@ -175,19 +175,22 @@ smoketest:
 	/bin/false
 
 
-runserver: $(VENV_DEV)
-	$(PYTHON) src/manage.py runserver
-
-
 runuwsgi: $(VENV_DEV)
 	$(UWSGI) --ini etc/local.uwsgi.ini
 
 
+runserver: $(VENV_DEV)
+	# run "manage.py runserver"
+	$(PYTHON) src/manage.py runserver
+
+
 createsuperuser: $(VENV_DEPLOY)
+	# run "manage.py createsuperuser"
 	$(PYTHON) src/manage.py createsuperuser
 
 
 collectstatic: $(VENV_DEPLOY)
+	# run "manage.py collectstatic"
 	$(PYTHON) src/manage.py collectstatic
 
 

@@ -180,18 +180,15 @@ runuwsgi: $(VENV_DEV)
 
 
 runserver: $(VENV_DEV)
-	# run "manage.py runserver"
 	$(PYTHON) src/manage.py runserver
 
 
 createsuperuser: $(VENV_DEPLOY)
-	# run "manage.py createsuperuser"
 	$(PYTHON) src/manage.py createsuperuser
 
 
 collectstatic: $(VENV_DEPLOY)
-	# run "manage.py collectstatic"
-	$(PYTHON) src/manage.py collectstatic
+	$(PYTHON) src/manage.py collectstatic --noinput
 
 
 ################################################

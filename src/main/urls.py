@@ -10,7 +10,7 @@ from django.urls import path
 from signup import views as signup_views
 
 admin_patterns = [
-    path(r'^admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
 ]
 
 auth_patterns = [

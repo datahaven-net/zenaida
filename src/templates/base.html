@@ -1,6 +1,6 @@
 {% load bootstrap_themes %}
 
-{% bootstrap_styles theme='cyborg' type='css' %}
+{% bootstrap_styles theme='united' type='css' %}
 
 {% load i18n %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -8,9 +8,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>{% block title %}Zenaida{% endblock %}</title>
+
     <link rel="stylesheet" href="/style.css" />
-    <title>{% block title %}User test{% endblock %}</title>
+
 </head>
+
 
 <body>
     <div id="header">

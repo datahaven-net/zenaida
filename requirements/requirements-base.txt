@@ -7,3 +7,4 @@ psycopg2
 django-redis-cache
 uwsgi
 djangorestframework
+django-bootstrap-themes

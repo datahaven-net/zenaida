@@ -1,11 +1,12 @@
 # Base requirements
-Django==2.0.3
+Django==2.0.4
 fqn-decorators==1.2.0
 raven==6.6.0
 timeexecution==3.2.0
 psycopg2==2.7.4
 django-redis-cache==1.7.1
-djangorestframework==3.7.7
+djangorestframework==3.8.2
+django-bootstrap-themes==3.3.6
 ## The following requirements were added by pip freeze:
 certifi==2018.1.18
 chardet==3.0.4
@@ -14,7 +15,7 @@ idna==2.6
 influxdb==5.0.0
 pkgsettings==0.12.0
 python-dateutil==2.7.2
-pytz==2018.3
+pytz==2018.4
 redis==2.10.6
 requests==2.18.4
 six==1.11.0

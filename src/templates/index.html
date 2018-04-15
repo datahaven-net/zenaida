@@ -2,5 +2,17 @@
 {% load i18n %}
 
 {% block content %}
-Index page
+
+{% if user.is_authenticated %}
+
+You do not have any domains registered yet... work in progress...
+
+{% else %}
+
+<h1>Welcome to Zenaida!</h1>
+
+<p>Please <a href="{% url 'auth_login' %}">Log In</a> to register a new domain name.</p>
+
+{% endif %}
+
 {% endblock %}

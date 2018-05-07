@@ -1,12 +1,13 @@
 #!/bin/bash
 
 EPP_GATE_PROCESS_NAME="epp_gate.pl"
-EPP_GATE_PATH="/home/zenaida/zenaida/bin/epp_gate.pl"
+EPP_GATE_PATH="/home/zenaida/zenaida/proc/epp_gate.pl"
 EPP_REGISTRY_CREDENTIALS_PATH="/home/zenaida/keys/epp_credentials.txt"
 RABBITMQ_GATE_CREDENTIALS_PATH="/home/zenaida/keys/rabbitmq_gate_credentials.txt"
-EPP_GATE_LOG_PATH="/tmp/gate"
-EPP_GATE_ERROR_LOG_PATH="/tmp/gate.err"
+EPP_GATE_LOG_PATH="/home/zenaida/logs/gate"
+EPP_GATE_ERROR_LOG_PATH="/home/zenaida/logs/gate.err"
 EPP_GATE_MAX_LOG_SIZE=1000000
+
 
 
 # rotate logs

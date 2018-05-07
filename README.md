@@ -174,12 +174,14 @@ Use Apt package manager to install RabbitMQ server on your Zenaida host:
         sudo apt-get update
         sudo apt-get install rabbitmq-server
         sudo rabbitmq-plugins enable rabbitmq_management
-        sudo rabbitmqctl add_user zenaida <rabbitmq password>
+        sudo rabbitmqctl add_user zenaida-admin <rabbitmq password>
         sudo rabbitmqctl set_user_tags zenaida administrator
         sudo rabbitmqctl set_permissions -p / zenaida ".*" ".*" ".*"
 
 
-Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourdomain.com:15672` and login with `zenaida`:`<rabbitmq password>` credentials you have just created.
+Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourdomain.com:15672` and login with `zenaida-admin`:`<rabbitmq password>` credentials you have just created.
+
+Now it is time to create live RabbitMQ credentials to access messaging queue. Got to `http://www.yourdomain.com:15672/#/users`, click "Add user" dropdown link, set username and password fields and click "Add user" button. Then select that user and click "Set permission" button to grant him access to virtual hosts.
 
 More details about RabbutMQ installation you can find here: https://www.rabbitmq.com/install-debian.html
 
@@ -191,8 +193,18 @@ To run real-time connection between Zenaida and EPP registry system a separate p
 To be able to start EPP Gate process you need to provide it with required credentials for EPP registry and RabbitMQ - example files you can find in `etc/` folder. You can place those files in a safe place on your server and fill with correct credentials:
 
         mkdir /home/zenaida/keys/
-        chmod go-rwx keys/
-        cp etc/
+        echo "localhost 5672 <rabbitmq_user> <rabbitmq_password>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt
+        echo "epp.yourdomain.com 700 <epp_user> <epp_password>" > /home/zenaida/keys/epp_credentials.txt
+        chmod go-rwx -R /home/zenaida/keys/
+
+
+Next create a folder to store log files:
+
+        mkdir /home/zenaida/logs/
+        chmod go-rwx -R /home/zenaida/logs/
+
+
+
 
 
 

@@ -60,9 +60,6 @@ crashlytics-build.properties
 Icon
 
 
-# Thumbnails
-._*
-
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
@@ -80,7 +77,6 @@ Temporary Items
 
 
 ### Linux ###
-*~
 
 # KDE directory preferences
 .directory
@@ -143,11 +139,9 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
-.coverage.*
 .cache
 nosetests.xml
 coverage.xml
-*,cover
 .pytest_cache/
 
 # Translations
@@ -171,7 +165,6 @@ target/
 *.un~
 Session.vim
 .netrwhist
-*~
 
 .pip_download
 build.properties

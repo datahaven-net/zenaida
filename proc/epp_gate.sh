@@ -10,7 +10,7 @@ EPP_GATE_MAX_LOG_SIZE=1000000
 
 
 # rotate logs
-if [ if $EPP_GATE_LOG_PATH ]; then
+if [ -f $EPP_GATE_LOG_PATH ]; then
     current_log_size=`du -b "$EPP_GATE_LOG_PATH" | tr -s '\t' ' ' | cut -d' ' -f1`
     # if log file size is not too big, do not need to rotate 
     if [ $current_log_size -gt $EPP_GATE_MAX_LOG_SIZE ]; then
@@ -31,5 +31,6 @@ nohup perl "$EPP_GATE_PATH" "$EPP_REGISTRY_CREDENTIALS_PATH" "$RABBITMQ_GATE_CRE
 
 
 # DONE!
-echo "process started : `ps auxww | grep "$EPP_GATE_PROCESS_NAME" | grep -v grep`" >> "$EPP_GATE_LOG_PATH"
+echo "process started : `ps auxww | grep "$EPP_GATE_PROCESS_NAME" | grep -v grep | awk '{print $2}'`\n" >> "$EPP_GATE_LOG_PATH"
+
 exit 0

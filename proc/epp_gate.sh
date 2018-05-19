@@ -9,30 +9,27 @@ EPP_GATE_ERROR_LOG_PATH="/home/zenaida/logs/gate.err"
 EPP_GATE_MAX_LOG_SIZE=1000000
 
 
-
 # rotate logs
-
-current_log_size=`du -b "$EPP_GATE_LOG_PATH" | tr -s '\t' ' ' | cut -d' ' -f1`
-# if log file size is not too big, do not need to rotate 
-if [ $current_log_size -gt $MaxFileSize ]; then
-    savelog -n -c 7 "$EPP_GATE_LOG_PATH"
+if [ if $EPP_GATE_LOG_PATH ]; then
+    current_log_size=`du -b "$EPP_GATE_LOG_PATH" | tr -s '\t' ' ' | cut -d' ' -f1`
+    # if log file size is not too big, do not need to rotate 
+    if [ $current_log_size -gt $EPP_GATE_MAX_LOG_SIZE ]; then
+        savelog -n -c 7 "$EPP_GATE_LOG_PATH"
+    fi
 fi
 
 
-
 # kill existing process
-
 echo "killing EPP gate process : `date`" >> "$EPP_GATE_LOG_PATH"
-
 kill -9 `ps auxww | grep "$EPP_GATE_PROCESS_NAME" | grep -v grep | awk '{print $2}'`
 sleep 1
 
 
-
 # start new process
-
 echo "starting EPP gate process : `date`" >> "$EPP_GATE_LOG_PATH"
-
 nohup perl "$EPP_GATE_PATH" "$EPP_REGISTRY_CREDENTIALS_PATH" "$RABBITMQ_GATE_CREDENTIALS_PATH" 1>>"$EPP_GATE_LOG_PATH" 2>>"$EPP_GATE_ERROR_LOG_PATH" &
 
+
+# DONE!
+echo "process started : `ps auxww | grep "$EPP_GATE_PROCESS_NAME" | grep -v grep`" >> "$EPP_GATE_LOG_PATH"
 exit 0

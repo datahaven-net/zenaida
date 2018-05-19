@@ -62,7 +62,6 @@ sub make_client {
     $epp_host =~ s/^\s+|\s+$//g;
     $epp_port =~ s/^\s+|\s+$//g;
 
-    my $epp_credentials_file = $ARGV[0];
 	$epp = Net::EPP::Client->new(
         host    => $epp_host,
         port    => $epp_port,

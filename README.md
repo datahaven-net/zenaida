@@ -159,7 +159,7 @@ Then we need to check if CPAN Perl package manager is installed and configured o
 
 Installing Perl modules is easy, but takes some time:
 
-        sudo cpan install JSON XML::LibXML HTTP::Daemon Method::Signatures AnyEvent Net::RabbitFoot TryCatch Digest::MD5 Data::Dumper Net::Server::PreFork
+        sudo cpan install AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
 
 
 

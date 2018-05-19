@@ -124,7 +124,7 @@ Install nginx if you do not have it yet installed and update the configuration:
 
 Also copy configuration for zenaida uwsgi process to global init scripts:
 
-        sudo cp etc/test.zenaida.uwsgi.conf /etc/init/uwsgi.zenaida.conf
+        sudo cp etc/test.zenaida.ai.uwsgi.conf /etc/init/uwsgi.zenaida.conf
 
 
 Restart uwsgi service for zenaida:
@@ -204,7 +204,33 @@ Next create a folder to store log files:
         chmod go-rwx -R /home/zenaida/logs/
 
 
+Now we need to be sure that "EPP Gate" process is configured correctly, lets execute Perl script directly:
 
+        perl proc/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt
+        ...
+        Sat May 19 20:49:17 2018: Connecting to RabbitMQ server at localhost:5672 with username: <rabbitmq_user>
+        Sat May 19 20:49:17 2018:  [x] Awaiting RPC requests
+
+
+Keep it running in the current terminal and open another console window to be able to fire real-time EPP requests towards given EPP server:
+
+        venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.client; print(zepp.client.cmd_domain_check(["testdomain.com", ]))'
+
+
+If RabbitMQ and EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
+
+        {'epp': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd', 'response': {'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'resData': {'chkData': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd', 'cd': {'name': {'@avail': '1', '#text': 'testdomain.com'}}}}, 'trID': {'clTRID': '103513f75a176e56038b2244258357f7', 'svTRID': '1526756418267'}}}}
+      
+
+To be able to easily manage EPP Gate process on your host system you can add it to your system-wide init scripts:
+
+        sudo cp etc/gate.zenaida.conf /etc/init/gate.zenaida.conf
+
+
+Then you can stop/start EPP Gate service this way:
+
+        sudo stop gate.zenaida
+        sudo start gate.zenaida
 
 
 

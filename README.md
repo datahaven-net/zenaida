@@ -117,20 +117,25 @@ Make sure you set the correct domain name on your server:
 
 Install nginx if you do not have it yet installed and update the configuration:
         
-        sudo cp etc/test.zenaida.ai.conf /etc/nginx/sites-available/test.zenaida.ai
-        sudo ln -s /etc/nginx/sites-available/test.zenaida.ai /etc/nginx/sites-enabled/
+        sudo cp etc/nginx.conf /etc/nginx/sites-available/zenaida
+        sudo ln -s /etc/nginx/sites-available/zenaida /etc/nginx/sites-enabled/
         sudo service nginx restart
 
 
 Also copy configuration for zenaida uwsgi process to global init scripts:
 
-        sudo cp etc/test.zenaida.ai.uwsgi.conf /etc/init/uwsgi.zenaida.conf
+        sudo cp etc/uwsgi-zenaida.conf /etc/init/uwsgi-zenaida.conf
 
 
 Restart uwsgi service for zenaida:
 
-        sudo stop uwsgi.zenaida
-        sudo start uwsgi.zenaida
+        sudo stop uwsgi-zenaida
+        sudo start uwsgi-zenaida
+
+
+You can always check current situation with:
+
+        sudo initctl status uwsgi-zenaida
 
 
 Your live server should be up and running now, navigate your browser to http://www.yourdomain.com
@@ -224,13 +229,18 @@ If RabbitMQ and EPP Gate process was configured correctly you should see a json 
 
 To be able to easily manage EPP Gate process on your host system you can add it to your system-wide init scripts:
 
-        sudo cp etc/gate.zenaida.conf /etc/init/gate.zenaida.conf
+        sudo cp etc/gate-zenaida.conf /etc/init/gate-zenaida.conf
 
 
 Then you can stop/start EPP Gate service this way:
 
-        sudo stop gate.zenaida
-        sudo start gate.zenaida
+        sudo stop gate-zenaida
+        sudo start gate-zenaida
+
+
+You can always check current situation with:
+
+        sudo initctl status gate-zenaida 
 
 
 
@@ -254,3 +264,38 @@ For some more advanced uses, a manual edit of the requirements.txt can be done b
 By default, `tox` and `make test` will only test against production requirements, in order to test against latest versions of the dependencies, there are two tox environments, `latest27` and `latest35`.
 
 They can be run via `tox -e latest27,latest35` or also with `make test_latest`
+
+
+## Contributing
+
+Please go to [Main Zenaida GitHub repository](https://github.com/datahaven-net/zenaida), click "Fork", and clone your fork repository via git+ssh link:
+
+        git clone git@github.com:< your GitHub username here >/zenaida.git
+
+
+Then you need to add main Zenaida repo as "upstream" source via HTTPS link (in read-only mode):
+
+        cd zenaida
+        git remote add upstream https://github.com/datahaven-net/zenaida.git
+        git remote -v
+        origin  git@github.com:< your GitHub username here >/zenaida.git (fetch)
+        origin  git@github.com:< your GitHub username here >/zenaida.git (push)
+        upstream    https://github.com/datahaven-net/zenaida.git (fetch)
+        upstream    https://github.com/datahaven-net/zenaida.git (push)
+
+
+Your current forked repository remains as "origin", and you should always commiting and pushing to your own code base:
+
+        # after you made some modifications, for example in README.md
+        git add README.md
+        git commit -m "updated documentation"
+        git push origin master
+
+
+Then you start a [new Pull Request](https://github.com/datahaven-net/zenaida/compare) towards main repository, you can click "compare across forks" link to select your own repository source in "head fork" drop down list. Then you will see the changes you are going to introduce to Zenaida and will be able to start a Pull Request.
+
+Please cooperate with the open-source Zenaida community to make your changes Approved and Merged into the main repository. As soon as your Pull Request was merged, you can refresh your local files and "origin" repository:
+
+        git pull upstream master
+        git push origin master
+

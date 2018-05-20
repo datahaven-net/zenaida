@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 from django.urls import path
 
 from signup import views as signup_views
+from front import views as front_views
 
 admin_patterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +34,8 @@ auth_patterns = [
 
 patterns = [
     path('', TemplateView.as_view(template_name="index.html"), name='index'),
+    path('lookup/', front_views.domain_lookup, name='domain_lookup'),
+
 ]
 
 urlpatterns = admin_patterns + auth_patterns + patterns

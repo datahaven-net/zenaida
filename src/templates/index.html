@@ -6,6 +6,8 @@
 {% if user.is_authenticated %}
 
 You do not have any domains registered yet... work in progress...
+<br>
+At the moment you can only <a href="{% url 'domain_lookup' %}">lookup</a> existing domains.
 
 {% else %}
 

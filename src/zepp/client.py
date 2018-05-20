@@ -90,6 +90,13 @@ class EPPBadResponse(Exception):
     pass
 
 
+class EPPCommandFailed(Exception):
+    pass
+
+
+class EPPCommandInvalid(Exception):
+    pass
+
 #------------------------------------------------------------------------------
 
 class XML2JsonOptions(object):

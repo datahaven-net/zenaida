@@ -1,20 +1,7 @@
 from django.shortcuts import render, redirect
 
 from front.forms import DomainLookupForm
-
-
-def domain_check(domain):
-    from zepp import client
-    check = client.cmd_domain_check([domain, ], )
-    if check['epp']['response']['result']['@code'] != '1000':
-        raise client.EPPCommandFailed('EPP domain_check failed with error code: %s' % (
-            check['epp']['response']['result']['@code'], ))
-    if check['epp']['response']['resData']['chkData']['cd']['name']['@avail'] == '1':
-        return False
-    if not check['epp']['response']['resData']['chkData']['cd']['reason'].startswith('(00)'):
-        raise client.EPPCommandFailed('EPP domain_check failed with reason: %s' % (
-            check['epp']['response']['resData']['chkData']['cd']['reason']))
-    return True
+from zepp.zmaster import domain_check
 
 
 def domain_lookup(request):
@@ -26,8 +13,12 @@ def domain_lookup(request):
     else:
         form = DomainLookupForm(request.POST)
         if form.is_valid():
-            try:
-                result = 'exist' if domain_check(form.cleaned_data['domain_name']) else 'not exist'
-            except Exception as exc:
-                result = 'ERROR: ' + str(exc)
+            result = domain_check(domain=form.cleaned_data['domain_name'], return_string=True)
     return render(request, 'front/domain_lookup.html', {'form': form, 'result': result, }, )
+
+
+def account_overview(request):
+    if not request.user.is_authenticated:
+        return redirect('index')
+    result = ''
+    return render(request, 'front/account_overview.html', {'result': result, }, )

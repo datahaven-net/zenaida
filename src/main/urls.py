@@ -35,7 +35,7 @@ auth_patterns = [
 patterns = [
     path('', TemplateView.as_view(template_name="index.html"), name='index'),
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
-
+    path('overview/', front_views.account_overview, name='account_overview'),
 ]
 
 urlpatterns = admin_patterns + auth_patterns + patterns

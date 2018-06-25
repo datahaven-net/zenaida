@@ -109,16 +109,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-
     'django.contrib.sessions',
     'django.contrib.messages',
-    # 'raven.contrib.django.raven_compat',
     'rest_framework',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'bootstrap_themes',
     'main',
+    'back',
 ]
 
 MIDDLEWARE = [

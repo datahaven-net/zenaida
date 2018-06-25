@@ -78,6 +78,7 @@ $(PARAMS): | src/main/params.example.py
 
 venv: $(VENV_DEV) $(PARAMS)
 
+
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
 	$(eval MAKE_MIGRATIONS_OUTPUT:="$(shell echo $(MAKE_MIGRATIONS))")
 	@echo $(MAKE_MIGRATIONS_OUTPUT)
@@ -99,13 +100,6 @@ check_requirements_txt:
 
 sanity_checks: check_requirements_txt check_forgotten_migrations
 	@echo "Checks OK"
-
-
-# Used by the deploy pipeline to do migrations that only have to run
-# on one node only, not all nodes where the software is installed.
-migrate: $(VENV_DEPLOY)
-	@$(PYTHON) src/manage.py migrate --noinput
-	@echo 'Done!'
 
 
 # Used by the PR jobs. This target should include all tests necessary
@@ -185,10 +179,32 @@ runserver: $(VENV_DEV)
 
 createsuperuser: $(VENV_DEPLOY)
 	$(PYTHON) src/manage.py createsuperuser
+	@echo 'createsuperuser OK'
 
 
 collectstatic: $(VENV_DEPLOY)
 	$(PYTHON) src/manage.py collectstatic --noinput
+	@echo 'collectstatic OK'
+
+
+# Used by the deploy pipeline to do migrations that only have to run
+# on one node only, not all nodes where the software is installed.
+migrate: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py migrate --noinput
+	@echo 'migrate OK'
+
+
+makemigrations: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py makemigrations
+	@echo 'makemigrations OK'
+
+
+shell: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py shell
+
+
+dbshell: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py dbshell
 
 
 ################################################

@@ -1,12 +1,15 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
+from back.models.account import Account
 
 
 class Profile(models.Model):
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    objects = models.Manager()
+
+    account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='profile')
 
     person_first_name = models.CharField(max_length=255, default='')
 
@@ -31,12 +34,16 @@ class Profile(models.Model):
     contact_email = models.CharField(max_length=255, default='')
 
 
-@receiver(post_save, sender=User)
+    def __str__(self):
+        return 'Profile({})'.format(self.account.email)
+
+
+@receiver(post_save, sender=Account)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.create(account=instance)
 
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=Account)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()

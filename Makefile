@@ -76,7 +76,7 @@ properties:
 $(PARAMS): | src/main/params.example.py
 	@cp $| $@
 
-venv: $(VENV_DEV) $(PARAMS)
+venv: $(VENV_DEPLOY) $(PARAMS)
 
 
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
@@ -136,7 +136,7 @@ docker:
 docker/%:
 	$(DOCKER_COMPOSE) run --rm app make $*
 
-setup.py: $(VENV_DEV)
+setup.py: $(VENV_DEPLOY)
 	$(PYTHON) setup_gen.py
 
 artifact: $(VENV_NO_SYSTEM_SITE_PACKAGES)
@@ -169,11 +169,11 @@ smoketest:
 	/bin/false
 
 
-runuwsgi: $(VENV_DEV)
+runuwsgi: $(VENV_DEPLOY)
 	$(UWSGI) --ini etc/local.uwsgi.ini
 
 
-runserver: $(VENV_DEV)
+runserver: $(VENV_DEPLOY)
 	$(PYTHON) src/manage.py runserver
 
 
@@ -228,7 +228,7 @@ $(VENV_NO_SYSTEM_SITE_PACKAGES):
 	@touch $@
 
 # the rest is based on main venvs
-$(VENV_DEPLOY): $(VENV_SYSTEM_SITE_PACKAGES) check_requirements_txt
+$(VENV_DEPLOY): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@

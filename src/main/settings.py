@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     'bootstrap_themes',
     'main',
     'back',
+    # 'front',
 ]
 
 MIDDLEWARE = [
@@ -209,3 +210,7 @@ REST_FRAMEWORK = {
 }
 
 LOGIN_REDIRECT_URL = 'index'
+
+# Custom user model
+# https://www.codingforentrepreneurs.com/blog/how-to-create-a-custom-django-user-model/
+AUTH_USER_MODEL = 'back.Account'

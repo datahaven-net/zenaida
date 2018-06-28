@@ -87,8 +87,9 @@
             <!-- /.navbar-top-links -->
 
 <!-- LEFT MENU --> 
-            <div class="navbar-default sidebar" role="navigation">
+            <div class="navbar-inverse sidebar" role="navigation">
                 <div class="sidebar-nav navbar-collapse">
+                {% if user.is_authenticated %}
                     <ul class="nav" id="side-menu">
                         <li class="sidebar-search">
                             <div class="input-group custom-search-form">
@@ -189,6 +190,7 @@
                             <!-- /.nav-second-level -->
                         </li>
                     </ul>
+                {% endif %}
                 </div>
                 <!-- /.sidebar-collapse -->
             </div>

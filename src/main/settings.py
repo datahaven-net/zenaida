@@ -109,16 +109,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-
     'django.contrib.sessions',
     'django.contrib.messages',
-    # 'raven.contrib.django.raven_compat',
     'rest_framework',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'bootstrap_themes',
     'main',
+    'back',
+    # 'front',
 ]
 
 MIDDLEWARE = [
@@ -210,3 +210,7 @@ REST_FRAMEWORK = {
 }
 
 LOGIN_REDIRECT_URL = 'index'
+
+# Custom user model
+# https://www.codingforentrepreneurs.com/blog/how-to-create-a-custom-django-user-model/
+AUTH_USER_MODEL = 'back.Account'

@@ -118,7 +118,8 @@ INSTALLED_APPS = [
     'bootstrap_themes',
     'main',
     'back',
-    # 'front',
+    'front',
+    'signup',
 ]
 
 MIDDLEWARE = [

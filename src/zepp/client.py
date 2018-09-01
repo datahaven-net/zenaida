@@ -11,6 +11,7 @@ import uuid
 #------------------------------------------------------------------------------
 
 from zepp import xml2json
+from zepp.exceptions import EPPResponseFailed, EPPBadResponse
 
 #------------------------------------------------------------------------------
 
@@ -74,28 +75,6 @@ def _tr(_s):
     except:
         pass
     return s
-
-#------------------------------------------------------------------------------
-
-class EPPResponseFailed(Exception):
-    def __init__(self, code, message):
-        self.code = code
-        self.message = message
-
-    def __str__(self):
-        return '[%s] %s' % (self.code, self.message)
-
-
-class EPPBadResponse(Exception):
-    pass
-
-
-class EPPCommandFailed(Exception):
-    pass
-
-
-class EPPCommandInvalid(Exception):
-    pass
 
 #------------------------------------------------------------------------------
 
@@ -240,12 +219,12 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             if code not in ['1000', '1300', '1301', ]:
                 if logs:
                     epplog('FAILED: ' + json.dumps(json_output, indent=2))
-                raise EPPResponseFailed(code, msg)
+                raise EPPResponseFailed(message=msg, code=code)
         else:
             if out.count('Command completed successfully') == 0:
                 if logs:
                     epplog('FAILED: ' + json.dumps(json_output, indent=2))
-                raise EPPResponseFailed(-1, 'Command failed')
+                raise EPPResponseFailed('Command failed')
     if logs:
         epplog('<<< ' + json.dumps(json_output, indent=2) + '\n\n')
     return json_output or out

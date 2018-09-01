@@ -9,3 +9,4 @@ class Contact(models.Model):
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='contacts', )
 
+    epp_id = models.CharField(max_length=32, unique=True, )

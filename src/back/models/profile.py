@@ -12,25 +12,18 @@ class Profile(models.Model):
     account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='profile')
 
     person_first_name = models.CharField(max_length=255, default='')
-
     person_last_name = models.CharField(max_length=255, default='')
 
     organization_name = models.CharField(max_length=255, default='')
 
     address_street = models.CharField(max_length=255, default='')
-
     address_city = models.CharField(max_length=255, default='')
-
     address_province = models.CharField(max_length=255, default='')
-
     address_postal_code = models.CharField(max_length=255, default='')
-
     address_country = models.CharField(max_length=255, default='')
 
     contact_voice = models.CharField(max_length=255, default='')
-
     contact_fax = models.CharField(max_length=255, default='')
-
     contact_email = models.CharField(max_length=255, default='')
 
 

@@ -1,13 +1,15 @@
 # Zenaida UWSGI systemd service configuration.
 #
-# Make link in your to global systemd folder to activate the service:
-# 
-#         sudo ln -s /home/zenaida/zenaida/etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
+# Make link in your global systemd folder to activate the uwsgi emperor service:
+#
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/uwsgi-emperor.service.example etc/systemd/system/uwsgi-emperor.service
+#         sudo ln -s etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
 #
 #
 # Start uwsgi emperor service:
 # 
-#         systemctl start uwsgi_emperor.service
+#         systemctl start uwsgi-emperor.service
 #
 #
 # You can always check current situation with:

@@ -115,31 +115,34 @@ Make sure you set the correct domain name on your server:
         sudo hostname -b yourdomain.com
 
 
-Install nginx if you do not have it yet installed and update the configuration:
-        
+Install nginx if you do not have it yet installed:
+
         sudo apt-get install nginx
-        sudo cp etc/nginx/zenaida /etc/nginx/sites-available/zenaida
-        sudo ln -s /etc/nginx/sites-available/zenaida /etc/nginx/sites-enabled/
+
+
+Activate nginx site configuration by creating a sym-link:
+
+        cp etc/nginx/zenaida.example etc/nginx/zenaida
+        sudo ln -s etc/nginx/zenaida /etc/nginx/sites-enabled/
         sudo unlink /etc/nginx/sites-enabled/default
 
 
-Lets configure uwsgi in emperor mode to follow best practices. We will need one vassal to be running and serving Zenaida traffic:
+Now it is time to configure uwsgi in emperor mode to follow best practices.
+We will need one vassal to be running and serving Zenaida traffic.
+The main uwsgi emperor process will be starting as systemd service:
 
+        cp etc/systemd/system/uwsgi-emperor.service.example etc/systemd/system/uwsgi-emperor.service
+        sudo ln -s etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
+        
 
-Also copy configuration for zenaida uwsgi process to global init scripts:
+Now start uwsgi emperor service:
 
-        sudo cp etc/uwsgi-zenaida.conf /etc/init.d/uwsgi-zenaida
-
-
-Restart uwsgi service for zenaida:
-
-        sudo stop uwsgi-zenaida
-        sudo start uwsgi-zenaida
+        systemctl start uwsgi-emperor.service
 
 
 You can always check current situation with:
 
-        sudo initctl status uwsgi-zenaida
+        systemctl status uwsgi-emperor.service
 
 
 Finally create separate folder to store server logs and restart nginx server:

@@ -18,9 +18,9 @@ Clone project files locally. If you are running on production server please use 
 
 Install postgress and few other packages:
 
-        sudo apt-get install python-pip python-dev libpq-dev postgresql postgresql-contrib
+        sudo apt-get install make python3-pip python3-dev python3-venv libpq-dev postgresql postgresql-contrib
 
-
+ 
 Create DB and user:
 
         sudo su - postgres
@@ -117,14 +117,18 @@ Make sure you set the correct domain name on your server:
 
 Install nginx if you do not have it yet installed and update the configuration:
         
-        sudo cp etc/nginx.conf /etc/nginx/sites-available/zenaida
+        sudo apt-get install nginx
+        sudo cp etc/nginx/zenaida /etc/nginx/sites-available/zenaida
         sudo ln -s /etc/nginx/sites-available/zenaida /etc/nginx/sites-enabled/
-        sudo service nginx restart
+        sudo unlink /etc/nginx/sites-enabled/default
+
+
+Lets configure uwsgi in emperor mode to follow best practices. We will need one vassal to be running and serving Zenaida traffic:
 
 
 Also copy configuration for zenaida uwsgi process to global init scripts:
 
-        sudo cp etc/uwsgi-zenaida.conf /etc/init/uwsgi-zenaida.conf
+        sudo cp etc/uwsgi-zenaida.conf /etc/init.d/uwsgi-zenaida
 
 
 Restart uwsgi service for zenaida:
@@ -138,6 +142,13 @@ You can always check current situation with:
         sudo initctl status uwsgi-zenaida
 
 
+Finally create separate folder to store server logs and restart nginx server:
+
+        mkdir /home/zenaida/logs/
+        sudo chgrp www-data /home/zenaida/logs/
+        sudo service nginx restart
+
+
 Your live server should be up and running now, navigate your browser to http://www.yourdomain.com
 
 
@@ -146,9 +157,9 @@ Your live server should be up and running now, navigate your browser to http://w
 
 To establish connection between Zenaida server and EPP registry system we use couple more components:
 
-    * RabbitMQ server to run messaging queue and exchange EPP commands
-    * Perl script which runs in background and keep alive connection with EPP server
-    * Python Polling job which periodically request updates from EPP server for backward synchronization   
+* RabbitMQ server to run messaging queue and exchange EPP commands
+* Perl script which runs in background and keep alive connection with EPP server
+* Python Polling job which periodically request updates from EPP server for backward synchronization   
 
 
 Lets start from installing Perl and required modules on Zenaida machine.

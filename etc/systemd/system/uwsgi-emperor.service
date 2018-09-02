@@ -1,0 +1,34 @@
+# Zenaida UWSGI systemd service configuration.
+#
+# Make link in your to global systemd folder to activate the service:
+# 
+#         sudo ln -s /home/zenaida/zenaida/etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
+#
+#
+# Start uwsgi emperor service:
+# 
+#         systemctl start uwsgi_emperor.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl status uwsgi-emperor.service 
+#
+
+
+[Unit]
+Description=uWSGI Emperor
+After=syslog.target
+
+[Service]
+ExecStart=/home/zenaida/zenaida/venv/bin/uwsgi --ini /home/zenaida/zenaida/etc/uwsgi/emperor.ini --logger file:logfile=/home/zenaida/logs/uwsgi-emperor.log,maxsize=2000000 
+# Requires systemd version 211 or newer
+RuntimeDirectory=uwsgi
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

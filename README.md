@@ -114,7 +114,7 @@ Configuration here was tested on Ubuntu 18.04.1 LTS server.
 First lets create a separate folder to store all interesting logs in one place and configure log rotation:
 
         mkdir /home/zenaida/logs/
-        sudo chown www-data /home/zenaida/logs/
+        sudo chown www-data:zenaida -R /home/zenaida/logs/
         sudo cp etc/logrotate.d/zenaida /etc/logrotate.d/
 
 
@@ -222,7 +222,7 @@ Another user account we will use for EPP message queue between Zenaida and EPP r
 Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourdomain.com:15672` and
 login with `zenaida`:`<password 1>` administrative credentials you have just created.
 
-You can verify permissions of existing RabbitMQ users: must be 3 users existing:
+You can verify permissions of RabbitMQ users - must be 3 users existing:
 
 * guest
 * zenaida
@@ -244,15 +244,18 @@ To be able to start EPP Gate process you need to provide it with required creden
 You can place those files in a safe place on your server and fill with correct credentials:
 
         mkdir /home/zenaida/keys/
-        echo "localhost 5672 <rabbitmq_user> <rabbitmq_password>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt
+        echo "localhost 5672 zenaida_epp <password 2>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt
+
+
+EPP regisrty will have to also provide you with credentials to access EPP server remotely.
+Place them in another file in your `keys` folder:
+
         echo "epp.yourdomain.com 700 <epp_user> <epp_password>" > /home/zenaida/keys/epp_credentials.txt
+
+
+Before continue further make sure you decreased access permissions to your secrets:
+
         chmod go-rwx -R /home/zenaida/keys/
-
-
-Next create a folder to store log files:
-
-        mkdir /home/zenaida/logs/
-        chmod go-rwx -R /home/zenaida/logs/
 
 
 Now we need to be sure that "EPP Gate" process is configured correctly, lets execute Perl script directly:

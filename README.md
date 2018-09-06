@@ -271,25 +271,25 @@ Keep it running in the current terminal and open another console window to be ab
         venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.client; print(zepp.client.cmd_domain_check(["testdomain.com", ]))'
 
 
-If RabbitMQ and EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
+If RabbitMQ and Zenaida EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
 
         {'epp': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd', 'response': {'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'resData': {'chkData': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd', 'cd': {'name': {'@avail': '1', '#text': 'testdomain.com'}}}}, 'trID': {'clTRID': '103513f75a176e56038b2244258357f7', 'svTRID': '1526756418267'}}}}
       
 
-To be able to easily manage EPP Gate process on your host system you can add it to your system-wide init scripts:
+To be able to easily manage Zenaida EPP Gate process on your host system you can add it to your system-wide systemd scripts:
 
-        sudo cp etc/gate-zenaida.conf /etc/init/gate-zenaida.conf
+        cp etc/systemd/system/zenaida-gate.service.example etc/systemd/system/zenaida-gate.service
+        sudo ln -s etc/systemd/system/zenaida-gate.service /etc/systemd/system/
 
 
-Then you can stop/start EPP Gate service this way:
+Then you can stop/start the service in a such way:
 
-        sudo stop gate-zenaida
-        sudo start gate-zenaida
+        sudo systemctl start zenaida-gate.service
 
 
 You can always check current situation with:
 
-        sudo initctl status gate-zenaida 
+        systemctl status zenaida-gate.service 
 
 
 

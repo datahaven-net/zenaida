@@ -9,20 +9,14 @@ EPP_GATE_ERROR_LOG_PATH="/home/zenaida/logs/gate.err"
 EPP_GATE_MAX_LOG_SIZE=1000000
 
 
-# kill existing process
-echo "killing EPP gate process : `date`" >> "$EPP_GATE_LOG_PATH"
-kill -9 `ps auxww | grep "$EPP_GATE_PROCESS_NAME" | grep -v grep | awk '{print $2}'`
-sleep 1
-
-
-# rotate logs
-if [ -f $EPP_GATE_LOG_PATH ]; then
-    current_log_size=`du -b "$EPP_GATE_LOG_PATH" | tr -s '\t' ' ' | cut -d' ' -f1`
-    # if log file size is not too big, do not need to rotate 
-    if [ $current_log_size -gt $EPP_GATE_MAX_LOG_SIZE ]; then
-        savelog -n -c 7 "$EPP_GATE_LOG_PATH"
-    fi
-fi
+# # rotate logs
+# if [ -f $EPP_GATE_LOG_PATH ]; then
+#     current_log_size=`du -b "$EPP_GATE_LOG_PATH" | tr -s '\t' ' ' | cut -d' ' -f1`
+#     # if log file size is not too big, do not need to rotate 
+#     if [ $current_log_size -gt $EPP_GATE_MAX_LOG_SIZE ]; then
+#         savelog -n -c 7 "$EPP_GATE_LOG_PATH"
+#     fi
+# fi
 
 
 # start new process

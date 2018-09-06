@@ -1,3 +1,5 @@
+/home/zenaida/logs/gate
+/home/zenaida/logs/gate.err
 /home/zenaida/logs/uwsgi-emperor
 /home/zenaida/logs/uwsgi-zenaida
 {

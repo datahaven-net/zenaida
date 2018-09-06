@@ -1,0 +1,33 @@
+# Zenaida Gate systemd service configuration.
+#
+# Make link in your global systemd folder to activate the service:
+#
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-gate.service.example etc/systemd/system/zenaida-gate.service
+#         sudo ln -s etc/systemd/system/zenaida-gate.service /etc/systemd/system/
+#
+#
+# Start Zenaida gate service run this command:
+# 
+#         sudo systemctl start zenaida-gate.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl status zenaida-gate.service 
+#
+
+
+[Unit]
+Description=ZenaidaGate
+After=syslog.target
+
+[Service]
+Type=simple
+User=zenaida
+WorkingDirectory=/home/zenaida/zenaida/
+ExecStart=/bin/sh -c "perl /home/zenaida/zenaida/proc/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt 1>>/home/zenaida/logs/gate 2>>/home/zenaida/logs/gate.err"
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

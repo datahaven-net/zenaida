@@ -223,10 +223,10 @@ Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourd
 login with `zenaida`:`<password 1>` administrative credentials you have just created.
 
 You can verify permissions of existing RabbitMQ users: must be 3 users existing:
-        
-        "guest"
-        "zenaida"
-        "zenaida_epp"
+
+* guest
+* zenaida
+* zenaida_epp
 
 
 Lets remove "guest" user :-)

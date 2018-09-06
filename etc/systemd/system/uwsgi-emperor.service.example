@@ -9,7 +9,7 @@
 #
 # Start uwsgi emperor service:
 # 
-#         systemctl start uwsgi-emperor.service
+#         sudo systemctl start uwsgi-emperor.service
 #
 #
 # You can always check current situation with:

@@ -137,7 +137,7 @@ The main uwsgi emperor process will be starting as systemd service:
 
 Now start uwsgi emperor service:
 
-        systemctl start uwsgi-emperor.service
+        sudo systemctl start uwsgi-emperor.service
 
 
 You can always check current situation with:

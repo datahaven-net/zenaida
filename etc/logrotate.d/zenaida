@@ -1,0 +1,9 @@
+/home/zenaida/logs/uwsgi-emperor
+/home/zenaida/logs/uwsgi-zenaida
+{
+  rotate 6
+  monthly
+  compress
+  missingok
+  notifempty
+}

@@ -108,7 +108,15 @@ Now you can navigate your browser to `http://127.0.0.1:8000/` and visit Zenaida 
 
 For production configuration you can take a look at some examples in `etc/` folder.
 
-You might want to use your own tweaks for nginx and uwsgi, so those files are just a starting point.
+You might want to use your own tweaks for nginx and uwsgi, so those files are just a starting point for you.
+Configuration here was tested on Ubuntu 18.04.1 LTS server.
+
+First lets create a separate folder to store all interesting logs in one place and configure log rotation:
+
+        mkdir /home/zenaida/logs/
+        sudo chown www-data /home/zenaida/logs/
+        sudo cp etc/logrotate.d/zenaida /etc/logrotate.d/
+
 
 Make sure you set the correct domain name on your server:
 
@@ -137,7 +145,7 @@ The main uwsgi emperor process will be starting as systemd service:
 
 Now start uwsgi emperor service:
 
-        systemctl start uwsgi-emperor.service
+        sudo systemctl start uwsgi-emperor.service
 
 
 You can always check current situation with:
@@ -145,20 +153,22 @@ You can always check current situation with:
         systemctl status uwsgi-emperor.service
 
 
-Finally create separate folder to store server logs and restart nginx server:
+Finally restart nginx server to make everything work end-to-end:
 
-        mkdir /home/zenaida/logs/
-        sudo chgrp www-data /home/zenaida/logs/
         sudo service nginx restart
+
+
+At any moment you can gracefully respawn Zenaida process manually by "touching" zenaida.ini file:
+
+        touch /home/zenaida/zenaida/etc/uwsgi/vassals/zenaida.ini
 
 
 Your live server should be up and running now, navigate your browser to http://www.yourdomain.com
 
 
-
 ## Install Perl and required modules
 
-To establish connection between Zenaida server and EPP registry system we use couple more components:
+To establish connection between Zenaida and EPP registry system we use couple more components:
 
 * RabbitMQ server to run messaging queue and exchange EPP commands
 * Perl script which runs in background and keep alive connection with EPP server

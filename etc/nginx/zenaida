@@ -3,9 +3,7 @@
 # Add custom nginx locations and specific settings here.
 #
 # Activate site configuration by creating a sym-link:
-#
-#         cd /home/zenaida/zenaida/
-#         cp etc/nginx/zenaida.example etc/nginx/zenaida
+# 
 #         sudo ln -s /home/zenaida/zenaida/etc/nginx/zenaida /etc/nginx/sites-enabled/
 #
 #

@@ -181,7 +181,8 @@ Few binary dependencies are required to running Perl modules:
         sudo apt-get install build-essential libxml2-dev libnet-ssleay-perl libssl-dev libdigest-sha1-perl 
 
 
-Then we need to check if CPAN Perl package manager is installed and configured on your OS - it should be present on most Linux systems by default after installing `build-essential` package:
+Then we need to check if CPAN Perl package manager is installed and configured on your OS - it should be
+present on most Linux systems by default after installing `build-essential` package:
 
         cpan
 
@@ -203,23 +204,44 @@ Use Apt package manager to install RabbitMQ server on your Zenaida host:
         sudo apt-get update
         sudo apt-get install rabbitmq-server
         sudo rabbitmq-plugins enable rabbitmq_management
-        sudo rabbitmqctl add_user zenaida-admin <rabbitmq password>
+
+
+We need to have secure way to access RabbitMQ administrator panel, so lets create a separate user account for that purpose:
+
+        sudo rabbitmqctl add_user zenaida <password 1>
         sudo rabbitmqctl set_user_tags zenaida administrator
         sudo rabbitmqctl set_permissions -p / zenaida ".*" ".*" ".*"
 
 
-Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourdomain.com:15672` and login with `zenaida-admin`:`<rabbitmq password>` credentials you have just created.
+Another user account we will use for EPP message queue between Zenaida and EPP registry:
 
-Now it is time to create live RabbitMQ credentials to access messaging queue. Got to `http://www.yourdomain.com:15672/#/users`, click "Add user" dropdown link, set username and password fields and click "Add user" button. Then select that user and click "Set permission" button to grant him access to virtual hosts.
+        sudo rabbitmqctl add_user zenaida_epp <password 2>
+        sudo rabbitmqctl set_permissions -p / zenaida_epp ".*" ".*" ".*"
+
+
+Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourdomain.com:15672` and
+login with `zenaida`:`<password 1>` administrative credentials you have just created.
+
+You can verify permissions of existing RabbitMQ users: must be 3 users existing:
+        
+        "guest"
+        "zenaida"
+        "zenaida_epp"
+
+
+Lets remove "guest" user :-)
 
 More details about RabbutMQ installation you can find here: https://www.rabbitmq.com/install-debian.html
 
 
+
 ## Establish connection with EPP registry
 
-To run real-time connection between Zenaida and EPP registry system a separate process was developed which is called "EPP Gate". You will find this Perl script in `bin/epp_gate.pl` file.
+To run real-time connection between Zenaida and EPP registry system a separate process was developed which is called "EPP Gate".
+You will find this Perl script in `bin/epp_gate.pl` file.
 
-To be able to start EPP Gate process you need to provide it with required credentials for EPP registry and RabbitMQ - example files you can find in `etc/` folder. You can place those files in a safe place on your server and fill with correct credentials:
+To be able to start EPP Gate process you need to provide it with required credentials for EPP registry and RabbitMQ - example files you can find in `etc/` folder.
+You can place those files in a safe place on your server and fill with correct credentials:
 
         mkdir /home/zenaida/keys/
         echo "localhost 5672 <rabbitmq_user> <rabbitmq_password>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt

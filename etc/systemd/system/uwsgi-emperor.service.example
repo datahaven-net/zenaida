@@ -23,7 +23,7 @@ Description=uWSGI Emperor
 After=syslog.target
 
 [Service]
-ExecStart=/home/zenaida/zenaida/venv/bin/uwsgi --ini /home/zenaida/zenaida/etc/uwsgi/emperor.ini --logger file:logfile=/home/zenaida/logs/uwsgi-emperor.log,maxsize=2000000 
+ExecStart=/home/zenaida/zenaida/venv/bin/uwsgi --ini /home/zenaida/zenaida/etc/uwsgi/emperor.ini
 # Requires systemd version 211 or newer
 RuntimeDirectory=uwsgi
 Restart=always

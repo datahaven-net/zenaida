@@ -114,7 +114,7 @@ Configuration here was tested on Ubuntu 18.04.1 LTS server.
 First lets create a separate folder to store all interesting logs in one place and configure log rotation:
 
         mkdir /home/zenaida/logs/
-        sudo chown www-data /home/zenaida/logs/
+        sudo chown www-data:zenaida -R /home/zenaida/logs/
         sudo cp etc/logrotate.d/zenaida /etc/logrotate.d/
 
 
@@ -222,7 +222,7 @@ Another user account we will use for EPP message queue between Zenaida and EPP r
 Now you can navigate your web browser to RabbitMQ dashboard at `http://www.yourdomain.com:15672` and
 login with `zenaida`:`<password 1>` administrative credentials you have just created.
 
-You can verify permissions of existing RabbitMQ users: must be 3 users existing:
+You can verify permissions of RabbitMQ users - must be 3 users existing:
 
 * guest
 * zenaida
@@ -244,15 +244,18 @@ To be able to start EPP Gate process you need to provide it with required creden
 You can place those files in a safe place on your server and fill with correct credentials:
 
         mkdir /home/zenaida/keys/
-        echo "localhost 5672 <rabbitmq_user> <rabbitmq_password>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt
+        echo "localhost 5672 zenaida_epp <password 2>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt
+
+
+EPP regisrty will have to also provide you with credentials to access EPP server remotely.
+Place them in another file in your `keys` folder:
+
         echo "epp.yourdomain.com 700 <epp_user> <epp_password>" > /home/zenaida/keys/epp_credentials.txt
+
+
+Before continue further make sure you decreased access permissions to your secrets:
+
         chmod go-rwx -R /home/zenaida/keys/
-
-
-Next create a folder to store log files:
-
-        mkdir /home/zenaida/logs/
-        chmod go-rwx -R /home/zenaida/logs/
 
 
 Now we need to be sure that "EPP Gate" process is configured correctly, lets execute Perl script directly:
@@ -268,25 +271,25 @@ Keep it running in the current terminal and open another console window to be ab
         venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.client; print(zepp.client.cmd_domain_check(["testdomain.com", ]))'
 
 
-If RabbitMQ and EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
+If RabbitMQ and Zenaida EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
 
         {'epp': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd', 'response': {'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'resData': {'chkData': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd', 'cd': {'name': {'@avail': '1', '#text': 'testdomain.com'}}}}, 'trID': {'clTRID': '103513f75a176e56038b2244258357f7', 'svTRID': '1526756418267'}}}}
       
 
-To be able to easily manage EPP Gate process on your host system you can add it to your system-wide init scripts:
+To be able to easily manage Zenaida EPP Gate process on your host system you can add it to your system-wide systemd scripts:
 
-        sudo cp etc/gate-zenaida.conf /etc/init/gate-zenaida.conf
+        cp etc/systemd/system/zenaida-gate.service.example etc/systemd/system/zenaida-gate.service
+        sudo ln -s etc/systemd/system/zenaida-gate.service /etc/systemd/system/
 
 
-Then you can stop/start EPP Gate service this way:
+Then you can stop/start the service in a such way:
 
-        sudo stop gate-zenaida
-        sudo start gate-zenaida
+        sudo systemctl start zenaida-gate.service
 
 
 You can always check current situation with:
 
-        sudo initctl status gate-zenaida 
+        systemctl status zenaida-gate.service 
 
 
 

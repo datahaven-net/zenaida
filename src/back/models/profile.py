@@ -7,7 +7,7 @@ from back.models.account import Account
 
 class Profile(models.Model):
 
-    objects = models.Manager()
+    profiles = models.Manager()
 
     account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='profile')
 

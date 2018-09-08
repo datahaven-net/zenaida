@@ -3,7 +3,7 @@ from django.db import models
 
 class Registrar(models.Model):
 
-    objects = models.Manager()
+    registrars = models.Manager()
 
     name = models.CharField(max_length=255)
 

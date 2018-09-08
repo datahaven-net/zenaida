@@ -5,7 +5,7 @@ from back.models.profile import Profile
 
 class Contact(models.Model):
     
-    objects = models.Manager()
+    contacts = models.Manager()
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='contacts', )
 

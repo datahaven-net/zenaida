@@ -1,16 +1,10 @@
 import logging
 
 import datetime
-import time
-
-from email.utils import parsedate, formatdate
-
-from pika.exceptions import AMQPError
+import csv
 
 from back import domains
-
-from zepp import client
-from zepp import exceptions
+from back import contacts
 
 
 def split_csv_row(csv_row, headers):
@@ -104,7 +98,7 @@ def split_csv_row(csv_row, headers):
     for field_index in range(len(csv_row)):
         field = csv_row[field_index]
         header = headers[field_index]
-        item_id = header.replace(' ', '_') + '_' + str(field_index)
+        item_id = header.lower().replace(' ', '_') + '_' + str(field_index)
         if item_id not in csv_record:
             csv_record[item_id] = field
         else:
@@ -112,75 +106,100 @@ def split_csv_row(csv_row, headers):
     return csv_record
 
 
-def build_csv_form(csv_row, headers):
+def get_csv_domain_info(csv_row, headers):
     csv_record = split_csv_row(csv_row, headers)
-    try:
-        csv_expiry_date = formatdate(datetime.datetime.strptime(
-            csv_record.get('expiry_date_4'),
-            '%Y-%m-%d',
-        ).timetuple(), True)
-    except:
-        csv_expiry_date = formatdate(time.time(), True)
-    dform = {
-        '1a.': '',
-        '1b.': csv_expiry_date,
-        '1c.': '',
-        '2.': csv_record.get('name_1', ''),
-        '3a.': csv_record.get('organisation_27', ''),
-        '3b.': csv_record.get('address_1_32', ''),
-        '3c.': csv_record.get('city_35', ''),
-        '3d.': csv_record.get('state/province_36', ''),
-        '3e.': csv_record.get('postal_code_37', ''),
-        '3f.': csv_record.get('country_38', ''),
-        '4c.': '',
-        '4d.': csv_record.get('organisation_57', ''),
-        '4e.': csv_record.get('address_1_62', ''),
-        '4f.': csv_record.get('city_65', ''),
-        '4g.': csv_record.get('state/province_66', ''),
-        '4h.': csv_record.get('postal_code_67', ''),
-        '4i.': csv_record.get('country_68', ''),
-        '4j.': csv_record.get('phone_58', ''),
-        '4k.': csv_record.get('fax_60', ''),
-        '4l.': csv_record.get('e-mail_56', ''),
-        '5c.': '',
-        '5d.': csv_record.get('organisation_72', ''),
-        '5e.': csv_record.get('address_1_77', ''),
-        '5f.': csv_record.get('city_80', ''),
-        '5g.': csv_record.get('state/province_81', ''),
-        '5h.': csv_record.get('postal_code_82', ''),
-        '5i.': csv_record.get('country_83', ''),
-        '5j.': csv_record.get('phone_73', ''),
-        '5k.': csv_record.get('fax_75', ''),
-        '5l.': csv_record.get('e-mail_71', ''),
-        '6c.': '',
-        '6d.': csv_record.get('organisation_42', ''),
-        '6e.': csv_record.get('address_1_47', ''),
-        '6f.': csv_record.get('city_50', ''),
-        '6g.': csv_record.get('state/province_51', ''),
-        '6h.': csv_record.get('postal_code_52', ''),
-        '6i.': csv_record.get('country_53', ''),
-        '6j.': csv_record.get('phone_43', ''),
-        '6k.': csv_record.get('fax_45', ''),
-        '6l.': csv_record.get('e-mail_41', ''),
-    }
-    for i in range(4):
-        nsfield = 'NameServer_1' + str(i + 2)
-        dform[str(i + 7) + 'a.'] = csv_record.get(nsfield, '')
-    return dform
+    info = dict(
+        expiry_date=datetime.datetime.strptime(csv_record.get('expiry_date_4'), '%Y-%m-%d', ),  # 1b.
+        create_date=datetime.datetime.strptime(csv_record.get('create_date_3'), '%Y-%m-%d', ),  # -
+        name=csv_record.get('name_1', ''),                              # 2.
+    #--- registrant contact
+        registrant=dict(
+            person_name='',                                             # -
+            organization_name=csv_record.get('organisation_27', ''),    # 3a.
+            address_street=csv_record.get('address_1_32', ''),          # 3b.
+            address_city=csv_record.get('city_35', ''),                 # 3c.
+            address_province=csv_record.get('state/province_36', ''),   # 3d.
+            address_postal_code=csv_record.get('postal_code_37', ''),   # 3e.
+            address_country=csv_record.get('country_38', ''),           # 3f.
+            contact_voice=csv_record.get('phone_28', ''),               # -
+            contact_fax=csv_record.get('fax_30', ''),                   # -
+            contact_email=csv_record.get('e-mail_26', ''),              # -
+        ),
+    #--- admin contact
+        admin=dict(
+            person_name=csv_record.get('name_40', ''),                  # -
+            organization_name=csv_record.get('organisation_57', ''),    # 4d.
+            address_street=csv_record.get('address_1_62', ''),          # 4e.
+            address_city=csv_record.get('city_65', ''),                 # 4f.
+            address_province=csv_record.get('state/province_66', ''),   # 4g.
+            address_postal_code=csv_record.get('postal_code_67', ''),   # 4h.
+            address_country=csv_record.get('country_68', ''),           # 4i.
+            contact_voice=csv_record.get('phone_58', ''),               # 4j.
+            contact_fax=csv_record.get('fax_60', ''),                   # 4k.
+            contact_email=csv_record.get('e-mail_56', ''),              # 4l.
+        ),
+    #--- tech contact
+        tech=dict(
+            person_name=csv_record.get('name_70', ''),                  # -
+            organization_name=csv_record.get('organisation_72', ''),    # 5d.
+            address_street=csv_record.get('address_1_77', ''),          # 5e.
+            address_city=csv_record.get('city_80', ''),                 # 5f.
+            address_province=csv_record.get('state/province_81', ''),   # 5g.
+            address_postal_code=csv_record.get('postal_code_82', ''),   # 5h.
+            address_country=csv_record.get('country_83', ''),           # 5i.
+            contact_voice=csv_record.get('phone_73', ''),               # 5j.
+            contact_fax=csv_record.get('fax_75', ''),                   # 5k.
+            contact_email=csv_record.get('e-mail_71', ''),              # 5l.
+        ),
+    #--- billing contact
+        billing=dict(
+            person_name=csv_record.get('name_25', ''),                  # -
+            organization_name=csv_record.get('organisation_42', ''),    # 6d.
+            address_street=csv_record.get('address_1_47', ''),          # 6e.
+            address_city=csv_record.get('city_50', ''),                 # 6f.
+            address_province=csv_record.get('state/province_51', ''),   # 6g.
+            address_postal_code=csv_record.get('postal_code_52', ''),   # 6h.
+            address_country=csv_record.get('country_53', ''),           # 6i.
+            contact_voice=csv_record.get('phone_43', ''),               # 6j.
+            contact_fax=csv_record.get('fax_45', ''),                   # 6k.
+            contact_email=csv_record.get('e-mail_41', ''),              # 6l.
+        ),
+    )
+    return info
+
+
+def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_contact_id, real_email):
+    errors = []
+    to_be_created = False
+    if known_epp_contact_id:
+        if known_epp_contact_id != real_epp_contact_id:
+    #--- contact epp ID is not matching
+            errors.append('%s: epp registrant ID is not matching with csv record, known is %s, real is %s' % (
+                domain_name, known_epp_contact_id, real_epp_contact_id, ))
+            to_be_created = True
+        else:
+            if not contacts.verify(
+                epp_id=real_epp_contact_id,
+                email=real_email,
+            ):
+    #--- contact info is not matching
+                errors.append('%s: epp registrant ID found, but known info is not matching with csv record, known is %s, real is %s' % (
+                    domain_name, known_epp_contact_id, real_epp_contact_id, ))
+                to_be_created = True
+    else:
+    #--- contact not exist
+        to_be_created = True
+    return errors, to_be_created
 
 
 def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', dry_run=True, do_backup=True):
     """
-    Change domain form file in /whois/ai/*
-    Change user index in /index_domains/*
-    Change epp info in /epp_domains/*
     """
-    epp_domain_info_modified = False
     errors = []
     try:
         csv_record = split_csv_row(csv_row, headers)
-        dform_csv = build_csv_form(csv_row, headers)
-        domain = dform_csv['2.']
+        csv_info = get_csv_domain_info(csv_row, headers)
+        domain = csv_info['name']
     except Exception as exc:
         errors.append('failed processing csv record: ' + str(exc))
         return errors
@@ -188,208 +207,202 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- invalid domain name
         errors.append('invalid domain name')
         return errors
+
     #--- lookup existing domain
-    known_domain = domains.take(domain)
-    is_exist = known_domain is not None
-    try:
-        real_expiry_date = datetime.datetime.fromtimestamp(time.mktime(datetime.datetime.strptime(
-            csv_record.get('expiry_date_4'), '%Y-%m-%d').timetuple()))
-    except Exception as exc:
-        errors.append('failed reading expiry date from csv record: ' + str(exc))
+    known_domain = domains.find(domain)
+    real_expiry_date = csv_info['expiry_date']
+    real_create_date = csv_info['create_date']
+    real_registrar_id = csv_record.get('registrar_id_9')
+
+    if wanted_registrar and real_registrar_id != wanted_registrar:
+    #--- belong to another registrar
+        errors.append('%s: csv record belongs to another registrar %s' % (domain, real_registrar_id, ))
         return errors
-    registrar_id = csv_record.get('registrar_id_9')
-    if wanted_registrar and registrar_id != wanted_registrar:
-    #--- record belong to another registrar
-        errors.append('record belong to another registrar: ' + registrar_id)
-        return errors
+
     real_registrant_contact_id = csv_record.get('registrant_contact_id_24')
-    real_billing_contact_id = csv_record.get('billing_contact_id_39')
     real_admin_contact_id = csv_record.get('admin_contact_id_54')
     real_tech_contact_id = csv_record.get('tech_contact_id_69')
-    known_epp_expiry_date = None if not known_domain else known_domain.expire_date
-    known_registrant_id = None if not known_domain else known_domain.registrant.epp_id
-    known_admin_contact_id = None if not known_domain else known_domain.contact_admin.epp_id
-    known_billing_contact_id = None if not known_domain else known_domain.contact_billing.epp_id
-    known_tech_contact_id = None if not known_domain else known_domain.contact_tech.epp_id
-    if 'registrant' not in epp_domain_info or 'id' not in epp_domain_info['registrant'] or 'pw' not in epp_domain_info['registrant']:
+    real_billing_contact_id = csv_record.get('billing_contact_id_39')
+    real_registrant_email = csv_info['registrant']['contact_email']
+    real_admin_email = csv_info['admin']['contact_email']
+    real_tech_email = csv_info['tech']['contact_email']
+    real_billing_email = csv_info['billing']['contact_email']
+
+    real_auth_info_password = csv_record.get('auth_info_password_2')
+    real_epp_id = csv_record.get('roid_0')
+
+    known_expiry_date = None
+    known_registrant_contact_id = None 
+    known_admin_contact_id = None
+    known_tech_contact_id = None
+    known_billing_contact_id = None
+    known_registrant_email = None
+    known_admin_email = None
+    known_tech_email = None
+    known_billing_email = None
+
+    new_domain = None
+    new_registrant_contact = None
+    new_admin_contact = None
+    new_tech_contact = None
+    new_billing_contact = None
+
+    need_registrant = False
+    need_admin_contact = False
+    need_tech_contact = False
+    need_billing_contact = False
+
+    if known_domain:
+        known_expiry_date = known_domain.expiry_date
+        known_registrant_contact_id = None if not known_domain.registrant else known_domain.registrant.epp_id
+        known_admin_contact_id = None if not known_domain.contact_admin else known_domain.contact_admin.epp_id
+        known_billing_contact_id = None if not known_domain.contact_billing else known_domain.contact_billing.epp_id
+        known_tech_contact_id = None if not known_domain.contact_tech else known_domain.contact_tech.epp_id
+        known_registrant_email = None if not known_domain.registrant else known_domain.registrant.profile.account.email
+        known_admin_email = None if not known_domain.contact_admin else known_domain.contact_admin.profile.account.email
+        known_tech_email = None if not known_domain.contact_tech else known_domain.contact_tech.profile.account.email
+        known_billing_email = None if not known_domain.contact_billing else known_domain.contact_billing.profile.account.email
+
+    if real_admin_contact_id or real_tech_contact_id or real_billing_contact_id:
+        if known_domain:
+            if not known_tech_contact_id and not known_admin_contact_id and not known_billing_contact_id:
+                if dry_run:
+                    errors.append('%s: no contacts present for known domain' % domain)
+                    return errors
+    else:
+        errors.append('%s: no csv contacts provided for domain' % domain)
+        return errors
+
+    if real_registrant_contact_id:
+    #--- registrant check
+        _errs, need_registrant = check_contact_to_be_created(
+            domain_name=domain,
+            known_epp_contact_id=known_registrant_contact_id,
+            real_epp_contact_id=real_registrant_contact_id,
+            real_email=real_registrant_email,
+        )
         if dry_run:
-            errors.append('epp registrant credentials not found in ' + epp_domain_path)
-            return errors
-        epp_domain_info['registrant'] = {'pw': 'qwerty123456', 'id': real_registrant_contact_id, }
-        epp_domain_info_modified = True
-    if not known_tech_contact_id and not known_admin_contact_id and not known_billing_contact_id:
+            errors.extend(_errs)
+
+    if real_admin_contact_id:
+    #--- admin contact check
+        _errs, need_admin_contact = check_contact_to_be_created(
+            domain_name=domain,
+            known_epp_contact_id=known_admin_contact_id,
+            real_epp_contact_id=real_admin_contact_id,
+            real_email=real_admin_email,
+        )
         if dry_run:
-            errors.append('epp no contacts present in ' + epp_domain_path)
-            return errors
-        epp_domain_info['contact_admin'] = {'pw': 'qwerty123456', 'id': real_registrant_contact_id, }
-        epp_domain_info_modified = True
-    if 'exDate' not in epp_domain_info:
+            errors.extend(_errs)
+
+    if real_tech_contact_id:
+    #--- tech contact check
+        _errs, need_tech_contact = check_contact_to_be_created(
+            domain_name=domain,
+            known_epp_contact_id=known_tech_contact_id,
+            real_epp_contact_id=real_tech_contact_id,
+            real_email=real_tech_email,
+        )
         if dry_run:
-            errors.append('epp no exDate field present in ' + epp_domain_path)
-            return errors
-        epp_domain_info['exDate'] = time.strftime('%Y-%m-%dT%H:%M:%S.%fZ', real_expiry_date.timetuple())
-        epp_domain_info_modified = True
-    if not is_exist:
+            errors.extend(_errs)
+
+    if real_billing_contact_id:
+    #--- billing contact check
+        _errs, need_billing_contact = check_contact_to_be_created(
+            domain_name=domain,
+            known_epp_contact_id=known_billing_contact_id,
+            real_epp_contact_id=real_billing_contact_id,
+            real_email=real_billing_email,
+        )
+        if dry_run:
+            errors.extend(_errs)
+
+    if not dry_run:
+        if need_registrant:
+    #--- registrant create
+            new_registrant_contact = contacts.create(
+                epp_id=real_registrant_contact_id,
+                email=real_registrant_email,
+                **csv_info['registrant'],
+            )
+        else:
+            contacts.update(real_registrant_email, **csv_info['registrant'])
+    
+        if need_admin_contact:
+    #--- admin contact create
+            new_admin_contact = contacts.create(
+                epp_id=real_admin_contact_id,
+                email=real_admin_email,
+                **csv_info['admin'],
+            )
+        else:
+            contacts.update(real_admin_email, **csv_info['admin'])
+
+        if need_tech_contact:
+    #--- tech contact create
+            new_tech_contact = contacts.create(
+                epp_id=real_tech_contact_id,
+                email=real_tech_email,
+                **csv_info['tech'],
+            )
+        else:
+            contacts.update(real_tech_email, **csv_info['tech'])
+    
+        if need_billing_contact:
+    #--- billing contact create
+            new_billing_contact = contacts.create(
+                epp_id=real_billing_contact_id,
+                email=real_billing_email,
+                **csv_info['billing'],
+            )
+        else:
+            contacts.update(real_billing_email, **csv_info['billing'])
+    
+    if not known_domain:
         if dry_run:
     #--- domain not found
-            errors.append('domain not found in ' + domains.domainPath(domain))
+            errors.append('%s: domain not exist' % domain)
             return errors
-        else:
     #--- create new domain
-            do_domain_create(domain, dform=dform_csv, epp_info=epp_domain_info)
-            # epp_domain_info = read_domain_epp_info(domain) or {}
-            epp_domain_info_modified = True
-    try:
-        dform = {}
-        fin = open(domain_form_path, 'r')
-        domains.readform(dform, fin)
-        fin.close()
-    except:
-    #--- failed to read domain info
-        errors.append('failed to read domain info from ' + domain_form_path)
-        return errors
-    try:
-        known_domain_expiry_date = datetime.datetime.fromtimestamp(time.mktime(parsedate(dform['1b.'])))
-    except:
-        known_domain_expiry_date = None
-    if real_registrant_contact_id and known_registrant_id != real_registrant_contact_id:
-    #--- epp registrant ID is not math with csv record
-        if dry_run:
-            errors.append('epp registrant ID is not math with csv record in %s : known is %s, real is %s' % (
-                epp_domain_path, known_registrant_id, real_registrant_contact_id, ))
-            return errors
-        epp_domain_info_modified = True
-        if 'registrant' not in epp_domain_info:
-            epp_domain_info['registrant'] = {'id': '', 'pw': 'qwerty123456'}
-        epp_domain_info['registrant']['id'] = real_registrant_contact_id
-    if real_admin_contact_id and known_admin_contact_id != real_admin_contact_id:
-    #--- epp admin ID is not math with csv record
-        if dry_run:
-            errors.append('epp admin contact ID is not math with csv record in %s : known is %s, real is %s' % (
-                epp_domain_path, known_admin_contact_id, real_admin_contact_id, ))
-            return errors
-        epp_domain_info_modified = True
-        if 'contact_admin' not in epp_domain_info:
-            epp_domain_info['contact_admin'] = {'id': '', 'pw': 'qwerty123456'}
-        epp_domain_info['contact_admin']['id'] = real_admin_contact_id
-    if real_billing_contact_id and known_billing_contact_id != real_billing_contact_id:
-    #--- epp billing ID is not math with csv record
-        if dry_run:
-            errors.append('epp billing contact ID is not math with csv record in %s : known is %s, real is %s' % (
-                epp_domain_path, known_billing_contact_id, real_billing_contact_id, ))
-            return errors
-        epp_domain_info_modified = True
-        if 'contact_billing' not in epp_domain_info:
-            epp_domain_info['contact_billing'] = {'id': '', 'pw': 'qwerty123456'}
-        epp_domain_info['contact_billing']['id'] = real_billing_contact_id
-    if real_tech_contact_id and known_tech_contact_id != real_tech_contact_id:
-    #--- epp tech ID is not math with csv record
-        if dry_run:
-            errors.append('epp tech contact ID is not math with csv record in %s : known is %s, real is %s' % (
-                epp_domain_path, known_tech_contact_id, real_tech_contact_id, ))
-            return errors
-        epp_domain_info_modified = True
-        if 'contact_tech' not in epp_domain_info:
-            epp_domain_info['contact_tech'] = {'id': '', 'pw': 'qwerty123456'}
-        epp_domain_info['contact_tech']['id'] = real_tech_contact_id
-    if known_epp_expiry_date:
-        dt = real_expiry_date - known_epp_expiry_date
+        new_domain = domains.create(
+            domain=domain,
+            expiry_date=real_expiry_date,
+            create_date=real_create_date,
+            epp_id=real_epp_id,
+            auth_key=real_auth_info_password,
+            registrar=real_registrar_id,
+            registrant=new_registrant_contact,
+            contact_admin=new_admin_contact,
+            contact_tech=new_tech_contact,
+            contact_billing=new_billing_contact,
+        )
+
+    if known_expiry_date:
+        dt = real_expiry_date - known_expiry_date
         dt_hours = float(dt.total_seconds()) / (60.0 * 60.0)
-        if dt_hours >= 2 * 24:
+        if dt_hours >= 24:
     #--- domain expiry date not in sync
             if dry_run:
-                errors.append('domain epp expiry date not in sync for %s, real: %s, known: %s' % (
-                    domain_form_path, real_expiry_date, known_epp_expiry_date))
+                errors.append('%s: expiry date not in sync for, known is %s, real is %s' % (
+                    domain, known_expiry_date, real_expiry_date, ))
                 return errors
-            epp_domain_info_modified = True
-            epp_domain_info['exDate'] = time.strftime('%Y-%m-%dT%H:%M:%S.%fZ', real_expiry_date.timetuple())
-    if known_domain_expiry_date:
-        dt = real_expiry_date - known_domain_expiry_date
-        dt_hours = float(dt.total_seconds()) / (60.0 * 60.0)
-        if dt_hours >= 2 * 24:
-    #--- domain expiry date not in sync
-            if dry_run:
-                errors.append('domain form expiry date not in sync for %s, real: %s, known: %s' % (
-                    domain_form_path, real_expiry_date, known_domain_expiry_date))
-                return errors
-            dform['1b.'] = formatdate(time.mktime(real_expiry_date.timetuple()), True)
-    #--- compare domain form fields with csv
-    for field in dform_csv.keys():
-        if field in ['1a.', '1c.', '4c.', '5c.', '6c.', '3a.', '4d.', ]:
-            # skip person name and few other organization fields
-            continue
-        if field in ['1b.', ]:
-            # skip expiry date
-            continue
-        if field in ['4d.', '5d.', '6d.', ]:
-            # skip org. name, it is populated with user email to epp.whois.ai by default
-            continue
-        if field in ['7a.', '8a.', '9a.', '10a.', ]:
-            # skip nameservers
-            continue
-        if dform.get(field, '') != '' and dform_csv[field] == '':
-            # skip empty fields from csv if currently have more info
-            continue
-        if dform.get(field, '') == '' and dform_csv[field] == 'unknown':
-            # skip 'unknown' values
-            continue
-        if field in ['3f.', '4i.', '5i.', '6i.', ] and not dform.get(field):
-            if not dry_run:
-                # data fix 1 : update coutries from csv if empty
-                dform[field] = dform_csv[field]
-            continue
-#         if field not in ['3f.', '4i.', '5i.', '6i.', ]:
-#             # run data fix 1 : only change country codes
-#             continue
-        if field in ['4j.', '5j.', '6j.', ] and dform_csv[field] == '+12645815398' and dform.get(field, '') == '':
-            continue
-        if field in ['4j.', '5j.', '6j.', ] and dform_csv.get(field, '').strip() == '0' and dform.get(field, '').strip() == '':
-            continue
-        if field not in dform:
-            if dry_run:
-                errors.append('field %s not present in domain form' % field)
-                continue
-            # data fix 2 : build non existing fields from csv
-            dform[field] = dform_csv[field]
-        if dform_csv[field] != dform[field]:
-            if dry_run:
-                errors.append('field %s not in sync: "%s" != "%s"' % (
-                    field, dform[field], dform_csv[field], ))
-                continue
-            # data fix 3 : override field value from csv
-            dform[field] = dform_csv[field]
+            known_domain.expiry_date = real_expiry_date
+            known_domain.save()
+    else:
+        if known_domain:
+    #--- updated known expiry date
+            known_domain.expiry_date = real_expiry_date
+            known_domain.save()
+
+    # TODO: create_date, nameservers
+
     if errors and dry_run:
         return errors
-    if epp_domain_info_modified:
-    # data fix 4 : write epp domain info
-        write_domain_epp_info(domain, epp_domain_info)
-    if do_backup:
-    #--- DO BACKUP
-        domains.write2logDir(dform)
-        if os.path.isfile(domain_form_path):
-            fd, _ = tempfile.mkstemp(
-                prefix='{}.'.format(domain),
-                dir=deleted_domains_path()
-            )
-            os.write(fd, open(domain_form_path, 'r').read())
-            os.close(fd)
-    #--- WRITE DOMAIN FILES
-    fout = open(domain_form_path + '.tmp', 'w')
-    domains.printform(dform, fout)
-    os.fsync(fout)
-    fout.close()
-    os.rename(domain_form_path + '.tmp', domain_form_path)
-    if dform['4l.'].strip() != '':
-        users.addUserDomain(dform['4l.'].strip(), domain)
-    if dform['5l.'].strip() != '':
-        users.addUserDomain(dform['5l.'].strip(), domain)
-    if dform['6l.'].strip() != '':
-        users.addUserDomain(dform['6l.'].strip(), domain)
+
     return errors
 
 
 def load_from_csv(filename):
-    import csv
     epp_domains = csv.reader(open(filename))
     count = 0
     headers = []
@@ -399,15 +412,12 @@ def load_from_csv(filename):
             headers.extend(row)
             continue
         domain = row[1]
-        print(domain)
         try:
-            results = epp_master.domain_regenerate_from_csv_row(row, headers, dry_run=True)
+            errors = domain_regenerate_from_csv_row(row, headers, dry_run=True)
         except:
-            print 'ERROR processing csv record:'
-            pprint.pprint(row)
+            logging.error('%s failed processing csv record: %r', domain, row)
             continue
-        if results:
-            print 'ERRORS:'
-            print results
+        if errors:
+            logging.error('%s errors: %r', domain, errors)
         else:
-            print 'OK'
+            logging.info('OK %s', domain)

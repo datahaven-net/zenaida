@@ -54,8 +54,7 @@ class Account(AbstractBaseUser):
 
     REQUIRED_FIELDS = []
 
-    objects = UserManager()
-
+    users = UserManager()
 
     email = models.EmailField(
         verbose_name='email address',

@@ -1,10 +1,21 @@
-from django.db import models
+import re
 
-from back.models.profile import Profile
+from django.db import models
+from django.core import exceptions
+
 from back.models.zone import Zone
 from back.models.contact import Contact
 from back.models.registrar import Registrar
-from back.domains import validate
+
+
+def validate(domain):
+    """
+    Raise `ValidationError()` if domain 
+    """
+    from back.domains import is_valid
+    if is_valid(domain):
+        return True
+    raise exceptions.ValidationError('value "{}" is not a valid domain name'.format(domain))
 
 
 class Domain(models.Model):
@@ -13,24 +24,21 @@ class Domain(models.Model):
 
     name = models.CharField(max_length=255, unique=True, validators=[validate, ])
 
-    expire_date = models.DateTimeField()
+    expiry_date = models.DateTimeField()
     create_date = models.DateTimeField()
 
-    epp_id = models.CharField(max_length=32, unique=True, )
+    epp_id = models.CharField(max_length=32, unique=True, blank=True, null=True)
 
-    auth_key = models.CharField(max_length=64)
+    auth_key = models.CharField(max_length=64, blank=True, null=True)
 
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='domains', )
 
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='domains', )
+    registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, )
 
-    registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', )
-
-    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='domains', )
-
-    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', )
-    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', )
-    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', )
+    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='domains', null=True, )
+    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', null=True, )
+    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', null=True, )
+    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', null=True, )
 
     @property
     def tld_name(self):

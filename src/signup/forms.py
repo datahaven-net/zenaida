@@ -17,7 +17,18 @@ class SignUpForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ('person_first_name', 'person_last_name', 'organization_name', )
+        fields = (
+            'contact_email',
+            'person_name',
+            'organization_name',
+            'address_street',
+            'address_city',
+            'address_province',
+            'address_postal_code',
+            'address_country',
+            'contact_voice',
+            'contact_fax',
+        )
 
 
     # 'first_name', 'last_name', 'email'

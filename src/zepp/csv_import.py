@@ -428,8 +428,12 @@ def load_from_csv(filename, dry_run=True):
             headers.extend(row)
             continue
         domain = row[1]
-        errors = domain_regenerate_from_csv_row(row, headers, dry_run=dry_run)
+        try:
+            errors = domain_regenerate_from_csv_row(row, headers, dry_run=dry_run)
+        except Exception as exc:
+            logging.error('%s exception: %r', domain, exc)
         if errors:
             logging.error('%s errors: %r', domain, errors)
         else:
-            logging.info('OK %s', domain)
+            logging.info('%s   OK', domain)
+    return count

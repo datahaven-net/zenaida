@@ -85,12 +85,10 @@ def create(name, expiry_date=None, create_date=None, epp_id=None, auth_key=None,
         auth_key=auth_key,
     )
     domain_obj.zone = zones.make(domain_obj.tld_zone)
-    if isinstance(registrar, Registrar):
-        domain_obj.registrar = registrar
-    else:
-        domain_obj.registrar = Registrar.registrars.get_or_create(
-            epp_id=registrar or settings.DEFAULT_REGISTRAR_ID,
-        )
+    if not isinstance(registrar, Registrar):
+        registrar = Registrar.registrars.get_or_create(
+            epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
+        )[0]
     domain_obj.registrar = registrar
     if registrant:
         domain_obj.registrant = registrant

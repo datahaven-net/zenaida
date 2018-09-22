@@ -28,12 +28,13 @@ class Profile(models.Model):
         return 'Profile({})'.format(self.account.email)
 
 
-@receiver(post_save, sender=Account)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(account=instance)
-
-
-@receiver(post_save, sender=Account)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+# @receiver(post_save, sender=Account)
+# def create_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         kwargs.pop('signal', None)
+#         Profile.profiles.create(account=instance, **kwargs)
+# 
+# 
+# @receiver(post_save, sender=Account)
+# def save_user_profile(sender, instance, **kwargs):
+#     instance.profile.save()

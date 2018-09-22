@@ -23,7 +23,7 @@ def make(tld_zone_name):
     Creates new zone with given tld name if it not exists, otherwise returns existing object.
     """
     if not is_supported(tld_zone_name):
-        raise ValueError('Zone "%s" is not supported by the server')
+        raise ValueError('Zone "%s" is not supported by the server' % tld_zone_name)
     zon_obj = Zone.zones.filter(name=tld_zone_name).first()
     if not zon_obj:
         zon_obj = Zone(name=tld_zone_name)

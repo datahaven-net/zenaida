@@ -1,8 +1,8 @@
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 from back.models.contact import Contact
-from back.models.account import Account
 from back.models.profile import Profile
+
+from back import users
 
 
 def exists(epp_id):
@@ -26,36 +26,29 @@ def verify(epp_id, email):
 
 def create(epp_id, email, account_password=None, **kwargs):
     """
-    Creates new contact with given email.
+    Creates new contact with given email, but only if Contact with same epp_id not exist yet.
     If corresponding Account not exist yet it will be created together with new Profile.
     """
-    existing_profile = find_profile(email)
+    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+    if existing_contact:
+        return existing_contact
+    existing_account = users.find_account(email)
+    if not existing_account:
+        existing_account = users.create_account(email, account_password=account_password)
+    existing_profile = Profile.profiles.filter(account_id=existing_account.id).first()
     if not existing_profile:
-        new_account = Account.users.create_user(email, password=account_password)
-        existing_profile = Profile(account=new_account, **kwargs)
+        existing_profile = Profile(account=existing_account, **kwargs)
         existing_profile.save()
-    cont = Contact.contacts.create(epp_id=epp_id, profile=existing_profile)
-    return cont
+    new_contact = Contact.contacts.create(epp_id=epp_id, profile=existing_profile)
+    return new_contact
 
 
 def update(email, **kwargs):
     """
     Update given Profile with new values if Account with given email exists.
     """
-    try:
-        updated = Profile.profiles.get(account_email=email).update(**kwargs)
-    except (ObjectDoesNotExist, MultipleObjectsReturned, ):
+    existing_account = users.find_account(email)
+    if not existing_account:
         return False
+    updated = Profile.profiles.filter(account=existing_account).update(**kwargs)
     return updated
-
-
-def find_profile(email):
-    """
-    Doing "email" lookup in Account table and returns related Profile object if found,
-    else `None`.
-    """
-    try:
-        accnt = Account.users.get(email=email)
-    except (ObjectDoesNotExist, MultipleObjectsReturned, ):
-        return None
-    return accnt.profile

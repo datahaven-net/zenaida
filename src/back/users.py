@@ -15,3 +15,9 @@ def find_account(email):
     """
     return Account.users.filter(email=email).first()
 
+
+def create_account(email, account_password=None, **kwargs):
+    """
+    Creates a new user account with given email.
+    """
+    return Account.users.create_user(email, password=account_password, **kwargs)

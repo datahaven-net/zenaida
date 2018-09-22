@@ -3,96 +3,100 @@ import logging
 import datetime
 import csv
 
+from django.utils.timezone import make_aware
+
 from back import domains
 from back import contacts
 
 
 def split_csv_row(csv_row, headers):
     """
-    {'Auth_Info_Password_2': '',
-     'NameServer_12': 'dns2.netbreeze.net',
-     'NameServer_13': 'ns2.offshore.ai',
-     'NameServer_14': '',
-     'NameServer_15': '',
-     'NameServer_16': '',
-     'NameServer_17': '',
-     'NameServer_18': '',
-     'NameServer_19': '',
-     'NameServer_20': '',
-     'NameServer_21': '',
-     'NameServer_22': '',
-     'NameServer_23': '',
-     'address_1_32': '2b',
-     'address_1_47': '',
-     'address_1_62': '3e',
-     'address_1_77': '',
-     'address_2_33': '',
-     'address_2_48': '',
-     'address_2_63': '',
-     'address_2_78': '',
-     'address_3_34': '',
-     'address_3_49': '',
-     'address_3_64': '',
-     'address_3_79': '',
-     'admin_contact_id_54': 'vesell420937fvfp',
-     'billing_contact_id_39': '',
-     'city_35': '2c',
-     'city_50': '',
-     'city_65': '3f',
-     'city_80': '',
-     'country_38': 'AI',
-     'country_53': '',
-     'country_68': 'AI',
-     'country_83': '',
-     'create_date_3': '2017-12-15',
-     'ds_rdata_8': '',
-     'e-mail_26': 'vesellov@gmail.com',
-     'e-mail_41': '',
-     'e-mail_56': 'vesellov@gmail.com',
-     'e-mail_71': '',
-     'eppstatus_7': '',
-     'expiry_date_4': '2024-04-29',
-     'fax_30': '',
-     'fax_45': '',
-     'fax_60': '3k',
-     'fax_75': '',
-     'fax_ext._31': '',
-     'fax_ext._46': '',
-     'fax_ext._61': '',
-     'fax_ext._76': '',
-     'locks_6': '',
-     'name_1': 'bitdust.ai',
-     'name_25': 'vesellov@gmail.com',
-     'name_40': '',
-     'name_55': 'vesellov@gmail.com',
-     'name_70': '',
-     'organisation_27': '2a',
-     'organisation_42': '',
-     'organisation_57': '3d',
-     'organisation_72': '',
-     'phone_28': '12645815398',
-     'phone_43': '',
-     'phone_58': '3j',
-     'phone_73': '',
-     'phone_ext._29': '',
-     'phone_ext._44': '',
-     'phone_ext._59': '',
-     'phone_ext._74': '',
-     'postal_code_37': '2e',
-     'postal_code_52': '',
-     'postal_code_67': '3h',
-     'postal_code_82': '',
-     'registrant_contact_id_24': 'vesell420946idyr',
-     'registrar_email_11': 'migrate@nic.ai',
-     'registrar_id_9': 'whois_ai',
-     'registrar_name_10': 'WHOIS AI Registrar',
-     'roid_0': '276693_nic_ai',
-     'state/province_36': '2d',
-     'state/province_51': '',
-     'state/province_66': '3g',
-     'state/province_81': '',
-     'status_5': 'domain_status_active',
-     'tech_contact_id_69': ''}
+    {
+        'admin_address_1_62': 'unknown',
+        'admin_address_2_63': '',
+        'admin_address_3_64': '',
+        'admin_city_65': 'unknown',
+        'admin_contact_id_54': 'abcd20329663if',
+        'admin_countrycode_68': 'GB',
+        'admin_email_56': 'abcd@gmail.com',
+        'admin_fax_60': '',
+        'admin_fax_ext_61': '',
+        'admin_name_55': 'Some Person',
+        'admin_organisation_57': 'Agent Corp Limited',
+        'admin_phone_58': '+12123415398',
+        'admin_phone_ext._59': '',
+        'admin_postalcode_67': 'postal code',
+        'admin_state_province_66': 'unknown',
+        'auth_info_password_2': '',
+        'billing_address_1_47': 'unknown',
+        'billing_address_2_48': '',
+        'billing_address_3_49': '',
+        'billing_city_50': 'unknown',
+        'billing_contact_id_39': 'abcd203326efgh',
+        'billing_countrycode_53': 'GB',
+        'billing_email_41': 'efgh@gmail.com',
+        'billing_fax_45': '',
+        'billing_fax_ext_46': '',
+        'billing_name_40': 'Another Person',
+        'billing_organisation_42': 'Agent Corp Limited',
+        'billing_phone_43': '+12123415398',
+        'billing_phone_ext_44': '',
+        'billing_postalcode_52': 'unknown',
+        'billing_state_province_51': 'unknown',
+        'create_date_3': '2017-12-16',
+        'ds_rdata_8': '',
+        'eppstatus_7': '',
+        'expiry_date_4': '2020-04-26',
+        'locks_6': '',
+        'name_1': 'domain-name.com',
+        'nameserver_10_21': '',
+        'nameserver_11_22': '',
+        'nameserver_12_23': '',
+        'nameserver_1_12': 'ns1.someserver.com',
+        'nameserver_2_13': 'ns2.someserver.com',
+        'nameserver_3_14': '',
+        'nameserver_4_15': '',
+        'nameserver_5_16': '',
+        'nameserver_6_17': '',
+        'nameserver_7_18': '',
+        'nameserver_8_19': '',
+        'nameserver_9_20': '',
+        'registrant_address_1_32': 'Street123',
+        'registrant_address_2_33': '',
+        'registrant_address_3_34': '',
+        'registrant_city_35': 'SomeTown',
+        'registrant_contact_id_24': 'abcd203342efgh',
+        'registrant_countrycode_38': 'GB',
+        'registrant_email_26': 'kuku@hotmail.net',
+        'registrant_fax_30': '',
+        'registrant_fax_ext_31': '',
+        'registrant_name_25': 'lala@gmail.com',
+        'registrant_organisation_27': 'Agent Org Limited',
+        'registrant_phone_28': '+12987815398',
+        'registrant_phone_ext_29': '',
+        'registrant_postalcode_37': '1234 AB',
+        'registrant_state_province_36': 'unknown',
+        'registrar_email_11': 'registrar@gmail.com',
+        'registrar_id_9': 'registrar_id',
+        'registrar_name_10': 'Some Domain Registrar',
+        'roid_0': '310961_nic_com',
+        'status_5': 'domain_status_active',
+        'tech_contact_id_69': 'xyz203311xcdq',
+        'technical_address_1_77': 'unknown',
+        'technical_address_2_78': '',
+        'technical_address_3_79': '',
+        'technical_city_80': 'unknown',
+        'technical_countrycode_83': 'GB',
+        'technical_email_71': 'xyz@gmail.com',
+        'technical_fax_75': '',
+        'technical_fax_ext_76': '',
+        'technical_name_70': 'Third Person',
+        'technical_organisation_72': 'Agent Off Limited',
+        'technical_phone_73': '+12645987398',
+        'technical_phone_ext_74': '',
+        'technical_postalcode_82': 'unknown',
+        'technical_state_province_81': 'unknown'
+    }
     """
     csv_record = {}
     for field_index in range(len(csv_row)):
@@ -109,60 +113,60 @@ def split_csv_row(csv_row, headers):
 def get_csv_domain_info(csv_row, headers):
     csv_record = split_csv_row(csv_row, headers)
     info = dict(
-        expiry_date=datetime.datetime.strptime(csv_record.get('expiry_date_4'), '%Y-%m-%d', ),  # 1b.
-        create_date=datetime.datetime.strptime(csv_record.get('create_date_3'), '%Y-%m-%d', ),  # -
-        name=csv_record.get('name_1', ''),                              # 2.
+        create_date=make_aware(datetime.datetime.strptime(csv_record.get('create_date_3'), '%Y-%m-%d', )),  # -
+        expiry_date=make_aware(datetime.datetime.strptime(csv_record.get('expiry_date_4'), '%Y-%m-%d', )),  # 1b.
+        name=csv_record.get('name_1', ''),                                                                  # 2.
     #--- registrant contact
         registrant=dict(
-            person_name='',                                             # -
-            organization_name=csv_record.get('organisation_27', ''),    # 3a.
-            address_street=csv_record.get('address_1_32', ''),          # 3b.
-            address_city=csv_record.get('city_35', ''),                 # 3c.
-            address_province=csv_record.get('state/province_36', ''),   # 3d.
-            address_postal_code=csv_record.get('postal_code_37', ''),   # 3e.
-            address_country=csv_record.get('country_38', ''),           # 3f.
-            contact_voice=csv_record.get('phone_28', ''),               # -
-            contact_fax=csv_record.get('fax_30', ''),                   # -
-            contact_email=csv_record.get('e-mail_26', ''),              # -
+            person_name='',                                                         # -
+            organization_name=csv_record.get('registrant_organisation_27', ''),     # 3a.
+            address_street=csv_record.get('registrant_address_1_32', ''),           # 3b.
+            address_city=csv_record.get('registrant_city_35', ''),                  # 3c.
+            address_province=csv_record.get('registrant_state_province_36', ''),    # 3d.
+            address_postal_code=csv_record.get('registrant_postalcode_37', ''),     # 3e.
+            address_country=csv_record.get('registrant_countrycode_38', ''),        # 3f.
+            contact_voice=csv_record.get('registrant_phone_28', ''),                # -
+            contact_fax=csv_record.get('registrant_fax_30', ''),                    # -
+            contact_email=csv_record.get('registrant_email_26', '').lower(),        # -
         ),
     #--- admin contact
         admin=dict(
-            person_name=csv_record.get('name_40', ''),                  # -
-            organization_name=csv_record.get('organisation_57', ''),    # 4d.
-            address_street=csv_record.get('address_1_62', ''),          # 4e.
-            address_city=csv_record.get('city_65', ''),                 # 4f.
-            address_province=csv_record.get('state/province_66', ''),   # 4g.
-            address_postal_code=csv_record.get('postal_code_67', ''),   # 4h.
-            address_country=csv_record.get('country_68', ''),           # 4i.
-            contact_voice=csv_record.get('phone_58', ''),               # 4j.
-            contact_fax=csv_record.get('fax_60', ''),                   # 4k.
-            contact_email=csv_record.get('e-mail_56', ''),              # 4l.
+            person_name=csv_record.get('admin_name_55', ''),                        # -
+            organization_name=csv_record.get('admin_organisation_57', ''),          # 4d.
+            address_street=csv_record.get('admin_address_1_62', ''),                # 4e.
+            address_city=csv_record.get('admin_city_65', ''),                       # 4f.
+            address_province=csv_record.get('admin_state_province_66', ''),         # 4g.
+            address_postal_code=csv_record.get('admin_postalcode_67', ''),          # 4h.
+            address_country=csv_record.get('admin_countrycode_68', ''),             # 4i.
+            contact_voice=csv_record.get('admin_phone_58', ''),                     # 4j.
+            contact_fax=csv_record.get('admin_fax_60', ''),                         # 4k.
+            contact_email=csv_record.get('admin_email_56', '').lower(),             # 4l.
         ),
     #--- tech contact
         tech=dict(
-            person_name=csv_record.get('name_70', ''),                  # -
-            organization_name=csv_record.get('organisation_72', ''),    # 5d.
-            address_street=csv_record.get('address_1_77', ''),          # 5e.
-            address_city=csv_record.get('city_80', ''),                 # 5f.
-            address_province=csv_record.get('state/province_81', ''),   # 5g.
-            address_postal_code=csv_record.get('postal_code_82', ''),   # 5h.
-            address_country=csv_record.get('country_83', ''),           # 5i.
-            contact_voice=csv_record.get('phone_73', ''),               # 5j.
-            contact_fax=csv_record.get('fax_75', ''),                   # 5k.
-            contact_email=csv_record.get('e-mail_71', ''),              # 5l.
+            person_name=csv_record.get('technical_name_70', ''),                    # -
+            organization_name=csv_record.get('technical_organisation_72', ''),      # 5d.
+            address_street=csv_record.get('technical_address_1_77', ''),            # 5e.
+            address_city=csv_record.get('technical_city_80', ''),                   # 5f.
+            address_province=csv_record.get('technical_state_province_81', ''),     # 5g.
+            address_postal_code=csv_record.get('technical_postalcode_82', ''),      # 5h.
+            address_country=csv_record.get('technical_countrycode_83', ''),         # 5i.
+            contact_voice=csv_record.get('technical_phone_73', ''),                 # 5j.
+            contact_fax=csv_record.get('technical_fax_75', ''),                     # 5k.
+            contact_email=csv_record.get('technical_email_71', '').lower(),         # 5l.
         ),
     #--- billing contact
         billing=dict(
-            person_name=csv_record.get('name_25', ''),                  # -
-            organization_name=csv_record.get('organisation_42', ''),    # 6d.
-            address_street=csv_record.get('address_1_47', ''),          # 6e.
-            address_city=csv_record.get('city_50', ''),                 # 6f.
-            address_province=csv_record.get('state/province_51', ''),   # 6g.
-            address_postal_code=csv_record.get('postal_code_52', ''),   # 6h.
-            address_country=csv_record.get('country_53', ''),           # 6i.
-            contact_voice=csv_record.get('phone_43', ''),               # 6j.
-            contact_fax=csv_record.get('fax_45', ''),                   # 6k.
-            contact_email=csv_record.get('e-mail_41', ''),              # 6l.
+            person_name=csv_record.get('billing_name_40', ''),                      # -
+            organization_name=csv_record.get('billing_organisation_42', ''),        # 6d.
+            address_street=csv_record.get('billing_address_1_47', ''),              # 6e.
+            address_city=csv_record.get('billing_city_50', ''),                     # 6f.
+            address_province=csv_record.get('billing_state_province_51', ''),       # 6g.
+            address_postal_code=csv_record.get('billing_postalcode_52', ''),        # 6h.
+            address_country=csv_record.get('billing_countrycode_53', ''),           # 6i.
+            contact_voice=csv_record.get('billing_phone_43', ''),                   # 6j.
+            contact_fax=csv_record.get('billing_fax_45', ''),                       # 6k.
+            contact_email=csv_record.get('billing_email_41', '').lower(),           # 6l.
         ),
     )
     return info
@@ -192,7 +196,7 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
     return errors, to_be_created
 
 
-def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', dry_run=True, do_backup=True):
+def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', dry_run=True):
     """
     """
     errors = []
@@ -326,7 +330,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 **csv_info['registrant'],
             )
         else:
-            contacts.update(real_registrant_email, **csv_info['registrant'])
+            contacts.update(
+                real_registrant_email,
+                **csv_info['registrant'],
+            )
     
         if need_admin_contact:
     #--- admin contact create
@@ -336,7 +343,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 **csv_info['admin'],
             )
         else:
-            contacts.update(real_admin_email, **csv_info['admin'])
+            contacts.update(
+                real_admin_email,
+                **csv_info['admin'],
+            )
 
         if need_tech_contact:
     #--- tech contact create
@@ -346,7 +356,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 **csv_info['tech'],
             )
         else:
-            contacts.update(real_tech_email, **csv_info['tech'])
+            contacts.update(
+                real_tech_email,
+                **csv_info['tech'],
+            )
     
         if need_billing_contact:
     #--- billing contact create
@@ -356,7 +369,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 **csv_info['billing'],
             )
         else:
-            contacts.update(real_billing_email, **csv_info['billing'])
+            contacts.update(
+                real_billing_email,
+                **csv_info['billing'],
+            )
     
     if not known_domain:
         if dry_run:
@@ -365,7 +381,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             return errors
     #--- create new domain
         new_domain = domains.create(
-            domain=domain,
+            name=domain,
             expiry_date=real_expiry_date,
             create_date=real_create_date,
             epp_id=real_epp_id,
@@ -402,7 +418,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     return errors
 
 
-def load_from_csv(filename):
+def load_from_csv(filename, dry_run=True):
     epp_domains = csv.reader(open(filename))
     count = 0
     headers = []
@@ -412,11 +428,7 @@ def load_from_csv(filename):
             headers.extend(row)
             continue
         domain = row[1]
-        try:
-            errors = domain_regenerate_from_csv_row(row, headers, dry_run=True)
-        except:
-            logging.error('%s failed processing csv record: %r', domain, row)
-            continue
+        errors = domain_regenerate_from_csv_row(row, headers, dry_run=dry_run)
         if errors:
             logging.error('%s errors: %r', domain, errors)
         else:

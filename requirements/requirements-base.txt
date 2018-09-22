@@ -3,7 +3,8 @@ Django
 fqn-decorators
 raven
 timeexecution
-psycopg2
+# psycopg2
+psycopg2-binary
 django-redis-cache
 uwsgi
 djangorestframework

@@ -47,3 +47,6 @@ class Domain(models.Model):
     @property
     def tld_zone(self):
         return '.'.join(self.name.split('.')[1:])
+
+    def __str__(self):
+        return 'Domain({})'.format(self.name)

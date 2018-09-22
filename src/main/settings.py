@@ -215,3 +215,9 @@ LOGIN_REDIRECT_URL = 'index'
 # Custom user model
 # https://www.codingforentrepreneurs.com/blog/how-to-create-a-custom-django-user-model/
 AUTH_USER_MODEL = 'back.Account'
+
+#------------------------------------------------------------------------------
+
+DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_default_registrar')
+SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', 'org', ])
+

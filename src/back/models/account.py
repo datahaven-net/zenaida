@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser
   
 class UserManager(BaseUserManager):
 
-    def create_user(self, email, password=None):
+    def create_user(self, email, password=None, **kwargs):
         """
         Creates and saves a User with the given email and password.
         """
@@ -54,8 +54,7 @@ class Account(AbstractBaseUser):
 
     REQUIRED_FIELDS = []
 
-    objects = UserManager()
-
+    users = UserManager()
 
     email = models.EmailField(
         verbose_name='email address',
@@ -78,7 +77,7 @@ class Account(AbstractBaseUser):
         return self.email
  
     def __str__(self):
-        return self.email
+        return 'Account({})'.format(self.email)
  
     def has_perm(self, perm, obj=None):
         return True

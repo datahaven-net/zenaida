@@ -138,6 +138,7 @@ docker/%:
 	$(DOCKER_COMPOSE) run --rm app make $*
 
 setup.py: $(VENV_DEPLOY)
+	@$(PIP) install pkgversion
 	$(PYTHON) setup_gen.py
 
 artifact: $(VENV_NO_SYSTEM_SITE_PACKAGES)

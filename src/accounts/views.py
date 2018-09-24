@@ -1,0 +1,98 @@
+from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME
+from django.contrib import messages
+from django.contrib.auth.views import SuccessURLAllowedHostsMixin
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, resolve_url
+from django.utils.http import is_safe_url
+from django.views.generic import RedirectView
+from django.views.generic.edit import FormView
+from django.conf import settings
+
+from accounts.utils import get_login_form
+from accounts.forms import SignUpForm
+from accounts.models import Activation
+
+
+class SignInView(SuccessURLAllowedHostsMixin, FormView):
+    template_name = 'accounts/login.html'
+    form_class = get_login_form()
+    redirect_field_name = REDIRECT_FIELD_NAME
+    success_url = '/'
+
+    def get_success_url(self):
+        url = self.get_redirect_url()
+        return url or resolve_url(settings.LOGIN_REDIRECT_URL)
+
+    def get_redirect_url(self):
+        redirect_to = self.request.POST.get(
+            self.redirect_field_name,
+            self.request.GET.get(self.redirect_field_name, '')
+        )
+        url_is_safe = is_safe_url(
+            url=redirect_to,
+            allowed_hosts=self.get_success_url_allowed_hosts(),
+            require_https=self.request.is_secure(),
+        )
+        return redirect_to if url_is_safe else ''
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        login(self.request, form.get_user())
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class SignUpView(FormView):
+    template_name = 'accounts/register.html'
+    form_class = SignUpForm
+    success_url = '/'
+
+    def form_valid(self, form):
+        if settings.ENABLE_USER_ACTIVATION:
+            user = form.save(commit=False)
+            user.active = False
+            user.save()
+
+            form.send_activation_email(self.request, user)
+
+            messages.add_message(self.request, messages.SUCCESS,
+                                 'You are registered. To activate the account, follow the link sent to the mail.')
+        else:
+            form.save()
+
+            email = form.cleaned_data.get('email')
+            raw_password = form.cleaned_data.get('password1')
+
+            user = authenticate(username=email, password=raw_password)
+            login(self.request, user)
+
+            messages.add_message(self.request, messages.SUCCESS, 'You are successfully registered!')
+
+        return super().form_valid(form)
+
+
+class ActivateView(RedirectView):
+    permanent = False
+    query_string = True
+    pattern_name = 'index'
+
+    def get_redirect_url(self, *args, **kwargs):
+        assert 'code' in kwargs
+
+        act = get_object_or_404(Activation, code=kwargs['code'])
+
+        # Activate user's profile
+        user = act.account
+        user.active = True
+        user.save()
+
+        # Remove activation record, it is unneeded
+        act.delete()
+
+        messages.add_message(self.request, messages.SUCCESS, 'You have successfully activated your account!')
+        login(self.request, user)
+
+        return super().get_redirect_url()

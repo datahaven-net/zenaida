@@ -7,33 +7,45 @@ from django.views.generic import TemplateView
 
 from django.urls import path
 
-from signup import views as signup_views
 from front import views as front_views
+from accounts import views as accounts_views
+
 
 admin_patterns = [
     path('admin/', admin.site.urls),
 ]
 
 auth_patterns = [
+    path('accounts/login/', accounts_views.SignInView.as_view(), name='login'),
 
-    path('signup/', signup_views.signup, name='auth_signup'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(
+        template_name='accounts/logout.html'), name='logout'),
 
-    path('login/', auth_views.LoginView.as_view(), name='auth_login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='auth_logout'),
+    path('accounts/register/', accounts_views.SignUpView.as_view(), name='register'),
 
-    path('password_change/', auth_views.PasswordChangeView.as_view(), name='auth_password_change'),
-    path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(), name='auth_password_change_done'),
+    path('accounts/activate/<code>/', accounts_views.ActivateView.as_view(), name='activate'),
 
-    path('password_reset/', auth_views.PasswordResetView.as_view(), name='auth_password_reset'),
-    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='auth_password_reset_done'),
+    path('accounts/password/change/', auth_views.PasswordChangeView.as_view(
+        template_name='accounts/password_change_form.html'), name='password_change'),
 
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='auth_password_reset_confirm'),
-    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='auth_password_reset_complete'),
+    path('accounts/password/change/done/', auth_views.PasswordChangeDoneView.as_view(
+        template_name='accounts/password_change_done.html'), name='password_change_done'),
 
+    path('accounts/password/reset/', auth_views.PasswordResetView.as_view(
+        template_name='accounts/password_reset.html'), name='password_reset'),
+
+    path('accounts/password/reset/done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='accounts/password_reset_done.html'), name='password_reset_done'),
+
+    path('accounts/password/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='accounts/password_reset_confirm.html'), name='password_reset_confirm'),
+
+    path('accounts/password/reset/done/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='accounts/password_reset_complete.html'), name='password_reset_complete'),
 ]
 
 patterns = [
-    path('', TemplateView.as_view(template_name="index.html"), name='index'),
+    path('', TemplateView.as_view(template_name="main/index.html"), name='index'),
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
     path('overview/', front_views.account_overview, name='account_overview'),
 ]

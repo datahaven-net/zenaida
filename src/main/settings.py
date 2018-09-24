@@ -15,11 +15,14 @@ import os
 
 from main import params
 
+#------------------------------------------------------------------------------ 
+#--- BASE DJANGO SETTINGS
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = '/home/zenaida/live/current'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_PATH = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 REPO_ROOT = os.path.dirname(SRC_PATH)
+CONTENT_DIR = BASE_DIR
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
@@ -31,13 +34,13 @@ CACHE_LOCATION = '127.0.0.1:6379'
 
 CACHE_PREFIX = 'zenaida'
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
 # https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-SECRET_KEY
-
-SECRET_KEY = getattr(params, 'SECRET_KEY', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+SECRET_KEY = getattr(params, 'SECRET_KEY', 'must be declared in src/main/params.py directly!!!')
 
 ALLOWED_HOSTS = ['*']
+
+SITE_ID = 1
 
 ROOT_URLCONF = 'main.urls'
 
@@ -72,7 +75,9 @@ LOGGING = {
     }
 }
 
-# Password validation
+
+#------------------------------------------------------------------------------
+#--- Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -90,7 +95,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+
+#------------------------------------------------------------------------------
+#--- Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
@@ -99,13 +106,17 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+
+#------------------------------------------------------------------------------
+#--- Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-# Application definition
+
+#------------------------------------------------------------------------------
+#--- Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -115,11 +126,14 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
-    'bootstrap_themes',
+    'django.contrib.sites',
+    'bootstrap4',
+    # 'bootstrap_themes',
     'main',
     'back',
     'front',
-    'signup',
+    'accounts',
+    # 'signup',
 ]
 
 MIDDLEWARE = [
@@ -152,24 +166,39 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'wsgi.application'
 
-# DATABASE DEFAULTS
-DATABASES_OPTIONS = {}
-DATABASES_TEST = {}
-DATABASES_CONN_MAX_AGE = 0
+#------------------------------------------------------------------------------
+#--- Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-# Sentry defaults
+EMAIL_HOST = ''
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+#------------------------------------------------------------------------------
+#--- Sentry defaults
 SENTRY_DSN = None
 
+
+#------------------------------------------------------------------------------
+#--- STANDALONE ?
 ENV = getattr(params, 'ENV')
 STANDALONE = True
 if ENV in ['production', 'docker', ]:  # pragma: no cover
     STANDALONE = False
 
 
-SESSION_COOKIE_NAME = 'zenaida_sid'
-CSRF_COOKIE_NAME = 'zenaida_csrftoken'
+#------------------------------------------------------------------------------
+#--- DATABASE DEFAULTS
+DATABASES_OPTIONS = {}
+DATABASES_TEST = {}
+DATABASES_CONN_MAX_AGE = 0
 
-# Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 DATABASES = {
     'default': {
@@ -200,7 +229,9 @@ CACHES = {
     }
 }
 
-# Django Rest Framework
+
+#------------------------------------------------------------------------------
+#--- Django Rest Framework
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -210,14 +241,27 @@ REST_FRAMEWORK = {
     ),
 }
 
-LOGIN_REDIRECT_URL = 'index'
+#------------------------------------------------------------------------------
+#--- USER LOGIN/AUTH/COOKIE
 
-# Custom user model
+ENABLE_USER_ACTIVATION = True
+LOGIN_VIA_EMAIL = True
+LOGIN_REDIRECT_URL = '/'
+# LOGIN_REDIRECT_URL = 'index'
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+SESSION_COOKIE_NAME = 'zenaida_sid'
+CSRF_COOKIE_NAME = 'zenaida_csrftoken'
+
+
+#------------------------------------------------------------------------------
+#--- CUSTOM USER MODEL
 # https://www.codingforentrepreneurs.com/blog/how-to-create-a-custom-django-user-model/
 AUTH_USER_MODEL = 'back.Account'
 
-#------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
+#--- ZENAIDA RELATED CONFIGS
 DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_default_registrar')
 SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', 'org', ])
-

@@ -119,6 +119,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 #--- Application definition
 
 INSTALLED_APPS = [
+    'grappelli',
     'django.contrib.admin',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -127,6 +128,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'nested_admin',
     'bootstrap4',
     'main',
     'back',

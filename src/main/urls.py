@@ -6,12 +6,15 @@ from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
 
 from django.urls import path
+from django.conf.urls import include
 
 from front import views as front_views
 from accounts import views as accounts_views
 
 
 admin_patterns = [
+    path('grappelli/', include('grappelli.urls')),
+    path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
 ]
 

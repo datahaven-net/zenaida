@@ -1,11 +1,13 @@
 # Base requirements
-Django
+pika
 fqn-decorators
 raven
 timeexecution
 psycopg2-binary
-django-redis-cache
 uwsgi
+Django
 djangorestframework
+django-redis-cache
 django-bootstrap4
-pika
+django-nested-admin
+django-grappelli

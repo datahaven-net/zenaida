@@ -1,4 +1,5 @@
 from django.contrib import admin
+from nested_admin import NestedModelAdmin, NestedStackedInline
 
 from back.models.zone import Zone
 from back.models.registrar import Registrar
@@ -8,27 +9,27 @@ from back.models.domain import Domain
 from back.models.contact import Contact
 
 
-class ZoneAdmin(admin.ModelAdmin):
+class ZoneAdmin(NestedModelAdmin):
     pass
 
 
-class RegistrarAdmin(admin.ModelAdmin):
+class RegistrarAdmin(NestedModelAdmin):
     pass
 
 
-class AccountAdmin(admin.ModelAdmin):
+class AccountAdmin(NestedModelAdmin):
+    list_display = ('email', 'is_active', 'is_staff', )
+
+
+class ProfileAdmin(NestedModelAdmin):
     pass
 
 
-class ProfileAdmin(admin.ModelAdmin):
+class DomainAdmin(NestedModelAdmin):
     pass
 
 
-class DomainAdmin(admin.ModelAdmin):
-    pass
-
-
-class ContactAdmin(admin.ModelAdmin):
+class ContactAdmin(NestedModelAdmin):
     pass
 
 

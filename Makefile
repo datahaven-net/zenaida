@@ -189,8 +189,6 @@ collectstatic: $(VENV_DEPLOY)
 	@echo 'collectstatic OK'
 
 
-# Used by the deploy pipeline to do migrations that only have to run
-# on one node only, not all nodes where the software is installed.
 migrate: $(VENV_DEPLOY)
 	@$(PYTHON) src/manage.py migrate --noinput
 	@echo 'migrate OK'

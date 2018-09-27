@@ -128,7 +128,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'bootstrap4',
-    # 'bootstrap_themes',
     'main',
     'back',
     'front',

@@ -27,7 +27,8 @@ class UserManager(BaseUserManager):
             email,
             password=password,
         )
-        user.staff = True
+        user.is_active = True
+        user.is_staff = True
         user.save(using=self._db)
         return user
 
@@ -39,8 +40,9 @@ class UserManager(BaseUserManager):
             email,
             password=password,
         )
-        user.staff = True
-        user.admin = True
+        user.is_active = True
+        user.is_staff = True
+        user.is_superuser = True
         user.save(using=self._db)
         return user
 

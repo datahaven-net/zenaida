@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_staffuser(self, email, password):
+    def create_staffuser(self, email, password, **kwargs):
         """
         Creates and saves a staff user with the given email and password.
         """
@@ -31,7 +31,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password):
+    def create_superuser(self, email, password, **kwargs):
         """
         Creates and saves a superuser with the given email and password.
         """
@@ -47,8 +47,12 @@ class UserManager(BaseUserManager):
 
 class Account(AbstractUser):
 
+    users = UserManager()
+
     class Meta:
         app_label = 'back'
+        base_manager_name = 'users'
+        default_manager_name = 'users'
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'

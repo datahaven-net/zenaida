@@ -50,6 +50,7 @@ PARAMS=src/main/params.py
 	requirements_clean_virtualenv requirements_create_virtualenv requirements_build
 
 tox: $(VENV_TOX) setup.py
+	# tox
 	$(TOX)
 
 # Used by the deploy pipeline to prepare for deploy
@@ -211,41 +212,52 @@ dbshell: $(VENV_DEPLOY)
 # Setting up of different kinds of virtualenvs #
 ################################################
 
-$(REQUIREMENTS_TXT): $(REQUIREMENTS_BASE) | $(VENV_TOX)
-	@$(TOX) -e requirements_txt
-	@echo "Successfully Updated requirements"
-
+$(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
+	# REQUIREMENTS_TXT
+	@$(PIP) install --upgrade pip
+	@$(PIP) install -r $(REQUIREMENTS_BASE)
+	@rm -vf $(REQUIREMENTS_TXT)
+	@$(PIP) freeze > $(REQUIREMENTS_TXT)
+	@echo "Successfully Updated requirements.txt"
 
 # these two are the main venvs
 $(VENV_SYSTEM_SITE_PACKAGES):
+	# VENV_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
 	@$(PYTHON_VERSION) -m venv venv
 	@touch $@
 
 $(VENV_NO_SYSTEM_SITE_PACKAGES):
+	# VENV_NO_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
 	@$(PYTHON_VERSION) -m venv venv
 	@touch $@
 
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	# VENV_DEPLOY
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	# VENV_BASE
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
+	# VENV_TEST
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TEST)
 	@touch $@
 
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
+	# VENV_TOX
+	@$(PIP) install --upgrade pip
 	@$(PIP) install tox
 	@touch $@
 
 $(VENV_DEV): $(VENV_TOX) $(VENV_BASE) $(VENV_TEST)
+	# VENV_DEV
 	@touch $@

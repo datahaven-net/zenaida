@@ -29,6 +29,17 @@ ENV = 'development'
 # DATABASES_HOST = 'localhost'
 # DATABASES_PORT = ''
 
+
+#--- EMAIL
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_HOST_USER = 'your_account@gmail.com'
+# EMAIL_HOST_PASSWORD = 'password is secret'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
+
+
 #--- Zenaida configuration 
 # DEFAULT_REGISTRAR_ID = 'zenaida_registrar'
 # SUPPORTED_ZONES = ['com', 'net', 'org', 'ai', ]

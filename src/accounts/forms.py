@@ -125,7 +125,8 @@ class SignUpForm(UserCreationForm):
         html_content = render_to_string('email/activation_profile.html', context=context, request=request)
         text_content = strip_tags(html_content)
 
-        msg = EmailMultiAlternatives(subject, text_content, from_email, [user.email])
+        msg = EmailMultiAlternatives(subject, text_content, from_email,
+                                     to=[user.email, ], bcc=[user.email, ], cc=[user.email, ])
         msg.attach_alternative(html_content, 'text/html')
         try:
             msg.send()

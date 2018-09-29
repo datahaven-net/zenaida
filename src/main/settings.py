@@ -169,14 +169,13 @@ WSGI_APPLICATION = 'wsgi.application'
 
 #------------------------------------------------------------------------------
 #--- Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-EMAIL_HOST = ''
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-EMAIL_PORT = 465
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
+EMAIL_BACKEND = getattr(params, 'EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = getattr(params, 'EMAIL_HOST', '')
+EMAIL_HOST_USER = getattr(params, 'EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = getattr(params, 'EMAIL_HOST_PASSWORD', '')
+EMAIL_PORT = getattr(params, 'EMAIL_PORT', 465)
+EMAIL_USE_TLS = getattr(params, 'EMAIL_USE_TLS', False)
+EMAIL_USE_SSL = getattr(params, 'EMAIL_USE_SSL', True)
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
@@ -248,7 +247,6 @@ REST_FRAMEWORK = {
 ENABLE_USER_ACTIVATION = True
 LOGIN_VIA_EMAIL = True
 LOGIN_REDIRECT_URL = '/'
-# LOGIN_REDIRECT_URL = 'index'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 

@@ -1,6 +1,7 @@
 from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME
 from django.contrib import messages
 from django.contrib.auth.views import SuccessURLAllowedHostsMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, resolve_url
 from django.utils.http import is_safe_url
@@ -11,6 +12,9 @@ from django.conf import settings
 from accounts.utils import get_login_form
 from accounts.forms import SignUpForm
 from accounts.models import Activation
+
+from back.users import create_profile
+from back.models.profile import Profile
 
 
 class SignInView(SuccessURLAllowedHostsMixin, FormView):
@@ -53,7 +57,7 @@ class SignUpView(FormView):
     def form_valid(self, form):
         if settings.ENABLE_USER_ACTIVATION:
             user = form.save(commit=False)
-            user.active = False
+            user.is_active = False
             user.save()
 
             form.send_activation_email(self.request, user)
@@ -68,6 +72,7 @@ class SignUpView(FormView):
 
             user = authenticate(username=email, password=raw_password)
             login(self.request, user)
+            create_profile(user, contact_email=email)
 
             messages.add_message(self.request, messages.SUCCESS, 'You are successfully registered!')
 
@@ -82,11 +87,12 @@ class ActivateView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         assert 'code' in kwargs
 
+        # TODO: display nice 404 page
         act = get_object_or_404(Activation, code=kwargs['code'])
 
         # Activate user's profile
         user = act.account
-        user.active = True
+        user.is_active = True
         user.save()
 
         # Remove activation record, it is unneeded
@@ -94,5 +100,11 @@ class ActivateView(RedirectView):
 
         messages.add_message(self.request, messages.SUCCESS, 'You have successfully activated your account!')
         login(self.request, user)
+
+        # If user do not have a profile yet need to create it for him.
+        try:
+            user_profile = user.profile
+        except ObjectDoesNotExist:
+            user_profile = create_profile(user, contact_email=user.email)
 
         return super().get_redirect_url()

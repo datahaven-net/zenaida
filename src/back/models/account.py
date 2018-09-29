@@ -60,6 +60,9 @@ class Account(AbstractUser):
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+    
+    # related fields:
+    # profile -> back.models.profile.Profile
 
     email = models.EmailField(
         verbose_name='email address',

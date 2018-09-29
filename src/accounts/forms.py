@@ -106,11 +106,10 @@ class SignUpForm(UserCreationForm):
 
     @staticmethod
     def send_activation_email(request, user):
-        subject = 'Profile Activation'
-
         from_email = settings.DEFAULT_FROM_EMAIL
         domain = Site.objects.get_current().domain
         code = get_random_string(20)
+        subject = 'Profile Activation on %s' % domain
 
         context = {
             'domain': domain,

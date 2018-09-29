@@ -35,11 +35,7 @@ def create(epp_id, email, account_password=None, **kwargs):
     existing_account = users.find_account(email)
     if not existing_account:
         existing_account = users.create_account(email, account_password=account_password)
-    existing_profile = Profile.profiles.filter(account_id=existing_account.id).first()
-    if not existing_profile:
-        existing_profile = Profile(account=existing_account, **kwargs)
-        existing_profile.save()
-    new_contact = Contact.contacts.create(epp_id=epp_id, profile=existing_profile)
+    new_contact = Contact.contacts.create(epp_id=epp_id, profile=existing_account.profile)
     return new_contact
 
 

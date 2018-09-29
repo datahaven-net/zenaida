@@ -14,8 +14,11 @@ from accounts import views as accounts_views
 
 admin_patterns = [
     path('grappelli/', include('grappelli.urls')),
+
     path('_nested_admin/', include('nested_admin.urls')),
+
     path('admin/', admin.site.urls),
+
 ]
 
 auth_patterns = [
@@ -49,8 +52,13 @@ auth_patterns = [
 
 patterns = [
     path('', TemplateView.as_view(template_name="main/index.html"), name='index'),
+
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
+
     path('overview/', front_views.account_overview, name='account_overview'),
+
+    path('domains/', front_views.account_domains, name='account_domains'),
+
 ]
 
 urlpatterns = admin_patterns + auth_patterns + patterns

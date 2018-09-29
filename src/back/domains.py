@@ -10,6 +10,7 @@ from back.models.domain import Domain
 from back.models.registrar import Registrar
 
 from back import zones
+from back import users
 
 
 def is_valid(domain, idn=False):
@@ -100,3 +101,17 @@ def create(name, expiry_date=None, create_date=None, epp_id=None, auth_key=None,
         domain_obj.contact_billing = contact_billing
     domain_obj.save()
     return domain_obj
+
+
+def list_domains(registrant_email):
+    """
+    List all domains for given user identified by email where he have registrant role assigned.
+    """
+    existing_account = users.find_account(registrant_email)
+    if not existing_account:
+        return []
+    result = []
+    for contact in existing_account.profile.contacts.all():
+        for domain in contact.registrant_domains.all():
+            result.append(domain)
+    return result

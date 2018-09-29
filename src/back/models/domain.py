@@ -35,10 +35,10 @@ class Domain(models.Model):
 
     registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, )
 
-    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='domains', null=True, )
-    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', null=True, )
-    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', null=True, )
-    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='+', null=True, )
+    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, )
+    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, )
+    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, )
+    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, )
 
     @property
     def tld_name(self):

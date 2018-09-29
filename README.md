@@ -300,7 +300,7 @@ You can configure if you wish to enable user account activations via email, edit
         ENABLE_USER_ACTIVATION = True
 
 
-Also you have to configure outgoing email channel to deliver messages. Different backends can be used in Django, simplest way to start is to user Google Accounts SMTP service:
+Also you have to configure outgoing email channel to deliver messages. Different backends can be used in Django, simplest way to start with Google Accounts SMTP service:
 
         EMAIL_HOST = 'smtp.gmail.com'
         EMAIL_HOST_USER = 'my_gmail_login@gmail.com'

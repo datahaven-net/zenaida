@@ -9,6 +9,9 @@ class Profile(models.Model):
 
     profiles = models.Manager()
 
+    # related fields:
+    # contacts -> back.models.contact.Contact
+
     account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='profile')
 
     person_name = models.CharField(max_length=255, default='')

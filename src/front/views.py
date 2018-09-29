@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 
+from back.domains import list_domains
 from front.forms import DomainLookupForm
 from zepp.zmaster import domain_check
 
@@ -22,3 +23,12 @@ def account_overview(request):
         return redirect('index')
     result = ''
     return render(request, 'front/account_overview.html', {'result': result, }, )
+
+
+def account_domains(request):
+    if not request.user.is_authenticated:
+        return redirect('index')
+    domains_list = list_domains(request.user.email)
+    return render(request, 'front/account_domains.html', {
+        'domains': domains_list,
+    }, )

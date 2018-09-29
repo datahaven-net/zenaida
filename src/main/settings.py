@@ -244,7 +244,7 @@ REST_FRAMEWORK = {
 #------------------------------------------------------------------------------
 #--- USER LOGIN/AUTH/COOKIE
 
-ENABLE_USER_ACTIVATION = True
+ENABLE_USER_ACTIVATION = getattr(params, 'ENABLE_USER_ACTIVATION', True)
 LOGIN_VIA_EMAIL = True
 LOGIN_REDIRECT_URL = '/'
 

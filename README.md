@@ -293,6 +293,24 @@ You can always check current situation with:
 
 
 
+## Configure Email settings
+
+You can configure if you wish to enable user account activations via email, edit file `src/main/params.py` and add such line:
+
+        ENABLE_USER_ACTIVATION = True
+
+
+Also you have to configure outgoing email channel to deliver messages. Different backends can be used in Django, simplest way to start is to user Google Accounts SMTP service:
+
+        EMAIL_HOST = 'smtp.gmail.com'
+        EMAIL_HOST_USER = 'my_gmail_login@gmail.com'
+        EMAIL_HOST_PASSWORD = '<password>'
+        EMAIL_PORT = 587
+        EMAIL_USE_TLS = True
+        EMAIL_USE_SSL = False
+
+
+
 ## Requirements Handling
 
 The project has automated handling of production requirements, the idea behind it is that

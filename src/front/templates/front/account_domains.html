@@ -7,12 +7,9 @@
             {% if request.user.is_authenticated %}
             
                 {% block content %}
-                <form method="post" action=".">
-                  {% csrf_token %}
-                  {{ form.as_p }}
-                  {{ result }}
-                  <input type="submit" value="test" />
-                </form>
+
+                Your domains: {{ domains }}
+
                 {% endblock %}
             
             {% else %}

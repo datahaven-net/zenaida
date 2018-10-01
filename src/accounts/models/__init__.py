@@ -1,1 +1,1 @@
-from .account import Account
+from accounts.models.account import Account

@@ -1,4 +1,5 @@
 from django.db import models
+
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 
@@ -53,7 +54,7 @@ class Account(AbstractUser):
     users = UserManager()
 
     class Meta:
-        app_label = 'back'
+        app_label = 'accounts'
         base_manager_name = 'users'
         default_manager_name = 'users'
 
@@ -62,6 +63,7 @@ class Account(AbstractUser):
     REQUIRED_FIELDS = []
 
     # related fields:
+    # activations -> accounts.models.activation.Activation
     # profile -> back.models.profile.Profile
     # domains -> back.models.domain.Domain
     # contacts -> back.models.contact.Contact
@@ -75,7 +77,7 @@ class Account(AbstractUser):
         help_text='user email address',
     )
 
-    # balance = models.IntegerField(default=0)
+    balance = models.IntegerField(default=0)
 
     def __str__(self):
         return 'Account({})'.format(self.email)
@@ -100,16 +102,3 @@ class Account(AbstractUser):
         Field `last_name` is disabled.
         """
         return self.email
-
-
-class Activation(models.Model):
-
-    # related fields:
-    # account -> accounts.models.Account
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    code = models.CharField(max_length=20)
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='activations', )
-
-    def __str__(self):
-        return 'Activation({})'.format(self.account.email)

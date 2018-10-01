@@ -1,4 +1,3 @@
-
 from back.models.contact import Contact
 
 from back import users

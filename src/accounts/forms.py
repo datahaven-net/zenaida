@@ -11,8 +11,8 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from accounts.models import Activation
-from accounts.models import Account
+from accounts.models.activation import Activation
+from accounts.models.account import Account
 
 
 class SignInViaEmailForm(forms.Form):

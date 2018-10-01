@@ -1,4 +1,4 @@
-from accounts.models import Account
+from accounts.models.account import Account
 
 from back.models.profile import Profile
 

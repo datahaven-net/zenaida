@@ -1,8 +1,8 @@
 from django.contrib import admin
 from nested_admin import NestedModelAdmin
 
-
-from accounts.models import Activation, Account
+from accounts.models.account import Account
+from accounts.models.activation import Activation
 
 
 class ActivationAdmin(NestedModelAdmin):

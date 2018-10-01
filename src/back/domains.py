@@ -1,8 +1,6 @@
 import re
-import datetime
 
 from django.utils import timezone
-from django.core import exceptions
 
 from main import settings
 

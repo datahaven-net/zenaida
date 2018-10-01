@@ -1,7 +1,7 @@
 from django.db import models
 from django.core import exceptions
 
-from accounts.models import Account
+from accounts.models.account import Account
 
 from back.models.zone import Zone
 from back.models.contact import Contact

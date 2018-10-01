@@ -130,11 +130,10 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'nested_admin',
     'bootstrap4',
-    'main',
+    'accounts',
     'back',
     'front',
-    'accounts',
-    # 'signup',
+    'main',
 ]
 
 MIDDLEWARE = [

@@ -12,7 +12,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import Activation
-from back.models.account import Account
+from accounts.models import Account
 
 
 class SignInViaEmailForm(forms.Form):

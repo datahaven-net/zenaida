@@ -257,7 +257,7 @@ CSRF_COOKIE_NAME = 'zenaida_csrftoken'
 #------------------------------------------------------------------------------
 #--- CUSTOM USER MODEL
 # https://www.codingforentrepreneurs.com/blog/how-to-create-a-custom-django-user-model/
-AUTH_USER_MODEL = 'back.Account'
+AUTH_USER_MODEL = 'accounts.Account'
 
 
 #------------------------------------------------------------------------------

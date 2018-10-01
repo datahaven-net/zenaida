@@ -1,6 +1,6 @@
 from django.db import models
 
-from back.models.account import Account
+from accounts.models import Account
 
 
 class Profile(models.Model):

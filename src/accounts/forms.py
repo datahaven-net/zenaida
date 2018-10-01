@@ -81,8 +81,6 @@ class SignUpForm(UserCreationForm):
         model = Account
         fields = ('email', 'password1', 'password2',)
 
-    # first_name = forms.CharField(max_length=50, required=False, help_text=_('Optional.'))
-    # last_name = forms.CharField(max_length=50, required=False, help_text=_('Optional.'))
     email = forms.EmailField(max_length=255, help_text=_('Required. Type a valid email address.'))
 
     error_messages = {

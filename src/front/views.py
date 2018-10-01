@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 
 from back.domains import list_domains
-from front.forms import DomainLookupForm
+from front.forms import DomainLookupForm, AccountProfileForm
 from zepp.zmaster import domain_check
 
 
@@ -21,14 +22,29 @@ def domain_lookup(request):
 def account_overview(request):
     if not request.user.is_authenticated:
         return redirect('index')
-    result = ''
-    return render(request, 'front/account_overview.html', {'result': result, }, )
+    return render(request, 'front/account_overview.html', {
+        'domains': list_domains(request.user.email),
+    }, )
 
 
 def account_domains(request):
     if not request.user.is_authenticated:
         return redirect('index')
-    domains_list = list_domains(request.user.email)
     return render(request, 'front/account_domains.html', {
-        'domains': domains_list,
+        'domains': list_domains(request.user.email),
     }, )
+
+
+def account_profile(request):
+    if not request.user.is_authenticated:
+        return redirect('index')
+    if request.method == 'POST':
+        form = AccountProfileForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile information was successfully updated!')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = AccountProfileForm(instance=request.user.profile)
+    return render(request, 'front/account_profile.html', {'form': form, }, )

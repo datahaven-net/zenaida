@@ -5,18 +5,18 @@
 <head>
 
     <meta charset="utf-8">
-
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description"
-          content="An example of Django project with login, registration, log out and password reset functionality.">
-    <meta name="author" content="Yehor Smoliakov">
+    <meta name="description" content="Zenaida - domain registry system">
+    <meta name="author" content="Veselin Penev">
 
     <link rel="icon" href="{% static 'favicon.ico' %}">
 
-    <title>Simple Django Login and Registration</title>
+    <title>Zenaida - domain registry system</title>
 
-    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'font-awesome/css/font-awesome.css' %}" rel="stylesheet" type="text/css">
 
 </head>
 
@@ -24,7 +24,7 @@
 
 <nav class="navbar navbar-expand-md navbar-dark bg-dark static-top">
 
-    <a class="navbar-brand" href="/">Demo</a>
+    <a class="navbar-brand" href="/">Zenaida</a>
 
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
             aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
             {% if request.user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'account_profile' %}">Profile</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'password_change' %}">Change password</a>
                 </li>

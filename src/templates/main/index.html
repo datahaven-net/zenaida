@@ -11,9 +11,10 @@
                 <br>
                 Work in progress... but at the moment you can:
                 <ul>
+                    <li>see <a href="{% url 'account_overview' %}">overview</a> of your account</li>
+                    <li>edit your <a href="{% url 'account_profile' %}">profile</a> info</li>
                     <li><a href="{% url 'domain_lookup' %}">lookup</a> existing domains</li>
                     <li>browse your <a href="{% url 'account_domains' %}">domains</a></li>
-                    <li>see <a href="{% url 'account_overview' %}">overview</a> of your account</li>
                 </ul>
             {% else %}
                 <h1>Welcome to Zenaida!</h1>

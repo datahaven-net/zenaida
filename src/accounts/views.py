@@ -14,7 +14,6 @@ from accounts.forms import SignUpForm
 from accounts.models import Activation
 
 from back.users import create_profile
-from back.models.profile import Profile
 
 
 class SignInView(SuccessURLAllowedHostsMixin, FormView):
@@ -46,6 +45,7 @@ class SignInView(SuccessURLAllowedHostsMixin, FormView):
 
     def form_valid(self, form):
         login(self.request, form.get_user())
+        messages.add_message(self.request, messages.SUCCESS, 'Successfully logged in!')
         return HttpResponseRedirect(self.get_success_url())
 
 

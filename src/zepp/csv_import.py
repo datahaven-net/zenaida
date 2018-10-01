@@ -262,10 +262,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         known_admin_contact_id = None if not known_domain.contact_admin else known_domain.contact_admin.epp_id
         known_billing_contact_id = None if not known_domain.contact_billing else known_domain.contact_billing.epp_id
         known_tech_contact_id = None if not known_domain.contact_tech else known_domain.contact_tech.epp_id
-        known_registrant_email = None if not known_domain.registrant else known_domain.registrant.profile.account.email
-        known_admin_email = None if not known_domain.contact_admin else known_domain.contact_admin.profile.account.email
-        known_tech_email = None if not known_domain.contact_tech else known_domain.contact_tech.profile.account.email
-        known_billing_email = None if not known_domain.contact_billing else known_domain.contact_billing.profile.account.email
+        known_registrant_email = None if not known_domain.registrant else known_domain.registrant.owner.email
+        known_admin_email = None if not known_domain.contact_admin else known_domain.contact_admin.owner.email
+        known_tech_email = None if not known_domain.contact_tech else known_domain.contact_tech.owner.email
+        known_billing_email = None if not known_domain.contact_billing else known_domain.contact_billing.owner.email
 
     if real_admin_contact_id or real_tech_contact_id or real_billing_contact_id:
         if known_domain:
@@ -331,7 +331,8 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             )
         else:
             contacts.update(
-                real_registrant_email,
+                epp_id=real_registrant_contact_id,
+                email=real_registrant_email,
                 **csv_info['registrant'],
             )
     
@@ -344,7 +345,8 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             )
         else:
             contacts.update(
-                real_admin_email,
+                epp_id=real_admin_contact_id,
+                email=real_admin_email,
                 **csv_info['admin'],
             )
 
@@ -357,7 +359,8 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             )
         else:
             contacts.update(
-                real_tech_email,
+                epp_id=real_tech_contact_id,
+                email=real_tech_email,
                 **csv_info['tech'],
             )
     
@@ -370,7 +373,8 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             )
         else:
             contacts.update(
-                real_billing_email,
+                epp_id=real_billing_contact_id,
+                email=real_billing_email,
                 **csv_info['billing'],
             )
     

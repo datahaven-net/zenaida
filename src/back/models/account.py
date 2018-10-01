@@ -63,6 +63,8 @@ class Account(AbstractUser):
     
     # related fields:
     # profile -> back.models.profile.Profile
+    # domains -> back.models.domain.Domain
+    # contacts -> back.models.contact.Contact
 
     email = models.EmailField(
         verbose_name='email address',
@@ -72,6 +74,8 @@ class Account(AbstractUser):
         blank=False,
         help_text='user email address',
     )
+
+    # balance = models.IntegerField(default=0)
 
     def __str__(self):
         return 'Account({})'.format(self.email)

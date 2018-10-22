@@ -27,9 +27,9 @@ class Domain(models.Model):
     expiry_date = models.DateTimeField()
     create_date = models.DateTimeField()
 
-    epp_id = models.CharField(max_length=32, unique=True, blank=True)
+    epp_id = models.CharField(max_length=32, unique=True, blank=True, default='')
 
-    auth_key = models.CharField(max_length=64, blank=True)
+    auth_key = models.CharField(max_length=64, blank=True, default='')
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='domains', )
 

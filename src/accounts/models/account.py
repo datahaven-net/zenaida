@@ -67,6 +67,7 @@ class Account(AbstractUser):
     # profile -> back.models.profile.Profile
     # domains -> back.models.domain.Domain
     # contacts -> back.models.contact.Contact
+    # nameservers -> back.models.nameserver.NameServer
 
     email = models.EmailField(
         verbose_name='email address',
@@ -80,7 +81,7 @@ class Account(AbstractUser):
     balance = models.IntegerField(default=0)
 
     def __str__(self):
-        return 'Account({})'.format(self.email)
+        return 'Account({}:{})'.format(self.email, self.balance)
 
     @property
     def username(self):

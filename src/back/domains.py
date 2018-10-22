@@ -7,6 +7,7 @@ from main import settings
 
 from back.models.domain import Domain
 from back.models.registrar import Registrar
+from back.models.nameserver import NameServer
 
 from back import zones
 from back import users
@@ -52,37 +53,50 @@ def is_valid(domain, idn=False):
     return True
 
 
-def is_exist(domain):
+def is_exist(domain_name='', epp_id=''):
     """
     Return `True` if domain exists, doing query in Domain table.
     """
-    return bool(Domain.domains.filter(name=domain).first())
+    if epp_id:
+        return bool(Domain.domains.filter(epp_id=epp_id).first())
+    return bool(Domain.domains.filter(name=domain_name).first())
 
 
-def find(domain):
+def find(domain_name='', epp_id=''):
     """
     Return `Domain` object if found in Domain table, else None.
     """
-    return Domain.domains.filter(name=domain).first()
+    if epp_id:
+        return Domain.domains.filter(epp_id=epp_id).first()
+    return Domain.domains.filter(name=domain_name).first()
 
 
-def create(name,
-           owner,
-           expiry_date=None, create_date=None, epp_id=None, auth_key=None,
-           registrar=None, registrant=None,
-           contact_admin=None, contact_billing=None, contact_tech=None, ):
+def create(
+        name,
+        owner,
+        expiry_date=None,
+        create_date=None,
+        epp_id='',
+        auth_key='',
+        registrar=None,
+        registrant=None,
+        contact_admin=None,
+        contact_billing=None,
+        contact_tech=None,
+        hosts=[],
+    ):
     """
     Create new domain.
     """
+    if is_exist(domain_name=name, epp_id=epp_id):
+        raise ValueError('Domain already exists')
     if not create_date:
         create_date = timezone.now()
-    # if not expiry_date:
-    #     expiry_date = timezone.now() + datetime.timedelta(days=2*365)
     if not contact_admin and not contact_tech and not contact_billing:
         raise ValueError('Must be set at least one of the domain contacts')
     if not registrant:
         registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
-    domain_obj = Domain(
+    new_domain = Domain(
         name=name,
         owner=owner,
         expiry_date=expiry_date,
@@ -90,23 +104,28 @@ def create(name,
         epp_id=epp_id,
         auth_key=auth_key,
     )
-    domain_obj.zone = zones.make(domain_obj.tld_zone)
+    new_domain.zone = zones.make(new_domain.tld_zone)
     if not isinstance(registrar, Registrar):
         registrar = Registrar.registrars.get_or_create(
             epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
         )[0]
-    domain_obj.registrar = registrar
+    new_domain.registrar = registrar
     if registrant:
-        domain_obj.registrant = registrant
+        new_domain.registrant = registrant
     if contact_admin:
-        domain_obj.contact_admin = contact_admin
+        new_domain.contact_admin = contact_admin
     if contact_tech:
-        domain_obj.contact_tech = contact_tech
+        new_domain.contact_tech = contact_tech
     if contact_billing:
-        domain_obj.contact_billing = contact_billing
-    domain_obj.save()
-    logger.debug('domain created: %s', domain_obj)
-    return domain_obj
+        new_domain.contact_billing = contact_billing
+    host_position = 1
+    for host in hosts:
+        new_nameserver = create_nameserver(host=host, owner=owner)
+        new_domain.set_nameserver(host_position, new_nameserver)
+        host_position += 1
+    new_domain.save()
+    logger.debug('domain created: %s', new_domain)
+    return new_domain
 
 
 def list_domains(registrant_email):
@@ -117,3 +136,17 @@ def list_domains(registrant_email):
     if not existing_account:
         return []
     return existing_account.domains
+
+
+def create_nameserver(host, owner, epp_id=''):
+    """
+    Create new nameserver.
+    """
+    if epp_id:
+        existing_nameserver = NameServer.nameservers.filter(epp_id=epp_id).first()
+        if existing_nameserver:
+            logger.debug('nameserver with epp_id=%s already exist', epp_id)
+            return existing_nameserver
+    new_nameserver = NameServer.nameservers.create(host=host, owner=owner, epp_id=epp_id)
+    logger.debug('nameserver created: %s', new_nameserver)
+    return new_nameserver

@@ -13,7 +13,7 @@ class Registrar(models.Model):
     # related fields:
     # domains -> back.models.domain.Domain
 
-    epp_id = models.CharField(max_length=32, unique=True, )
+    epp_id = models.CharField(max_length=32, unique=True, blank=True, default='', )
 
     def __str__(self):
         return 'Registrar({})'.format(self.epp_id)

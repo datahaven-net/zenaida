@@ -26,7 +26,7 @@ def verify(epp_id, email):
     return True
 
 
-def create(email, epp_id=None, account_password=None, **kwargs):
+def create(email, epp_id='', account_password=None, **kwargs):
     """
     Creates new contact with given email, but only if Contact with same epp_id not exist yet.
     If corresponding Account not exist yet it will be created together with new Profile.
@@ -45,7 +45,7 @@ def create(email, epp_id=None, account_password=None, **kwargs):
     return new_contact
 
 
-def update(email=None, epp_id=None, **kwargs):
+def update(email=None, epp_id='', **kwargs):
     """
     Update given Contact with new field values.
     """

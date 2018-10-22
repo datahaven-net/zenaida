@@ -7,6 +7,10 @@ class DomainLookupForm(forms.Form):
     domain_name = fields.CharField(label='domain name', max_length=100, required=False)
 
 
+class DomainCreateForm(forms.Form):
+    domain_name = fields.CharField(label='domain name', max_length=100, required=True)
+
+
 class AccountProfileForm(models.ModelForm):
 
     class Meta:

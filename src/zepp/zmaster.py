@@ -55,3 +55,7 @@ def domain_check(domain, raise_errors=False, return_string=False, return_respons
         return 'exist'
     return True
 
+
+def domain_register(domain):
+    """
+    """

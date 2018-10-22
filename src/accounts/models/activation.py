@@ -1,12 +1,9 @@
 from django.db import models
 
-from back.models.account import Account
+from accounts.models.account import Account
 
 
 class Activation(models.Model):
-
-    # related fields:
-    # account -> back.model.account.Account
 
     created_at = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=20)

@@ -1,8 +1,6 @@
 import re
-import datetime
 
 from django.utils import timezone
-from django.core import exceptions
 
 from main import settings
 
@@ -65,21 +63,24 @@ def find(domain):
     return Domain.domains.filter(name=domain).first()
 
 
-def create(name, expiry_date=None, create_date=None, epp_id=None, auth_key=None, registrar=None,
-           registrant=None, contact_admin=None, contact_billing=None, contact_tech=None, ):
+def create(name, owner,
+           expiry_date=None, create_date=None, epp_id=None, auth_key=None,
+           registrar=None, registrant=None,
+           contact_admin=None, contact_billing=None, contact_tech=None, ):
     """
     Create new domain.
     """
     if not create_date:
         create_date = timezone.now()
-    if not expiry_date:
-        expiry_date = timezone.now() + datetime.timedelta(days=365)
+    # if not expiry_date:
+    #     expiry_date = timezone.now() + datetime.timedelta(days=2*365)
     if not contact_admin and not contact_tech and not contact_billing:
         raise ValueError('Must be set at least one of the domain contacts')
     if not registrant:
         registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
     domain_obj = Domain(
         name=name,
+        owner=owner,
         expiry_date=expiry_date,
         create_date=create_date,
         epp_id=epp_id,
@@ -110,8 +111,4 @@ def list_domains(registrant_email):
     existing_account = users.find_account(registrant_email)
     if not existing_account:
         return []
-    result = []
-    for contact in existing_account.profile.contacts.all():
-        for domain in contact.registrant_domains.all():
-            result.append(domain)
-    return result
+    return existing_account.domains

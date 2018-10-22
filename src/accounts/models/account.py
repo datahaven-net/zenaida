@@ -1,8 +1,9 @@
 from django.db import models
+
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import AbstractUser
-  
-  
+
+
 class UserManager(BaseUserManager):
 
     def create_user(self, email, password=None, **kwargs):
@@ -53,16 +54,19 @@ class Account(AbstractUser):
     users = UserManager()
 
     class Meta:
-        app_label = 'back'
+        app_label = 'accounts'
         base_manager_name = 'users'
         default_manager_name = 'users'
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-    
+
     # related fields:
+    # activations -> accounts.models.activation.Activation
     # profile -> back.models.profile.Profile
+    # domains -> back.models.domain.Domain
+    # contacts -> back.models.contact.Contact
 
     email = models.EmailField(
         verbose_name='email address',
@@ -72,6 +76,8 @@ class Account(AbstractUser):
         blank=False,
         help_text='user email address',
     )
+
+    balance = models.IntegerField(default=0)
 
     def __str__(self):
         return 'Account({})'.format(self.email)

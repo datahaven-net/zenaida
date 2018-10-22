@@ -11,7 +11,7 @@ from django.conf import settings
 
 from accounts.utils import get_login_form
 from accounts.forms import SignUpForm
-from accounts.models import Activation
+from accounts.models.activation import Activation
 
 from back.users import create_profile
 

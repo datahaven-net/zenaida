@@ -1,7 +1,7 @@
-import re
-
 from django.db import models
 from django.core import exceptions
+
+from accounts.models.account import Account
 
 from back.models.zone import Zone
 from back.models.contact import Contact
@@ -30,6 +30,8 @@ class Domain(models.Model):
     epp_id = models.CharField(max_length=32, unique=True, blank=True, null=True)
 
     auth_key = models.CharField(max_length=64, blank=True, null=True)
+
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='domains', )
 
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='domains', )
 

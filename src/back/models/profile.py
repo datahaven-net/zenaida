@@ -1,16 +1,11 @@
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
-from back.models.account import Account
+from accounts.models.account import Account
 
 
 class Profile(models.Model):
 
     profiles = models.Manager()
-
-    # related fields:
-    # contacts -> back.models.contact.Contact
 
     account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='profile')
 
@@ -29,15 +24,3 @@ class Profile(models.Model):
 
     def __str__(self):
         return 'Profile({})'.format(self.account.email)
-
-
-# @receiver(post_save, sender=Account)
-# def create_user_profile(sender, instance, created, **kwargs):
-#     if created:
-#         kwargs.pop('signal', None)
-#         Profile.profiles.create(account=instance, **kwargs)
-# 
-# 
-# @receiver(post_save, sender=Account)
-# def save_user_profile(sender, instance, **kwargs):
-#     instance.profile.save()

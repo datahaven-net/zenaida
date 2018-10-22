@@ -1,5 +1,5 @@
+from accounts.models.account import Account
 
-from back.models.account import Account
 from back.models.profile import Profile
 
 

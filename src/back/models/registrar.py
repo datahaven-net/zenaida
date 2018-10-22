@@ -5,6 +5,11 @@ class Registrar(models.Model):
 
     registrars = models.Manager()
 
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'registrars'
+        default_manager_name = 'registrars'
+
     # related fields:
     # domains -> back.models.domain.Domain
 

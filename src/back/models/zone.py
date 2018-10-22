@@ -5,6 +5,11 @@ class Zone(models.Model):
 
     zones = models.Manager()
 
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'zones'
+        default_manager_name = 'zones'
+
     # related fields:
     # domains -> back.models.domain.Domain
 

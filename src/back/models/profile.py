@@ -7,6 +7,11 @@ class Profile(models.Model):
 
     profiles = models.Manager()
 
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'profiles'
+        default_manager_name = 'profiles'
+
     account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='profile')
 
     person_name = models.CharField(max_length=255, default='', blank=True,)

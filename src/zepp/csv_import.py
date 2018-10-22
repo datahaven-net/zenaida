@@ -454,6 +454,30 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             known_domain.save()
             logger.debug('create date was not set, now updated for %s : %s', known_domain, real_create_date)
 
+    #--- check known epp_id
+    if known_epp_id:
+        if known_epp_id != real_epp_id:
+            known_domain.epp_id = real_epp_id
+            known_domain.save()
+            logger.debug('known epp_id for %s updated : %s', known_domain, real_epp_id)
+    else:
+        if known_domain:
+            known_domain.epp_id = real_epp_id
+            known_domain.save()
+            logger.debug('epp_id was not set for %s, now updated : %s', known_domain, real_epp_id)
+
+    #--- check auth_key
+    if known_auth_key:
+        if known_auth_key != real_auth_key:
+            known_domain.auth_key = real_auth_key
+            known_domain.save()
+            logger.debug('known auth_key for %s updated : %s', known_domain, real_auth_key)
+    else:
+        if known_domain:
+            known_domain.auth_key = real_auth_key
+            known_domain.save()
+            logger.debug('auth_key was not set for %s, now updated : %s', known_domain, real_auth_key)
+
     # TODO: nameservers
 
     if errors and dry_run:

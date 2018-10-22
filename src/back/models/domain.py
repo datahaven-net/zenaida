@@ -22,6 +22,11 @@ class Domain(models.Model):
 
     domains = models.Manager()
 
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'domains'
+        default_manager_name = 'domains'
+
     name = models.CharField(max_length=255, unique=True, validators=[validate, ])
 
     expiry_date = models.DateTimeField()

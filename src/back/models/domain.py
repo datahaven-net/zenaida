@@ -27,20 +27,20 @@ class Domain(models.Model):
     expiry_date = models.DateTimeField()
     create_date = models.DateTimeField()
 
-    epp_id = models.CharField(max_length=32, unique=True, blank=True, null=True)
+    epp_id = models.CharField(max_length=32, unique=True, blank=True)
 
-    auth_key = models.CharField(max_length=64, blank=True, null=True)
+    auth_key = models.CharField(max_length=64, blank=True)
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='domains', )
 
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='domains', )
 
-    registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, )
+    registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, blank=True, )
 
-    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, )
-    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, )
-    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, )
-    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, )
+    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True, )
+    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, blank=True, )
+    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, blank=True, )
+    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, blank=True, )
 
     @property
     def tld_name(self):
@@ -51,4 +51,4 @@ class Domain(models.Model):
         return '.'.join(self.name.split('.')[1:])
 
     def __str__(self):
-        return 'Domain({})'.format(self.name)
+        return 'Domain({}:{})'.format(self.name, self.epp_id)

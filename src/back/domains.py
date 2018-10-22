@@ -1,3 +1,4 @@
+import logging
 import re
 
 from django.utils import timezone
@@ -9,6 +10,8 @@ from back.models.registrar import Registrar
 
 from back import zones
 from back import users
+
+logger = logging.getLogger(__name__)
 
 
 def is_valid(domain, idn=False):
@@ -63,7 +66,8 @@ def find(domain):
     return Domain.domains.filter(name=domain).first()
 
 
-def create(name, owner,
+def create(name,
+           owner,
            expiry_date=None, create_date=None, epp_id=None, auth_key=None,
            registrar=None, registrant=None,
            contact_admin=None, contact_billing=None, contact_tech=None, ):
@@ -101,6 +105,7 @@ def create(name, owner,
     if contact_billing:
         domain_obj.contact_billing = contact_billing
     domain_obj.save()
+    logger.debug('domain created: %s', domain_obj)
     return domain_obj
 
 

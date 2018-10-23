@@ -7,6 +7,11 @@ class Contact(models.Model):
     
     contacts = models.Manager()
 
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'contacts'
+        default_manager_name = 'contacts'
+
     # related fields:
     # registrant_domains -> back.models.domain.Domain
     # admin_domains -> back.models.domain.Domain
@@ -15,7 +20,7 @@ class Contact(models.Model):
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contacts', )
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, )
+    epp_id = models.CharField(max_length=32, unique=True, blank=True, default='')
 
     person_name = models.CharField(max_length=255, default='', blank=True,)
     organization_name = models.CharField(max_length=255, default='', blank=True,)
@@ -31,4 +36,4 @@ class Contact(models.Model):
     contact_email = models.CharField(max_length=255, default='', blank=True,)
 
     def __str__(self):
-        return 'Contact({})'.format(self.epp_id)
+        return 'Contact({}:{})'.format(self.owner.email, self.epp_id)

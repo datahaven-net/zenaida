@@ -1,6 +1,10 @@
+import logging
+
 from accounts.models.account import Account
 
 from back.models.profile import Profile
+
+logger = logging.getLogger(__name__)
 
 
 def is_exist(email):
@@ -25,6 +29,7 @@ def create_account(email, account_password=None, also_profile=True, **kwargs):
     new_account = Account.users.create_user(email, password=account_password)
     if also_profile:
         create_profile(new_account, **kwargs)
+    logger.debug('account created: %s', new_account)
     return new_account
 
 
@@ -32,4 +37,6 @@ def create_profile(existing_account, **kwargs):
     """
     Creates new Profile for given Account.
     """
-    return Profile.profiles.create(account=existing_account, **kwargs)
+    prof = Profile.profiles.create(account=existing_account, **kwargs)
+    logger.debug('profile created: %s', prof)
+    return prof

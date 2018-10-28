@@ -138,16 +138,11 @@ def list_domains(registrant_email):
     return existing_account.domains
 
 
-def create_nameserver(host, owner, epp_id=''):
+def create_nameserver(host, owner):
     """
     Create new nameserver. Do not assign nameserver to any domain.
     """
-    if epp_id:
-        existing_nameserver = NameServer.nameservers.filter(epp_id=epp_id).first()
-        if existing_nameserver:
-            logger.debug('nameserver with epp_id=%s already exist', epp_id)
-            return existing_nameserver
-    new_nameserver = NameServer.nameservers.create(host=host, owner=owner, epp_id=epp_id)
+    new_nameserver = NameServer.nameservers.create(host=host, owner=owner)
     logger.debug('nameserver created: %s', new_nameserver)
     return new_nameserver
 
@@ -165,8 +160,11 @@ def update_nameservers(domain_name, hosts):
     for i in range(len(hosts)):
         if hosts[i]:
             if existing_nameservers[i]:
-                existing_nameservers[i].host = hosts[i]
-                existing_nameservers[i].save()
+                if existing_nameservers[i].host != hosts[i]:
+                    logger.debug('nameserver host to be changed for %s : % -> %s',
+                                existing_domain, existing_nameservers[i].host, hosts[i])
+                    existing_nameservers[i].host = hosts[i]
+                    existing_nameservers[i].save()
             else:
                 new_nameserver = create_nameserver(host=hosts[i], owner=existing_domain.owner)
                 existing_domain.set_nameserver(i, new_nameserver)

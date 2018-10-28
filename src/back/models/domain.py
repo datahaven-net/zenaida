@@ -1,3 +1,5 @@
+import logging
+
 from django.db import models
 from django.core import exceptions
 
@@ -7,6 +9,8 @@ from back.models.zone import Zone
 from back.models.contact import Contact
 from back.models.registrar import Registrar
 from back.models.nameserver import NameServer
+
+logger = logging.getLogger(__name__)
 
 
 def validate(domain):
@@ -118,15 +122,19 @@ class Domain(models.Model):
         """
         if pos == 0:
             self.nameserver1 = nameserver
+            logger.debug('nameserver %s set for %s at position 1', nameserver, self)
             return
         if pos == 1:
             self.nameserver2 = nameserver
+            logger.debug('nameserver %s set for %s at position 2', nameserver, self)
             return
         if pos == 2:
             self.nameserver3 = nameserver
+            logger.debug('nameserver %s set for %s at position 3', nameserver, self)
             return
         if pos == 3:
             self.nameserver4 = nameserver
+            logger.debug('nameserver %s set for %s at position 4', nameserver, self)
             return
         raise ValueError('Invalid position for nameserver')
 
@@ -138,15 +146,19 @@ class Domain(models.Model):
         if pos not in list(range(4)):
             raise ValueError('Invalid position for nameserver')
         if pos == 0 and self.nameserver1:
+            logger.debug('nameserver %s to be erased for %s at position 1', self.nameserver1, self)
             self.nameserver1.delete()
             return True
         if pos == 1 and self.nameserver2:
+            logger.debug('nameserver %s to be erased for %s at position 2', self.nameserver1, self)
             self.nameserver2.delete()
             return True
         if pos == 2 and self.nameserver3:
+            logger.debug('nameserver %s to be erased for %s at position 3', self.nameserver1, self)
             self.nameserver3.delete()
             return True
         if pos == 3 and self.nameserver4:
+            logger.debug('nameserver %s to be erased for %s at position 4', self.nameserver1, self)
             self.nameserver4.delete()
             return True
         return False

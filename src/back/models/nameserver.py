@@ -18,11 +18,9 @@ class NameServer(models.Model):
     # domains3 -> back.models.domain.Domain
     # domains4 -> back.models.domain.Domain
 
-    host = models.CharField(max_length=255, unique=True, )
-
-    epp_id = models.CharField(max_length=32, unique=True, blank=True, default='')
+    host = models.CharField(max_length=255)
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='nameservers', )
 
     def __str__(self):
-        return 'NameServer({}:{})'.format(self.host, self.epp_id)
+        return 'NameServer({})'.format(self.host)

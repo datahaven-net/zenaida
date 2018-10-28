@@ -171,6 +171,13 @@ def get_csv_domain_info(csv_row, headers):
             contact_fax=csv_record.get('billing_fax_45', ''),                       # 6k.
             contact_email=csv_record.get('billing_email_41', '').lower(),           # 6l.
         ),
+    #--- nameservers
+        nameservers=[
+            csv_record.get('nameserver_1_12', ''),                                  # 7a.
+            csv_record.get('nameserver_2_13', ''),                                  # 8a.
+            csv_record.get('nameserver_3_14', ''),                                  # 9a.
+            csv_record.get('nameserver_4_15', ''),                                  # 10a.
+        ]
     )
     return info
 
@@ -212,6 +219,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     except Exception as exc:
         errors.append('failed processing csv record: ' + str(exc))
         return errors
+
     if not domains.is_valid(domain):
     #--- invalid domain name
         errors.append('invalid domain name')
@@ -238,6 +246,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     real_admin_email = csv_info['admin']['contact_email']
     real_tech_email = csv_info['tech']['contact_email']
     real_billing_email = csv_info['billing']['contact_email']
+    real_nameservers = csv_info['nameservers']
 
     known_expiry_date = None
     known_create_date = None
@@ -251,6 +260,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     known_admin_email = None
     known_tech_email = None
     known_billing_email = None
+    known_nameservers = []
 
     new_domain = None
     new_registrant_contact = None
@@ -281,6 +291,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         known_admin_email = None if not known_domain.contact_admin else known_domain.contact_admin.owner.email
         known_tech_email = None if not known_domain.contact_tech else known_domain.contact_tech.owner.email
         known_billing_email = None if not known_domain.contact_billing else known_domain.contact_billing.owner.email
+        known_nameservers = known_domain.list_hosts()
 
     if real_admin_contact_id or real_tech_contact_id or real_billing_contact_id:
         if known_domain:
@@ -402,7 +413,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             errors.append('%s: domain not exist' % domain)
             return errors
     #--- create new domain
-        new_domain = domains.create(
+        known_domain = domains.create(
             name=domain,
             owner=owner_account,
             expiry_date=real_expiry_date,
@@ -414,6 +425,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             contact_admin=new_admin_contact,
             contact_tech=new_tech_contact,
             contact_billing=new_billing_contact,
+            hosts=real_nameservers,
         )
 
     if known_expiry_date:
@@ -431,6 +443,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     else:
         if known_domain:
     #--- expiry date was not set
+            if dry_run:
+                errors.append('expiry date was not set for %s, real is %s' % (
+                    domain, real_expiry_date, ))
+                return errors
             known_domain.expiry_date = real_expiry_date
             known_domain.save()
             logger.debug('expiry date was not set, now updated for %s : %s', known_domain, real_expiry_date)
@@ -450,6 +466,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     else:
         if known_domain:
     #--- create date was not set
+            if dry_run:
+                errors.append('create date was not set for %s, real is %s' % (
+                    domain, real_create_date, ))
+                return errors
             known_domain.create_date = real_create_date
             known_domain.save()
             logger.debug('create date was not set, now updated for %s : %s', known_domain, real_create_date)
@@ -457,11 +477,19 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- check known epp_id
     if known_epp_id:
         if known_epp_id != real_epp_id:
+            if dry_run:
+                errors.append('epp_id not in sync for %s, known is %s, real is %s' % (
+                    domain, known_epp_id, real_epp_id, ))
+                return errors
             known_domain.epp_id = real_epp_id
             known_domain.save()
             logger.debug('known epp_id for %s updated : %s', known_domain, real_epp_id)
     else:
         if known_domain:
+            if dry_run:
+                errors.append('epp_id was not set for %s, real is %s' % (
+                    domain, real_epp_id, ))
+                return errors
             known_domain.epp_id = real_epp_id
             known_domain.save()
             logger.debug('epp_id was not set for %s, now updated : %s', known_domain, real_epp_id)
@@ -469,16 +497,33 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- check auth_key
     if known_auth_key:
         if known_auth_key != real_auth_key:
+            if dry_run:
+                errors.append('auth_key not in sync for %s, known is %s, real is %s' % (
+                    domain, known_auth_key, real_auth_key, ))
+                return errors
             known_domain.auth_key = real_auth_key
             known_domain.save()
             logger.debug('known auth_key for %s updated : %s', known_domain, real_auth_key)
     else:
         if known_domain:
+            if dry_run:
+                errors.append('auth_key was not set for %s, real is %s' % (
+                    domain, real_auth_key, ))
+                return errors
             known_domain.auth_key = real_auth_key
             known_domain.save()
             logger.debug('auth_key was not set for %s, now updated : %s', known_domain, real_auth_key)
 
-    # TODO: nameservers
+    #--- check nameservers
+    for i in range(4):
+        if real_nameservers[i] != known_nameservers[i]:
+            if dry_run:
+                errors.append('nameserver at position %s not in sync for %s, known is %s, real is %s' % (
+                    domain, known_nameservers[i], real_nameservers[i], ))
+                return errors
+
+    #--- update nameservers
+    domains.update_nameservers(domain, real_nameservers)
 
     if errors and dry_run:
         return errors

@@ -15,39 +15,39 @@ from back import users
 logger = logging.getLogger(__name__)
 
 
-def is_valid(domain, idn=False):
+def is_valid(domain_name, idn=False):
     """
     Return `True` if domain name is valid.
     """
     regexp = '^[\w\-\.]*$'
     regexp_IP = '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
-    if re.match(regexp, domain) is None:
+    if re.match(regexp, domain_name) is None:
         return False
-    if domain.startswith('-'):
+    if domain_name.startswith('-'):
         # -abcd.ai is not a valid name
         return False
-    if not idn and domain.count('--'):
+    if not idn and domain_name.count('--'):
         # IDN domains are not allowed
         return False
-    if len(domain) >= 4 and domain[2] == '.' and domain[1] == '-':
+    if len(domain_name) >= 4 and domain_name[2] == '.' and domain_name[1] == '-':
         # x-.com is not valid name
         return False
-    if domain.count('-.'):
+    if domain_name.count('-.'):
         # abcd-.com is not a valid name
         return False
-    if domain.startswith('.'):
+    if domain_name.startswith('.'):
         # .abc.com is not a valid name
         return False
-    if domain.endswith('.'):
+    if domain_name.endswith('.'):
         # abc.com. is not a valid name
         return False
-    if domain.count('_.'):
+    if domain_name.count('_.'):
         # xyz_.net is not a valid name
         return False
-    if domain.startswith('_'):
+    if domain_name.startswith('_'):
         # _asdf.org is not a valid name
         return False
-    if re.match(regexp_IP, domain.strip()) is not None:
+    if re.match(regexp_IP, domain_name.strip()) is not None:
         # must not look like IP address
         return False
     return True
@@ -72,7 +72,7 @@ def find(domain_name='', epp_id=''):
 
 
 def create(
-        name,
+        domain_name,
         owner,
         expiry_date=None,
         create_date=None,
@@ -81,14 +81,14 @@ def create(
         registrar=None,
         registrant=None,
         contact_admin=None,
-        contact_billing=None,
         contact_tech=None,
+        contact_billing=None,
         hosts=[],
     ):
     """
     Create new domain.
     """
-    if is_exist(domain_name=name, epp_id=epp_id):
+    if is_exist(domain_name=domain_name, epp_id=epp_id):
         raise ValueError('Domain already exists')
     if not create_date:
         create_date = timezone.now()
@@ -97,7 +97,7 @@ def create(
     if not registrant:
         registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
     new_domain = Domain(
-        name=name,
+        name=domain_name,
         owner=owner,
         expiry_date=expiry_date,
         create_date=create_date,
@@ -118,7 +118,7 @@ def create(
         new_domain.contact_tech = contact_tech
     if contact_billing:
         new_domain.contact_billing = contact_billing
-    host_position = 1
+    host_position = 0
     for host in hosts:
         new_nameserver = create_nameserver(host=host, owner=owner)
         new_domain.set_nameserver(host_position, new_nameserver)
@@ -140,7 +140,7 @@ def list_domains(registrant_email):
 
 def create_nameserver(host, owner, epp_id=''):
     """
-    Create new nameserver.
+    Create new nameserver. Do not assign nameserver to any domain.
     """
     if epp_id:
         existing_nameserver = NameServer.nameservers.filter(epp_id=epp_id).first()
@@ -150,3 +150,25 @@ def create_nameserver(host, owner, epp_id=''):
     new_nameserver = NameServer.nameservers.create(host=host, owner=owner, epp_id=epp_id)
     logger.debug('nameserver created: %s', new_nameserver)
     return new_nameserver
+
+
+def update_nameservers(domain_name, hosts):
+    """
+    Create or update nameservers hosts for given domain.
+    Value `hosts` is a list of 4 items.
+    None or empty string in the list means nameserver not set at given position.
+    """
+    existing_domain = find(domain_name=domain_name)
+    if not existing_domain:
+        raise ValueError('Domain not exist')
+    existing_nameservers = existing_domain.list_nameservers()
+    for i in range(len(hosts)):
+        if hosts[i]:
+            if existing_nameservers[i]:
+                existing_nameservers[i].host = hosts[i]
+                existing_nameservers[i].save()
+            else:
+                new_nameserver = create_nameserver(host=hosts[i], owner=existing_domain.owner)
+                existing_domain.set_nameserver(i, new_nameserver)
+        else:
+            existing_domain.clear_nameserver(i)

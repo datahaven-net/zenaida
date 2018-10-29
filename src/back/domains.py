@@ -158,4 +158,6 @@ def update_nameservers(domain_name, hosts):
         else:
             existing_domain.clear_nameserver(i)
             domain_modified = True
+    if domain_modified:
+        existing_domain.save()
     return domain_modified

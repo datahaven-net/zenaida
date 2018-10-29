@@ -525,8 +525,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
 
     #--- update nameservers
-    if domains.update_nameservers(domain, real_nameservers):
-        known_domain.save()
+    domains.update_nameservers(domain, real_nameservers)
 
     if errors and dry_run:
         return errors

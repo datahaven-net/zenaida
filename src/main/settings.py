@@ -71,7 +71,12 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
             'handlers': ['console', ]
-        }
+        },
+        'zepp.csv_import': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['console', ]
+        },
     }
 }
 

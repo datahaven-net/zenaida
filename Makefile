@@ -77,7 +77,7 @@ properties:
 $(PARAMS): | src/main/params.example.py
 	@cp $| $@
 
-venv: $(VENV_DEPLOY) $(PARAMS)
+venv: $(VENV_BASE) $(PARAMS)
 
 
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
@@ -220,7 +220,9 @@ todo: $(VENV_DEPLOY)
 
 
 graph_models: $(VENV_DEPLOY)
+	@$(PIP) install --upgrade pygraphviz
 	@$(PYTHON) src/manage.py graph_models -a -g -o graph_models.png
+	@$(PIP) uninstall --yes pygraphviz
 	@echo 'File graph_models.png created.'
 
 

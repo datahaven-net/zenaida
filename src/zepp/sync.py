@@ -12,3 +12,4 @@ def domain_sync(domain_name, raise_errors=False):
     domain_exists = zmaster.domain_check(domain_name, raise_errors=raise_errors)
     if domain_exists is None:
         return None
+    

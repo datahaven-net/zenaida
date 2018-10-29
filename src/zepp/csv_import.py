@@ -419,7 +419,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             contact_admin=new_admin_contact,
             contact_tech=new_tech_contact,
             contact_billing=new_billing_contact,
-            hosts=real_nameservers,
+            nameservers=real_nameservers,
         )
 
     if new_domain:

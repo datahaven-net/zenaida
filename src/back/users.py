@@ -21,12 +21,16 @@ def find_account(email):
     return Account.users.filter(email=email).first()
 
 
-def create_account(email, account_password=None, also_profile=True, **kwargs):
+def create_account(email, account_password=None, also_profile=True, is_active=False, **kwargs):
     """
     Creates a new user account with given email and also new Profile object for him.
     All `kwargs` will be passed as field values to the new Profile object. 
     """
-    new_account = Account.users.create_user(email, password=account_password)
+    new_account = Account.users.create_user(
+        email=email,
+        password=account_password,
+        is_active=is_active,
+    )
     if also_profile:
         create_profile(new_account, **kwargs)
     logger.debug('account created: %s', new_account)
@@ -40,3 +44,10 @@ def create_profile(existing_account, **kwargs):
     prof = Profile.profiles.create(account=existing_account, **kwargs)
     logger.debug('profile created: %s', prof)
     return prof
+
+
+def generate_password(length):
+    """
+    Call Django `make_random_password()` method.
+    """
+    return Account.users.make_random_password(length=length)

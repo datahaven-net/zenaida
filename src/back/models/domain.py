@@ -66,7 +66,7 @@ class Domain(models.Model):
         return '.'.join(self.name.split('.')[1:])
 
     def __str__(self):
-        return 'Domain({}:{})'.format(self.name, self.epp_id)
+        return 'Domain({}:{}:{})'.format(self.name, self.epp_id, self.owner.email)
 
     def list_hosts(self):
         """

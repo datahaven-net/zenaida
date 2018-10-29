@@ -182,7 +182,7 @@ def get_csv_domain_info(csv_row, headers):
     return info
 
 
-def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_contact_id, real_email):
+def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_contact_id, real_owner):
     errors = []
     to_be_created = False
     if known_epp_contact_id:
@@ -194,7 +194,7 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
         else:
             if not contacts.verify(
                 epp_id=real_epp_contact_id,
-                email=real_email,
+                owner=real_owner,
             ):
     #--- contact info is not matching
                 errors.append('%s: epp registrant ID found, but known info is not matching with csv record, known is %s, real is %s' % (
@@ -203,8 +203,8 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
     else:
     #--- contact not exist
         to_be_created = True
-    logger.debug('check contact known:%s real:%s email:%s : %s',
-                 known_epp_contact_id, real_epp_contact_id, real_email, to_be_created)
+    logger.debug('check contact known:%s real:%s owner:%s : %s',
+                 known_epp_contact_id, real_epp_contact_id, real_owner, to_be_created)
     return errors, to_be_created
 
 
@@ -258,6 +258,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     known_billing_contact_id = None
     known_nameservers = ['', ] * 4
 
+    new_domain = None
     new_registrant_contact = None
     new_admin_contact = None
     new_tech_contact = None
@@ -268,10 +269,16 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     need_tech_contact = False
     need_billing_contact = False
 
-    #--- account registrant check
     owner_account = users.find_account(real_registrant_email)
     if not owner_account:
-        owner_account = users.create_account(real_registrant_email)
+    #--- account check/create
+        new_password=users.generate_password(length=10)
+        owner_account = users.create_account(
+            email=real_registrant_email,
+            account_password=new_password,
+            is_active=True,
+        )
+        logger.info('generated new account and password for %s : %s', real_registrant_email, new_password)
 
     if known_domain:
         known_expiry_date = known_domain.expiry_date
@@ -300,7 +307,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             domain_name=domain,
             known_epp_contact_id=known_registrant_contact_id,
             real_epp_contact_id=real_registrant_contact_id,
-            real_email=real_registrant_email,
+            real_owner=owner_account,
         )
         if dry_run:
             errors.extend(_errs)
@@ -311,7 +318,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             domain_name=domain,
             known_epp_contact_id=known_admin_contact_id,
             real_epp_contact_id=real_admin_contact_id,
-            real_email=real_admin_email,
+            real_owner=owner_account,
         )
         if dry_run:
             errors.extend(_errs)
@@ -322,7 +329,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             domain_name=domain,
             known_epp_contact_id=known_tech_contact_id,
             real_epp_contact_id=real_tech_contact_id,
-            real_email=real_tech_email,
+            real_owner=owner_account,
         )
         if dry_run:
             errors.extend(_errs)
@@ -333,7 +340,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             domain_name=domain,
             known_epp_contact_id=known_billing_contact_id,
             real_epp_contact_id=real_billing_contact_id,
-            real_email=real_billing_email,
+            real_owner=owner_account,
         )
         if dry_run:
             errors.extend(_errs)
@@ -343,13 +350,12 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- registrant create
             new_registrant_contact = contacts.create(
                 epp_id=real_registrant_contact_id,
-                email=real_registrant_email,
+                owner=owner_account,
                 **csv_info['registrant'],
             )
         else:
             contacts.update(
                 epp_id=real_registrant_contact_id,
-                email=real_registrant_email,
                 **csv_info['registrant'],
             )
     
@@ -357,14 +363,13 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- admin contact create
             new_admin_contact = contacts.create(
                 epp_id=real_admin_contact_id,
-                email=real_admin_email,
+                owner=owner_account,
                 **csv_info['admin'],
             )
         else:
             if real_admin_contact_id and real_admin_email:
                 contacts.update(
                     epp_id=real_admin_contact_id,
-                    email=real_admin_email,
                     **csv_info['admin'],
                 )
 
@@ -372,14 +377,13 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- tech contact create
             new_tech_contact = contacts.create(
                 epp_id=real_tech_contact_id,
-                email=real_tech_email,
+                owner=owner_account,
                 **csv_info['tech'],
             )
         else:
             if real_tech_contact_id and real_tech_email:
                 contacts.update(
                     epp_id=real_tech_contact_id,
-                    email=real_tech_email,
                     **csv_info['tech'],
                 )
     
@@ -387,14 +391,13 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- billing contact create
             new_billing_contact = contacts.create(
                 epp_id=real_billing_contact_id,
-                email=real_billing_email,
+                owner=owner_account,
                 **csv_info['billing'],
             )
         else:
             if real_billing_contact_id and real_billing_email:
                 contacts.update(
                     epp_id=real_billing_contact_id,
-                    email=real_billing_email,
                     **csv_info['billing'],
                 )
     
@@ -404,7 +407,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             errors.append('%s: domain not exist' % domain)
             return errors
     #--- create new domain
-        known_domain = domains.create(
+        new_domain = domains.create(
             domain_name=domain,
             owner=owner_account,
             expiry_date=real_expiry_date,
@@ -418,6 +421,10 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             contact_billing=new_billing_contact,
             hosts=real_nameservers,
         )
+
+    if new_domain:
+    #--- DONE, new domain created
+        return []
 
     if known_expiry_date:
         dt = real_expiry_date - known_expiry_date
@@ -518,11 +525,13 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
 
     #--- update nameservers
-    domains.update_nameservers(domain, real_nameservers)
+    if domains.update_nameservers(domain, real_nameservers):
+        known_domain.save()
 
     if errors and dry_run:
         return errors
 
+    #--- DONE, existing domain updated
     return errors
 
 

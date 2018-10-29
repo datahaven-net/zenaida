@@ -2,8 +2,6 @@ import logging
 
 from back.models.contact import Contact
 
-from back import users
-
 logger = logging.getLogger(__name__)
 
 
@@ -14,7 +12,7 @@ def exists(epp_id):
     return bool(Contact.contacts.filter(epp_id=epp_id).first())
 
 
-def verify(epp_id, email):
+def verify(epp_id, email=None, owner=None):
     """
     Make sure that existing contact with given epp_id have same info.
     """
@@ -23,48 +21,33 @@ def verify(epp_id, email):
     cont = Contact.contacts.get(epp_id=epp_id)
     if email and cont.owner.email != email:
         return False
+    if owner and cont.owner.pk != owner.pk:
+        return False
     return True
 
 
-def create(email, epp_id='', account_password=None, **kwargs):
+def create(epp_id, owner, **kwargs):
     """
-    Creates new contact with given email, but only if Contact with same epp_id not exist yet.
-    If corresponding Account not exist yet it will be created together with new Profile.
-    Value `account_password` will be passed to `users.create_account()` method if new user to be created.
+    Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
     """
-    if epp_id:
-        existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
-        if existing_contact:
-            logger.debug('contact with epp_id=%s already exist', epp_id)
-            return existing_contact
-    existing_account = users.find_account(email)
-    if not existing_account:
-        existing_account = users.create_account(email, account_password=account_password)
-    new_contact = Contact.contacts.create(epp_id=epp_id, owner=existing_account)
+    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+    if existing_contact:
+        if existing_contact.owner.pk != owner.pk:
+            raise Exception('Invalid owner, existing contact have another owner already')
+        logger.debug('contact with epp_id=%s already exist', epp_id)
+        return existing_contact
+    new_contact = Contact.contacts.create(epp_id=epp_id, owner=owner, **kwargs)
     logger.debug('contact created: %s', new_contact)
     return new_contact
 
 
-def update(email=None, epp_id='', **kwargs):
+def update(epp_id, **kwargs):
     """
     Update given Contact with new field values.
     """
-    existing_epp_contact = None
-    if epp_id:
-        existing_epp_contact = Contact.contacts.filter(epp_id=epp_id).first()
-    existing_contacts = []
-    if email:
-        if existing_epp_contact:
-            if existing_epp_contact.owner.email != email:
-                raise Exception('Invalid email, existing contact have another owner already')
-            existing_contacts.append(existing_epp_contact)
-        else:
-            existing_contacts = Contact.contacts.filter(owner__email=email).all()
-    if not existing_contacts:
+    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+    if not existing_contact:
         raise Exception('Contact not found')
-    if len(existing_contacts) > 1:
-        raise Exception('Multiple contacts found')
-    target_contact = existing_contacts[0]
-    updated = Contact.contacts.filter(pk=target_contact.pk).update(**kwargs)
-    logger.debug('contact updated: %s', target_contact)
+    updated = Contact.contacts.filter(pk=existing_contact.pk).update(**kwargs)
+    logger.debug('contact updated: %s', existing_contact)
     return updated

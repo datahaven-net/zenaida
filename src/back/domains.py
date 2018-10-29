@@ -96,6 +96,11 @@ def create(
         raise ValueError('Must be set at least one of the domain contacts')
     if not registrant:
         registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
+    if not isinstance(registrar, Registrar):
+        registrar = Registrar.registrars.get_or_create(
+            epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
+        )[0]
+    zone = zones.make('.'.join(domain_name.split('.')[1:]))
     new_domain = Domain(
         name=domain_name,
         owner=owner,
@@ -103,13 +108,9 @@ def create(
         create_date=create_date,
         epp_id=epp_id,
         auth_key=auth_key,
+        registrar=registrar,
+        zone=zone,
     )
-    new_domain.zone = zones.make(new_domain.tld_zone)
-    if not isinstance(registrar, Registrar):
-        registrar = Registrar.registrars.get_or_create(
-            epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
-        )[0]
-    new_domain.registrar = registrar
     if registrant:
         new_domain.registrant = registrant
     if contact_admin:
@@ -157,6 +158,7 @@ def update_nameservers(domain_name, hosts):
     if not existing_domain:
         raise ValueError('Domain not exist')
     existing_nameservers = existing_domain.list_nameservers()
+    domain_modified = False
     for i in range(len(hosts)):
         if hosts[i]:
             if existing_nameservers[i]:
@@ -168,5 +170,8 @@ def update_nameservers(domain_name, hosts):
             else:
                 new_nameserver = create_nameserver(host=hosts[i], owner=existing_domain.owner)
                 existing_domain.set_nameserver(i, new_nameserver)
+                domain_modified = True
         else:
             existing_domain.clear_nameserver(i)
+            domain_modified = True
+    return domain_modified

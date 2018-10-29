@@ -207,12 +207,28 @@ dbshell: $(VENV_DEPLOY)
 	@$(PYTHON) src/manage.py dbshell
 
 
+show_urls: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py show_urls
+
+
+shell_plus: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py shell_plus
+
+
+todo: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py notes
+
+
+graph_models: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py graph_models -a -g -o graph_models.png
+	@echo 'File graph_models.png created.'
+
+
 ################################################
 # Setting up of different kinds of virtualenvs #
 ################################################
 
 $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
-	# REQUIREMENTS_TXT
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_BASE)
 	@rm -vf $(REQUIREMENTS_TXT)
@@ -221,42 +237,35 @@ $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 
 # these two are the main venvs
 $(VENV_SYSTEM_SITE_PACKAGES):
-	# VENV_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
 	@$(PYTHON_VERSION) -m venv venv
 	@touch $@
 
 $(VENV_NO_SYSTEM_SITE_PACKAGES):
-	# VENV_NO_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
 	@$(PYTHON_VERSION) -m venv venv
 	@touch $@
 
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
-	# VENV_DEPLOY
-	@$(PIP) install --upgrade pip
-	@$(PIP) install -r $(REQUIREMENTS_TXT)
+	@$(PIP) install -q --upgrade pip
+	@$(PIP) install -q -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
-	# VENV_BASE
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
-	# VENV_TEST
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TEST)
 	@touch $@
 
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
-	# VENV_TOX
 	@$(PIP) install --upgrade pip
 	@$(PIP) install tox
 	@touch $@
 
 $(VENV_DEV): $(VENV_TOX) $(VENV_BASE) $(VENV_TEST)
-	# VENV_DEV
 	@touch $@

@@ -1,6 +1,8 @@
 # Zenaida
 
-Open source domain registry system built on top of EPP protocol
+Open source domain registry system built on top of EPP protocol.
+Zenaida works as a "client" for EPP registry back-end system and provides on-line service for end-users who wish to register domains.
+Tested together with CoCCA backend software: https://cocca.org.nz/
 
 
 
@@ -311,6 +313,12 @@ Also you have to configure outgoing email channel to deliver messages. Different
 
 
 
+## Importing domains from CSV file
+
+
+
+
+
 ## Requirements Handling
 
 The project has automated handling of production requirements, the idea behind it is that
@@ -326,11 +334,13 @@ In case you need a specific version of a library, the protocol should be:
 For some more advanced uses, a manual edit of the requirements.txt can be done but make sure to document it somewhere because `make requirements.txt` *will* overwrite this file.
 
 
+
 # Testing against latest versions
 
 By default, `tox` and `make test` will only test against production requirements, in order to test against latest versions of the dependencies, there are two tox environments, `latest27` and `latest35`.
 
 They can be run via `tox -e latest27,latest35` or also with `make test_latest`
+
 
 
 ## Contributing

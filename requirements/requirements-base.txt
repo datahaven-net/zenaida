@@ -6,8 +6,10 @@ timeexecution
 psycopg2-binary
 uwsgi
 Django
+pygraphviz
 djangorestframework
 django-redis-cache
 django-bootstrap4
 django-nested-admin
 django-grappelli
+django-extensions

@@ -79,7 +79,6 @@ LOGGING = {
 #------------------------------------------------------------------------------
 #--- Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -99,7 +98,6 @@ AUTH_PASSWORD_VALIDATORS = [
 #------------------------------------------------------------------------------
 #--- Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -110,15 +108,14 @@ USE_TZ = True
 #------------------------------------------------------------------------------
 #--- Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
-
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 #------------------------------------------------------------------------------
 #--- Application definition
-
 INSTALLED_APPS = [
+    # nice django admin: https://django-grappelli.readthedocs.io/en/latest/
     'grappelli',
     'django.contrib.admin',
     'django.contrib.sessions',
@@ -128,8 +125,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    # improved amdin: https://django-nested-admin.readthedocs.io/en/latest/quickstart.html
     'nested_admin',
+    # html templates: https://django-bootstrap4.readthedocs.io/en/stable/quickstart.html
     'bootstrap4',
+    # usefull things: https://django-extensions.readthedocs.io/en/latest/command_extensions.html
+    'django_extensions',
     'accounts',
     'back',
     'front',
@@ -165,6 +166,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'wsgi.application'
+
 
 #------------------------------------------------------------------------------
 #--- Email settings
@@ -240,9 +242,9 @@ REST_FRAMEWORK = {
     ),
 }
 
+
 #------------------------------------------------------------------------------
 #--- USER LOGIN/AUTH/COOKIE
-
 ENABLE_USER_ACTIVATION = getattr(params, 'ENABLE_USER_ACTIVATION', True)
 LOGIN_VIA_EMAIL = True
 LOGIN_REDIRECT_URL = '/'
@@ -257,6 +259,15 @@ CSRF_COOKIE_NAME = 'zenaida_csrftoken'
 #--- CUSTOM USER MODEL
 # https://www.codingforentrepreneurs.com/blog/how-to-create-a-custom-django-user-model/
 AUTH_USER_MODEL = 'accounts.Account'
+
+
+#------------------------------------------------------------------------------
+#--- django-extensions graph models
+# https://django-extensions.readthedocs.io/en/latest/graph_models.html
+GRAPH_MODELS = {
+  'all_applications': True,
+  'group_models': True,
+}
 
 
 #------------------------------------------------------------------------------

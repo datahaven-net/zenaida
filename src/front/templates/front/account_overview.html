@@ -7,7 +7,7 @@
             {% if request.user.is_authenticated %}
 
                 <h1>{{ user.email }}</h1>
-                Current balance: <b>0.0</b>
+                Current balance: <b>{{ user.balance }} $ US</b>
                 <br>
                 Number of domains: <b>{{ domains|length }}</b>
                 <br>

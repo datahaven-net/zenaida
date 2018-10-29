@@ -150,15 +150,10 @@ def update_nameservers(domain_name, hosts):
     domain_modified = False
     for i in range(len(hosts)):
         if hosts[i]:
-            if existing_nameservers[i]:
-                if existing_nameservers[i].host != hosts[i]:
-                    logger.debug('nameserver host to be changed for %s : % -> %s',
-                                existing_domain, existing_nameservers[i].host, hosts[i])
-                    existing_nameservers[i].host = hosts[i]
-                    existing_nameservers[i].save()
-            else:
-                new_nameserver = create_nameserver(host=hosts[i], owner=existing_domain.owner)
-                existing_domain.set_nameserver(i, new_nameserver)
+            if existing_nameservers[i] != hosts[i]:
+                logger.debug('nameserver host to be changed for %s : %s -> %s',
+                             existing_domain, existing_nameservers[i], hosts[i])
+                existing_domain.set_nameserver(i, hosts[i])
                 domain_modified = True
         else:
             existing_domain.clear_nameserver(i)

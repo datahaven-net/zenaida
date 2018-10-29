@@ -67,7 +67,6 @@ class Account(AbstractUser):
     # profile -> back.models.profile.Profile
     # domains -> back.models.domain.Domain
     # contacts -> back.models.contact.Contact
-    # nameservers -> back.models.nameserver.NameServer
 
     email = models.EmailField(
         verbose_name='email address',

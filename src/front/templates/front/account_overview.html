@@ -11,10 +11,16 @@
                 <br>
                 Number of domains: <b>{{ domains|length }}</b>
                 <br>
+                Edit your <a href="{% url 'account_profile' %}">profile</a> info
+                <br>
+                <a href="{% url 'domain_lookup' %}">Lookup</a> existing domains
+                <br>
+                browse your <a href="{% url 'account_domains' %}">domains</a>
 
             {% else %}
                 <h1>Welcome to Zenaida!</h1>
                 Please <a href="{% url 'login' %}">Log In</a> to register a new domain name.
+
             {% endif %}
         </div>
     </div>

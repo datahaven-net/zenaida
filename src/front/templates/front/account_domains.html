@@ -6,7 +6,12 @@
         <div>
             {% if request.user.is_authenticated %}
             
-                Your domains: {{ domains }}
+                Your domains:
+                <ul>
+                {% for domain in domains %}
+                    <li><a href="{% url 'login' %}">{{domain.name}}</a></li>
+                {% endfor %}
+                </ul>
             
             {% else %}
                 <h1>Welcome to Zenaida!</h1>

@@ -54,11 +54,14 @@ def domain_lookup(request):
 
 
 def account_overview(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
-    return render(request, 'front/account_overview.html', {
-        'domains': domains.list_domains(request.user.email),
-    }, )
+    response = {
+        'domains': [],
+    }
+    if request.user.is_authenticated:
+        response = {
+            'domains': domains.list_domains(request.user.email),
+        }
+    return render(request, 'front/account_overview.html', response)
 
 
 def account_domains(request):

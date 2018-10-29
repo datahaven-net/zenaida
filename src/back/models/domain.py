@@ -8,7 +8,6 @@ from accounts.models.account import Account
 from back.models.zone import Zone
 from back.models.contact import Contact
 from back.models.registrar import Registrar
-from back.models.nameserver import NameServer
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +51,10 @@ class Domain(models.Model):
     contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, blank=True, )
     contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, blank=True, )
 
-    nameserver1 = models.ForeignKey(NameServer, on_delete=models.CASCADE, related_name='domains1', null=True, blank=True, )
-    nameserver2 = models.ForeignKey(NameServer, on_delete=models.CASCADE, related_name='domains2', null=True, blank=True, )
-    nameserver3 = models.ForeignKey(NameServer, on_delete=models.CASCADE, related_name='domains3', null=True, blank=True, )
-    nameserver4 = models.ForeignKey(NameServer, on_delete=models.CASCADE, related_name='domains4', null=True, blank=True, )
+    nameserver1 = models.CharField(max_length=256, blank=True, default='')
+    nameserver2 = models.CharField(max_length=256, blank=True, default='')
+    nameserver3 = models.CharField(max_length=256, blank=True, default='')
+    nameserver4 = models.CharField(max_length=256, blank=True, default='')
 
     @property
     def tld_name(self):
@@ -68,56 +67,36 @@ class Domain(models.Model):
     def __str__(self):
         return 'Domain({}:{}:{})'.format(self.name, self.epp_id, self.owner.email)
 
-    def list_hosts(self):
-        """
-        Return list of current hosts from NameServer objects.
-        Always returns list of 4 items, empty string means nameserver was not set.
-        """
-        l = ['', ] * 4
-        if self.nameserver1:
-            l[0] = self.nameserver1.host
-        if self.nameserver2:
-            l[1] = self.nameserver2.host
-        if self.nameserver3:
-            l[2] = self.nameserver3.host
-        if self.nameserver4:
-            l[3] = self.nameserver4.host
-        return l
-    
     def list_nameservers(self):
         """
-        Return list of current NameServer objects.
-        Always returns list of 4 items, None means nameserver was not set at given position.
+        Return list of current nameservers.
+        Always returns list of 4 items, empty string means nameserver was not set.
         """
-        l = [None, ] * 4
-        if self.nameserver1:
-            l[0] = self.nameserver1
-        if self.nameserver2:
-            l[1] = self.nameserver2
-        if self.nameserver3:
-            l[2] = self.nameserver3
-        if self.nameserver4:
-            l[3] = self.nameserver4
-        return l
+        return [
+            self.nameserver1,
+            self.nameserver2,
+            self.nameserver3,
+            self.nameserver4,
+        ]
 
     def get_nameserver(self, pos):
         """
-        Return NameServer object from given position.
-        Counting `pos` from 1 to 4.
+        Return nameserver value from given position.
+        Counting `pos` from 0 to 3.
         """
-        if pos == 1:
+        if pos == 0:
             return self.nameserver1
-        if pos == 2:
+        if pos == 1:
             return self.nameserver2
-        if pos == 3:
+        if pos == 2:
             return self.nameserver3
-        if pos == 4:
+        if pos == 3:
             return self.nameserver4
         raise ValueError('Invalid position for nameserver')
 
     def set_nameserver(self, pos, nameserver):
         """
-        Set NameServer object on given position.
+        Set nameserver on given position.
         Counting `pos` from 0 to 3.
         """
         if pos == 0:
@@ -140,25 +119,25 @@ class Domain(models.Model):
 
     def clear_nameserver(self, pos):
         """
-        Remove NameServer object at given position.
+        Set empty value for nameserver at given position.
         Counting `pos` from 0 to 3.
         """
         if pos not in list(range(4)):
             raise ValueError('Invalid position for nameserver')
         if pos == 0 and self.nameserver1:
             logger.debug('nameserver %s to be erased for %s at position 1', self.nameserver1, self)
-            self.nameserver1.delete()
+            self.nameserver1 = ''
             return True
         if pos == 1 and self.nameserver2:
-            logger.debug('nameserver %s to be erased for %s at position 2', self.nameserver1, self)
-            self.nameserver2.delete()
+            logger.debug('nameserver %s to be erased for %s at position 2', self.nameserver2, self)
+            self.nameserver2 = ''
             return True
         if pos == 2 and self.nameserver3:
-            logger.debug('nameserver %s to be erased for %s at position 3', self.nameserver1, self)
-            self.nameserver3.delete()
+            logger.debug('nameserver %s to be erased for %s at position 3', self.nameserver3, self)
+            self.nameserver3 = ''
             return True
         if pos == 3 and self.nameserver4:
-            logger.debug('nameserver %s to be erased for %s at position 4', self.nameserver1, self)
-            self.nameserver4.delete()
+            logger.debug('nameserver %s to be erased for %s at position 4', self.nameserver4, self)
+            self.nameserver4 = ''
             return True
         return False

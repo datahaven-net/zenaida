@@ -136,7 +136,7 @@ def list_domains(registrant_email):
     existing_account = users.find_account(registrant_email)
     if not existing_account:
         return []
-    return existing_account.domains
+    return list(existing_account.domains.all())
 
 
 def create_nameserver(host, owner):

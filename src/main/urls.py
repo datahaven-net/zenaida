@@ -51,15 +51,15 @@ auth_patterns = [
 ]
 
 patterns = [
-    path('', TemplateView.as_view(template_name="main/index.html"), name='index'),
+    # path('', TemplateView.as_view(template_name="main/index.html"), name='index'),
 
     path('profile/', front_views.account_profile, name='account_profile'),
-
-    path('overview/', front_views.account_overview, name='account_overview'),
 
     path('domains/', front_views.account_domains, name='account_domains'),
 
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
+
+    path('', front_views.account_overview, name='index'),
 
 ]
 

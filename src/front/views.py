@@ -26,10 +26,11 @@ def domain_create(request):
                 if is_exist:
                     messages.error(request, 'Domain <b>%s</b> already registered.' % form.domain_name)
                 else:
-                    domains.create(
-                        name=form.domain_name,
-                        owner=request.user,
-                    )
+                    # TODO: domain to be created
+#                     domains.create(
+#                         name=form.domain_name,
+#                         owner=request.user,
+#                     )
                     messages.error(request, 'New domain <b>%s</b> was created, you have one day to register it' % form.domain_name)
     return render(request, 'front/domain_create.html', {
         'form': form,
@@ -46,7 +47,10 @@ def domain_lookup(request):
         form = forms.DomainLookupForm(request.POST)
         if form.is_valid():
             result = zmaster.domain_check(domain=form.cleaned_data['domain_name'], return_string=True)
-    return render(request, 'front/domain_lookup.html', {'form': form, 'result': result, }, )
+    return render(request, 'front/domain_lookup.html', {
+        'form': form,
+        'result': result,
+    }, )
 
 
 def account_overview(request):
@@ -77,4 +81,6 @@ def account_profile(request):
             messages.error(request, 'Please correct the error below.')
     else:
         form = forms.AccountProfileForm(instance=request.user.profile)
-    return render(request, 'front/account_profile.html', {'form': form, }, )
+    return render(request, 'front/account_profile.html', {
+        'form': form,
+    }, )

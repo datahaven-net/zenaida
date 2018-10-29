@@ -7,7 +7,6 @@ from main import settings
 
 from back.models.domain import Domain
 from back.models.registrar import Registrar
-from back.models.nameserver import NameServer
 
 from back import zones
 from back import users
@@ -83,7 +82,7 @@ def create(
         contact_admin=None,
         contact_tech=None,
         contact_billing=None,
-        hosts=[],
+        nameservers=[],
     ):
     """
     Create new domain.
@@ -120,9 +119,8 @@ def create(
     if contact_billing:
         new_domain.contact_billing = contact_billing
     host_position = 0
-    for host in hosts:
-        new_nameserver = create_nameserver(host=host, owner=owner)
-        new_domain.set_nameserver(host_position, new_nameserver)
+    for nameserver in nameservers:
+        new_domain.set_nameserver(host_position, nameserver)
         host_position += 1
     new_domain.save()
     logger.debug('domain created: %s', new_domain)
@@ -137,15 +135,6 @@ def list_domains(registrant_email):
     if not existing_account:
         return []
     return list(existing_account.domains.all())
-
-
-def create_nameserver(host, owner):
-    """
-    Create new nameserver. Do not assign nameserver to any domain.
-    """
-    new_nameserver = NameServer.nameservers.create(host=host, owner=owner)
-    logger.debug('nameserver created: %s', new_nameserver)
-    return new_nameserver
 
 
 def update_nameservers(domain_name, hosts):

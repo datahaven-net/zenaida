@@ -77,7 +77,7 @@ properties:
 $(PARAMS): | src/main/params.example.py
 	@cp $| $@
 
-venv: $(VENV_DEPLOY) $(PARAMS)
+venv: $(VENV_BASE) $(PARAMS)
 
 
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)

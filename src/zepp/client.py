@@ -1,4 +1,5 @@
 import os
+import six
 import time
 import json
 import copy
@@ -7,6 +8,11 @@ import random
 import string
 import pika
 import uuid
+import logging
+
+#------------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
@@ -21,55 +27,18 @@ _rabbitmq_client_credentials_filename = "/home/zenaida/keys/rabbitmq_gate_creden
 
 #------------------------------------------------------------------------------
 
-LocaleInstalled = False
-
-def _install_locale():
-    """
-    Here is a small trick to refresh current default encoding.
-    """
-    global LocaleInstalled
-    if LocaleInstalled:
-        return False
-    try:
-        import sys
-        reload(sys)
-        if hasattr(sys, "setdefaultencoding"):
-            import locale
-            denc = locale.getpreferredencoding()
-            if denc != '':
-                sys.setdefaultencoding(denc)
-        LocaleInstalled = True
-    except:
-        pass
-    return LocaleInstalled
-
-
-def _enc(_s):
-    _install_locale()
-    s = '%s' % _s
-    if type(s) != unicode:
+def _enc(s):
+    if not isinstance(s, six.text_type):
         try:
-            s = unicode(s)
+            s = s.decode('utf-8')
         except:
-            try:
-                s = unicode(s, 'latin-1')
-            except:
-                try:
-                    s = unicode(s, 'iso-8859-1')
-                except:
-                    try:
-                        s = unicode(s, errors='replace')
-                    except:
-                        pass
-                    pass
-                pass
+            s = s.decode('utf-8', errors='replace')
     return s
 
 
 def _tr(_s):
     s = _enc(_s)
     try:
-        # TODO:
         from transliterate import translit
         s = translit(s, reversed=True)
     except:
@@ -232,7 +201,7 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
 #------------------------------------------------------------------------------
 
 def make_epp_id(email):
-    rand4bytes = ''.join([random.choice(string.letters + string.digits) for _ in range(4)])
+    rand4bytes = ''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(4)])
     return email.replace('.', '').split('@')[0][:6] + str(int(time.time() * 100.0))[6:] + rand4bytes.lower()
 
 #------------------------------------------------------------------------------

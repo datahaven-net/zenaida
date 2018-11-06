@@ -1,7 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.generic import TemplateView
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.conf import settings
 
 from back import domains
+from back import contacts
 from front import forms
 from zepp import zmaster
 
@@ -87,3 +93,25 @@ def account_profile(request):
     return render(request, 'front/account_profile.html', {
         'form': form,
     }, )
+
+
+class ContactsView(TemplateView):
+    template_name = 'front/account_contacts.html'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        self.extra_context = {
+            'contacts': request.user.contacts.all(),
+        }
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        from automats import contact_synchronizer
+        contact_id = request.POST['contact_id']
+        contact_object = contacts.by_id(contact_id)
+        cs = contact_synchronizer.ContactSynchronizer(
+            log_events=settings.DEBUG,
+            log_transitions=settings.DEBUG,
+        )
+        cs.event('run', contact_object)
+        return JsonResponse({'contact_id': contact_id, })

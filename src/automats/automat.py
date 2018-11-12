@@ -110,9 +110,11 @@ def clear_object(index):
     """
     global _Objects
     if _Objects is None:
-        return
+        return False
     if index in _Objects:
         del _Objects[index]
+        return True
+    return False
 
 
 def objects():
@@ -210,8 +212,9 @@ class Automat(object):
         self.debug_level = debug_level
         self.log_events = log_events
         self.log_transitions = log_transitions
+        self._state_callbacks = {}
         self.init(**kwargs)
-        set_object(self.index, self)
+        self.register()
         self.log(self.debug_level,  'CREATED AUTOMAT %s with index %d' % (str(self), self.index))
 
     def __del__(self):
@@ -243,6 +246,20 @@ class Automat(object):
         """
         return '%s(%s)' % (self.id, self.state)
 
+    def register(self):
+        """
+        Put reference to this automat instance into a global dictionary.
+        """
+        set_object(self.index, self)
+        return self.index
+
+    def unregister(self):
+        """
+        Removes reference to this instance from global dictionary tracking all state machines.
+        """
+        clear_object(self.index)
+        return True
+
     def init(self, **kwargs):
         """
         Define this method in subclass to execute some code when creating an object.
@@ -252,7 +269,7 @@ class Automat(object):
         """
         Define this method in subclass to execute some code when destroying an object.
         """
-        
+
     def destroy(self, **kwargs):
         """
         Call this method to remove the state machine from the ``objects()`` dictionary
@@ -261,7 +278,7 @@ class Automat(object):
         """
         self.log(self.debug_level, 'destroying %r, refs=%d' % (self, sys.getrefcount(self)), )
         self.shutdown(**kwargs)
-        objects().pop(self.index)
+        self.unregister()
 
     def state_changed(self, oldstate, newstate, event, *args, **kwargs):
         """
@@ -292,7 +309,7 @@ class Automat(object):
     def event(self, event, *args, **kwargs):
         """
         Use that method to send ``event`` directly to the state machine.
-        It will execute ``self.A()`` immediately. 
+        It will execute ``self.A()`` immediately, run callbacks and loggers. 
         """
         global _StateChangedCallback
         if _LogEvents:
@@ -324,6 +341,7 @@ class Automat(object):
                 _StateChangedCallback(self.index, self.id, self.name, old_state, new_state)
         else:
             self.state_not_changed(self.state, event, *args, **kwargs)
+        self.execute_state_changed_callbacks(old_state, new_state, event, *args, **kwargs)
 
     def log(self, level, text):
         """
@@ -356,3 +374,77 @@ class Automat(object):
             _LogsCount += 1
         else:
             logger.debug((' ' * level) + text)
+
+    def add_state_changed_callback(self, cb, oldstate=None, newstate=None, callback_id=None):
+        """
+        You can add a callback function to be executed when state machine
+        reaches given scenario, it will be called with such arguments:
+
+            cb(oldstate, newstate, event, *args, **kwargs)
+
+        For example, method_B() will be called when machine_A become "ONLINE":
+
+            machine_A.add_state_changed_callback(method_B, None, "ONLINE")
+
+        If you set "None" to both arguments,
+        the callback will be executed every time when the state gets changed:
+
+            machineB.add_state_changed_callback(method_B)
+
+        """
+        key = (oldstate, newstate)
+        if key not in self._state_callbacks:
+            self._state_callbacks[key] = []
+        if cb not in self._state_callbacks[key]:
+            self._state_callbacks[key].append((callback_id, cb))
+
+    def remove_state_changed_callback(self, cb=None, callback_id=None):
+        """
+        Remove given callback from the state machine.
+        """
+        removed_count = 0
+        for key in list(self._state_callbacks.keys()):
+            cb_list = self._state_callbacks[key]
+            for cb_tupl in cb_list:
+                cb_id_, cb_ = cb_tupl
+                if cb and cb == cb_:
+                    self._state_callbacks[key].remove(cb_tupl)
+                    removed_count += 1
+                if callback_id and callback_id == cb_id_:
+                    self._state_callbacks[key].remove(cb_tupl)
+                    removed_count += 1
+                if len(self._state_callbacks[key]) == 0:
+                    self._state_callbacks.pop(key)
+        return removed_count
+
+    def remove_state_changed_callback_by_state(self, oldstate=None, newstate=None):
+        """
+        Removes all callback methods with given condition.
+
+        This is useful if you use ``lambda x: do_somethig()`` to catch
+        the moment when state gets changed.
+        """
+        for key in list(self._state_callbacks.keys()):
+            if key == (oldstate, newstate):
+                self._state_callbacks.pop(key)
+                break
+
+    def execute_state_changed_callbacks(self, oldstate, newstate, event, *args, **kwargs):
+        """
+        Compare conditions and execute state changed callback methods matching criteria.
+        """
+        for key, cb_list in self._state_callbacks.items():
+            old, new = key
+            catched = False
+            if old is None and new is None:
+                catched = True
+            elif old is None and new == newstate and newstate != oldstate:
+                catched = True
+            elif new is None and old == oldstate and newstate != oldstate:
+                catched = True
+            elif old == oldstate and new == newstate:
+                catched = True
+            if catched:
+                for cb_tupl in cb_list:
+                    _, cb = cb_tupl
+                    cb(oldstate, newstate, event, *args, **kwargs)

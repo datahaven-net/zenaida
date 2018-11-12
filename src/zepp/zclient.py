@@ -1,4 +1,3 @@
-import os
 import six
 import time
 import json
@@ -16,14 +15,10 @@ logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
+from django.conf import settings
+
 from zepp import xml2json
-from zepp.exceptions import EPPResponseFailed, EPPBadResponse
-
-#------------------------------------------------------------------------------
-
-_log_filename = "/home/zenaida/logs/zepp_client"
-_error_log_filename = "/home/zenaida/logs/zepp_client.err"
-_rabbitmq_client_credentials_filename = "/home/zenaida/keys/rabbitmq_gate_credentials.txt"
+from zepp import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -50,49 +45,13 @@ def _tr(_s):
 class XML2JsonOptions(object):
     pretty = True
 
-#------------------------------------------------------------------------------
-
-def log_epp_errors(epp_errors=[]):
-    global _error_log_filename
-    if not epp_errors:
-        epp_errors = [traceback.format_exc(), ]
-    try:
-        fout = open(_error_log_filename, 'a')
-        for err in epp_errors:
-            fout.write('\n%s\n%s\n' % (time.strftime('%m/%d %H:%M:%S'), err))
-        fout.flush()
-        os.fsync(fout)
-        fout.close()
-    except:
-        try:
-            fout.close()  # make sure file gets closed
-        except:
-            pass
-    return
-
-
-def epplog(txt):
-    global _log_filename
-    try:
-        f = open(_log_filename, 'a')
-        f.write(time.strftime('%m/%d %H:%M:%S') + ' ' + txt + '\n')
-        f.flush()
-        os.fsync(f.fileno())
-        f.close()
-    except:
-        try:
-            f.close()  # make sure file gets closed
-        except:
-            pass
-    return
 
 #------------------------------------------------------------------------------
-
 
 class RPCClient:
     def __init__(self):
-        global _rabbitmq_client_credentials_filename
-        _host, _port, _username, _password = open(_rabbitmq_client_credentials_filename, 'r').read().strip().split(' ')
+        secret = open(settings.RABBITMQ_CLIENT_CREDENTIALS_FILENAME, 'r').read()
+        _host, _port, _username, _password = secret.strip().split(' ')
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=_host,
@@ -152,20 +111,21 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
     try:
         json_input = json.dumps(json_request)
     except Exception as exc:
-        raise EPPBadResponse('wrong json input %s : %s' % (str(exc), json_request))
+        logger.exception('epp request failed, wrong json input')
+        raise zerrors.EPPBadResponse('wrong json input %s : %s' % (str(exc), json_request))
 
     if logs:
-        epplog('>>> ' + json_input)
+        logger.info('>>> %s\n' % json_input)
 
     try:
         out = do_rpc_request(json_request)
     except Exception as exc:
-        epplog('!!! ' + traceback.format_exc())
-        raise EPPBadResponse('epp request failed: %s' % str(exc))
+        logger.exception('epp request failed, unexpected error')
+        raise zerrors.EPPBadResponse('epp request failed: %s' % str(exc))
 
     if not out:
-        epplog('!!! EMPTY response from epp_gate, connection error')
-        raise EPPBadResponse('epp request failed: empty response, connection error')
+        logger.error('empty response from epp_gate, connection error')
+        raise zerrors.EPPBadResponse('epp request failed: empty response, connection error')
 
     json_output = None
     if unserialize:
@@ -175,7 +135,8 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             except UnicodeEncodeError:
                 json_output = json.loads(xml2json.xml2json(out.encode('ascii', errors='ignore'), XML2JsonOptions(), strip_ns=1, strip=1))
         except Exception as exc:
-            raise EPPBadResponse('epp response unserialize failed: %s' % traceback.format_exc())
+            raise zerrors.EPPBadResponse('epp response unserialize failed: %s' % traceback.format_exc())
+
     if raise_for_result:
         if json_output:
             try:
@@ -183,19 +144,21 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                 msg = json_output['epp']['response']['result']['msg'].replace('Command failed;', '')
             except:
                 if logs:
-                    epplog('ERROR: ' + json_output)
-                raise EPPBadResponse('wrong response, response code not found')
+                    logger.error('bad formatted response: ' + json_output)
+                raise zerrors.EPPBadResponse('bad formatted response, response code not found')
             if code not in ['1000', '1300', '1301', ]:
                 if logs:
-                    epplog('FAILED: ' + json.dumps(json_output, indent=2))
-                raise EPPResponseFailed(message=msg, code=code)
+                    logger.error('response code failed: ' + json.dumps(json_output, indent=2))
+                raise zerrors.EPPResponseFailed(message=msg, code=code)
         else:
             if out.count('Command completed successfully') == 0:
                 if logs:
-                    epplog('FAILED: ' + json.dumps(json_output, indent=2))
-                raise EPPResponseFailed('Command failed')
+                    logger.error('response message failed: ' + json.dumps(json_output, indent=2))
+                raise zerrors.EPPResponseFailed('Command failed')
+
     if logs:
-        epplog('<<< ' + json.dumps(json_output, indent=2) + '\n\n')
+        logger.info('<<< %s\n' % json.dumps(json_output, indent=2))
+
     return json_output or out
 
 #------------------------------------------------------------------------------
@@ -471,6 +434,15 @@ def cmd_contact_update(contact_id, email=None, voice=None, fax=None, auth_info=N
             loc['address']['street'][i] = '%s' % _enc(loc['address']['street'][i])
         cmd['args']['contacts'].append(loc)
     return run(cmd, **args)
+
+
+def cmd_contact_delete(contact_id, **args):
+    return run({
+        'cmd': 'contact_delete',
+        'args': {
+            'contact': contact_id,
+        },
+    }, **args)
 
 #------------------------------------------------------------------------------
 

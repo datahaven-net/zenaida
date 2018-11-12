@@ -8,6 +8,7 @@
 Zenaida contact_synchronizer() Automat
 
 EVENTS:
+    * :red:`error`
     * :red:`response`
     * :red:`run`
 """
@@ -18,7 +19,8 @@ from automats import automat
 
 from back import contacts
 
-from zepp import client
+from zepp import zclient
+from zepp import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -59,46 +61,54 @@ class ContactSynchronizer(automat.Automat):
         if self.state == 'AT_STARTUP':
             if event == 'run' and not self.isKnownEPPid(*args, **kwargs):
                 self.state = 'CONTACT_CREATE'
+                self.doInit(*args, **kwargs)
                 self.doPrepareCreate(*args, **kwargs)
                 self.doSendContactCreate(*args, **kwargs)
             elif event == 'run' and self.isKnownEPPid(*args, **kwargs):
                 self.state = 'CONTACT_UPDATE'
+                self.doInit(*args, **kwargs)
                 self.doPrepareUpdate(*args, **kwargs)
                 self.doSendContactUpdate(*args, **kwargs)
         #---CONTACT_RECREATE---
         elif self.state == 'CONTACT_RECREATE':
-            if event == 'response' and not self.isCode(1000):
+            if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
                 self.state = 'FAILED'
                 self.doReportFailed(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000):
+            elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DONE'
+                self.doWriteDB(*args, **kwargs)
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
         #---CONTACT_UPDATE---
         elif self.state == 'CONTACT_UPDATE':
-            if event == 'response' and not self.isCode(1000):
-                self.state = 'FAILED'
-                self.doReportFailed(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000):
+            if event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DONE'
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-        #---CONTACT_CREATE---
-        elif self.state == 'CONTACT_CREATE':
-            if event == 'response' and self.isCode(2303):
-                self.state = 'DONE'
-                self.doReportDone(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and not self.isCode(1000) and not self.isCode(2303):
+            elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2303, *args, **kwargs) ):
                 self.state = 'FAILED'
                 self.doReportFailed(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(2303):
+            elif event == 'response' and self.isCode(2303, *args, **kwargs):
                 self.state = 'CONTACT_RECREATE'
                 self.doPrepareRetry(*args, **kwargs)
                 self.doSendContactCreate(*args, **kwargs)
+        #---CONTACT_CREATE---
+        elif self.state == 'CONTACT_CREATE':
+            if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2303, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportFailed(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(2303, *args, **kwargs):
+                self.state = 'CONTACT_RECREATE'
+                self.doPrepareRetry(*args, **kwargs)
+                self.doSendContactCreate(*args, **kwargs)
+            elif event == 'response' and self.isCode(1000, *args, **kwargs):
+                self.state = 'DONE'
+                self.doWriteDB(*args, **kwargs)
+                self.doReportDone(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---FAILED---
         elif self.state == 'FAILED':
             pass
@@ -113,12 +123,24 @@ class ContactSynchronizer(automat.Automat):
         """
         return args[0].epp_id != ''
 
+    def isCode(self, *args, **kwargs):
+        """
+        Condition method.
+        """
+        return args[0] == int(args[1]['epp']['response']['result']['@code'])
+
+    def doInit(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.target_contact = args[0]
+
     def doPrepareCreate(self, *args, **kwargs):
         """
         Action method.
         """
         self.contact_info = contacts.to_dict(args[0])
-        self.contact_info['id'] = client.make_epp_id(self.contact_info['email'])
+        self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email'])
 
     def doPrepareUpdate(self, *args, **kwargs):
         """
@@ -133,62 +155,71 @@ class ContactSynchronizer(automat.Automat):
         """
         # small workaround for situations when that contact already exists on the server,
         # epp_id is generated randomly so there is a chance you hit already existing object
-        self.contact_info['id'] = client.make_epp_id('a' + self.contact_info['email'])
+        self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email']) + 'a'
 
     def doSendContactCreate(self, *args, **kwargs):
         """
         Action method.
         """
         try:
-            response = client.cmd_contact_create(
+            response = zclient.cmd_contact_create(
                 contact_id=self.contact_info['id'],
                 email=self.contact_info['email'],
                 voice=self.contact_info['voice'],
                 fax=self.contact_info['fax'],
                 # auth_info=auth_info,
                 contacts_list=self.contact_info['contacts'],
+                raise_for_result=False,
             )
-        except client.EPPResponseFailed as exc:
-            self.log(self.debug_level, 'Exception in doSendContactCreate: %r' % exc)
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doSendContactCreate: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)
-#             if ret['epp']['response']['result']['@code'] != '1000':
-#                 if ret['epp']['response']['result']['@code'] != '2302':
-#                     raise epp_client.EPPCommandFailed(message='EPP contact_create failed with error code: %s' % (
-#                         ret['epp']['response']['result']['@code'], ))
 
     def doSendContactUpdate(self, *args, **kwargs):
         """
         Action method.
         """
         try:
-            response = client.cmd_contact_update(
+            response = zclient.cmd_contact_update(
                 contact_id=self.contact_info['id'],
                 email=self.contact_info['email'],
                 voice=self.contact_info['voice'],
                 fax=self.contact_info['fax'],
                 # auth_info=auth_info,
                 contacts_list=self.contact_info['contacts'],
+                raise_for_result=False,
             )
-        except client.EPPResponseFailed as exc:
-            self.log(self.debug_level, 'Exception in doSendContactCreate: %r' % exc)
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doSendContactUpdate: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)
+
+    def doWriteDB(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.target_contact.epp_id = args[0]['epp']['response']['resData']['creData']['id']
+        self.target_contact.save()
 
     def doReportDone(self, *args, **kwargs):
         """
         Action method.
         """
+        # TODO: log some positive history in the DB here
 
     def doReportFailed(self, *args, **kwargs):
         """
         Action method.
         """
+        # TODO: log error in the history here
 
     def doDestroyMe(self, *args, **kwargs):
         """
         Remove all references to the state machine object to destroy it.
         """
         self.destroy(**kwargs)
+
+

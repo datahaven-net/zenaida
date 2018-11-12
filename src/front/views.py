@@ -52,7 +52,10 @@ def domain_lookup(request):
     else:
         form = forms.DomainLookupForm(request.POST)
         if form.is_valid():
-            result = zmaster.domain_check(domain=form.cleaned_data['domain_name'], return_string=True)
+            result = zmaster.domain_check(
+                domain_name=form.cleaned_data['domain_name'],
+                return_string=True,
+            )
     return render(request, 'front/domain_lookup.html', {
         'form': form,
         'result': result,

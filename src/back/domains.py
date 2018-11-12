@@ -2,8 +2,7 @@ import logging
 import re
 
 from django.utils import timezone
-
-from main import settings
+from django.conf import settings
 
 from back.models.domain import Domain
 from back.models.registrar import Registrar

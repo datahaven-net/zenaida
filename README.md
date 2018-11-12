@@ -55,7 +55,7 @@ Create DB and user:
 
 To be abe to run same code on production machine as well as locally on your laptop you can use isolated development settings, configure this by setting `src/main/params.py` file:
 
-        cp src/main/params.example.py src/main/params.py
+        cp src/main/params_example.py src/main/params.py
         nano src/main/params.py
 
 
@@ -167,6 +167,9 @@ At any moment you can gracefully respawn Zenaida process manually by "touching" 
 
 Your live server should be up and running now, navigate your browser to http://www.yourdomain.com
 
+But you will need a to do a bit more configurations on Production server later on, read more about that bellow after you finish preparing other parts of the system.
+
+
 
 ## Install Perl and required modules
 
@@ -262,7 +265,7 @@ Before continue further make sure you decreased access permissions to your secre
 
 Now we need to be sure that "EPP Gate" process is configured correctly, lets execute Perl script directly:
 
-        perl proc/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt
+        perl bin/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt
         ...
         Sat May 19 20:49:17 2018: Connecting to RabbitMQ server at localhost:5672 with username: <rabbitmq_user>
         Sat May 19 20:49:17 2018:  [x] Awaiting RPC requests
@@ -270,7 +273,7 @@ Now we need to be sure that "EPP Gate" process is configured correctly, lets exe
 
 Keep it running in the current terminal and open another console window to be able to fire real-time EPP requests towards given EPP server:
 
-        venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.client; print(zepp.client.cmd_domain_check(["testdomain.com", ]))'
+        venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.zclient; print(zepp.zclient.cmd_domain_check(["testdomain.com", ]))'
 
 
 If RabbitMQ and Zenaida EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
@@ -291,7 +294,22 @@ Then you can stop/start the service in a such way:
 
 You can always check current situation with:
 
-        systemctl status zenaida-gate.service 
+        systemctl status zenaida-gate.service
+
+
+Now it is time to configure access to EPP Gate from Django side - it will use RabbitMQ server as a client to send/receive EPP XML messages.
+
+First place your RabbitMQ client credentials in another file in your `keys` folder:
+
+        echo "localhost 5672 zenaida <password 1>" > /home/zenaida/keys/rabbitmq_client_credentials.txt
+
+
+Edit file `src/main/params.py` and add such line:
+
+        RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys/rabbitmq_client_credentials.txt'
+
+
+If all components was set up correctly and running you should be able to use most of Zenaida functionality now. For example you can lookup some domains by going to http://www.yourdomain.com/lookup/ in your web browser and use Domain Search form.
 
 
 
@@ -315,7 +333,9 @@ Also you have to configure outgoing email channel to deliver messages. Different
 
 ## Importing domains from CSV file
 
+It is possible to export multiple domains details from CoCCA server dashboard into single .csv file. Zenaida can read such format and load those domains easily. This way you can run initial import before GoLive with new Zenaida web-site:
 
+        venv/bin/python src/manage.py csv_import domains.csv 
 
 
 

@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
-from django.views.generic import TemplateView
-
 from django.urls import path
 from django.conf.urls import include
 
@@ -52,6 +50,8 @@ auth_patterns = [
 
 patterns = [
     path('profile/', front_views.account_profile, name='account_profile'),
+
+    path('contacts/', front_views.ContactsView.as_view(), name='account_contacts'),
 
     path('domains/', front_views.account_domains, name='account_domains'),
 

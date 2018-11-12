@@ -2,7 +2,7 @@ import logging
 
 from back.models.zone import Zone
 
-from main import settings
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 

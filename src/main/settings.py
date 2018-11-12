@@ -36,7 +36,7 @@ CACHE_PREFIX = 'zenaida'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-SECRET_KEY
-SECRET_KEY = getattr(params, 'SECRET_KEY', 'must be declared in src/main/params.py directly!!!')
+SECRET_KEY = getattr(params, 'SECRET_KEY', 'must be declared in src/main/params.py directly  !')
 
 ALLOWED_HOSTS = ['*']
 
@@ -55,7 +55,10 @@ LOGGING = {
     },
     'formatters': {
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(levelname)s %(message)s',
+        },
+        'timestamped': {
+            'format': '%(levelname)s %(asctime)s %(message)s',
         },
     },
     'handlers': {
@@ -64,6 +67,14 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
             'filters': [],
+        },
+        'epp': {
+            'level': 'DEBUG',
+            'class' : 'logging.handlers.RotatingFileHandler',
+            'filename': getattr(params, 'EPP_LOG_FILENAME'),
+            'maxBytes' : 1024*1024*10,  # 10MB
+            'backupCount' : 10,
+            'formatter': 'timestamped',
         },
     },
     'loggers': {
@@ -77,9 +88,19 @@ LOGGING = {
             'propagate': False,
             'handlers': ['console', ]
         },
+        'zepp.zclient': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['epp', ]
+        },
+        'pika': {
+            'propagate': False,
+        },
     }
 }
 
+# if DEBUG and os.environ.get('RUN_MAIN', None) != 'true':
+#     LOGGING = {}
 
 #------------------------------------------------------------------------------
 #--- Password validation
@@ -250,7 +271,7 @@ REST_FRAMEWORK = {
 
 #------------------------------------------------------------------------------
 #--- USER LOGIN/AUTH/COOKIE
-ENABLE_USER_ACTIVATION = getattr(params, 'ENABLE_USER_ACTIVATION', True)
+ENABLE_USER_ACTIVATION = True
 LOGIN_VIA_EMAIL = True
 LOGIN_REDIRECT_URL = '/'
 
@@ -277,5 +298,7 @@ GRAPH_MODELS = {
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
-DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_default_registrar')
-SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', 'org', ])
+LOADED_OK = 'OK'
+DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID')
+SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES')
+RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'RABBITMQ_CLIENT_CREDENTIALS_FILENAME')

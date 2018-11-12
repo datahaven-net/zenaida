@@ -74,7 +74,7 @@ clean: pyclean docsclean
 properties:
 	@echo "{\"artifact\": \"$(ARTIFACT)\", \"version\": \"$(VSN)\"}"
 
-$(PARAMS): | src/main/params.example.py
+$(PARAMS): | src/main/params_example.py
 	@cp $| $@
 
 venv: $(VENV_BASE) $(PARAMS)

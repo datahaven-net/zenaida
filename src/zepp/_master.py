@@ -10,7 +10,7 @@ from email.utils import parsedate, formatdate
 #------------------------------------------------------------------------------
 
 from zepp import client as epp_client
-from zepp.client import EPPBadResponse, EPPCommandFailed, EPPCommandInvalid, EPPResponseFailed
+from zepp.zclient import EPPBadResponse, EPPCommandFailed, EPPCommandInvalid, EPPResponseFailed
 
 #------------------------------------------------------------------------------
 

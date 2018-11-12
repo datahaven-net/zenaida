@@ -1,3 +1,7 @@
+# Zenaida
+keys.local/
+automats/*.~vsd
+
 # Created by https://www.gitignore.io/api/pycharm,osx,linux,virtualenv,python,vim
 
 src/static/*

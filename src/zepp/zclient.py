@@ -48,20 +48,26 @@ class XML2JsonOptions(object):
 
 #------------------------------------------------------------------------------
 
-class RPCClient:
+class RPCClient(object):
+
     def __init__(self):
         secret = open(settings.RABBITMQ_CLIENT_CREDENTIALS_FILENAME, 'r').read()
         _host, _port, _username, _password = secret.strip().split(' ')
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=_host,
-                port=int(_port),
-                credentials=pika.credentials.PlainCredentials(
-                    username=_username,
-                    password=_password,
-                ),
+        
+        try:
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=_host,
+                    port=int(_port),
+                    credentials=pika.credentials.PlainCredentials(
+                        username=_username,
+                        password=_password,
+                    ),
+                )
             )
-        )
+        except pika.exceptions.ConnectionClosed as exc:
+            raise zerrors.EPPConnectionFailed(str(exc))
+
         self.connection.add_timeout(5, self.on_timeout)
 
         self.channel = self.connection.channel()
@@ -85,7 +91,7 @@ class RPCClient:
     def request(self, query):
         self.reply = None
         self.corr_id = str(uuid.uuid4())
-        self.channel.basic_publish(
+        if not self.channel.basic_publish(
             exchange='',
             routing_key='epp_messages',
             properties=pika.BasicProperties(
@@ -93,7 +99,8 @@ class RPCClient:
                 correlation_id=self.corr_id,
             ),
             body=str(query)
-        )
+        ):
+            raise zerrors.EPPConnectionFailed('failed publishing epp request')
         while self.reply is None:
             self.connection.process_data_events()
         return self.reply
@@ -111,16 +118,19 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
     try:
         json_input = json.dumps(json_request)
     except Exception as exc:
-        logger.exception('epp request failed, wrong json input')
-        raise zerrors.EPPBadResponse('wrong json input %s : %s' % (str(exc), json_request))
+        logger.exception('epp request failed, invalid json input')
+        raise zerrors.EPPBadResponse('epp request failed, invalid json input')
 
     if logs:
         logger.info('>>> %s\n' % json_input)
 
     try:
         out = do_rpc_request(json_request)
+    except zerrors.EPPError as exc:
+        logger.exception('epp request failed with known error: %s' % exc)
+        raise exc
     except Exception as exc:
-        logger.exception('epp request failed, unexpected error')
+        logger.exception('epp request failed, unexpected error: %s' % exc)
         raise zerrors.EPPBadResponse('epp request failed: %s' % str(exc))
 
     if not out:

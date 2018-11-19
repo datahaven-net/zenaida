@@ -22,7 +22,7 @@ def _prepare_tester_domain():
     tester_domain = tester.domains.first()
     if not tester_domain:
         tester_registrant = contacts.create(
-            epp_id='',
+            epp_id=None,
             owner=tester,
             person_name='Tester Tester Registrant',
             organization_name='TestingCorp',
@@ -36,7 +36,7 @@ def _prepare_tester_domain():
             contact_email='tester@zenaida.ai',
         )
         tester_contact_admin = contacts.create(
-            epp_id='',
+            epp_id=None,
             owner=tester,
             person_name='Tester Tester Admin',
             organization_name='TestingCorp',
@@ -50,7 +50,7 @@ def _prepare_tester_domain():
             contact_email='tester@zenaida.ai',
         )
         tester_contact_tech = contacts.create(
-            epp_id='',
+            epp_id=None,
             owner=tester,
             person_name='Tester Tester Tech',
             organization_name='TestingCorp',
@@ -64,7 +64,7 @@ def _prepare_tester_domain():
             contact_email='tester@zenaida.ai',
         )
         tester_contact_billing = contacts.create(
-            epp_id='',
+            epp_id=None,
             owner=tester,
             person_name='Tester Tester Billing',
             organization_name='TestingCorp',
@@ -78,7 +78,7 @@ def _prepare_tester_domain():
             contact_email='tester@zenaida.ai',
         )
         tester_domain = domains.create(
-            domain_name='test.%s' % settings['SUPPORTED_ZONES'][0],
+            domain_name='test.%s' % settings.SUPPORTED_ZONES[0],
             owner=tester,
             expiry_date=make_aware(datetime.datetime.now() + datetime.timedelta(days=365)),
             create_date=make_aware(datetime.datetime.now()),

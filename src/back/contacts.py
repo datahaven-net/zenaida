@@ -38,12 +38,13 @@ def create(epp_id, owner, **kwargs):
     """
     Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
     """
-    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
-    if existing_contact:
-        if existing_contact.owner.pk != owner.pk:
-            raise Exception('Invalid owner, existing contact have another owner already')
-        logger.debug('contact with epp_id=%s already exist', epp_id)
-        return existing_contact
+    if epp_id:
+        existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+        if existing_contact:
+            if existing_contact.owner.pk != owner.pk:
+                raise Exception('Invalid owner, existing contact have another owner already')
+            logger.debug('contact with epp_id=%s already exist', epp_id)
+            return existing_contact
     new_contact = Contact.contacts.create(epp_id=epp_id, owner=owner, **kwargs)
     logger.debug('contact created: %s', new_contact)
     return new_contact

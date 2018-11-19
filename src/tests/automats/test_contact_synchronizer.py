@@ -34,7 +34,7 @@ def _prepare_tester_contact():
 
 
 @pytest.mark.django_db
-def test_create():
+def test_contact_create():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_contact = _prepare_tester_contact()
@@ -62,7 +62,7 @@ def test_create():
 
 
 @pytest.mark.django_db
-def test_update_recreate():
+def test_contact_recreate():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_contact = _prepare_tester_contact()
@@ -93,7 +93,7 @@ def test_update_recreate():
 
 
 @pytest.mark.django_db
-def test_update_existing():
+def test_contact_update():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_contact = _prepare_tester_contact()

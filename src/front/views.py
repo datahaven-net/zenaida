@@ -112,9 +112,6 @@ class ContactsView(TemplateView):
         from automats import contact_synchronizer
         contact_id = request.POST['contact_id']
         contact_object = contacts.by_id(contact_id)
-        cs = contact_synchronizer.ContactSynchronizer(
-            log_events=settings.DEBUG,
-            log_transitions=settings.DEBUG,
-        )
+        cs = contact_synchronizer.ContactSynchronizer()
         cs.event('run', contact_object)
         return JsonResponse({'contact_id': contact_id, })

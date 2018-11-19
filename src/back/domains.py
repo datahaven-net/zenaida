@@ -94,7 +94,7 @@ def create(
         raise ValueError('Must be set at least one of the domain contacts')
     if not registrant:
         registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
-    if not isinstance(registrar, Registrar):
+    if not registrar or not isinstance(registrar, Registrar):
         registrar = Registrar.registrars.get_or_create(
             epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
         )[0]

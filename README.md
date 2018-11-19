@@ -299,17 +299,30 @@ You can always check current situation with:
 
 Now it is time to configure access to EPP Gate from Django side - it will use RabbitMQ server as a client to send/receive EPP XML messages.
 
-First place your RabbitMQ client credentials in another file in your `keys` folder:
+First place your RabbitMQ client credentials in another file in your `~/keys-www-data` folder.
 
-        echo "localhost 5672 zenaida <password 1>" > /home/zenaida/keys/rabbitmq_client_credentials.txt
+Here is a small exception, because those credentials must be accessable from django software running on behalf of www-data user and nginx+uwsgi process ... In a previous step credentials for `zenaida-gate` service must be only accessable by `zenaida` user.
+
+To try to mitigate risks you can put those credentials in a separate folder with dedicated access from your Django application :
+
+        mkdir /home/zenaida/keys-www-data/
+        echo "localhost 5672 zenaida <password 1>" > /home/zenaida/keys-www-data/rabbitmq_client_credentials.txt
+        sudo sudo chown www-data -R keys-www-data/
 
 
 Edit file `src/main/params.py` and add such line:
 
-        RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys/rabbitmq_client_credentials.txt'
+        RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys-www-data/rabbitmq_client_credentials.txt'
 
 
-If all components was set up correctly and running you should be able to use most of Zenaida functionality now. For example you can lookup some domains by going to http://www.yourdomain.com/lookup/ in your web browser and use Domain Search form.
+Also if you would like to store EPP traffic comming thru Zenaida Django application you can just set a file name to log it :
+
+        EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'
+
+
+You know, you can try to play with multiple console terminals running in parallel to see all stuff connected and run smoothly.
+
+If all components was set up correctly and running right now on your machine you should be able to use most of Zenaida functionality now. For example you can lookup some domains by going to http://www.yourdomain.com/lookup/ or http://localhost:8000/ in your web browser and use Domain Search form to test it.
 
 
 

@@ -69,6 +69,8 @@ LOGGING = {
             'filters': [],
         },
         'epp': {
+            'propagate': False,
+        } if not getattr(params, 'EPP_LOG_FILENAME') else  {
             'level': 'DEBUG',
             'class' : 'logging.handlers.RotatingFileHandler',
             'filename': getattr(params, 'EPP_LOG_FILENAME'),

@@ -65,10 +65,6 @@ _Counter = 0  #: Increment by one for every new object, the idea is to keep uniq
 _Index = {}   #: Index dictionary, unique id (string) to index (int)
 _Objects = {} #: Objects dictionary to store all state machines objects
 _StateChangedCallback = None  #: Called when some state were changed
-_LogFile = None  #: This is to have a separated Log file for state machines logs
-_LogFilename = None
-_LogsCount = 0  #: If not zero - it will print time since that value, not system time 
-_LifeBeginsTime = 0
 
 #------------------------------------------------------------------------------ 
 
@@ -136,45 +132,6 @@ def SetStateChangedCallback(cb):
     global _StateChangedCallback
     _StateChangedCallback = cb
 
-
-def OpenLogFile(filename):
-    """
-    Open a file to write logs from all state machines. Very useful during debug.
-    """
-    global _LogFile
-    global _LogFilename
-    if _LogFile:
-        return
-    _LogFilename = filename
-    try:
-        _LogFile = open(_LogFilename, 'w')
-    except:
-        _LogFile = None
-
-
-def CloseLogFile():
-    """
-    Close the current log file, you can than open it again.
-    """
-    global _LogFile
-    if not _LogFile:
-        return
-    _LogFile.flush()
-    _LogFile.close()
-    _LogFile = None
-    _LogFilename = None
-
-
-def LifeBegins(when=None):
-    """
-    Call that function during program start up to print relative time in the logs, not absolute. 
-    """
-    global _LifeBeginsTime
-    if when:
-        _LifeBeginsTime = when
-    else:
-        _LifeBeginsTime = time.time()
-    
 #------------------------------------------------------------------------------ 
 
 class Automat(object):
@@ -205,13 +162,27 @@ class Automat(object):
     put ``[post]`` string into the last line of the LABEL shape.
     """
           
-    def __init__(self, name, state, debug_level=18, log_events=False, log_transitions=False, **kwargs):
+    def __init__(self,
+            name,
+            state,
+            inputs=None,
+            outputs=None,
+            debug_level=18,
+            log_events=False,
+            log_transitions=False,
+            raise_errors=False,
+            **kwargs
+        ):
         self.id, self.index = create_index(name)
         self.name = name
         self.state = state
+        self.inputs = inputs
+        self.outputs = outputs
+        self._prev_state = None
         self.debug_level = debug_level
         self.log_events = log_events
         self.log_transitions = log_transitions
+        self.raise_errors = raise_errors
         self._state_callbacks = {}
         self.init(**kwargs)
         self.register()
@@ -318,62 +289,45 @@ class Automat(object):
         elif self.log_events:
             self.log(self.debug_level, '%s fired with event "%s", refs=%d' % (
                 self, event, sys.getrefcount(self)))
-        old_state = self.state
+        self._prev_state = self.state
         if self.post:
-            try:
+            if self.raise_errors:
                 new_state = self.A(event, *args, **kwargs)
-            except:
-                self.log(self.debug_level, traceback.format_exc())
-                return
+            else:
+                try:
+                    new_state = self.A(event, *args, **kwargs)
+                except:
+                    self.log(self.debug_level, traceback.format_exc())
+                    return
             self.state = new_state
         else:
-            try:
-                self.A(event, *args, **kwargs)
-            except:
-                self.log(self.debug_level, traceback.format_exc())
-                return
+            if self.raise_errors:
+                new_state = self.A(event, *args, **kwargs)
+            else:
+                try:
+                    self.A(event, *args, **kwargs)
+                except:
+                    self.log(self.debug_level, traceback.format_exc())
+                    return
             new_state = self.state
-        if old_state != new_state:
+        if self._prev_state != new_state:
             if self.log_transitions:
-                self.log(self.debug_level, '%s(%s): (%s)->(%s)' % (self.id, event, old_state, new_state))
-            self.state_changed(old_state, new_state, event, *args, **kwargs)
+                self.log(self.debug_level, '%s(%s): (%s)->(%s)' % (self.id, event, self._prev_state, new_state))
+            self.state_changed(self._prev_state, new_state, event, *args, **kwargs)
             if _StateChangedCallback is not None:
-                _StateChangedCallback(self.index, self.id, self.name, old_state, new_state)
+                _StateChangedCallback(self.index, self.id, self.name, self._prev_state, new_state)
         else:
             self.state_not_changed(self.state, event, *args, **kwargs)
-        self.execute_state_changed_callbacks(old_state, new_state, event, *args, **kwargs)
+        self.execute_state_changed_callbacks(self._prev_state, new_state, event, *args, **kwargs)
 
     def log(self, level, text):
         """
         Print log message. See ``OpenLogFile()`` and ``CloseLogFile()`` methods.
         """
-        global _LogFile
-        global _LogFilename
-        global _LogsCount
-        global _LifeBeginsTime
         global _Debug
         if not _Debug:
             return
-        if _LogFile is not None:
-            if _LogsCount > 100000:
-                _LogFile.close()
-                _LogFile = open(_LogFilename, 'w')
-                _LogsCount = 0
-
-            s = ' ' * level + text+'\n'
-            if _LifeBeginsTime != 0:
-                dt = time.time() - _LifeBeginsTime
-                mn = dt // 60
-                sc = dt - mn * 60
-                s = ('%02d:%02d.%02d' % (mn, sc, (sc-int(sc))*100)) + s
-            else:
-                s = time.strftime('%H:%M:%S') + s
-
-            _LogFile.write(s)
-            _LogFile.flush()
-            _LogsCount += 1
-        else:
-            logger.debug((' ' * level) + text)
+        logger.debug((' ' * level) + text)
 
     def add_state_changed_callback(self, cb, oldstate=None, newstate=None, callback_id=None):
         """

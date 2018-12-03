@@ -353,6 +353,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 owner=owner_account,
                 **csv_info['registrant'],
             )
+            # TODO: make sure contact was assigned to the domain
         else:
             contacts.update(
                 epp_id=real_registrant_contact_id,
@@ -366,6 +367,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 owner=owner_account,
                 **csv_info['admin'],
             )
+            # TODO: make sure contact was assigned to the domain
         else:
             if real_admin_contact_id and real_admin_email:
                 contacts.update(
@@ -380,6 +382,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 owner=owner_account,
                 **csv_info['tech'],
             )
+            # TODO: make sure contact was assigned to the domain
         else:
             if real_tech_contact_id and real_tech_email:
                 contacts.update(
@@ -394,6 +397,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 owner=owner_account,
                 **csv_info['billing'],
             )
+            # TODO: make sure contact was assigned to the domain
         else:
             if real_billing_contact_id and real_billing_email:
                 contacts.update(

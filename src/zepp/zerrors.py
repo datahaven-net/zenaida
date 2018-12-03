@@ -3,15 +3,20 @@ class EPPError(Exception):
     code = -1
     message = 'Unknown error'
 
+    def __init__(self, message, code=-1):
+        self.code = code
+        self.message = message
+
     def __str__(self):
         return '[%s] %s' % (self.code, self.message)
 
 
-class EPPResponseFailed(EPPError):
+class EPPConnectionFailed(EPPError):
+    pass
 
-    def __init__(self, message, code=-1):
-        self.code = code
-        self.message = message
+
+class EPPResponseFailed(EPPError):
+    pass
 
 
 class EPPBadResponse(EPPError):

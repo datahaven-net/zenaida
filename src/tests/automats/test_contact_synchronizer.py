@@ -34,7 +34,7 @@ def _prepare_tester_contact():
 
 
 @pytest.mark.django_db
-def test_create():
+def test_contact_create():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_contact = _prepare_tester_contact()
@@ -48,12 +48,12 @@ def test_create():
             (oldstate, newstate, event, )
         ),
     )
-    assert tester_contact.epp_id == ''
+    assert tester_contact.epp_id is None
     cs.event('run', tester_contact)
     assert tester_contact.epp_id != ''
     delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
-    tester_contact.epp_id = ''
+    tester_contact.epp_id = None
     tester_contact.save()
     assert scenario == [
         ('AT_STARTUP', 'DONE', 'run'),
@@ -62,7 +62,7 @@ def test_create():
 
 
 @pytest.mark.django_db
-def test_update_recreate():
+def test_contact_recreate():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_contact = _prepare_tester_contact()
@@ -83,7 +83,7 @@ def test_update_recreate():
     assert tester_contact.epp_id != ''
     delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
-    tester_contact.epp_id = ''
+    tester_contact.epp_id = None
     tester_contact.save()
     assert scenario == [
         ('AT_STARTUP', 'DONE', 'run'),
@@ -93,7 +93,7 @@ def test_update_recreate():
 
 
 @pytest.mark.django_db
-def test_update_existing():
+def test_contact_update():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_contact = _prepare_tester_contact()
@@ -126,7 +126,7 @@ def test_update_existing():
     assert tester_contact.epp_id != ''
     delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
-    tester_contact.epp_id = ''
+    tester_contact.epp_id = None
     tester_contact.save()
     assert scenario == [
         ('AT_STARTUP', 'DONE', 'run'),

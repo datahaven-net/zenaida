@@ -20,7 +20,7 @@ class Contact(models.Model):
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contacts', )
 
-    epp_id = models.CharField(max_length=32, unique=True, blank=True, default='')
+    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
 
     person_name = models.CharField(max_length=255, default='', blank=True,)
     organization_name = models.CharField(max_length=255, default='', blank=True,)

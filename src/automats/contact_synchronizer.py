@@ -15,6 +15,10 @@ EVENTS:
 
 #------------------------------------------------------------------------------
 
+from django.conf import settings
+
+#------------------------------------------------------------------------------
+
 from automats import automat
 
 from back import contacts
@@ -29,16 +33,22 @@ class ContactSynchronizer(automat.Automat):
     This class implements all the functionality of ``contact_synchronizer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=False, log_transitions=False, **kwargs):
+    def __init__(self, debug_level=0, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
         """
         Builds `contact_synchronizer()` state machine.
         """
+        if log_events is None:
+            log_events=settings.DEBUG
+        if log_transitions is None:
+            log_transitions=settings.DEBUG
         super(ContactSynchronizer, self).__init__(
             name="contact_synchronizer",
             state="AT_STARTUP",
+            outputs=[],
             debug_level=debug_level,
             log_events=log_events,
             log_transitions=log_transitions,
+            raise_errors=raise_errors,
             **kwargs
         )
 
@@ -73,7 +83,7 @@ class ContactSynchronizer(automat.Automat):
         elif self.state == 'CONTACT_RECREATE':
             if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
                 self.state = 'FAILED'
-                self.doReportFailed(*args, **kwargs)
+                self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DONE'
@@ -88,7 +98,7 @@ class ContactSynchronizer(automat.Automat):
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2303, *args, **kwargs) ):
                 self.state = 'FAILED'
-                self.doReportFailed(*args, **kwargs)
+                self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'response' and self.isCode(2303, *args, **kwargs):
                 self.state = 'CONTACT_RECREATE'
@@ -98,7 +108,7 @@ class ContactSynchronizer(automat.Automat):
         elif self.state == 'CONTACT_CREATE':
             if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2303, *args, **kwargs) ):
                 self.state = 'FAILED'
-                self.doReportFailed(*args, **kwargs)
+                self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'response' and self.isCode(2303, *args, **kwargs):
                 self.state = 'CONTACT_RECREATE'
@@ -139,15 +149,15 @@ class ContactSynchronizer(automat.Automat):
         """
         Action method.
         """
-        self.contact_info = contacts.to_dict(args[0])
+        self.contact_info = contacts.to_dict(self.target_contact)
         self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email'])
 
     def doPrepareUpdate(self, *args, **kwargs):
         """
         Action method.
         """
-        self.contact_info = contacts.to_dict(args[0])
-        self.contact_info['id'] = args[0].epp_id
+        self.contact_info = contacts.to_dict(self.target_contact)
+        self.contact_info['id'] = self.target_contact.epp_id
 
     def doPrepareRetry(self, *args, **kwargs):
         """
@@ -209,12 +219,19 @@ class ContactSynchronizer(automat.Automat):
         Action method.
         """
         # TODO: log some positive history in the DB here
+        self.outputs.append(args[0])
 
-    def doReportFailed(self, *args, **kwargs):
+    def doReportFailed(self, event, *args, **kwargs):
         """
         Action method.
         """
         # TODO: log error in the history here
+        if event == 'error':
+            self.outputs.append(args[0])
+        else:
+            self.outputs.append(Exception(
+                'Unexpected response code: %s' % args[0]['epp']['response']['result']['@code']
+            ))
 
     def doDestroyMe(self, *args, **kwargs):
         """

@@ -226,6 +226,16 @@ graph_models: $(VENV_DEPLOY)
 	@echo 'File graph_models.png created.'
 
 
+epp_gate_dev: $(VENV_DEPLOY)
+	@echo "Starting epp gate with local credentials"
+	@perl bin/epp_gate.pl ./keys.local/epp_credentials.txt ./keys.local/rabbitmq_gate_credentials.txt
+
+
+rabbitmq_server_dev:
+	@echo "Starting RabbitMQ server"
+	@rabbitmq-server
+
+
 ################################################
 # Setting up of different kinds of virtualenvs #
 ################################################

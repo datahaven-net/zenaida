@@ -109,7 +109,7 @@ def test_domain_update():
             (oldstate, newstate, event, )
         ),
     )
-    cs.event('run', tester_domain)
+    cs.event('run', tester_domain, update_domain=True)
     assert scenario == [
         ('AT_STARTUP', 'DONE', 'run'),
         ('CONTACT_CREATE', 'DONE', 'response'),

@@ -73,12 +73,12 @@ class ContactSynchronizer(automat.Automat):
                 self.state = 'CONTACT_CREATE'
                 self.doInit(*args, **kwargs)
                 self.doPrepareCreate(*args, **kwargs)
-                self.doSendContactCreate(*args, **kwargs)
+                self.doEppContactCreate(*args, **kwargs)
             elif event == 'run' and self.isKnownEPPid(*args, **kwargs):
                 self.state = 'CONTACT_UPDATE'
                 self.doInit(*args, **kwargs)
                 self.doPrepareUpdate(*args, **kwargs)
-                self.doSendContactUpdate(*args, **kwargs)
+                self.doEppContactUpdate(*args, **kwargs)
         #---CONTACT_RECREATE---
         elif self.state == 'CONTACT_RECREATE':
             if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
@@ -103,7 +103,7 @@ class ContactSynchronizer(automat.Automat):
             elif event == 'response' and self.isCode(2303, *args, **kwargs):
                 self.state = 'CONTACT_RECREATE'
                 self.doPrepareRetry(*args, **kwargs)
-                self.doSendContactCreate(*args, **kwargs)
+                self.doEppContactCreate(*args, **kwargs)
         #---CONTACT_CREATE---
         elif self.state == 'CONTACT_CREATE':
             if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2303, *args, **kwargs) ):
@@ -113,7 +113,7 @@ class ContactSynchronizer(automat.Automat):
             elif event == 'response' and self.isCode(2303, *args, **kwargs):
                 self.state = 'CONTACT_RECREATE'
                 self.doPrepareRetry(*args, **kwargs)
-                self.doSendContactCreate(*args, **kwargs)
+                self.doEppContactCreate(*args, **kwargs)
             elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DONE'
                 self.doWriteDB(*args, **kwargs)
@@ -167,7 +167,7 @@ class ContactSynchronizer(automat.Automat):
         # epp_id is generated randomly so there is a chance you hit already existing object
         self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email']) + 'a'
 
-    def doSendContactCreate(self, *args, **kwargs):
+    def doEppContactCreate(self, *args, **kwargs):
         """
         Action method.
         """
@@ -182,12 +182,12 @@ class ContactSynchronizer(automat.Automat):
                 raise_for_result=False,
             )
         except zerrors.EPPError as exc:
-            self.log(self.debug_level, 'Exception in doSendContactCreate: %s' % exc)
+            self.log(self.debug_level, 'Exception in doEppContactCreate: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)
 
-    def doSendContactUpdate(self, *args, **kwargs):
+    def doEppContactUpdate(self, *args, **kwargs):
         """
         Action method.
         """
@@ -202,7 +202,7 @@ class ContactSynchronizer(automat.Automat):
                 raise_for_result=False,
             )
         except zerrors.EPPError as exc:
-            self.log(self.debug_level, 'Exception in doSendContactUpdate: %s' % exc)
+            self.log(self.debug_level, 'Exception in doEppContactUpdate: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)

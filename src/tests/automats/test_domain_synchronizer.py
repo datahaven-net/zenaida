@@ -5,7 +5,7 @@ import datetime
 from django.conf import settings
 from django.utils.timezone import make_aware
 
-from automats import domain_contacts_synchronizer
+from automats import domain_synchronizer
 
 from back import users
 from back import contacts
@@ -98,12 +98,12 @@ def _prepare_tester_domain():
 
 
 @pytest.mark.django_db
-def test_domain_update():
+def test_domain_create():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
     tester_domain = _prepare_tester_domain()
     scenario = []
-    cs = domain_contacts_synchronizer.DomainContactsSynchronizer(
+    cs = domain_synchronizer.DomainSynchronizer(
         log_events=True,
         log_transitions=True,
         raise_errors=True,

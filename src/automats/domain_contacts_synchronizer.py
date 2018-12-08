@@ -80,28 +80,35 @@ class DomainContactsSynchronizer(automat.Automat):
                 self.doInit(*args, **kwargs)
                 self.doPrepareContacts(*args, **kwargs)
                 self.doSyncContacts(*args, **kwargs)
+        #---FAILED---
+        elif self.state == 'FAILED':
+            pass
+        #---DONE---
+        elif self.state == 'DONE':
+            pass
         #---SYNC_CONTACTS---
         elif self.state == 'SYNC_CONTACTS':
             if event == 'error':
                 self.state = 'FAILED'
                 self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'all-contacts-in-sync':
+            elif event == 'all-contacts-in-sync' and self.isDomainToBeUpdated(*args, **kwargs):
                 self.state = 'DOMAIN_INFO?'
-                self.doSendDomainInfo(*args, **kwargs)
+                self.doEppDomainInfo(*args, **kwargs)
+            elif event == 'all-contacts-in-sync' and not self.isDomainToBeUpdated(*args, **kwargs):
+                self.state = 'DONE'
+                self.doReportContactsUpdated(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---DOMAIN_INFO?---
         elif self.state == 'DOMAIN_INFO?':
             if event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DOMAIN_UPDATE'
                 self.doPrepareDomainChange(*args, **kwargs)
-                self.doSendDomainUpdate(*args, **kwargs)
+                self.doEppDomainUpdate(*args, **kwargs)
             elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
                 self.state = 'FAILED'
                 self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-        #---FAILED---
-        elif self.state == 'FAILED':
-            pass
         #---DOMAIN_UPDATE---
         elif self.state == 'DOMAIN_UPDATE':
             if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
@@ -110,11 +117,8 @@ class DomainContactsSynchronizer(automat.Automat):
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DONE'
-                self.doReportDone(*args, **kwargs)
+                self.doReportDomainUpdated(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-        #---DONE---
-        elif self.state == 'DONE':
-            pass
         return None
 
     def isCode(self, *args, **kwargs):
@@ -123,12 +127,19 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         return args[0] == int(args[1]['epp']['response']['result']['@code'])
 
+    def isDomainToBeUpdated(self, *args, **kwargs):
+        """
+        Condition method.
+        """
+        return self.domain_to_be_updated
+
     def doInit(self, *args, **kwargs):
         """
         Action method.
         """
         self.target_domain = args[0]
         self.target_contacts = {}
+        self.domain_to_be_updated = kwargs.get('update_domain', False)
 
     def doPrepareContacts(self, *args, **kwargs):
         """
@@ -164,7 +175,7 @@ class DomainContactsSynchronizer(automat.Automat):
                 (role, result, ),
             ])
 
-    def doSendDomainInfo(self, *args, **kwargs):
+    def doEppDomainInfo(self, *args, **kwargs):
         """
         Action method.
         """
@@ -173,7 +184,7 @@ class DomainContactsSynchronizer(automat.Automat):
                 domain=self.target_domain.name,
             )
         except zerrors.EPPError as exc:
-            self.log(self.debug_level, 'Exception in doSendDomainInfo: %s' % exc)
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)
@@ -211,7 +222,7 @@ class DomainContactsSynchronizer(automat.Automat):
             if current_registrant != self.target_contacts['registrant'].epp_id:
                 self.change_registrant = self.target_contacts['registrant'].epp_id
 
-    def doSendDomainUpdate(self, *args, **kwargs):
+    def doEppDomainUpdate(self, *args, **kwargs):
         """
         Action method.
         """
@@ -223,16 +234,21 @@ class DomainContactsSynchronizer(automat.Automat):
                 change_registrant=self.change_registrant,
             )
         except zerrors.EPPError as exc:
-            self.log(self.debug_level, 'Exception in doSendDomainUpdate: %s' % exc)
+            self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)
 
-    def doReportDone(self, *args, **kwargs):
+    def doReportDomainUpdated(self, *args, **kwargs):
         """
         Action method.
         """
         self.outputs.append(args[0])
+
+    def doReportContactsUpdated(self, *args, **kwargs):
+        """
+        Action method.
+        """
 
     def doReportFailed(self, event, *args, **kwargs):
         """

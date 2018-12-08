@@ -238,6 +238,13 @@ Lets remove "guest" user :-)
 
 More details about RabbutMQ installation you can find here: https://www.rabbitmq.com/install-debian.html
 
+To install RabbutMQ on MacOS refer to that page: https://www.rabbitmq.com/install-standalone-mac.html
+
+For local development you might want to run RabbutMQ manually instead of starting it as a system service.
+In that case you just run a local server from Makefile and then you can open RabbitMQ dashboard at `http://localhost:15672`:
+
+        make rabbitmq_server_dev
+
 
 
 ## Establish connection with EPP registry
@@ -301,7 +308,8 @@ Now it is time to configure access to EPP Gate from Django side - it will use Ra
 
 First place your RabbitMQ client credentials in another file in your `~/keys-www-data` folder.
 
-Here is a small exception, because those credentials must be accessable from django software running on behalf of www-data user and nginx+uwsgi process ... In a previous step credentials for `zenaida-gate` service must be only accessable by `zenaida` user.
+Here is a small exception, because those credentials must be accessable from django software running on behalf of www-data user and nginx+uwsgi process ... 
+In a previous step credentials for `zenaida-gate` service must be only accessable by `zenaida` user.
 
 To try to mitigate risks you can put those credentials in a separate folder with dedicated access from your Django application :
 
@@ -322,7 +330,14 @@ Also if you would like to store EPP traffic comming thru Zenaida Django applicat
 
 You know, you can try to play with multiple console terminals running in parallel to see all stuff connected and run smoothly.
 
-If all components was set up correctly and running right now on your machine you should be able to use most of Zenaida functionality now. For example you can lookup some domains by going to http://www.yourdomain.com/lookup/ or http://localhost:8000/ in your web browser and use Domain Search form to test it.
+If you are developing locally and started Zenaida application directly on your local OS you can run such command to start EPP Gate:
+
+        make epp_gate_dev
+
+
+If all components was set up correctly and running right now on your machine you should be able to use most of Zenaida functionality now.
+For example you can lookup some domains by going to `http://www.yourdomain.com/lookup/` (or `http://localhost:8000/lookup/` if running locally)
+in your web browser and use Domain Search form to test it.
 
 
 

@@ -14,7 +14,7 @@ from back import domains
 from zepp import zclient
 
 
-def _prepare_tester_domain():
+def _prepare_tester_domain(domain_name, auth_key='', domain_epp_id=''):
     tester = users.find_account('tester@zenaida.ai')
     if not tester:
         tester = users.create_account('tester@zenaida.ai', account_password='tester', is_active=True, )
@@ -77,11 +77,12 @@ def _prepare_tester_domain():
             contact_email='tester@zenaida.ai',
         )
         tester_domain = domains.create(
-            domain_name='test.%s' % settings.SUPPORTED_ZONES[0],
+            domain_name=domain_name,
             owner=tester,
             expiry_date=make_aware(datetime.datetime.now() + datetime.timedelta(days=365)),
             create_date=make_aware(datetime.datetime.now()),
-            epp_id=zclient.make_epp_id(tester.email),
+            epp_id=domain_epp_id,
+            auth_key=auth_key,
             registrar=None,
             registrant=tester_registrant,
             contact_admin=tester_contact_admin,
@@ -98,10 +99,12 @@ def _prepare_tester_domain():
 
 
 @pytest.mark.django_db
-def test_domain_create():
+def test_domain_anther_registrar():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')
-    tester_domain = _prepare_tester_domain()
+    tester_domain = _prepare_tester_domain(
+        domain_name='test.%s' % settings.SUPPORTED_ZONES[0],
+    )
     scenario = []
     cs = domain_synchronizer.DomainSynchronizer(
         log_events=True,
@@ -109,12 +112,14 @@ def test_domain_create():
         raise_errors=True,
     )
     cs.add_state_changed_callback(
-        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.insert(0,
+        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.append(
             (oldstate, newstate, event, )
         ),
     )
     cs.event('run', tester_domain, update_domain=True)
+    del cs
     assert scenario == [
-        ('AT_STARTUP', 'DONE', 'run'),
-        ('CONTACT_CREATE', 'DONE', 'response'),
+        ('AT_STARTUP', 'EXISTS?', 'run'),
+        ('EXISTS?', 'OWNER?', 'response'),
+        ('OWNER?', 'FAILED', 'response'),
     ]

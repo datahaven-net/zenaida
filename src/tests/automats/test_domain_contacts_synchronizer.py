@@ -109,12 +109,13 @@ def test_domain_update():
         raise_errors=True,
     )
     cs.add_state_changed_callback(
-        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.insert(0,
+        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.append(
             (oldstate, newstate, event, )
         ),
     )
     cs.event('run', tester_domain, update_domain=True)
+    del cs
     assert scenario == [
-        ('AT_STARTUP', 'DONE', 'run'),
+        ('AT_STARTUP', 'CONTACT_CREATE', 'run'),
         ('CONTACT_CREATE', 'DONE', 'response'),
     ]

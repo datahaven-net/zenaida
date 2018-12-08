@@ -80,12 +80,6 @@ class DomainContactsSynchronizer(automat.Automat):
                 self.doInit(*args, **kwargs)
                 self.doPrepareContacts(*args, **kwargs)
                 self.doSyncContacts(*args, **kwargs)
-        #---FAILED---
-        elif self.state == 'FAILED':
-            pass
-        #---DONE---
-        elif self.state == 'DONE':
-            pass
         #---SYNC_CONTACTS---
         elif self.state == 'SYNC_CONTACTS':
             if event == 'error':
@@ -119,6 +113,12 @@ class DomainContactsSynchronizer(automat.Automat):
                 self.state = 'DONE'
                 self.doReportDomainUpdated(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+        #---DONE---
+        elif self.state == 'DONE':
+            pass
+        #---FAILED---
+        elif self.state == 'FAILED':
+            pass
         return None
 
     def isCode(self, *args, **kwargs):
@@ -174,6 +174,7 @@ class DomainContactsSynchronizer(automat.Automat):
             self.outputs.extend([
                 (role, result, ),
             ])
+        self.event('all-contacts-in-sync')
 
     def doEppDomainInfo(self, *args, **kwargs):
         """

@@ -47,7 +47,6 @@ of Information Technologies, Mechanics and Optics, Programming Technologies Depa
 
 import logging
 import sys
-import time
 import traceback
 
 #------------------------------------------------------------------------------ 
@@ -64,7 +63,7 @@ _LogEvents = True   # set to True to log every event passed to any state machine
 _Counter = 0  #: Increment by one for every new object, the idea is to keep unique ID's in the index
 _Index = {}   #: Index dictionary, unique id (string) to index (int)
 _Objects = {} #: Objects dictionary to store all state machines objects
-_StateChangedCallback = None  #: Called when some state were changed
+_GlobalStateChangedCallback = None  #: Called when some state were changed
 
 #------------------------------------------------------------------------------ 
 
@@ -129,8 +128,8 @@ def SetStateChangedCallback(cb):
     
         cb(index, id, name, old_state, new_state)
     """
-    global _StateChangedCallback
-    _StateChangedCallback = cb
+    global _GlobalStateChangedCallback
+    _GlobalStateChangedCallback = cb
 
 #------------------------------------------------------------------------------ 
 
@@ -179,6 +178,10 @@ class Automat(object):
         self.inputs = inputs
         self.outputs = outputs
         self._prev_state = None
+        self._executing = False
+        self._executions = 0
+        self._current_execution = -1
+        self._heap = {}
         self.debug_level = debug_level
         self.log_events = log_events
         self.log_transitions = log_transitions
@@ -190,7 +193,7 @@ class Automat(object):
 
     def __del__(self):
         global _Index
-        global _StateChangedCallback
+        global _GlobalStateChangedCallback
         if self is None:
             return
         o = self
@@ -206,10 +209,10 @@ class Automat(object):
             self.log(debug_level, 'automat.__del__ WARNING %s not found' % automatid)
             return
         del _Index[automatid]
-        self.log(debug_level, 'DESTROYED AUTOMAT %s with index %d' % (str(o), index))
+        self.log(debug_level, 'DESTROYED AUTOMAT %s with index %d' % (str(o), index, ))
         del o
-        if _StateChangedCallback is not None:
-            _StateChangedCallback(index, automatid, name, last_state, 'NOT_EXIST')
+        if _GlobalStateChangedCallback is not None:
+            _GlobalStateChangedCallback(index, automatid, name, last_state, 'NOT_EXIST')
 
     def __str__(self):
         """
@@ -247,7 +250,8 @@ class Automat(object):
         and delete that instance. Be sure to not have any existing references on 
         that instance so destructor will be called immediately.
         """
-        self.log(self.debug_level, 'destroying %r, refs=%d' % (self, sys.getrefcount(self)), )
+        self.log(self.debug_level, 'destroying %s, index=%d, heap=%d' % (
+            self, self.index, len(self._heap), ))
         self.shutdown(**kwargs)
         self.unregister()
 
@@ -262,63 +266,6 @@ class Automat(object):
         Redefine this method in subclass if you want to do some actions
         immediately after processing the event, which did not change the automat's state.
         """        
-
-    def A(self, event, *args, **kwargs):
-        """
-        Must define this method in subclass. 
-        This is the core method of the SWITCH-technology.
-        I am using ``visio2python`` (created by me) to generate Python code from MS Visio drawing.
-        """
-        raise NotImplementedError
-
-    def automat(self, event, *args, **kwargs):
-        """
-        Just an alias for `event()` method.
-        """
-        return self.event(event, *args, **kwargs)
-
-    def event(self, event, *args, **kwargs):
-        """
-        Use that method to send ``event`` directly to the state machine.
-        It will execute ``self.A()`` immediately, run callbacks and loggers. 
-        """
-        global _StateChangedCallback
-        if _LogEvents:
-            self.log(self.debug_level * 4, '%s fired with event "%s", refs=%d' % (
-                self, event, sys.getrefcount(self)))
-        elif self.log_events:
-            self.log(self.debug_level, '%s fired with event "%s", refs=%d' % (
-                self, event, sys.getrefcount(self)))
-        self._prev_state = self.state
-        if self.post:
-            if self.raise_errors:
-                new_state = self.A(event, *args, **kwargs)
-            else:
-                try:
-                    new_state = self.A(event, *args, **kwargs)
-                except:
-                    self.log(self.debug_level, traceback.format_exc())
-                    return
-            self.state = new_state
-        else:
-            if self.raise_errors:
-                new_state = self.A(event, *args, **kwargs)
-            else:
-                try:
-                    self.A(event, *args, **kwargs)
-                except:
-                    self.log(self.debug_level, traceback.format_exc())
-                    return
-            new_state = self.state
-        if self._prev_state != new_state:
-            if self.log_transitions:
-                self.log(self.debug_level, '%s(%s): (%s)->(%s)' % (self.id, event, self._prev_state, new_state))
-            self.state_changed(self._prev_state, new_state, event, *args, **kwargs)
-            if _StateChangedCallback is not None:
-                _StateChangedCallback(self.index, self.id, self.name, self._prev_state, new_state)
-        else:
-            self.state_not_changed(self.state, event, *args, **kwargs)
-        self.execute_state_changed_callbacks(self._prev_state, new_state, event, *args, **kwargs)
 
     def log(self, level, text):
         """
@@ -402,3 +349,88 @@ class Automat(object):
                 for cb_tupl in cb_list:
                     _, cb = cb_tupl
                     cb(oldstate, newstate, event, *args, **kwargs)
+
+    def A(self, event, *args, **kwargs):
+        """
+        Must define this method in subclass. 
+        This is the core method of the SWITCH-technology.
+        I am using ``visio2python`` (created by me) to generate Python code from MS Visio drawing.
+        """
+        raise NotImplementedError
+
+    def automat(self, event, *args, **kwargs):
+        """
+        Just an alias for `event()` method.
+        """
+        return self.event(event, *args, **kwargs)
+
+    def event(self, event, *args, **kwargs):
+        """
+        Use that method to send ``event`` directly to the state machine.
+        It will execute ``self.A()`` immediately, run callbacks and loggers. 
+        """
+        if self._executing:
+            # TODO: check what will happen if self.post is True
+            if self._current_execution in self._heap:
+                _event, _args, _kwargs = self._heap.pop(self._current_execution)
+                self._executing = False
+                self._post_processing(self.state, _event, *_args, **_kwargs)
+            else:
+                raise Exception('Last execution info was not found in the heap')
+        self._executing = True
+        self._current_execution = self._executions
+        self._executions += 1
+        self._heap[self._current_execution] = (event, args, kwargs)
+        new_state = self._execute(event, *args, **kwargs)
+        _event, _args, _kwargs = None, None, None
+        if self._current_execution in self._heap:
+            _event, _args, _kwargs = self._heap.pop(self._current_execution)
+        self._executing = False
+        if new_state is None:
+            return None
+        if _event:
+            self._post_processing(new_state, _event, *_args, **_kwargs)
+        return new_state
+
+    def _execute(self, event, *args, **kwargs):
+        if _LogEvents:
+            self.log(self.debug_level * 4, '%s fired with event "%s", refs=%d' % (
+                self, event, sys.getrefcount(self)))
+        elif self.log_events:
+            self.log(self.debug_level, '%s fired with event "%s", refs=%d' % (
+                self, event, sys.getrefcount(self)))
+        self._prev_state = self.state
+        if self.post:
+            if self.raise_errors:
+                new_state = self.A(event, *args, **kwargs)
+            else:
+                try:
+                    new_state = self.A(event, *args, **kwargs)
+                except:
+                    self.log(self.debug_level, traceback.format_exc())
+                    return None
+            self.state = new_state
+        else:
+            if self.raise_errors:
+                new_state = self.A(event, *args, **kwargs)
+            else:
+                try:
+                    self.A(event, *args, **kwargs)
+                except:
+                    self.log(self.debug_level, traceback.format_exc())
+                    return None
+            new_state = self.state
+        return new_state
+
+    def _post_processing(self, new_state, event, *args, **kwargs):
+        global _GlobalStateChangedCallback
+        if self._prev_state != new_state:
+            if self.log_transitions:
+                self.log(self.debug_level, '%s(%s): (%s)->(%s)' % (self.id, event, self._prev_state, new_state))
+            self.state_changed(self._prev_state, new_state, event, *args, **kwargs)
+            if _GlobalStateChangedCallback is not None:
+                _GlobalStateChangedCallback(self.index, self.id, self.name, self._prev_state, new_state)
+        else:
+            self.state_not_changed(self.state, event, *args, **kwargs)
+        self.execute_state_changed_callbacks(self._prev_state, new_state, event, *args, **kwargs)
+        return True

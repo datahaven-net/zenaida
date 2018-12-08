@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # domain_synchronizer.py
-#
-
 
 """
 .. module:: domain_synchronizer
@@ -24,6 +22,9 @@ from django.conf import settings
 #------------------------------------------------------------------------------
 
 from automats import automat
+
+from zepp import zclient
+from zepp import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -205,21 +206,35 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-
-    def doEppDomainRenew(self, *args, **kwargs):
-        """
-        Action method.
-        """
+        self.target_domain = args[0]
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
         Action method.
         """
+        try:
+            response = zclient.cmd_domain_check(
+                domains=[self.target_domain.name, ],
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.event('error', exc)
+        else:
+            self.event('response', response)
 
     def doEppDomainInfo(self, *args, **kwargs):
         """
         Action method.
         """
+        try:
+            response = zclient.cmd_domain_info(
+                domain=self.target_domain.name,
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.event('error', exc)
+        else:
+            self.event('response', response)
 
     def doEppDomainCreate(self, *args, **kwargs):
         """
@@ -227,6 +242,11 @@ class DomainSynchronizer(automat.Automat):
         """
 
     def doEppDomainUpdate(self, *args, **kwargs):
+        """
+        Action method.
+        """
+
+    def doEppDomainRenew(self, *args, **kwargs):
         """
         Action method.
         """

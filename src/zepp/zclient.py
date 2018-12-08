@@ -118,7 +118,7 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
     try:
         json_input = json.dumps(json_request)
     except Exception as exc:
-        logger.exception('epp request failed, invalid json input')
+        logger.error('epp request failed, invalid json input')
         raise zerrors.EPPBadResponse('epp request failed, invalid json input')
 
     if logs:
@@ -127,11 +127,11 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
     try:
         out = do_rpc_request(json_request)
     except zerrors.EPPError as exc:
-        logger.exception('epp request failed with known error: %s' % exc)
+        logger.error('epp request failed with known error: %s' % exc)
         raise exc
     except Exception as exc:
-        logger.exception('epp request failed, unexpected error: %s' % exc)
-        raise zerrors.EPPBadResponse('epp request failed: %s' % str(exc))
+        logger.error('epp request failed, unexpected error: %s' % traceback.format_exc())
+        raise zerrors.EPPBadResponse('epp request failed: %s' % exc)
 
     if not out:
         logger.error('empty response from epp_gate, connection error')
@@ -145,7 +145,8 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             except UnicodeEncodeError:
                 json_output = json.loads(xml2json.xml2json(out.encode('ascii', errors='ignore'), XML2JsonOptions(), strip_ns=1, strip=1))
         except Exception as exc:
-            raise zerrors.EPPBadResponse('epp response unserialize failed: %s' % traceback.format_exc())
+            logger.error('epp response unserialize failed: %s' % traceback.format_exc())
+            raise zerrors.EPPBadResponse('epp response unserialize failed: %s' % exc)
 
     if raise_for_result:
         if json_output:

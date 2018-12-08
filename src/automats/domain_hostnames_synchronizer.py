@@ -17,55 +17,37 @@ EVENTS:
 """
 
 
+#------------------------------------------------------------------------------
+
+from django.conf import settings
+
+#------------------------------------------------------------------------------
+
 from automats import automat
 
-
-_DomainHostnamesSynchronizer = None
-
-
-def A(event=None, *args, **kwargs):
-    """
-    Access method to interact with `domain_hostnames_synchronizer()` machine.
-    """
-    global _DomainHostnamesSynchronizer
-    if event is None:
-        return _DomainHostnamesSynchronizer
-    if _DomainHostnamesSynchronizer is None:
-        # TODO: set automat name and starting state here
-        _DomainHostnamesSynchronizer = DomainHostnamesSynchronizer(name='domain_hostnames_synchronizer', state='AT_STARTUP')
-    if event is not None:
-        _DomainHostnamesSynchronizer.automat(event, *args, **kwargs)
-    return _DomainHostnamesSynchronizer
-
-
-def Destroy():
-    """
-    Destroy `domain_hostnames_synchronizer()` automat and remove its instance from memory.
-    """
-    global _DomainHostnamesSynchronizer
-    if _DomainHostnamesSynchronizer is None:
-        return
-    _DomainHostnamesSynchronizer.destroy()
-    del _DomainHostnamesSynchronizer
-    _DomainHostnamesSynchronizer = None
-
+#------------------------------------------------------------------------------
 
 class DomainHostnamesSynchronizer(automat.Automat):
     """
     This class implements all the functionality of ``domain_hostnames_synchronizer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=False, log_transitions=False, publish_events=False, **kwargs):
+    def __init__(self, debug_level=0, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
         """
         Builds `domain_hostnames_synchronizer()` state machine.
         """
+        if log_events is None:
+            log_events=settings.DEBUG
+        if log_transitions is None:
+            log_transitions=settings.DEBUG
         super(DomainHostnamesSynchronizer, self).__init__(
             name="domain_hostnames_synchronizer",
             state="AT_STARTUP",
+            outputs=[],
             debug_level=debug_level,
             log_events=log_events,
             log_transitions=log_transitions,
-            publish_events=publish_events,
+            raise_errors=raise_errors,
             **kwargs
         )
 
@@ -142,6 +124,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         Condition method.
         """
+        return args[0] == int(args[1]['epp']['response']['result']['@code'])
 
     def isUpdateRequired(self, *args, **kwargs):
         """

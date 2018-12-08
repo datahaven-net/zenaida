@@ -48,3 +48,4 @@ ENV = 'development'
 # SUPPORTED_ZONES = ['com', 'net', 'org', 'ai', ]
 # RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys/rabbitmq_client_credentials.txt'
 # EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'
+# AUTOMATS_LOG_FILENAME = '/home/zenaida/logs/automats.log'

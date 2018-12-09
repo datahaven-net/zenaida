@@ -237,6 +237,7 @@ class ContactSynchronizer(automat.Automat):
         """
         Remove all references to the state machine object to destroy it.
         """
+        self.target_contact = None
         self.destroy(**kwargs)
 
 

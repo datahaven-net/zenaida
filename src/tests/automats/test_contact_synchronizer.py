@@ -44,19 +44,19 @@ def test_contact_create():
         log_transitions=True,
     )
     cs.add_state_changed_callback(
-        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.insert(0,
+        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.append(
             (oldstate, newstate, event, )
         ),
     )
-    assert tester_contact.epp_id is None
     cs.event('run', tester_contact)
+    del cs
     assert tester_contact.epp_id != ''
     delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
     tester_contact.epp_id = None
     tester_contact.save()
     assert scenario == [
-        ('AT_STARTUP', 'DONE', 'run'),
+        ('AT_STARTUP', 'CONTACT_CREATE', 'run'),
         ('CONTACT_CREATE', 'DONE', 'response'),
     ]
 
@@ -75,19 +75,20 @@ def test_contact_recreate():
         log_transitions=True,
     )
     cs.add_state_changed_callback(
-        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.insert(0,
+        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.append(
             (oldstate, newstate, event, )
         ),
     )
     cs.event('run', tester_contact)
+    del cs
     assert tester_contact.epp_id != ''
     delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
     tester_contact.epp_id = None
     tester_contact.save()
     assert scenario == [
-        ('AT_STARTUP', 'DONE', 'run'),
-        ('CONTACT_UPDATE', 'DONE', 'response'),
+        ('AT_STARTUP', 'CONTACT_UPDATE', 'run'),
+        ('CONTACT_UPDATE', 'CONTACT_RECREATE', 'response'),
         ('CONTACT_RECREATE', 'DONE', 'response'),
     ]
 
@@ -118,19 +119,18 @@ def test_contact_update():
         log_transitions=True,
     )
     cs.add_state_changed_callback(
-        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.insert(0,
+        cb=lambda oldstate, newstate, event, *args, **kwargs: scenario.append(
             (oldstate, newstate, event, )
         ),
     )
     cs.event('run', tester_contact)
+    del cs
     assert tester_contact.epp_id != ''
     delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
     tester_contact.epp_id = None
     tester_contact.save()
     assert scenario == [
-        ('AT_STARTUP', 'DONE', 'run'),
+        ('AT_STARTUP', 'CONTACT_UPDATE', 'run'),
         ('CONTACT_UPDATE', 'DONE', 'response'),
     ]
-
-

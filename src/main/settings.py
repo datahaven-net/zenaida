@@ -78,12 +78,27 @@ LOGGING = {
             'backupCount' : 10,
             'formatter': 'timestamped',
         },
+        'automats': {
+            'propagate': False,
+        } if not getattr(params, 'AUTOMATS_LOG_FILENAME') else {
+            'level': 'DEBUG',
+            'class' : 'logging.handlers.RotatingFileHandler',
+            'filename': getattr(params, 'AUTOMATS_LOG_FILENAME'),
+            'maxBytes' : 1024*1024*10,  # 10MB
+            'backupCount' : 10,
+            'formatter': 'timestamped',
+        },
     },
     'loggers': {
         'django.request': {
             'level': 'DEBUG',
             'propagate': False,
             'handlers': ['console', ]
+        },
+        'automats.automat': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['automats', ]
         },
         'zepp.csv_import': {
             'level': 'DEBUG',

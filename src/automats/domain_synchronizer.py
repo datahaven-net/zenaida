@@ -22,6 +22,7 @@ from django.conf import settings
 #------------------------------------------------------------------------------
 
 from automats import automat
+from automats import domain_contacts_synchronizer
 
 from zepp import zclient
 from zepp import zerrors
@@ -73,37 +74,37 @@ class DomainSynchronizer(automat.Automat):
         """
         The state machine code, generated using `visio2python <http://bitdust.io/visio2python/>`_ tool.
         """
-        #---EXISTS?---
-        if self.state == 'EXISTS?':
-            if event == 'response' and not self.isDomainExist(*args, **kwargs):
-                self.state = 'CONTACTS'
-                self.doRunDomainContactsSync(*args, **kwargs)
-            elif event == 'error':
-                self.state = 'FAILED'
-                self.doReportFailed(event, *args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isDomainExist(*args, **kwargs):
-                self.state = 'OWNER?'
-                self.doEppDomainInfo(*args, **kwargs)
-        #---OWNER?---
-        elif self.state == 'OWNER?':
-            if event == 'response' and not self.isSameRegistrant(*args, **kwargs):
-                self.state = 'FAILED'
-                self.doReportFailed(event, *args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'error':
-                self.state = 'FAILED'
-                self.doReportFailed(event, *args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isSameRegistrant(*args, **kwargs):
-                self.state = 'CONTACTS'
-                self.doRunDomainContactsSync(*args, **kwargs)
         #---AT_STARTUP---
-        elif self.state == 'AT_STARTUP':
+        if self.state == 'AT_STARTUP':
             if event == 'run':
                 self.state = 'EXISTS?'
                 self.doInit(*args, **kwargs)
                 self.doEppDomainCheck(*args, **kwargs)
+        #---EXISTS?---
+        elif self.state == 'EXISTS?':
+            if event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isDomainExist(*args, **kwargs):
+                self.state = 'CONTACTS'
+                self.doRunDomainContactsSync(*args, **kwargs)
+            elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(1000, *args, **kwargs) and self.isDomainExist(*args, **kwargs):
+                self.state = 'OWNER?'
+                self.doEppDomainInfo(*args, **kwargs)
+        #---OWNER?---
+        elif self.state == 'OWNER?':
+            if event == 'error' or ( event == 'response' and not self.isCode(2201, *args, **kwargs) and not self.isCode(1000, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(2201, *args, **kwargs):
+                self.state = 'FAILED'
+                self.doReportAnotherOwner(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(1000, *args, **kwargs):
+                self.state = 'CONTACTS'
+                self.doRunDomainContactsSync(*args, **kwargs)
         #---CONTACTS---
         elif self.state == 'CONTACTS':
             if event == 'error':
@@ -176,12 +177,19 @@ class DomainSynchronizer(automat.Automat):
             pass
         return None
 
-    def isDomainToBeCreated(self, *args, **kwargs):
+    def isCode(self, *args, **kwargs):
         """
         Condition method.
         """
+        return args[0] == int(args[1]['epp']['response']['result']['@code'])
 
     def isDomainExist(self, *args, **kwargs):
+        """
+        Condition method.
+        """
+        return args[0]['epp']['response']['resData']['chkData']['cd']['name']['@avail'] == '0'
+
+    def isDomainToBeCreated(self, *args, **kwargs):
         """
         Condition method.
         """
@@ -190,17 +198,6 @@ class DomainSynchronizer(automat.Automat):
         """
         Condition method.
         """
-
-    def isSameRegistrant(self, *args, **kwargs):
-        """
-        Condition method.
-        """
-
-    def isCode(self, *args, **kwargs):
-        """
-        Condition method.
-        """
-        return args[0] == int(args[1]['epp']['response']['result']['@code'])
 
     def doInit(self, *args, **kwargs):
         """
@@ -215,6 +212,7 @@ class DomainSynchronizer(automat.Automat):
         try:
             response = zclient.cmd_domain_check(
                 domains=[self.target_domain.name, ],
+                raise_for_result=False,
             )
         except zerrors.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
@@ -227,14 +225,16 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            self._latest_domain_info = zclient.cmd_domain_info(
                 domain=self.target_domain.name,
+                auth_info=self.target_domain.auth_key,
+                raise_for_result=False,
             )
         except zerrors.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
-            self.event('response', response)
+            self.event('response', self._latest_domain_info)
 
     def doEppDomainCreate(self, *args, **kwargs):
         """
@@ -251,12 +251,20 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
 
-    def doRunDomainNameserversSync(self, *args, **kwargs):
+    def doRunDomainContactsSync(self, *args, **kwargs):
         """
         Action method.
         """
+        dcs = domain_contacts_synchronizer.DomainContactsSynchronizer(raise_errors=True)
+        try:
+            dcs.event('run')
+        except Exception as exc:
+            self.event('error', exc)
+            return
+        self.outputs.extend(dcs.outputs)
+        self.event('contacts-ok')
 
-    def doRunDomainContactsSync(self, *args, **kwargs):
+    def doRunDomainNameserversSync(self, *args, **kwargs):
         """
         Action method.
         """
@@ -272,6 +280,11 @@ class DomainSynchronizer(automat.Automat):
         """
 
     def doReportFailed(self, *args, **kwargs):
+        """
+        Action method.
+        """
+
+    def doReportAnotherOwner(self, *args, **kwargs):
         """
         Action method.
         """

@@ -12,9 +12,13 @@ from front import forms
 from zepp import zmaster
 
 
-def domain_create(request):
-    if not request.user.is_authenticated:
+def is_user_authenticated(authentication_status):
+    if not authentication_status:
         return redirect('index')
+
+
+def domain_create(request):
+    is_user_authenticated(request.user.is_authenticated)
     if request.method != 'POST':
         form = forms.DomainCreateForm()
     else:
@@ -44,8 +48,7 @@ def domain_create(request):
 
 
 def domain_lookup(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
+    is_user_authenticated(request.user.is_authenticated)
     result = ''
     if request.method != 'POST':
         form = forms.DomainLookupForm()
@@ -74,16 +77,14 @@ def account_overview(request):
 
 
 def account_domains(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
+    is_user_authenticated(request.user.is_authenticated)
     return render(request, 'front/account_domains.html', {
         'domains': domains.list_domains(request.user.email),
     }, )
 
 
 def account_profile(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
+    is_user_authenticated(request.user.is_authenticated)
     if request.method == 'POST':
         form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
         if form.is_valid():

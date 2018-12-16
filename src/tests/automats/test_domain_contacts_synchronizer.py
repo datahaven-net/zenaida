@@ -116,6 +116,8 @@ def test_domain_update():
     cs.event('run', tester_domain, update_domain=True)
     del cs
     assert scenario == [
-        ('AT_STARTUP', 'CONTACT_CREATE', 'run'),
-        ('CONTACT_CREATE', 'DONE', 'response'),
+        ('AT_STARTUP', 'SYNC_CONTACTS', 'run'),
+        ('SYNC_CONTACTS', 'DOMAIN_INFO?', 'all-contacts-in-sync'),
+        ('DOMAIN_INFO?', 'DOMAIN_UPDATE', 'response'),
+        ('DOMAIN_UPDATE', 'DONE', 'response'),
     ]

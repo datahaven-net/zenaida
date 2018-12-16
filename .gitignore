@@ -1,5 +1,6 @@
-# Zenaida
+# Zenaida local development
 keys.local/
+logs.local/
 automats/*.~vsd
 
 # Created by https://www.gitignore.io/api/pycharm,osx,linux,virtualenv,python,vim

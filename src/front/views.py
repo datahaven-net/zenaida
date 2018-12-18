@@ -99,6 +99,30 @@ def account_profile(request):
     }, )
 
 
+def get_faq(request):
+    return render(request, 'front/faq.html')
+
+
+def get_faq_epp(request):
+    return render(request, 'faq/faq_epp.html')
+
+
+def get_faq_auctions(request):
+    return render(request, 'faq/faq_auctions.html')
+
+
+def get_faq_payments(request):
+    return render(request, 'faq/faq_payments.html')
+
+
+def get_correspondentbank(request):
+    return render(request, 'faq/correspondentbank.html')
+
+
+def get_registrars(request):
+    return render(request, 'faq/registrars.html')
+
+
 class ContactsView(TemplateView):
     template_name = 'front/account_contacts.html'
 

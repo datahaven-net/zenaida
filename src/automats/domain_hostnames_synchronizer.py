@@ -12,6 +12,7 @@ Zenaida domain_hostnames_synchronizer() Automat
 EVENTS:
     * :red:`all-hosts-created`
     * :red:`error`
+    * :red:`no-hosts-to-be-added`
     * :red:`response`
     * :red:`run`
 """
@@ -25,6 +26,11 @@ from django.conf import settings
 
 from automats import automat
 
+from back import domains
+
+from zepp import zclient
+from zepp import zerrors
+
 #------------------------------------------------------------------------------
 
 class DomainHostnamesSynchronizer(automat.Automat):
@@ -32,10 +38,13 @@ class DomainHostnamesSynchronizer(automat.Automat):
     This class implements all the functionality of ``domain_hostnames_synchronizer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
+    def __init__(self, update_domain=True,
+                 debug_level=0, log_events=None, log_transitions=None,
+                 raise_errors=False, **kwargs):
         """
         Builds `domain_hostnames_synchronizer()` state machine.
         """
+        self.update_domain = update_domain
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -72,12 +81,19 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         The state machine code, generated using `visio2python <http://bitdust.io/visio2python/>`_ tool.
         """
+        #---AT_STARTUP---
+        if self.state == 'AT_STARTUP':
+            if event == 'run' and not self.isUpdateRequired(*args, **kwargs):
+                self.state = 'DONE'
+                self.doReportDone(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'run' and self.isUpdateRequired(*args, **kwargs):
+                self.state = 'DOMAIN_INFO?'
+                self.doInit(*args, **kwargs)
+                self.doEppDomainInfo(*args, **kwargs)
         #---DOMAIN_INFO?---
-        if self.state == 'DOMAIN_INFO?':
-            if event == 'response' and self.isCode(1000, *args, **kwargs) and self.isUpdateRequired(*args, **kwargs):
-                self.state = 'HOSTS_CREATE'
-                self.doEppHostCreateMany(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isUpdateRequired(*args, **kwargs):
+        elif self.state == 'DOMAIN_INFO?':
+            if event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isUpdateRequired(*args, **kwargs):
                 self.state = 'DONE'
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
@@ -85,21 +101,10 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 self.state = 'FAILED'
                 self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-        #---AT_STARTUP---
-        elif self.state == 'AT_STARTUP':
-            if event == 'run' and self.isDomainInfoKnown(*args, **kwargs) and not self.isUpdateRequired(*args, **kwargs):
-                self.state = 'DONE'
-                self.doReportDone(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'run' and not self.isDomainInfoKnown(*args, **kwargs):
-                self.state = 'DOMAIN_INFO?'
-                self.doEppDomainInfo(*args, **kwargs)
-        #---DONE---
-        elif self.state == 'DONE':
-            pass
-        #---FAILED---
-        elif self.state == 'FAILED':
-            pass
+            elif event == 'response' and self.isCode(1000, *args, **kwargs) and self.isUpdateRequired(*args, **kwargs):
+                self.state = 'HOSTS_CHECK'
+                self.doPrepareHosts(*args, **kwargs)
+                self.doEppHostCheckMany(*args, **kwargs)
         #---DOMAIN_UPDATE!---
         elif self.state == 'DOMAIN_UPDATE!':
             if event == 'response' and self.isCode(1000, *args, **kwargs):
@@ -119,6 +124,25 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 self.state = 'FAILED'
                 self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+        #---DONE---
+        elif self.state == 'DONE':
+            pass
+        #---FAILED---
+        elif self.state == 'FAILED':
+            pass
+        #---HOSTS_CHECK---
+        elif self.state == 'HOSTS_CHECK':
+            if event == 'response' and self.isCode(1000, *args, **kwargs):
+                self.state = 'HOSTS_CREATE'
+                self.doEppHostCreateMany(*args, **kwargs)
+            elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'no-hosts-to-be-added':
+                self.state = 'DOMAIN_UPDATE!'
+                self.doEppDomainUpdate(*args, **kwargs)
+        return None
 
     def isCode(self, *args, **kwargs):
         """
@@ -130,41 +154,129 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         Condition method.
         """
+        known_domain_info = kwargs.get('known_domain_info', None)
+        if known_domain_info is None:
+            return True
+        return domains.check_nameservers_changed( 
+            domain_object=kwargs['target_domain'],
+            domain_info_response=known_domain_info,
+        )
 
-    def isDomainInfoKnown(self, *args, **kwargs):
+    def doInit(self, *args, **kwargs):
         """
-        Condition method.
+        Action method.
         """
+        self.target_domain = kwargs['target_domain']
+        self.known_domain_info = kwargs.get('known_domain_info', None)
 
     def doEppDomainInfo(self, *args, **kwargs):
         """
         Action method.
         """
+        try:
+            response = zclient.cmd_domain_info(
+                domain=self.target_domain.name,
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.event('error', exc)
+        else:
+            self.known_domain_info = response
+            self.event('response', response)
+
+    def doPrepareHosts(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.hosts_to_be_added = []
+        self.hosts_to_be_removed = []
+        self.hosts_to_be_added, self.hosts_to_be_removed = domains.compare_nameservers(
+            domain_object=self.target_domain,
+            domain_info_response=self.known_domain_info,
+        )
+
+    def doEppHostCheckMany(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        if not self.hosts_to_be_added:
+            self.event('no-hosts-to-be-added')
+            return
+        try:
+            check_host = zclient.cmd_host_check(self.hosts_to_be_added)
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppHostCheckMany: %s' % exc)
+            self.event('error', exc)
+        else:
+            self.event('response', check_host)
 
     def doEppHostCreateMany(self, *args, **kwargs):
         """
         Action method.
         """
+        check_host_results = args[0]['epp']['response']['resData']['chkData']['cd']
+        if isinstance(check_host_results, dict):
+            check_host_results = [check_host_results, ]
+        for host_avail in check_host_results:
+            if host_avail['name']['@avail'] == '1':
+                try:
+                    create_host = zclient.cmd_host_create(host_avail['name']['#text'])
+                except zerrors.EPPError as exc:
+                    self.log(self.debug_level, 'Exception in doEppHostCreateMany: %s' % exc)
+                    self.event('error', exc)
+                    return
+                # TODO: check that scenario later : probably hostname format is not valid or some other issue on back-end
+                # can be that we just mark that hostname as invalid or "not-in-sync"... 
+                # if create_host['epp']['response']['result']['@code'] == '2303':
+                #     return False
+                if create_host['epp']['response']['result']['@code'] != '1000':
+                    self.log(self.debug_level, 'Bad result code from host_create in doEppHostCreateMany: %s' % create_host['epp']['response']['result']['@code'])
+                    self.event('error')
+                    return
+                self.outputs.append(create_host)
+        self.event('all-hosts-created')
 
     def doEppDomainUpdate(self, *args, **kwargs):
         """
         Action method.
         """
-
-    def doReportFailed(self, event, *args, **kwargs):
-        """
-        Action method.
-        """
+        try:
+            domain_update = zclient.cmd_domain_update(
+                self.target_domain.name,
+                add_nameservers_list=self.hosts_to_be_added,
+                remove_nameservers_list=self.hosts_to_be_removed,
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
+            self.event('error', exc)
+        else:
+            self.event('response', domain_update)
 
     def doReportDone(self, *args, **kwargs):
         """
         Action method.
         """
+        if args:
+            self.outputs.append(args[0])
+
+    def doReportFailed(self, event, *args, **kwargs):
+        """
+        Action method.
+        """
+        if event == 'error':
+            self.outputs.append(args[0])
+        else:
+            self.outputs.append(Exception(
+                'Unexpected response code: %s' % args[0]['epp']['response']['result']['@code']
+            ))
 
     def doDestroyMe(self, *args, **kwargs):
         """
         Remove all references to the state machine object to destroy it.
         """
+        self.target_domain = None
+        self.known_domain_info = None
+        self.update_domain = None
+        self.hosts_to_be_added = None
+        self.hosts_to_be_removed = None
         self.destroy()
-
-

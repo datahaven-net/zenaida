@@ -116,3 +116,4 @@ def to_dict(contact_object):
         c['address']['cc'] = iso_countries.clean_country_code(c['address']['cc'])
     info['contacts'][0] = c        
     return info
+

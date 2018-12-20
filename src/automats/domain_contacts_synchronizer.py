@@ -23,6 +23,8 @@ from django.conf import settings
 from automats import automat
 from automats import contact_synchronizer
 
+from back import domains
+
 from zepp import zclient
 from zepp import zerrors
 
@@ -33,10 +35,15 @@ class DomainContactsSynchronizer(automat.Automat):
     This class implements all the functionality of ``domain_contacts_synchronizer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
+    def __init__(self, update_domain=False, skip_roles=[],
+                 debug_level=0, log_events=None, log_transitions=None,
+                 raise_errors=False,
+                 **kwargs):
         """
         Builds `domain_contacts_synchronizer()` state machine.
         """
+        self.domain_to_be_updated = update_domain
+        self.skip_roles = skip_roles
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -137,14 +144,13 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         Action method.
         """
-        self.target_domain = args[0]
-        self.target_contacts = {}
-        self.domain_to_be_updated = kwargs.get('update_domain', False)
+        self.target_domain = kwargs['target_domain']
 
     def doPrepareContacts(self, *args, **kwargs):
         """
         Action method.
         """
+        self.target_contacts = {}
         possbile_contacts = {
             'registrant': self.target_domain.registrant,
             'admin': self.target_domain.contact_admin,
@@ -152,6 +158,8 @@ class DomainContactsSynchronizer(automat.Automat):
             'tech': self.target_domain.contact_tech,
         }
         for role, possbile_contact in possbile_contacts.items():
+            if role in self.skip_roles:
+                continue
             if not possbile_contact:
                 continue
             self.target_contacts[role] = possbile_contact
@@ -165,10 +173,12 @@ class DomainContactsSynchronizer(automat.Automat):
             try:
                 cs.event('run', contact_object)
             except Exception as exc:
+                self.log(self.debug_level, 'Exception in ContactSynchronizer: %s' % exc)
                 self.event('error', exc)
                 break
             result = cs.outputs[0]
             if isinstance(result, Exception):
+                self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % result)
                 self.event('error', result)
                 break
             self.outputs.extend([
@@ -197,31 +207,11 @@ class DomainContactsSynchronizer(automat.Automat):
         self.add_contacts = []
         self.remove_contacts = []
         self.change_registrant = None
-        current_contacts = args[0]['epp']['response']['resData']['infData']['contact']
-        if not isinstance(current_contacts, list):
-            current_contacts = [current_contacts, ]
-        current_contacts = [{
-            'type': i['@type'],
-            'id': i['#text'],
-        } for i in current_contacts]
-        current_registrant = args[0]['epp']['response']['resData']['infData'].get('registrant', {'id': None, })
-        new_contacts = []
-        for role, contact_object in self.target_contacts.items():
-            if role != 'registrant':
-                if contact_object.epp_id:
-                    new_contacts.append({'type': role, 'id': contact_object.epp_id})
-        current_contacts_ids = [old_contact['id'] for old_contact in current_contacts]
-        new_contacts_ids = [new_cont['id'] for new_cont in new_contacts]
-        for new_cont in new_contacts:
-            if new_cont['id'] not in current_contacts_ids:
-                self.add_contacts.append(new_cont)
-        for old_cont in current_contacts:
-            if old_cont['type'] != 'registrant':
-                if old_cont['id'] not in new_contacts_ids:
-                    self.remove_contacts.append(old_cont)
-        if 'registrant' in self.target_contacts:
-            if current_registrant != self.target_contacts['registrant'].epp_id:
-                self.change_registrant = self.target_contacts['registrant'].epp_id
+        self.add_contacts, self.remove_contacts, self.change_registrant = domains.compare_contacts(
+            domain_object=self.target_domain,
+            domain_info_response=args[0],
+            target_contacts=list(self.target_contacts.items()),
+        )
 
     def doEppDomainUpdate(self, *args, **kwargs):
         """
@@ -250,6 +240,7 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         Action method.
         """
+        # TODO: write positive history in DB
 
     def doReportFailed(self, event, *args, **kwargs):
         """
@@ -266,6 +257,11 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         Remove all references to the state machine object to destroy it.
         """
+        self.add_contacts = None
+        self.remove_contacts = None
+        self.change_registrant = None
+        self.domain_to_be_updated = None
+        self.skip_roles = None
         self.destroy()
 
 

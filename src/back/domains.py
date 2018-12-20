@@ -160,3 +160,92 @@ def update_nameservers(domain_name, hosts):
     if domain_modified:
         existing_domain.save()
     return domain_modified
+
+
+def compare_contacts(domain_object, domain_info_response=None, target_contacts=None, ):
+    """
+    Based on known EPP domain info and local info from database identify which contacts needs to be added or removed.
+    Also checks if registrant needs to be changed.
+    """
+    add_contacts = []
+    remove_contacts = []
+    change_registrant = None
+    if not target_contacts:
+        target_contacts = domain_object.list_contacts()
+    #--- contacts
+    current_contacts = []
+    new_contacts = []
+    try:
+        current_contacts = domain_info_response['epp']['response']['resData']['infData']['contact']
+    except:
+        pass
+    if not isinstance(current_contacts, list):
+        current_contacts = [current_contacts, ]
+    current_contacts = [{
+        'type': i['@type'],
+        'id': i['#text'],
+    } for i in current_contacts]
+    for role, contact_object in target_contacts:
+        if role != 'registrant' and contact_object.epp_id:
+            new_contacts.append({'type': role, 'id': contact_object.epp_id, })
+    current_contacts_ids = [old_contact['id'] for old_contact in current_contacts]
+    for new_cont in new_contacts:
+        if new_cont['id'] not in current_contacts_ids:
+            add_contacts.append(new_cont)
+    new_contacts_ids = [new_cont['id'] for new_cont in new_contacts]
+    for old_cont in current_contacts:
+        if old_cont['type'] != 'registrant' and old_cont['id'] not in new_contacts_ids:
+            remove_contacts.append(old_cont)
+    #--- registrant
+    current_registrant = None
+    try:
+        current_registrant = domain_info_response['epp']['response']['resData']['infData']['registrant']
+    except:
+        pass
+    if domain_object.registrant and current_registrant and current_registrant != domain_object.registrant.epp_id:
+        change_registrant = domain_object.registrant.epp_id
+    return add_contacts, remove_contacts, change_registrant
+
+
+def check_nameservers_changed(domain_object, domain_info_response=None):
+    """
+    Compares known domain nameservers received from EPP response and currently stored in db,
+    return True if some change found: add or remove nameserver.
+    TODO: check can't we just compare two lists... ?
+    """
+    try:
+        current_servers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
+    except:
+        current_servers = []
+    if not isinstance(current_servers, list):
+        current_servers = [current_servers, ]
+    for old_server in current_servers:
+        if old_server and old_server not in domain_object.list_nameservers():
+            return True
+    for new_server in domain_object.list_nameservers():
+        if new_server and new_server not in current_servers:
+            return True
+    return False
+
+
+def compare_nameservers(domain_object, domain_info_response=None):
+    """
+    Based on known EPP domain info and local info from database identify which name servers needs to be added or removed.
+    """
+    remove_nameservers = []
+    add_nameservers = []
+    try:
+        current_nameservers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
+    except:
+        current_nameservers = []
+    if not isinstance(current_nameservers, list):
+        current_nameservers = [current_nameservers, ]
+    new_nameservers = domain_object.list_nameservers()
+    for old_server in current_nameservers:
+        if old_server and old_server not in new_nameservers:
+            remove_nameservers.append(old_server)
+    for new_server in new_nameservers:
+        if new_server and new_server not in current_nameservers:
+            add_nameservers.append(new_server)
+    return add_nameservers, remove_nameservers
+

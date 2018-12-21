@@ -66,14 +66,23 @@ def domain_lookup(request):
 
 
 def account_overview(request):
-    response = {
-        'domains': [],
-    }
+    result = ''
+    if request.method != 'POST':
+        form = forms.DomainLookupForm()
+    else:
+        form = forms.DomainLookupForm(request.POST)
+        if form.is_valid():
+            result = zmaster.domain_check(
+                domain_name=form.cleaned_data['domain_name'],
+                return_string=True,
+            )
+    resp = render(request, 'front/account_overview.html', {'form': form, 'result': result})
     if request.user.is_authenticated:
         response = {
             'domains': domains.list_domains(request.user.email),
         }
-    return render(request, 'front/account_overview.html', response)
+        resp = render(request, 'front/account_overview.html', {'form': form, 'result': result, 'response': response})
+    return resp
 
 
 def account_domains(request):

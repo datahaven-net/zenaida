@@ -1,8 +1,8 @@
-tox
+# tox
 isort
 flake8
 mock
-pkgversion
+# pkgversion
 
 # PyTest for running the tests.
 pytest

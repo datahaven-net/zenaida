@@ -99,7 +99,7 @@ def account_domains(request):
 def account_domain_add(request):
     is_user_authenticated(request.user.is_authenticated)
 
-    form = forms.DomainAddForm(request.GET)
+    form = forms.DomainAddForm(request.user)
     resp = render(request, 'front/account_domain_add.html', {
         'form': form,
     })

@@ -11,6 +11,9 @@
                   {% csrf_token %}
                   {{ form.as_p }}
                   {{ result }}
+                  {% if link %}
+                    <a href="{{ link }}">register <b>form.domain_name</b></a>
+                  {% endif %}
                   <input type="submit" value="Search" />
                 </form>
                 {% endblock %}

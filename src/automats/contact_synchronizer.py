@@ -131,7 +131,7 @@ class ContactSynchronizer(automat.Automat):
         """
         Condition method.
         """
-        return args[0].epp_id != ''
+        return bool(args[0].epp_id)
 
     def isCode(self, *args, **kwargs):
         """

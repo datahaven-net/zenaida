@@ -17,7 +17,7 @@ def _prepare_tester_contact():
     tester_contact = tester.contacts.first()
     if not tester_contact:
         tester_contact = contacts.create(
-            epp_id='',
+            epp_id=None,
             owner=tester,
             person_name='Tester Tester',
             organization_name='TestingCorp',

@@ -1,14 +1,15 @@
-from django.forms import forms, fields, models
+from django.forms import forms, fields, models, TextInput
 
 from back.models.profile import Profile
 
 
 class DomainLookupForm(forms.Form):
-    domain_name = fields.CharField(label='domain name', max_length=100, required=False)
+    domain_name = fields.CharField(label='', max_length=100, required=True,
+                                   widget=TextInput(attrs={'placeholder': 'Find your domain'}),)
 
 
 class DomainCreateForm(forms.Form):
-    domain_name = fields.CharField(label='domain name', max_length=100, required=True)
+    domain_name = fields.CharField(label='Domain Name', max_length=100, required=True)
 
 
 class AccountProfileForm(models.ModelForm):

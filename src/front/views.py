@@ -12,9 +12,13 @@ from front import forms
 from zepp import zmaster
 
 
-def domain_create(request):
-    if not request.user.is_authenticated:
+def is_user_authenticated(authentication_status):
+    if not authentication_status:
         return redirect('index')
+
+
+def domain_create(request):
+    is_user_authenticated(request.user.is_authenticated)
     if request.method != 'POST':
         form = forms.DomainCreateForm()
     else:
@@ -44,8 +48,7 @@ def domain_create(request):
 
 
 def domain_lookup(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
+    is_user_authenticated(request.user.is_authenticated)
     result = ''
     if request.method != 'POST':
         form = forms.DomainLookupForm()
@@ -63,27 +66,34 @@ def domain_lookup(request):
 
 
 def account_overview(request):
-    response = {
-        'domains': [],
-    }
+    result = ''
+    if request.method != 'POST':
+        form = forms.DomainLookupForm()
+    else:
+        form = forms.DomainLookupForm(request.POST)
+        if form.is_valid():
+            result = zmaster.domain_check(
+                domain_name=form.cleaned_data['domain_name'],
+                return_string=True,
+            )
+    resp = render(request, 'front/account_overview.html', {'form': form, 'result': result})
     if request.user.is_authenticated:
         response = {
             'domains': domains.list_domains(request.user.email),
         }
-    return render(request, 'front/account_overview.html', response)
+        resp = render(request, 'front/account_overview.html', {'form': form, 'result': result, 'response': response})
+    return resp
 
 
 def account_domains(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
+    is_user_authenticated(request.user.is_authenticated)
     return render(request, 'front/account_domains.html', {
         'domains': domains.list_domains(request.user.email),
     }, )
 
 
 def account_profile(request):
-    if not request.user.is_authenticated:
-        return redirect('index')
+    is_user_authenticated(request.user.is_authenticated)
     if request.method == 'POST':
         form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
         if form.is_valid():
@@ -96,6 +106,30 @@ def account_profile(request):
     return render(request, 'front/account_profile.html', {
         'form': form,
     }, )
+
+
+def get_faq(request):
+    return render(request, 'front/faq.html')
+
+
+def get_faq_epp(request):
+    return render(request, 'faq/faq_epp.html')
+
+
+def get_faq_auctions(request):
+    return render(request, 'faq/faq_auctions.html')
+
+
+def get_faq_payments(request):
+    return render(request, 'faq/faq_payments.html')
+
+
+def get_correspondentbank(request):
+    return render(request, 'faq/correspondentbank.html')
+
+
+def get_registrars(request):
+    return render(request, 'faq/registrars.html')
 
 
 class ContactsView(TemplateView):

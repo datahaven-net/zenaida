@@ -151,13 +151,13 @@ class DomainContactsSynchronizer(automat.Automat):
         Action method.
         """
         self.target_contacts = {}
-        possbile_contacts = {
+        possible_contacts = {
             'registrant': self.target_domain.registrant,
             'admin': self.target_domain.contact_admin,
             'billing': self.target_domain.contact_billing,
             'tech': self.target_domain.contact_tech,
         }
-        for role, possbile_contact in possbile_contacts.items():
+        for role, possbile_contact in possible_contacts.items():
             if role in self.skip_roles:
                 continue
             if not possbile_contact:

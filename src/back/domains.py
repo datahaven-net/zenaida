@@ -173,12 +173,11 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
     if not target_contacts:
         target_contacts = domain_object.list_contacts()
     #--- contacts
-    current_contacts = []
     new_contacts = []
     try:
         current_contacts = domain_info_response['epp']['response']['resData']['infData']['contact']
     except:
-        pass
+        current_contacts = []
     if not isinstance(current_contacts, list):
         current_contacts = [current_contacts, ]
     current_contacts = [{

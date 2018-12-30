@@ -50,6 +50,7 @@ def domain_create(request):
 def domain_lookup(request):
     is_user_authenticated(request.user.is_authenticated)
     result = ''
+    link = ''
     if request.method != 'POST':
         form = forms.DomainLookupForm()
     else:
@@ -57,11 +58,14 @@ def domain_lookup(request):
         if form.is_valid():
             result = zmaster.domain_check(
                 domain_name=form.cleaned_data['domain_name'],
-                return_string=True,
+                # return_string=True,
             )
+            if not result:
+                link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
     return render(request, 'front/domain_lookup.html', {
         'form': form,
-        'result': result,
+        'link': link,
+        'result': str(result),
     }, )
 
 
@@ -91,6 +95,16 @@ def account_domains(request):
         'domains': domains.list_domains(request.user.email),
     }, )
 
+
+def account_domain_add(request):
+    is_user_authenticated(request.user.is_authenticated)
+
+    form = forms.DomainAddForm(request.GET)
+    resp = render(request, 'front/account_domain_add.html', {
+        'form': form,
+    })
+    return resp
+    
 
 def account_profile(request):
     is_user_authenticated(request.user.is_authenticated)

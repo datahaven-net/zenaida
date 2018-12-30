@@ -12,6 +12,13 @@ class DomainCreateForm(forms.Form):
     domain_name = fields.CharField(label='Domain Name', max_length=100, required=True)
 
 
+class DomainAddForm(forms.Form):
+    domain_name = fields.CharField(label='Domain Add', max_length=100, required=True)
+    contact_admin = fields.CharField(label='Contact Admin', max_length=100, required=False)
+    contact_billing = fields.CharField(label='Contact Billing', max_length=100, required=False)
+    contact_tech = fields.CharField(label='Contact Tech', max_length=100, required=False)
+
+
 class AccountProfileForm(models.ModelForm):
 
     class Meta:

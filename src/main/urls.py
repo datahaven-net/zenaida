@@ -39,9 +39,25 @@ auth_patterns = [
 
 patterns = [
     path('profile/', front_views.account_profile, name='account_profile'),
+
     path('contacts/', front_views.ContactsView.as_view(), name='account_contacts'),
+    # path('contacts/add', front_views.ContactsView.as_view(), name='account_contact_add'),
+    # path('contacts/edit', front_views.ContactsView.as_view(), name='account_contact_edit'),
+
     path('domains/', front_views.account_domains, name='account_domains'),
+    path('domains/add', front_views.account_domain_add, name='account_domain_add'),
+    # path('domains/edit', front_views.account_domain_edit, name='account_domain_edit'),
+    # path('domains/register', front_views.account_domain_register, name='account_domain_register'),
+    # path('domains/renew', front_views.account_domain_renew, name='account_domain_renew'),
+    # path('domains/transfer', front_views.account_domain_transfer, name='account_domain_transfer'),
+    # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
+
+    # path('billing/', front_views.billing_overview, name='billing_overview'),
+    # path('billing/pay', front_views.billing_pay, name='billing_pay'),
+    # path('billing/invoice', front_views.billing_invoice, name='billing_invoice'),
+
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
+
     # FAQ URLs
     path('faq/', front_views.get_faq, name='faq'),
     path('faq_epp/', front_views.get_faq_epp, name='faq_epp'),

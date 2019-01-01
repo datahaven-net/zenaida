@@ -120,7 +120,7 @@ test_dev: sanity_checks pyclean venv
 test/%: sanity_checks pyclean venv
 	$(TOX) -e $(TOX_PY_LIST) -- $*
 
-test_e2e:
+test_e2e: tox
 	E2E=1 PYTHONPATH=./src/ .tox/py36/bin/py.test -vv --capture=no src/tests/
 
 lint: $(VENV_TOX)

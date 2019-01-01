@@ -229,9 +229,7 @@ class ContactSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(Exception(
-                'Unexpected response code: %s' % args[0]['epp']['response']['result']['@code']
-            ))
+            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

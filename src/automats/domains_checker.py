@@ -90,6 +90,7 @@ class DomainsChecker(automat.Automat):
             if event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isAnyExist(*args, **kwargs):
                 self.state = 'DONE'
                 self.doReportExisting(event, *args, **kwargs)
+                self.doReportDone(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
                 self.state = 'FAILED'
@@ -155,6 +156,7 @@ class DomainsChecker(automat.Automat):
         Action method.
         """
         self.target_domain_names = list(args[0])
+        self.check_results = {dn: False for dn in self.target_domain_names}
         self.current_domain_name = None
 
     def doPrepareAvailableDomains(self, event, *args, **kwargs):
@@ -162,6 +164,7 @@ class DomainsChecker(automat.Automat):
         Action method.
         """
         if event == 'skip-check':
+            self.existing_domains = list(self.target_domain_names)
             self.available_domain_names = list(self.target_domain_names)
             return
         self.available_domain_names = []
@@ -177,6 +180,7 @@ class DomainsChecker(automat.Automat):
                 continue
             if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('the domain exists'):
                 self.available_domain_names.append(name)
+        self.existing_domains = list(self.available_domain_names)
 
     def doIterateNextDomain(self, *args, **kwargs):
         """
@@ -207,6 +211,7 @@ class DomainsChecker(automat.Automat):
         Action method.
         """
         if self.skip_info:
+            self.check_results = {dn: dn in self.existing_domains for dn in self.target_domain_names}
             self.event('skip-info')
             return
         try:
@@ -225,6 +230,7 @@ class DomainsChecker(automat.Automat):
                     self.log(self.debug_level, 'Domain known to belong to another registrant: %s' % self.current_domain_name)
                     self.event('error', zerrors.EPPRegistrantAuthFailed(response=response))
                     return
+            self.check_results[self.current_domain_name] = True
             self.event('response', response)
 
     def doReportExisting(self, event, *args, **kwargs):
@@ -260,6 +266,7 @@ class DomainsChecker(automat.Automat):
         """
         Action method.
         """
+        self.outputs.append(self.check_results)
 
     def doReportFailed(self, event, *args, **kwargs):
         """
@@ -274,8 +281,10 @@ class DomainsChecker(automat.Automat):
         """
         Remove all references to the state machine object to destroy it.
         """
+        self.check_results = None
         self.current_domain_name = None
         self.target_domain_names = None
+        self.existing_domains = None
         self.available_domain_names = None
         self.destroy()
 

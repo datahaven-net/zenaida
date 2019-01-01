@@ -9,7 +9,11 @@
                 <form method="post" action=".">
                   {% csrf_token %}
                   {{ form }}
-                  {{ result }}
+                  <br>{{ message }}
+                  {% if link %}
+                    <a href="{{ link }}">register <b>{{ domain_name }}</b></a>
+                    <br>
+                  {% endif %}
                   <input type="submit" value="Search" />
                 </form>
                 Current balance: <b>{{ user.balance }} $ US</b>
@@ -31,7 +35,11 @@
                 <form method="post" action=".">
                   {% csrf_token %}
                   {{ form }}
-                  {{ result }}
+                  <br>{{ message }}
+                  {% if link %}
+                    <a href="{{ link }}">register <b>{{ domain_name }}</b></a>
+                    <br>
+                  {% endif %}
                   <input type="submit" value="Search" />
                 </form>
             {% endif %}

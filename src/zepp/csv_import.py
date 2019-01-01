@@ -271,6 +271,9 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
 
     owner_account = users.find_account(real_registrant_email)
     if not owner_account:
+        if dry_run:
+            errors.append('account %s not exist' % real_registrant_email)
+            return errors
     #--- account check/create
         new_password=users.generate_password(length=10)
         owner_account = users.create_account(

@@ -5,88 +5,54 @@ from pika.exceptions import AMQPError
 from zepp import zclient
 from zepp import zerrors
 
+from automats import domains_checker
+from automats import domain_synchronizer
+
+
 logger = logging.getLogger(__name__)
 
 
-def domain_check(domain_name, raise_errors=False, return_string=False, return_response=False, ):
+def domains_check(domain_names, verify_registrant=False, raise_errors=False):
     """
-    Return True (domain exist), False (domain not exist), None (if error) or string (with error message).
-    If return_response==True always return EPP response as dictionary.
-    If raise_errors==True always raise exceptions in case of errors.
-    If return_string==True always return error message as string in case of errors.
+    Checks if those domains existing on Back-End.
+    Returns dictionary object with check results.
+    If `verify_registrant` is True process will also send domain_info() request to check epp_id on Back-End
+    and compare with current registrant information stored in DB for every domain : epp_id must be in sync.
+    Returns None if error happened, or raise Exception if `raise_errors` is False.
     """
-    try:
-        check = zclient.cmd_domain_check([domain_name, ], )
-    except AMQPError as exc:
+    dc = domains_checker.DomainsChecker(
+        skip_info=(not verify_registrant),
+        verify_registrant=verify_registrant,
+        raise_errors=raise_errors,
+    )
+    dc.event('run', domain_names)
+    result = dc.outputs[-1]
+    if isinstance(result, Exception):
         if raise_errors:
-            raise zerrors.EPPCommandFailed(str(exc))
-        if return_string:
-            return 'request failed, connection broken: %s' % exc
+            raise result
         return None
-    except Exception as exc:
-        if raise_errors:
-            raise zerrors.EPPCommandFailed(str(exc))
-        if return_string:
-            return 'request failed, unknown error: %s' % exc
-        return None
-    try:
-        if check['epp']['response']['result']['@code'] != '1000':
-            if raise_errors:
-                raise zerrors.EPPCommandFailed('EPP domain_check failed with error code: %s' % (
-                    check['epp']['response']['result']['@code'], ))
-            if return_response:
-                return check
-            if return_string:
-                return 'request failed, error code: %s' % check['epp']['response']['result']['@code']
-            return None
-        if check['epp']['response']['resData']['chkData']['cd']['name']['@avail'] == '1':
-            if return_response:
-                return check
-            if return_string:
-                return 'not exist'
-            return False
-    except KeyError as exc:
-        if return_response:
-            return check
-        if return_string:
-            return 'request failed, unexpected field in response: %s' % exc
-        return False
-    if return_response:
-        return check
-    if return_string:
-        return 'exist'
-    return True
+    return result
 
 
-def domain_info(domain_name, auth_info=None, raise_errors=False, return_string=False):
+def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, raise_errors=False, ):
     """
-    Send domain_info EPP command and returns result response.
     """
-    try:
-        info = zclient.cmd_domain_info(domain_name, auth_info=auth_info)
-    except AMQPError as exc:
+    ds = domain_synchronizer.DomainSynchronizer(
+        raise_errors=raise_errors,
+    )
+    ds.event('run', domain_object,
+        sync_contacts=sync_contacts,
+        sync_nameservers=sync_nameservers,
+        renew_years=renew_years,
+    )
+    result = ds.outputs[-1]
+    if isinstance(result, Exception):
         if raise_errors:
-            raise zerrors.EPPCommandFailed(str(exc))
-        if return_string:
-            return 'domain info request failed, connection broken: %s' % exc
+            raise result
         return None
-    except Exception as exc:
+    if result is not True:
         if raise_errors:
-            raise zerrors.EPPCommandFailed(str(exc))
-        if return_string:
-            return 'domain info request failed, unknown error: %s' % exc
+            raise Exception('Unexpected result in domain create flow')
         return None
-    if info['epp']['response']['result']['@code'] != '1000':
-        if raise_errors:
-            raise zerrors.EPPCommandFailed('EPP domain_info failed with error code: %s' % (
-                info['epp']['response']['result']['@code'], ))
-        if return_string:
-            return 'domain info request failed with error code: %s' % info['epp']['response']['result']['@code']
-        return None
-    # TODO: ...
-    return {}
-        
+    return result
 
-def domain_register(domain_name):
-    """
-    """

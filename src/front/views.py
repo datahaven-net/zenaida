@@ -24,18 +24,18 @@ def domain_create(request):
     else:
         form = forms.DomainCreateForm(request.POST)
         if form.is_valid():
-            try:
-                is_exist = zmaster.domain_check(
-                    domain=form.cleaned_data['domain_name'],
-                    raise_errors=True,
-                    return_string=False,
-                )
-            except:
-                messages.error(request, 'Failed to check domain status, please try again later.')
-            else:
-                if is_exist:
-                    messages.error(request, 'Domain <b>%s</b> already registered.' % form.domain_name)
-                else:
+#             try:
+#                 is_exist = zmaster.domain_check(
+#                     domain=form.cleaned_data['domain_name'],
+#                     raise_errors=True,
+#                     return_string=False,
+#                 )
+#             except:
+#                 messages.error(request, 'Failed to check domain status, please try again later.')
+#             else:
+#                 if is_exist:
+#                     messages.error(request, 'Domain <b>%s</b> already registered.' % form.domain_name)
+#                 else:
                     # TODO: domain to be created
 #                     domains.create(
 #                         name=form.domain_name,
@@ -49,44 +49,63 @@ def domain_create(request):
 
 def domain_lookup(request):
     is_user_authenticated(request.user.is_authenticated)
-    result = ''
+    message = ''
     link = ''
+    domain_name = ''
     if request.method != 'POST':
         form = forms.DomainLookupForm()
     else:
         form = forms.DomainLookupForm(request.POST)
         if form.is_valid():
-            result = zmaster.domain_check(
-                domain_name=form.cleaned_data['domain_name'],
-                # return_string=True,
+            domain_name = form.cleaned_data['domain_name']
+            check_result = zmaster.domains_check(
+                [domain_name, ],
             )
-            if not result:
-                link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
+            if check_result is None:
+                message = 'service temporary unavailable'
+            else:
+                if check_result.get(domain_name):
+                    message = 'domain already registered'
+                else:
+                    message = 'domain is available'
+                    link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
     return render(request, 'front/domain_lookup.html', {
         'form': form,
         'link': link,
-        'result': str(result),
-    }, )
+        'message': str(message),
+        'domain_name': domain_name,
+    })
 
 
 def account_overview(request):
-    result = ''
+    message = ''
+    link = ''
+    domain_name = ''
     if request.method != 'POST':
         form = forms.DomainLookupForm()
     else:
         form = forms.DomainLookupForm(request.POST)
         if form.is_valid():
-            result = zmaster.domain_check(
-                domain_name=form.cleaned_data['domain_name'],
-                return_string=True,
-            )
-    resp = render(request, 'front/account_overview.html', {'form': form, 'result': result})
+            domain_name = form.cleaned_data['domain_name']
+            check_result = zmaster.domains_check(domain_names=[domain_name, ], )
+            if check_result is None:
+                message = 'service temporary unavailable'
+            else:
+                if check_result.get(domain_name):
+                    message = 'domain already registered'
+                else:
+                    message = 'domain is available'
+                    link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
+    response = {
+        'form': form,
+        'message': message,
+        'link': link,
+        'domains': [],
+        'domain_name': domain_name,
+    }
     if request.user.is_authenticated:
-        response = {
-            'domains': domains.list_domains(request.user.email),
-        }
-        resp = render(request, 'front/account_overview.html', {'form': form, 'result': result, 'response': response})
-    return resp
+        response['domains'] += domains.list_domains(request.user.email)
+    return render(request, 'front/account_overview.html', response)
 
 
 def account_domains(request):

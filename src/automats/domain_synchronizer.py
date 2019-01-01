@@ -144,6 +144,7 @@ class DomainSynchronizer(automat.Automat):
             elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'READ'
                 self.doDBWriteDomainCreated(*args, **kwargs)
+                self.doReportCreated(event, *args, **kwargs)
                 self.doEppDomainInfo(*args, **kwargs)
         #---READ---
         elif self.state == 'READ':
@@ -163,7 +164,7 @@ class DomainSynchronizer(automat.Automat):
                 self.doDestroyMe(*args, **kwargs)
             elif ( event == 'no-updates' or ( event == 'response' and self.isCode(1000, *args, **kwargs) ) ) and not self.isDomainToBeRenew(*args, **kwargs):
                 self.state = 'DONE'
-                self.doReportSuccess(*args, **kwargs)
+                self.doReportDone(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif ( event == 'no-updates' or ( event == 'response' and self.isCode(1000, *args, **kwargs) ) ) and self.isDomainToBeRenew(*args, **kwargs):
                 self.state = 'RENEW'
@@ -177,7 +178,8 @@ class DomainSynchronizer(automat.Automat):
             elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'DONE'
                 self.doDBWriteDomainRenew(*args, **kwargs)
-                self.doReportSuccess(*args, **kwargs)
+                self.doReportRenew(*args, **kwargs)
+                self.doReportDone(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
         #---DONE---
         elif self.state == 'DONE':
@@ -410,7 +412,6 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-        self.outputs.append(args[0])
         # TODO: args[0]['epp']['response']['trID']['svTRID']  store in history
         self.target_domain.create_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['crDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -422,7 +423,6 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-        self.outputs.append(args[0])
         # TODO: args[0]['epp']['response']['trID']['svTRID']  store in history
         self.target_domain.expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['renData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -435,10 +435,23 @@ class DomainSynchronizer(automat.Automat):
         self.target_domain.epp_id = args[0]['epp']['response']['resData']['infData']['roid']
         self.target_domain.save()
 
-    def doReportSuccess(self, *args, **kwargs):
+    def doReportDone(self, event, *args, **kwargs):
         """
         Action method.
         """
+        self.outputs.append(True)
+
+    def doReportCreated(self, event, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.outputs.append(args[0])
+
+    def doReportRenew(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.outputs.append(args[0])
 
     def doReportAnotherOwner(self, *args, **kwargs):
         """
@@ -466,5 +479,4 @@ class DomainSynchronizer(automat.Automat):
         self.verify_owner = None
         self.latest_domain_info = None
         self.destroy()
-
 

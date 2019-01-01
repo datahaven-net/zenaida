@@ -75,7 +75,8 @@ def test_domain_create():
         ('RENEW', 'DONE', 'response'),
     ]
     assert tester_domain.epp_id is not None
-    assert len(outputs) == 7
+    assert len(outputs) == 8
+    assert outputs[-1] is True
 
 
 @pytest.mark.django_db
@@ -117,4 +118,5 @@ def test_domain_no_updates():
         ('READ', 'UPDATE!', 'response'),
         ('UPDATE!', 'DONE', 'no-updates'),
     ]
-    assert len(outputs) == 4
+    assert len(outputs) == 5
+    assert outputs[-1] is True

@@ -33,10 +33,11 @@ def test_single_domain_exist():
         ('CHECK_MANY', 'INFO_ONE', 'response'),
         ('INFO_ONE', 'DONE', 'response'),
     ]
-    assert len(outputs) == 3
+    assert len(outputs) == 4
     assert outputs[0] == [test_domain_name, ]
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
     assert outputs[2]['epp']['response']['result']['@code'] == '1000'
+    assert outputs[3] == {test_domain_name: True, }
 
 
 @pytest.mark.django_db
@@ -61,9 +62,10 @@ def test_single_domain_not_exist():
         ('AT_STARTUP', 'CHECK_MANY', 'run'),
         ('CHECK_MANY', 'DONE', 'response'),
     ]
-    assert len(outputs) == 2
+    assert len(outputs) == 3
     assert outputs[0] == []
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
+    assert outputs[2] == {test_domain_name: False, }
 
 
 @pytest.mark.django_db
@@ -91,11 +93,13 @@ def test_two_domains_exist():
         ('INFO_ONE', 'INFO_ONE', 'response'),
         ('INFO_ONE', 'DONE', 'response'),
     ]
-    assert len(outputs) == 4
+    assert len(outputs) == 5
     assert outputs[0] == [test_domain_name1, test_domain_name2, ]
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
     assert outputs[2]['epp']['response']['result']['@code'] == '1000'
     assert outputs[3]['epp']['response']['result']['@code'] == '1000'
+    assert outputs[4][test_domain_name1] is True
+    assert outputs[4][test_domain_name2] is True
 
 
 @pytest.mark.django_db
@@ -212,8 +216,9 @@ def test_skip_check():
         ('CHECK_MANY', 'INFO_ONE', 'skip-check'),
         ('INFO_ONE', 'DONE', 'response'),
     ]
-    assert len(outputs) == 1
+    assert len(outputs) == 2
     assert outputs[0]['epp']['response']['result']['@code'] == '1000'
+    assert outputs[1] == {test_domain_name: True, }
 
 
 @pytest.mark.django_db
@@ -240,6 +245,7 @@ def test_skip_info():
         ('CHECK_MANY', 'INFO_ONE', 'response'),
         ('INFO_ONE', 'DONE', 'skip-info'),
     ]
-    assert len(outputs) == 2
+    assert len(outputs) == 3
     assert outputs[0] == [test_domain_name, ]
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
+    assert outputs[2] == {test_domain_name: True, }

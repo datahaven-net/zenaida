@@ -444,6 +444,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
+        self.outputs.append(zerrors.EPPRegistrarAuthFailed(response=args[0]))
 
     def doReportFailed(self, event, *args, **kwargs):
         """

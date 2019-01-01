@@ -37,3 +37,12 @@ class EPPCommandInvalid(EPPError):
 
 class EPPUnexpectedResponse(EPPError):
     pass
+
+
+class EPPRegistrarAuthFailed(EPPError):
+    pass
+
+
+class EPPRegistrantAuthFailed(EPPError):
+    pass
+

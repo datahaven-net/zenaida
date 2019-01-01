@@ -223,7 +223,7 @@ class DomainsChecker(automat.Automat):
                 real_registrant_epp_id = response['epp']['response']['resData']['infData'].get('registrant', None)
                 if real_registrant_epp_id and known_registrant_epp_id and known_registrant_epp_id != real_registrant_epp_id:
                     self.log(self.debug_level, 'Domain known to belong to another registrant: %s' % self.current_domain_name)
-                    self.event('error', Exception('Domain known to belong to another registrant'))
+                    self.event('error', zerrors.EPPRegistrantAuthFailed(response=response))
                     return
             self.event('response', response)
 

@@ -224,7 +224,7 @@ class DomainSynchronizer(automat.Automat):
                 raise_for_result=False,
             )
         except zerrors.EPPError as exc:
-            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.log(self.debug_level, 'Exception in doEppDomainCheck: %s' % exc)
             self.event('error', exc)
         else:
             self.event('response', response)
@@ -444,6 +444,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
+        self.outputs.append(zerrors.EPPRegistrarAuthFailed(response=args[0]))
 
     def doReportFailed(self, event, *args, **kwargs):
         """
@@ -452,9 +453,7 @@ class DomainSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(Exception(
-                'Unexpected response code: %s' % args[0]['epp']['response']['result']['@code']
-            ))
+            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

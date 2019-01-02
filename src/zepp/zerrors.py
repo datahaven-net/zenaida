@@ -46,3 +46,6 @@ class EPPRegistrarAuthFailed(EPPError):
 class EPPRegistrantAuthFailed(EPPError):
     pass
 
+
+class EPPRegistrantUnknown(EPPError):
+    pass

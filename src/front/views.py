@@ -5,7 +5,9 @@ from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.conf import settings
+from datetime import datetime
 
+from back.models import zone
 from back import domains
 from back import contacts
 from front import forms
@@ -49,7 +51,7 @@ def domain_create(request):
 
 def domain_lookup(request):
     is_user_authenticated(request.user.is_authenticated)
-    message = ''
+    is_domain_registered = ''
     link = ''
     domain_name = ''
     if request.method != 'POST':
@@ -62,17 +64,18 @@ def domain_lookup(request):
                 [domain_name, ],
             )
             if check_result is None:
-                message = 'service temporary unavailable'
+                # If service is unavailable, return 'Unknown'
+                is_domain_registered = 'Unknown'
             else:
                 if check_result.get(domain_name):
-                    message = 'domain already registered'
+                    is_domain_registered = True
                 else:
-                    message = 'domain is available'
+                    is_domain_registered = False
                     link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
     return render(request, 'front/domain_lookup.html', {
         'form': form,
         'link': link,
-        'message': str(message),
+        'is_domain_registered': str(is_domain_registered),
         'domain_name': domain_name,
     })
 
@@ -117,11 +120,35 @@ def account_domains(request):
 
 def account_domain_add(request):
     is_user_authenticated(request.user.is_authenticated)
+    resp = None
+    contact_amount = len(request.user.contacts.all())
+    if request.method != 'POST':
+        form = forms.DomainAddForm(request.user)
+    else:
+        domain_name = request.GET['domain_name']
+        form = forms.DomainAddForm(request.user, request.POST)
+        form_to_save = form.save(commit=False)
+        form_to_save.name = domain_name
+        form_to_save.expiry_date = datetime.now()
+        form_to_save.create_date = datetime.now()
+        form_to_save.owner = request.user
 
-    form = forms.DomainAddForm(request.user)
-    resp = render(request, 'front/account_domain_add.html', {
-        'form': form,
-    })
+        zones = zone.Zone.zones.all()
+        for zone_record in zones:
+            if zone_record.name == domain_name.split('.')[-1].lower():
+                form_to_save.zone = zone_record
+            else:
+                # TODO return error message if zone is not supported.
+                pass
+        if form.is_valid():
+            form_to_save.save()
+            resp = render(request, 'front/account_domain_add.html', {'registered': True})
+
+    if not resp:
+        resp = render(request, 'front/account_domain_add.html', {
+            'form': form,
+            'contact_amount': contact_amount
+        })
     return resp
     
 

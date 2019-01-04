@@ -29,11 +29,14 @@ class ContactForm(forms.Form):
 class DomainAddForm(ModelForm):
     class Meta:
         model = Domain
-        fields = ('contact_admin', 'nameserver1', 'nameserver2', 'nameserver3', 'nameserver4')
+        fields = ('contact_admin', 'contact_billing', 'contact_tech', 'nameserver1', 'nameserver2', 'nameserver3',
+                  'nameserver4')
 
     def __init__(self, current_user, *args, **kwargs):
         super(DomainAddForm, self).__init__(*args, **kwargs)
         self.fields['contact_admin'].queryset = self.fields['contact_admin'].queryset.filter(owner=current_user.id)
+        self.fields['contact_billing'].queryset = self.fields['contact_billing'].queryset.filter(owner=current_user.id)
+        self.fields['contact_tech'].queryset = self.fields['contact_tech'].queryset.filter(owner=current_user.id)
 
 
 class AccountProfileForm(models.ModelForm):

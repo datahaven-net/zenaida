@@ -5,11 +5,11 @@
     <div class="mt-3">
         <div>
             {% if request.user.is_authenticated %}
-                {% if domains.count > 0 %}
+                {% if domains %}
                   Your domains:
                     <ul>
                     {% for domain in domains %}
-                        <li><a href="{% url 'login' %}">{{domain.name}}</a></li>
+                        <li><a href="">{{domain.name}}</a></li>
                     {% endfor %}
                     </ul>
                 {% else %}

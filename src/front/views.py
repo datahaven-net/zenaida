@@ -19,36 +19,6 @@ def is_user_authenticated(authentication_status):
         return redirect('index')
 
 
-def domain_create(request):
-    is_user_authenticated(request.user.is_authenticated)
-    if request.method != 'POST':
-        form = forms.DomainCreateForm()
-    else:
-        form = forms.DomainCreateForm(request.POST)
-        if form.is_valid():
-#             try:
-#                 is_exist = zmaster.domain_check(
-#                     domain=form.cleaned_data['domain_name'],
-#                     raise_errors=True,
-#                     return_string=False,
-#                 )
-#             except:
-#                 messages.error(request, 'Failed to check domain status, please try again later.')
-#             else:
-#                 if is_exist:
-#                     messages.error(request, 'Domain <b>%s</b> already registered.' % form.domain_name)
-#                 else:
-                    # TODO: domain to be created
-#                     domains.create(
-#                         name=form.domain_name,
-#                         owner=request.user,
-#                     )
-                    messages.error(request, 'New domain <b>%s</b> was created, you have one day to register it' % form.domain_name)
-    return render(request, 'front/domain_create.html', {
-        'form': form,
-    }, )
-
-
 def domain_lookup(request):
     is_user_authenticated(request.user.is_authenticated)
     is_domain_registered = ''

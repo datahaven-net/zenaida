@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -34,8 +34,8 @@ def domain_lookup(request):
                 [domain_name, ],
             )
             if check_result is None:
-                # If service is unavailable, return 'Unknown'
-                is_domain_registered = 'Unknown'
+                # If service is unavailable, return 'Unavailable'
+                is_domain_registered = 'Unavailable'
             else:
                 if check_result.get(domain_name):
                     is_domain_registered = True
@@ -136,6 +136,29 @@ def account_profile(request):
     return render(request, 'front/account_profile.html', {
         'form': form,
     }, )
+
+
+def create_new_contact(request, user_id):
+    is_user_authenticated(request.user.is_authenticated)
+    error = False
+    if request.method == 'POST':
+        if request.user.id == user_id:
+            form = forms.ContactPersonForm(request.POST)
+            form_to_save = form.save(commit=False)
+            form_to_save.owner = request.user
+            if form.is_valid():
+                form_to_save.save()
+                # When creation of contact person is successful, return back to the page that user came from.
+                next_page = request.POST.get('next_page', '/')
+                return HttpResponseRedirect(next_page)
+        else:
+            error = True
+    # While showing the form, get the url of the page that user came from.
+    next_page = request.META.get('HTTP_REFERER')
+    return render(
+        request, 'front/account_contacts_add.html',
+        {'form': forms.ContactPersonForm(), 'contact_person_error': error, 'next_page': next_page}
+    )
 
 
 def get_faq(request):

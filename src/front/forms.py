@@ -1,6 +1,6 @@
 from django.forms import forms, fields, models, ModelForm, TextInput
 from back.models.profile import Profile
-from back.models.domain import Domain
+from back.models.domain import Contact, Domain
 
 
 class DomainLookupForm(forms.Form):
@@ -12,18 +12,11 @@ class DomainCreateForm(forms.Form):
     domain_name = fields.CharField(label='Domain Name', max_length=100, required=True)
 
 
-class ContactForm(forms.Form):
-    # TODO Instead of forms, use ModelForm
-    person_name = fields.CharField(label='Contact Person Name', max_length=255)
-    organization_name = fields.CharField(label='Name of Organization', max_length=255)
-    address_street = fields.CharField(label='Street Name', max_length=255)
-    address_city = fields.CharField(label='City', max_length=255)
-    address_province = fields.CharField(label='Province', max_length=255)
-    address_postal_code = fields.CharField(label='Postcode', max_length=255)
-    address_country = fields.CharField(label='Country', max_length=255)
-    contact_voice = fields.CharField(label='Phone Number', max_length=255)
-    contact_fax = fields.CharField(label='Fax_number', max_length=255)
-    contact_email = fields.EmailField(max_length=255)
+class ContactPersonForm(ModelForm):
+    class Meta:
+        model = Contact
+        fields = ('person_name', 'organization_name', 'address_street', 'address_city', 'address_province',
+                  'address_postal_code', 'address_country', 'contact_voice', 'contact_fax', 'contact_email')
 
 
 class DomainAddForm(ModelForm):

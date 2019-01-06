@@ -7,17 +7,20 @@
             {% if request.user.is_authenticated %}
               {% if registered != True %}
                 {% if contact_amount == 0 %}
-                  <b>You don't have any contact information to register a domain.</b><br />
-                  <b>Please create a contact in order to complete registration.</b><br />
+                  You don't have any contact information to register a domain.<br />
+                  <a href="{% url 'account_contacts' %}{{request.user.id}}"><b>Click here</b>
+                  </a> to create a contact person in order to complete registration.<br />
+                  You will be redirected to this page again after creating a contact person.<br />
                 {% else %}
-                  Create a new contact person.
-                {% endif %}
-
-                <form method="post">
+                  You have <b>{{contact_amount}}</b> contact persons.
+                  <a href="{% url 'account_contacts' %}{{request.user.id}}"><b>Click here</b>
+                  </a> to create a new contact person.<br /><br />
+                  <form method="post">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <input type="submit" value="Register new domain" />
-                </form>
+                  </form>
+                {% endif %}
               {% elif registered == True %}
                 <b>Your domain is successfully registered. Continue to pay.</b><br />
               {% endif %}

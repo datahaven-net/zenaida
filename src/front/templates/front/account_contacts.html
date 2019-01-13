@@ -6,18 +6,18 @@
         <div>
             {% if request.user.is_authenticated %}
             
-                Your contacts:
-                <ul>
-                {% for contact in contacts %}
-                    <li><a href="{% url 'account_contacts' %}{{contact.id}}">{{contact.contact_email}}</a>
-                        <form action="{% url 'account_contacts' %}" method="POST">
-                            {% csrf_token %}
-                            <input type="hidden" name="contact_id" value="{{contact.id}}" />
-                            <input type="submit" name="submit" value="update" />
-                        </form>
-                    </li>
-                {% endfor %}
-                </ul>
+                {% if contacts.count > 0 %}
+                  <b>Your contact persons:</b>
+                  <ul>
+                  {% for contact in contacts %}
+                    <li><a href='{% url "account_contacts_edit" contact.id %}'>{{contact.person_name}}</a></li>
+                  {% endfor %}
+                  </ul>
+                  <a href="{% url 'account_contacts_new' %}"><b>Click here</b></a> to create another contact person.<br />
+                {% else %}
+                  You don't have any contact person yet.<br />
+                  <a href="{% url 'account_contacts_new' %}"><b>Click here</b></a> to create one.<br />
+                {% endif %}
 
             {% else %}
                 <h1>Welcome to Zenaida!</h1>

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseRedirect
 from django.views.generic import TemplateView
@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 from datetime import datetime
 
-from back.models import zone
+from back.models import zone, domain
 from back import domains
 from back import contacts
 from front import forms
@@ -138,27 +138,39 @@ def account_profile(request):
     }, )
 
 
-def create_new_contact(request, user_id):
+def create_new_contact(request):
     is_user_authenticated(request.user.is_authenticated)
     error = False
     if request.method == 'POST':
-        if request.user.id == user_id:
-            form = forms.ContactPersonForm(request.POST)
-            form_to_save = form.save(commit=False)
-            form_to_save.owner = request.user
-            if form.is_valid():
-                form_to_save.save()
-                # When creation of contact person is successful, return back to the page that user came from.
-                next_page = request.POST.get('next_page', '/')
-                return HttpResponseRedirect(next_page)
+        form = forms.ContactPersonForm(request.POST)
+        form_to_save = form.save(commit=False)
+        form_to_save.owner = request.user
+        if form.is_valid():
+            form_to_save.save()
+            # When creation of contact person is successful, return back to the page that user came from.
+            next_page = request.POST.get('next_page', '/')
+            return HttpResponseRedirect(next_page)
         else:
             error = True
     # While showing the form, get the url of the page that user came from.
     next_page = request.META.get('HTTP_REFERER')
     return render(
-        request, 'front/account_contacts_add.html',
+        request, 'front/account_contacts_new.html',
         {'form': forms.ContactPersonForm(), 'contact_person_error': error, 'next_page': next_page}
     )
+
+
+def edit_contact(request, contact_id):
+    is_user_authenticated(request.user.is_authenticated)
+    contact_person = get_object_or_404(domain.Contact.contacts, pk=contact_id, owner=request.user)
+    if request.method == 'POST':
+        form = forms.ContactPersonForm(request.POST, instance=contact_person)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/contacts/')
+    else:
+        form = forms.ContactPersonForm(instance=contact_person)
+    return render(request, 'front/account_contacts_edit.html', {'form': form})
 
 
 def get_faq(request):

@@ -41,9 +41,8 @@ patterns = [
     path('profile/', front_views.account_profile, name='account_profile'),
 
     path('contacts/', front_views.ContactsView.as_view(), name='account_contacts'),
-    path('contacts/<int:user_id>', front_views.create_new_contact, name='account_contacts'),
-
-    # path('contacts/edit', front_views.ContactsView.as_view(), name='account_contact_edit'),
+    path('contacts/new/', front_views.create_new_contact, name='account_contacts_new'),
+    path('contacts/edit/<int:contact_id>/', front_views.edit_contact, name='account_contacts_edit'),
 
     path('domains/', front_views.account_domains, name='account_domains'),
     path('domains/add', front_views.account_domain_add, name='account_domain_add'),

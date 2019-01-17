@@ -85,6 +85,7 @@ class ActivateView(RedirectView):
     pattern_name = 'index'
 
     def get_redirect_url(self, *args, **kwargs):
+        # TODO: change assert to raise
         assert 'code' in kwargs
 
         # TODO: display nice 404 page

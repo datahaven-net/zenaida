@@ -7,6 +7,8 @@ from django.urls import path
 from django.conf.urls import include
 
 from front import views as front_views
+from billing import views as billing_views
+from billing.pay_4csonline import views as pay_4csonline_views
 from accounts import views as accounts_views
 
 
@@ -53,8 +55,11 @@ patterns = [
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
     # path('billing/', front_views.billing_overview, name='billing_overview'),
-    # path('billing/pay', front_views.billing_pay, name='billing_pay'),
     # path('billing/invoice', front_views.billing_invoice, name='billing_invoice'),
+    path('billing/pay/', billing_views.new_payment, name='billing_new_payment'),
+    path('billing/4csonline/pay/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),
+    path('billing/4csonline/process/', pay_4csonline_views.process_payment, name='billing_4csonline_process_payment'),
+    path('billing/4csonline/verify/', pay_4csonline_views.verify_payment, name='billing_4csonline_verify_payment'),
 
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
 

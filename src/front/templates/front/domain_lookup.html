@@ -4,7 +4,9 @@
 
     <div class="mt-3">
         <div>
-            {% if request.user.is_authenticated %}
+            {% if not request.user.is_authenticated %}
+                {% include 'layouts/default/welcome.html' %}
+            {% else %}
             
                 {% block content %}
                 <form method="post" action=".">
@@ -25,9 +27,6 @@
                 </form>
                 {% endblock %}
             
-            {% else %}
-                <h1>Welcome to Zenaida!</h1>
-                Please <a href="{% url 'login' %}">Log In</a> to register a new domain name.
             {% endif %}
         </div>
     </div>

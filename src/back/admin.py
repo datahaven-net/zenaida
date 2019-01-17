@@ -1,5 +1,5 @@
 from django.contrib import admin
-from nested_admin import NestedModelAdmin
+from nested_admin import NestedModelAdmin  # @UnresolvedImport
 
 from back.models.zone import Zone
 from back.models.registrar import Registrar

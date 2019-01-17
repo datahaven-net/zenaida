@@ -174,6 +174,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     # usefull things: https://django-extensions.readthedocs.io/en/latest/command_extensions.html
     'django_extensions',
+    'billing',
     'accounts',
     'back',
     'front',

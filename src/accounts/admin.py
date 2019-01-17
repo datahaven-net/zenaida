@@ -1,5 +1,5 @@
 from django.contrib import admin
-from nested_admin import NestedModelAdmin
+from nested_admin import NestedModelAdmin  # @UnresolvedImport
 
 from accounts.models.account import Account
 from accounts.models.activation import Activation

@@ -1,0 +1,25 @@
+<html>
+<head>
+    <TITLE>Credit Card payment</TITLE>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+    <body>
+        <div class=container>
+            <div class="row">
+                <div align=center>
+                    <form action="{{merch_link}}" method="post">
+                        <input type="hidden" name="MERCHKEY" value="{{merch_id}}" />
+                        <input type="hidden" name="TRANTYPE" value="AUTHPOST" />
+                        <input type="hidden" name="AMT" value="{{price}}" />
+                        <input type="hidden" name="CURR" value="USD" />
+                        <input type="hidden" name="invoice" value="{{invoice}}" />
+                        <input type="hidden" name="tranid" value="{{tran_id}}" />
+                        <input type="hidden" name="URLAPPROVED" value="{% url 'billing_4csonline_verify_payment' %}?result=pass&rc=#RC#&fc=#FC#&app=#APP#&ref=#REF#&invoice=#INVOICE#&tran_id=#TRANID#&err=#EM#&av=#AV#&amt=#AMT#" />
+                        <input type="hidden" name="URLOTHER" value="{% url 'billing_4csonline_verify_payment' %}?result=miss&rc=#RC#&fc=#FC#&app=#APP#&ref=#REF#&invoice=#INVOICE#&tran_id=#TRANID#&err=#EM#&av=#AV#&amt=#AMT#" />
+                        <input type="submit" name=SUBMIT value="Next" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

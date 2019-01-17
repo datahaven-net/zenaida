@@ -41,6 +41,7 @@ SECRET_KEY = getattr(params, 'SECRET_KEY', 'must be declared in src/main/params.
 ALLOWED_HOSTS = ['*']
 
 SITE_ID = 1
+SITE_BASE_URL = getattr(params, 'SITE_BASE_URL', 'http://localhost:8000')
 
 ROOT_URLCONF = 'main.urls'
 

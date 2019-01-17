@@ -16,7 +16,7 @@ import os
 from main import params
 
 #------------------------------------------------------------------------------ 
-#--- BASE DJANGO SETTINGS
+#--- Basic Django settings
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = '/home/zenaida/live/current'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,6 +44,12 @@ SITE_ID = 1
 
 ROOT_URLCONF = 'main.urls'
 
+
+#------------------------------------------------------------------------------
+#--- Logging configuration
+EPP_LOG_FILENAME = getattr(params, 'EPP_LOG_FILENAME', None)
+AUTOMATS_LOG_FILENAME = getattr(params, 'AUTOMATS_LOG_FILENAME', None)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -70,20 +76,20 @@ LOGGING = {
         },
         'epp': {
             'propagate': False,
-        } if not getattr(params, 'EPP_LOG_FILENAME') else  {
+        } if not EPP_LOG_FILENAME else  {
             'level': 'DEBUG',
             'class' : 'logging.handlers.RotatingFileHandler',
-            'filename': getattr(params, 'EPP_LOG_FILENAME'),
+            'filename': EPP_LOG_FILENAME,
             'maxBytes' : 1024*1024*10,  # 10MB
             'backupCount' : 10,
             'formatter': 'timestamped',
         },
         'automats': {
             'propagate': False,
-        } if not getattr(params, 'AUTOMATS_LOG_FILENAME') else {
+        } if not AUTOMATS_LOG_FILENAME else {
             'level': 'DEBUG',
             'class' : 'logging.handlers.RotatingFileHandler',
-            'filename': getattr(params, 'AUTOMATS_LOG_FILENAME'),
+            'filename': AUTOMATS_LOG_FILENAME,
             'maxBytes' : 1024*1024*10,  # 10MB
             'backupCount' : 10,
             'formatter': 'timestamped',
@@ -115,9 +121,6 @@ LOGGING = {
         },
     }
 }
-
-# if DEBUG and os.environ.get('RUN_MAIN', None) != 'true':
-#     LOGGING = {}
 
 #------------------------------------------------------------------------------
 #--- Password validation
@@ -319,8 +322,6 @@ GRAPH_MODELS = {
 DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_registrar')
 SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', ])
 RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
-EPP_LOG_FILENAME = getattr(params, 'EPP_LOG_FILENAME', '/tmp/epp.log')
-AUTOMATS_LOG_FILENAME = getattr(params, 'AUTOMATS_LOG_FILENAME', '/tmp/automats.log')
 BILLING_4CSONLINE_MERCHANT_ID = getattr(params, 'BILLING_4CSONLINE_MERCHANT_ID', '')
 BILLING_4CSONLINE_MERCHANT_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_LINK', '')
 

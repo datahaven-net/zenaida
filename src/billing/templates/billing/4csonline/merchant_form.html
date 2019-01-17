@@ -8,6 +8,7 @@
             <div class="row">
                 <div align=center>
                     <form action="{{merch_link}}" method="post">
+                        {% csrf_token %}
                         <input type="hidden" name="MERCHKEY" value="{{merch_id}}" />
                         <input type="hidden" name="TRANTYPE" value="AUTHPOST" />
                         <input type="hidden" name="AMT" value="{{price}}" />

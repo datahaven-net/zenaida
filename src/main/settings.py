@@ -316,7 +316,14 @@ GRAPH_MODELS = {
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
+DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_registrar')
+SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', ])
+RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
+EPP_LOG_FILENAME = getattr(params, 'EPP_LOG_FILENAME', '/tmp/epp.log')
+AUTOMATS_LOG_FILENAME = getattr(params, 'AUTOMATS_LOG_FILENAME', '/tmp/automats.log')
+BILLING_4CSONLINE_MERCHANT_ID = getattr(params, 'BILLING_4CSONLINE_MERCHANT_ID', '')
+BILLING_4CSONLINE_MERCHANT_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_LINK', '')
+
+#------------------------------------------------------------------------------
+#--- Last line, just for testing purposes
 LOADED_OK = 'OK'
-DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID')
-SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES')
-RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'RABBITMQ_CLIENT_CREDENTIALS_FILENAME')

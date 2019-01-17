@@ -47,8 +47,6 @@ ROOT_URLCONF = 'main.urls'
 
 #------------------------------------------------------------------------------
 #--- Logging configuration
-EPP_LOG_FILENAME = getattr(params, 'EPP_LOG_FILENAME', None)
-AUTOMATS_LOG_FILENAME = getattr(params, 'AUTOMATS_LOG_FILENAME', None)
 
 LOGGING = {
     'version': 1,
@@ -74,26 +72,6 @@ LOGGING = {
             'formatter': 'simple',
             'filters': [],
         },
-        'epp': {
-            'propagate': False,
-        } if not EPP_LOG_FILENAME else  {
-            'level': 'DEBUG',
-            'class' : 'logging.handlers.RotatingFileHandler',
-            'filename': EPP_LOG_FILENAME,
-            'maxBytes' : 1024*1024*10,  # 10MB
-            'backupCount' : 10,
-            'formatter': 'timestamped',
-        },
-        'automats': {
-            'propagate': False,
-        } if not AUTOMATS_LOG_FILENAME else {
-            'level': 'DEBUG',
-            'class' : 'logging.handlers.RotatingFileHandler',
-            'filename': AUTOMATS_LOG_FILENAME,
-            'maxBytes' : 1024*1024*10,  # 10MB
-            'backupCount' : 10,
-            'formatter': 'timestamped',
-        },
     },
     'loggers': {
         'django.request': {
@@ -101,26 +79,48 @@ LOGGING = {
             'propagate': False,
             'handlers': ['console', ]
         },
-        'automats.automat': {
-            'level': 'DEBUG',
-            'propagate': False,
-            'handlers': ['automats', ]
-        },
         'zepp.csv_import': {
             'level': 'DEBUG',
             'propagate': False,
             'handlers': ['console', ]
-        },
-        'zepp.zclient': {
-            'level': 'DEBUG',
-            'propagate': False,
-            'handlers': ['epp', ]
         },
         'pika': {
             'propagate': False,
         },
     }
 }
+
+EPP_LOG_FILENAME = getattr(params, 'EPP_LOG_FILENAME', None)
+if EPP_LOG_FILENAME:
+    LOGGING['handlers']['epp'] = {
+        'level': 'DEBUG',
+        'class' : 'logging.handlers.RotatingFileHandler',
+        'filename': EPP_LOG_FILENAME,
+        'maxBytes' : 1024*1024*10,  # 10MB
+        'backupCount' : 10,
+        'formatter': 'timestamped',
+    }
+    LOGGING['loggers']['zepp.zclient'] = {
+        'level': 'DEBUG',
+        'propagate': False,
+        'handlers': ['epp', ]
+    }
+
+AUTOMATS_LOG_FILENAME = getattr(params, 'AUTOMATS_LOG_FILENAME', None)
+if AUTOMATS_LOG_FILENAME:
+    LOGGING['handlers']['automats'] = {
+        'level': 'DEBUG',
+        'class' : 'logging.handlers.RotatingFileHandler',
+        'filename': AUTOMATS_LOG_FILENAME,
+        'maxBytes' : 1024*1024*10,  # 10MB
+        'backupCount' : 10,
+        'formatter': 'timestamped',
+    }
+    LOGGING['loggers']['automats.automat'] = {
+        'level': 'DEBUG',
+        'propagate': False,
+        'handlers': ['automats', ]
+    }
 
 #------------------------------------------------------------------------------
 #--- Password validation

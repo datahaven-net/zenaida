@@ -10,8 +10,13 @@
 
                 <form method="post">
                     {% csrf_token %}
-                    {{ form.as_p }}
-                    <input type="submit" value="Save your profile" />
+                      {% for field in form %}
+                        <div class="form-group-lg">
+                            <label>{{ field.label }}</label>
+                            <input class="col-sm-4 form-control" value="{{ field.value }}">
+                        </div>
+                      {% endfor %}
+                    <button type="submit" class="btn btn-success">Save your profile</button>
                 </form>
 
             {% endif %}

@@ -17,7 +17,7 @@ class Payment(models.Model):
 
     transaction_id = models.CharField(max_length=16, unique=True, null=False, blank=False)
 
-    amount = models.IntegerField(null=False, blank=False, )
+    amount = models.FloatField(null=False, blank=False)
 
     method = models.CharField(
         choices=(
@@ -45,3 +45,5 @@ class Payment(models.Model):
         null=False,
         blank=False,
     )
+
+    merchant_reference = models.CharField(max_length=16, null=True, blank=True, default=None)

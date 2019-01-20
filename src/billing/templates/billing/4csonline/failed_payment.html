@@ -1,13 +1,37 @@
-<html>
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <TITLE>Payment accepted</TITLE>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Zenaida - domain registry system">
+    <meta name="author" content="Veselin Penev">
+
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+
+    <title>Payment failed</title>
+
+    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'font-awesome/css/font-awesome.css' %}" rel="stylesheet" type="text/css">
+
 </head>
-    <body>
-        <div class=container>
-            <div class="row">
-                <p align=center>Payment failed.</p>
+
+<body>
+
+    <div class="container">
+        <div class="row mt-3">
+            <div class="col-sm-12 text-center">
+
+                <div class="alert alert-danger">
+                  <strong>Payment failed:</strong>
+                  {{message}}
+                </div>
             </div>
         </div>
-    </body>
+    </div>
+
 </html>

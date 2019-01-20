@@ -1,25 +1,44 @@
 {% include 'layouts/default/head.html' %}
+{% load front_filters %}
 
 <div class="container-fluid">
 
     <div class="mt-3">
         <div>
-            {% if not request.user.is_authenticated %}
-                {% include 'layouts/default/welcome.html' %}
-            {% else %}
-
-                {% if domains %}
-                  Your domains:
-                    <ul>
-                    {% for domain in domains %}
-                        <li><a href="">{{domain.name}}</a></li>
-                    {% endfor %}
-                    </ul>
+            {% if request.user.is_authenticated %}
+              {% if domains %}
+              <table class="table">
+                <tr>
+                  <th scope="col"></th>
+                  <th>Domain Name</th>
+                  <th>Status</th>
+                  <th>Expiry Date</th>
+                  <th>Creation Date</th>
+                </tr>
+                  {% for domain in domains %}
+                    <tr>
+                      <th scope="row">{{ forloop.counter }}</th>
+                      <td><a href="">{{ domain.name }}</a></td>
+                      <td>{{ domain.epp_status }}</td>
+                      <td>
+                        {% if domain.expiry_datetime_as_date <= 0|add_days %}
+                          <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                        {% elif 90|add_days > domain.expiry_datetime_as_date %}
+                          <div class="text-warning">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                        {% else %}
+                          <div class="text-success">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                        {% endif %}
+                      </td>
+                      <td>{{ domain.create_date|date:'d-m-Y' }}</td>
+                    </tr>
+                  {% endfor %}
                 {% else %}
-                  You don't have any domain yet. <br />
-                  Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
+                    You don't have any domain yet. <br />
+                    Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
                 {% endif %}
-            
+              </table>
+            {% else %}
+                {% include 'layouts/default/welcome.html' %}
             {% endif %}
         </div>
     </div>

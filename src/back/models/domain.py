@@ -4,6 +4,7 @@ from django.db import models
 from django.core import exceptions
 
 from accounts.models.account import Account
+from back.models.constants import EPPStatusTypes
 
 from back.models.zone import Zone
 from back.models.contact import Contact
@@ -37,19 +38,24 @@ class Domain(models.Model):
     create_date = models.DateTimeField()
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
+    epp_status = models.CharField(
+        max_length=32, choices=EPPStatusTypes.choices_as_tuple(), default=EPPStatusTypes.EPP_STATUS_INACTIVE.value)
 
     auth_key = models.CharField(max_length=64, blank=True, default='')
 
-    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='domains', )
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='domains')
+    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='domains')
 
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='domains', )
+    registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, blank=True)
 
-    registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, blank=True, )
-
-    registrant = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True, )
-    contact_admin = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, blank=True, )
-    contact_billing = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, blank=True, )
-    contact_tech = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, blank=True, )
+    registrant = models.ForeignKey(
+        Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True)
+    contact_admin = models.ForeignKey(
+        Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, blank=True)
+    contact_billing = models.ForeignKey(
+        Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, blank=True)
+    contact_tech = models.ForeignKey(
+        Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, blank=True)
 
     nameserver1 = models.CharField(max_length=256, blank=True, default='')
     nameserver2 = models.CharField(max_length=256, blank=True, default='')

@@ -65,7 +65,7 @@ def verify_payment(request):
         raise exceptions.SuspiciousOperation()
 
     if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
-        if request.GET.get('result') != 'pass' or request.GET.get('rc') != 'OK' or request.GET.get('fc') != 'ACCEPTED':
+        if request.GET.get('result') != 'pass' or request.GET.get('rc') != 'OK' or request.GET.get('fc') != 'APPROVED':
             if request.GET.get('fc') == 'INCOMPLETE':
                 message = 'transaction was cancelled'
                 payment_object.status = 'cancelled'

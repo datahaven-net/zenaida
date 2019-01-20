@@ -7,19 +7,20 @@
         <div>
             {% if request.user.is_authenticated %}
               {% if domains %}
-              <table class="table">
-                <tr>
-                  <th scope="col"></th>
-                  <th>Domain Name</th>
-                  <th>Status</th>
-                  <th>Expiry Date</th>
-                  <th>Creation Date</th>
-                </tr>
+                <table class="table">
+                  <tr>
+                    <th scope="col"></th>
+                    <th>Domain Name</th>
+                    <th>Status</th>
+                    <th>Expiry Date</th>
+                    <th>Creation Date</th>
+                    <th>Register/Renew</th>
+                  </tr>
                   {% for domain in domains %}
                     <tr>
-                      <th scope="row">{{ forloop.counter }}</th>
+                      <td scope="row"><input type="checkbox" value="{{domain.name}}"/></td>
                       <td><a href="">{{ domain.name }}</a></td>
-                      <td>{{ domain.epp_status }}</td>
+                      <td>{{ domain.get_epp_status_display }}</td>
                       <td>
                         {% if domain.expiry_datetime_as_date <= 0|add_days %}
                           <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
@@ -30,13 +31,48 @@
                         {% endif %}
                       </td>
                       <td>{{ domain.create_date|date:'d-m-Y' }}</td>
+                      <td>
+                        {% if not domain.epp_id %}
+                          <a class="btn btn-danger" href="#" role="button">Complete Registration</a>
+                        {% else %}
+                          <a class="btn btn-success" href="#" role="button">Renew</a>
+                        {% endif %}
+                      </td>
                     </tr>
                   {% endfor %}
+                </table>
+
+                {% if domains.has_other_pages %}
+                  <nav aria-label="Page navigation example">
+                    <div class="text-xs-center">
+                      <ul class="pagination justify-content-center">
+                        {% if domains.has_previous %}
+                          <li class="page-item"><a class="page-link" href="?page={{ domains.previous_page_number }}">Previous</a></li>
+                        {% else %}
+                          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                        {% endif %}
+                        {% for i in domains.paginator.page_range %}
+                          {% if domains.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
+                          {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                          {% endif %}
+                        {% endfor %}
+                        {% if domains.has_next %}
+                          <li class="page-item"><a class="page-link" href="?page={{ domains.next_page_number }}">Next</a></li>
+                        {% else %}
+                          <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        {% endif %}
+                      </ul>
+                    </div>
+                  </nav>
+                  <a class="btn btn-success" href="#" role="button">Transfer Domains</a>
+                  <a class="btn btn-success" href="#" role="button">Renew Domains</a>
+                {% endif %}
                 {% else %}
                     You don't have any domain yet. <br />
                     Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
                 {% endif %}
-              </table>
             {% else %}
                 {% include 'layouts/default/welcome.html' %}
             {% endif %}

@@ -31,6 +31,7 @@ class Domain(models.Model):
         app_label = 'back'
         base_manager_name = 'domains'
         default_manager_name = 'domains'
+        ordering = ['expiry_date']
 
     name = models.CharField(max_length=255, unique=True, validators=[validate, ])
 
@@ -69,6 +70,14 @@ class Domain(models.Model):
     @property
     def tld_zone(self):
         return '.'.join(self.name.split('.')[1:])
+
+    @property
+    def expiry_datetime_as_date(self):
+        return self.expiry_date.date()
+
+    @property
+    def create_datetime_as_date(self):
+        return self.create_date.date()
 
     def __str__(self):
         return 'Domain({}:{}:{})'.format(self.name, self.epp_id, self.owner.email)

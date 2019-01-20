@@ -1,5 +1,6 @@
 from django import shortcuts
 from django.contrib import messages
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, HttpResponseRedirect
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
@@ -80,8 +81,19 @@ def index_page(request):
 def account_domains(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
+    domain_objects = domains.list_domains(request.user.email)
+    page = request.GET.get('page', 1)
+    paginator = Paginator(domain_objects, 10)
+
+    try:
+        domain_objects = paginator.page(page)
+    except PageNotAnInteger:
+        domain_objects = paginator.page(1)
+    except EmptyPage:
+        domain_objects = paginator.page(paginator.num_pages)
+
     return shortcuts.render(request, 'front/account_domains.html', {
-        'domains': domains.list_domains(request.user.email),
+        'domains': domain_objects,
     }, )
 
 

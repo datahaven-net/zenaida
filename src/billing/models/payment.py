@@ -36,8 +36,10 @@ class Payment(models.Model):
     status = models.CharField(
         choices=(
             ('started', 'Started', ),
-            ('failed', 'Failed', ),
+            ('cancelled', 'Cancelled', ),
+            ('declined', 'Declined', ),
             ('paid', 'Paid', ),
+            ('unconfirmed', 'Unconfirmed', ),
             ('processed', 'Processed', ),
         ),
         default='started',

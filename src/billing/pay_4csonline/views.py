@@ -1,4 +1,5 @@
 import logging
+import requests
 
 from django import urls
 from django import shortcuts
@@ -44,6 +45,15 @@ def process_payment(request):
 
 
 def verify_payment(request):
+    if request.GET.get('result') != 'pass' and request.GET.get('rc') == 'USERCAN' and request.GET.get('fc') == 'INCOMPLETE':
+        payment_object = Payment.payments.filter(transaction_id=request.GET.get('tid')).first()
+        payment_object.status = 'cancelled'
+        payment_object.finished_at = timezone.now()
+        payment_object.save()
+        return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
+            'message': 'transaction was cancelled',
+        })
+
     payment_object = shortcuts.get_object_or_404(Payment, transaction_id=request.GET['invoice'])
 
     if payment_object.finished_at:
@@ -55,19 +65,40 @@ def verify_payment(request):
         raise exceptions.SuspiciousOperation()
 
     if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
-        if request.GET.get('result') != 'pass':
-            payment_object.status = 'failed'
+        if request.GET.get('result') != 'pass' or request.GET.get('rc') != 'OK' or request.GET.get('fc') != 'ACCEPTED':
+            if request.GET.get('fc') == 'INCOMPLETE':
+                message = 'transaction was cancelled'
+                payment_object.status = 'cancelled'
+            else:
+                message = 'transaction was declined'
+                payment_object.status = 'declined'
             payment_object.finished_at = timezone.now()
             payment_object.merchant_reference = request.GET['ref']
             payment_object.save()
-            message = 'transaction was declined'
-            if request.GET.get('err') == 'INCOMPLETE':
-                message = 'transaction was cancelled'
             return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
                 'message': message,
             })
 
-    # TODO: add verification request towards merchant back-end 
+    payment_object.status = 'paid'
+    payment_object.finished_at = timezone.now()
+    payment_object.merchant_reference = request.GET['ref']
+    payment_object.save()
+
+    verified = requests.get('{}?m={}&t={}'.format(
+        settings.BILLING_4CSONLINE_MERCHANT_VERIFY_LINK,
+        settings.BILLING_4CSONLINE_MERCHANT_ID,
+        payment_object.transaction_id,
+    ))
+    if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
+        if verified.text != 'YES':
+            payment_object.status = 'unconfirmed'
+            payment_object.save()
+            message = 'transaction verification failed, please contact site administrator'
+            logging.critical('Payment confirmation failed, transaction_id=%s' % payment_object.transaction_id)
+            return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
+                'message': message,
+            })
+
     payment_object.status = 'processed'
     payment_object.finished_at = timezone.now()
     payment_object.merchant_reference = request.GET['ref']

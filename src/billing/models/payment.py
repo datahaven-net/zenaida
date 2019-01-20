@@ -31,7 +31,7 @@ class Payment(models.Model):
 
     started_at = models.DateTimeField(null=False)
 
-    finished_at = models.DateTimeField(null=True, default=None)
+    finished_at = models.DateTimeField(null=True, blank=True, default=None)
 
     status = models.CharField(
         choices=(

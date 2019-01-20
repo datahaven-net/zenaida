@@ -6,7 +6,6 @@ class NewPaymentForm(forms.Form):
         label='Amount',
         required=True,
         choices=(
-            ('1', '1$', ),
             ('100', '100$', ),
             ('200', '200$', ),
             ('500', '500$', ),

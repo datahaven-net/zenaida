@@ -322,9 +322,14 @@ GRAPH_MODELS = {
 #--- ZENAIDA RELATED CONFIGS
 DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_registrar')
 SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', ])
+
 RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
+
+BILLING_BYPASS_PAYMENT_TIME_CHECK = getattr(params, 'BILLING_BYPASS_PAYMENT_TIME_CHECK', False)
+BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION = getattr(params, 'BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION', False)
 BILLING_4CSONLINE_MERCHANT_ID = getattr(params, 'BILLING_4CSONLINE_MERCHANT_ID', '')
 BILLING_4CSONLINE_MERCHANT_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_LINK', '')
+BILLING_4CSONLINE_MERCHANT_VERIFY_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_VERIFY_LINK', '')
 
 #------------------------------------------------------------------------------
 #--- Last line, just for testing purposes

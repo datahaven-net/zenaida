@@ -13,9 +13,9 @@ class Payment(models.Model):
         default_manager_name = 'payments'
 
 
-    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='payments', )
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='payments')
 
-    transaction_id = models.CharField(max_length=16, unique=True, null=False, blank=False, )
+    transaction_id = models.CharField(max_length=16, unique=True, null=False, blank=False)
 
     amount = models.IntegerField(null=False, blank=False, )
 
@@ -29,7 +29,7 @@ class Payment(models.Model):
         blank=False,
     ) 
 
-    started_at = models.DateTimeField(auto_now=True)
+    started_at = models.DateTimeField(null=False)
 
     finished_at = models.DateTimeField(null=True, default=None)
 

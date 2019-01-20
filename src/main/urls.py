@@ -71,7 +71,7 @@ patterns = [
     path('correspondentbank/', front_views.get_correspondentbank, name='correspondentbank'),
     path('registrars/', front_views.get_registrars, name='registrars'),
     # Index
-    path('', front_views.account_overview, name='index'),
+    path('', front_views.index_page, name='index'),
 ]
 
 urlpatterns = admin_patterns + auth_patterns + patterns

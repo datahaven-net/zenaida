@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django import shortcuts
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseRedirect
 from django.views.generic import TemplateView
@@ -14,13 +14,9 @@ from front import forms
 from zepp import zmaster
 
 
-def is_user_authenticated(authentication_status):
-    if not authentication_status:
-        return redirect('index')
-
-
 def domain_lookup(request):
-    is_user_authenticated(request.user.is_authenticated)
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
     is_domain_registered = ''
     link = ''
     domain_name = ''
@@ -42,7 +38,7 @@ def domain_lookup(request):
                 else:
                     is_domain_registered = False
                     link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
-    return render(request, 'front/domain_lookup.html', {
+    return shortcuts.render(request, 'front/domain_lookup.html', {
         'form': form,
         'link': link,
         'is_domain_registered': str(is_domain_registered),
@@ -50,7 +46,7 @@ def domain_lookup(request):
     })
 
 
-def account_overview(request):
+def index_page(request):
     message = ''
     link = ''
     domain_name = ''
@@ -78,18 +74,20 @@ def account_overview(request):
     }
     if request.user.is_authenticated:
         response['domains'] += domains.list_domains(request.user.email)
-    return render(request, 'front/account_overview.html', response)
+    return shortcuts.render(request, 'front/account_overview.html', response)
 
 
 def account_domains(request):
-    is_user_authenticated(request.user.is_authenticated)
-    return render(request, 'front/account_domains.html', {
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    return shortcuts.render(request, 'front/account_domains.html', {
         'domains': domains.list_domains(request.user.email),
     }, )
 
 
 def account_domain_add(request):
-    is_user_authenticated(request.user.is_authenticated)
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
     resp = None
     contact_amount = len(request.user.contacts.all())
     if request.method != 'POST':
@@ -112,10 +110,10 @@ def account_domain_add(request):
                 pass
         if form.is_valid():
             form_to_save.save()
-            resp = render(request, 'front/account_domain_add.html', {'registered': True})
+            resp = shortcuts.render(request, 'front/account_domain_add.html', {'registered': True})
 
     if not resp:
-        resp = render(request, 'front/account_domain_add.html', {
+        resp = shortcuts.render(request, 'front/account_domain_add.html', {
             'form': form,
             'contact_amount': contact_amount
         })
@@ -123,7 +121,8 @@ def account_domain_add(request):
     
 
 def account_profile(request):
-    is_user_authenticated(request.user.is_authenticated)
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
     if request.method == 'POST':
         form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
         if form.is_valid():
@@ -133,13 +132,14 @@ def account_profile(request):
             messages.error(request, 'Please correct the error below.')
     else:
         form = forms.AccountProfileForm(instance=request.user.profile)
-    return render(request, 'front/account_profile.html', {
+    return shortcuts.render(request, 'front/account_profile.html', {
         'form': form,
     }, )
 
 
 def create_new_contact(request):
-    is_user_authenticated(request.user.is_authenticated)
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
     error = False
     if request.method == 'POST':
         form = forms.ContactPersonForm(request.POST)
@@ -154,15 +154,16 @@ def create_new_contact(request):
             error = True
     # While showing the form, get the url of the page that user came from.
     next_page = request.META.get('HTTP_REFERER')
-    return render(
+    return shortcuts.render(
         request, 'front/account_contacts_new.html',
         {'form': forms.ContactPersonForm(), 'contact_person_error': error, 'next_page': next_page}
     )
 
 
 def edit_contact(request, contact_id):
-    is_user_authenticated(request.user.is_authenticated)
-    contact_person = get_object_or_404(domain.Contact.contacts, pk=contact_id, owner=request.user)
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    contact_person = shortcuts.get_object_or_404(domain.Contact.contacts, pk=contact_id, owner=request.user)
     if request.method == 'POST':
         form = forms.ContactPersonForm(request.POST, instance=contact_person)
         if form.is_valid():
@@ -170,31 +171,31 @@ def edit_contact(request, contact_id):
             return HttpResponseRedirect('/contacts/')
     else:
         form = forms.ContactPersonForm(instance=contact_person)
-    return render(request, 'front/account_contacts_edit.html', {'form': form})
+    return shortcuts.render(request, 'front/account_contacts_edit.html', {'form': form})
 
 
 def get_faq(request):
-    return render(request, 'front/faq.html')
+    return shortcuts.render(request, 'front/faq.html')
 
 
 def get_faq_epp(request):
-    return render(request, 'faq/faq_epp.html')
+    return shortcuts.render(request, 'faq/faq_epp.html')
 
 
 def get_faq_auctions(request):
-    return render(request, 'faq/faq_auctions.html')
+    return shortcuts.render(request, 'faq/faq_auctions.html')
 
 
 def get_faq_payments(request):
-    return render(request, 'faq/faq_payments.html')
+    return shortcuts.render(request, 'faq/faq_payments.html')
 
 
 def get_correspondentbank(request):
-    return render(request, 'faq/correspondentbank.html')
+    return shortcuts.render(request, 'faq/correspondentbank.html')
 
 
 def get_registrars(request):
-    return render(request, 'faq/registrars.html')
+    return shortcuts.render(request, 'faq/registrars.html')
 
 
 class ContactsView(TemplateView):

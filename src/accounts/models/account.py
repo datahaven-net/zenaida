@@ -79,6 +79,7 @@ class Account(AbstractUser):
 
     balance = models.IntegerField(default=0)
 
+
     def __str__(self):
         return 'Account({}:{})'.format(self.email, self.balance)
 

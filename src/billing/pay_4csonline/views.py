@@ -33,7 +33,7 @@ def process_payment(request):
         raise exceptions.SuspiciousOperation()
 
     return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
-        'company_name': 'DataHaven.Net Ltd',
+        'company_name': 'DATAHAVEN NET',
         'price': '{}.00'.format(int(payment_object.amount)),
         'merch_id': settings.BILLING_4CSONLINE_MERCHANT_ID,
         'merch_link': settings.BILLING_4CSONLINE_MERCHANT_LINK,

@@ -1,51 +1,77 @@
 {% include 'layouts/default/head.html' %}
 
-<div class="container-fluid">
+{% load bootstrap4 %}
 
-    <div class="mt-3">
-        <div>
-            {% if request.user.is_authenticated %}
-                <h3>Logged in as {{ user.email }}</h3>
-                <form method="post" action=".">
-                  {% csrf_token %}
-                  {{ form }}
-                  <br>{{ message }}
-                  {% if link %}
-                    <a href="{{ link }}">register <b>{{ domain_name }}</b></a>
-                    <br>
-                  {% endif %}
-                  <input type="submit" value="Search" />
-                </form>
-                Current balance: <b>{{ user.balance }} $ US</b>
-                <br />
-                {% if domains.count > 0 %}
-                  Number of domains that you have: <b>{{ domains.count }}</b>
-                  <br />
-                  Browse your current <a href="{% url 'account_domains' %}">domains</a>
-                  <br />
-                  <a href="{% url 'domain_lookup' %}">Search</a> for a new domain
-                {% else %}
-                  You don't have any domain yet.
-                  Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
-                {% endif %}
-                <br />
-                Edit your <a href="{% url 'account_profile' %}">profile</a> info
-            {% else %}
-                <h1>Welcome to Zenaida!</h1>
-                <form method="post" action=".">
-                  {% csrf_token %}
-                  {{ form }}
-                  <br>{{ message }}
-                  {% if link %}
-                    <a href="{{ link }}">register <b>{{ domain_name }}</b></a>
-                    <br>
-                  {% endif %}
-                  <input type="submit" value="Search" />
-                </form>
+{% include 'layouts/default/container_sm_6_offset_3.html' %}
+
+
+{% if request.user.is_authenticated %}
+
+    <div class="text-center">
+
+        <h3>Logged in as <b>{{ user.email }}</b></h3>
+
+        <form method="post" action=".">
+            {% csrf_token %}
+            {{ form }}
+            <br>{{ message }}
+
+            {% if link %}
+
+                <a href="{{ link }}">register <b>{{ domain_name }}</b></a>
+                <br>
+
             {% endif %}
-        </div>
+
+            <button class="btn btn-success">Search</button>
+        </form>
+
+        Current balance: <b>{{ user.balance }} $ US</b>
+
+        <br />
+
+        {% if domains.count > 0 %}
+
+            Number of domains that you have: <b>{{ domains.count }}</b>
+            <br />
+            Browse your current <a href="{% url 'account_domains' %}">domains</a>
+            <br />
+            <a href="{% url 'domain_lookup' %}">Search</a> for a new domain
+
+        {% else %}
+
+            You don't have any domain yet.
+            Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
+
+        {% endif %}
+        <br />
+
+        Edit your <a href="{% url 'account_profile' %}">profile</a> info
+
     </div>
 
-</div>
+{% else %}
+
+    <div class="text-center">
+
+        <h1>Welcome to Zenaida!</h1>
+
+        <form method="post" action=".">
+            {% csrf_token %}
+            {{ form }}
+            <br>{{ message }}
+            {% if link %}
+                <a href="{% url 'login' %}">register <b>{{ domain_name }}</b></a>
+                <br>
+            {% endif %}
+            <button class="btn btn-success">Search</button>
+        </form>
+
+    </div>
+
+{% endif %}
+
+
+{% include 'layouts/default/container_close.html' %}
 
 {% include 'layouts/default/foot.html' %}

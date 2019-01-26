@@ -67,6 +67,9 @@ class Account(AbstractUser):
     # profile -> back.models.profile.Profile
     # domains -> back.models.domain.Domain
     # contacts -> back.models.contact.Contact
+    # payments -> billing.models.payment.Payment
+    # orders -> billing.models.order.Order
+
 
     email = models.EmailField(
         verbose_name='email address',

@@ -75,7 +75,7 @@ def index_page(request):
     }
     if request.user.is_authenticated:
         response['domains'] += domains.list_domains(request.user.email)
-    return shortcuts.render(request, 'front/account_overview.html', response)
+    return shortcuts.render(request, 'front/index.html', response)
 
 
 def account_domains(request):

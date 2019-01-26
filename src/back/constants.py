@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class ChoiceEnum(Enum):
+
     @classmethod
     def choices_as_tuple(cls):
         return tuple((choice.name, choice.value) for choice in cls)

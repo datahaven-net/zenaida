@@ -1,36 +1,36 @@
 {% include 'layouts/default/head.html' %}
 
-<div class="container-fluid">
+{% load bootstrap4 %}
 
-    <div class="mt-3">
-        <div>
-            {% if not request.user.is_authenticated %}
-                {% include 'layouts/default/welcome.html' %}
-            {% else %}
-            
-                {% block content %}
-                <form method="post" action=".">
-                  {% csrf_token %}
-                  {{ form }}
-                  <input type="submit" value="Search" />
-                  <br />
-                  {% if is_domain_registered == 'False' %}
-                    Your domain is available to register.<br />
-                    <a href="{{ link }}">Click here to register!</a><br />
-                  {% elif is_domain_registered == 'True' %}
-                    The domain you searched for is already registered.<br />
-                    Try to find another domain.
-                  {% elif is_domain_registered == 'Unavailable' %}
-                    Service is unavailable at this moment.<br />
-                    Please try it later.
-                  {% endif %}
-                </form>
-                {% endblock %}
-            
-            {% endif %}
-        </div>
-    </div>
+{% include 'layouts/default/container_sm_4_offset_4.html' %}
 
-</div>
+
+{% if not request.user.is_authenticated %}
+    {% include 'layouts/default/welcome.html' %}
+{% else %}
+
+    {% block content %}
+    <form method="post" action=".">
+      {% csrf_token %}
+      {{ form }}
+      <input type="submit" value="Search" />
+      <br />
+      {% if is_domain_registered == 'False' %}
+        Your domain is available to register.<br />
+        <a href="{{ link }}">Click here to register!</a><br />
+      {% elif is_domain_registered == 'True' %}
+        The domain you searched for is already registered.<br />
+        Try to find another domain.
+      {% elif is_domain_registered == 'Unavailable' %}
+        Service is unavailable at this moment.<br />
+        Please try it later.
+      {% endif %}
+    </form>
+    {% endblock %}
+
+{% endif %}
+
+
+{% include 'layouts/default/container_close.html' %}
 
 {% include 'layouts/default/foot.html' %}

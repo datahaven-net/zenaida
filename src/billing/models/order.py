@@ -13,9 +13,11 @@ class Order(models.Model):
         default_manager_name = 'orders'
 
 
-    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='orders')
+    # related fields:
+    # items -> billing.models.order_item.OrderItem
 
-    order_id = models.CharField(max_length=16, unique=True, null=False, blank=False)
+
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='orders')
 
     started_at = models.DateTimeField(null=False)
 
@@ -34,4 +36,10 @@ class Order(models.Model):
         blank=False,
     )
 
-    total_price = models.FloatField(null=False, blank=False)
+    @property
+    def total_price(self):
+        return sum([i.price for i in self.items.all()])
+
+    @property
+    def items_count(self):
+        return len(self.items.all())

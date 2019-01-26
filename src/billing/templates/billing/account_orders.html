@@ -1,0 +1,86 @@
+{% include 'layouts/default/head.html' %}
+
+{% load bootstrap4 %}
+
+{% load front_filters %}
+
+{% include 'layouts/default/container_fluid.html' %}
+
+
+{% if request.user.is_authenticated %}
+
+    {% if orders %}
+
+        <table class="table">
+            <tr>
+                <th scope="col"></th>
+                <th>OrderID</th>
+                <th>Items</th>
+                <th>Started</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+
+            {% for order in orders %}
+
+                <tr>
+                    <td scope="row"><input type="checkbox" value="{{ order.id }}"/></td>
+                    <td><a href="">{{ order.id }}</a></td>
+                    <td>{{ order.items_count }}</td>
+                    <td>{{ order.started_at }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>
+                        {% if not order.finished_at %}
+                            <a class="btn btn-success" href="#" role="button">Pay</a>
+                        {% endif %}
+                    </td>
+                </tr>
+
+            {% endfor %}
+        
+        </table>
+        
+        {% if orders.has_other_pages %}
+
+            <nav aria-label="Page navigation example">
+                <div class="text-xs-center">
+                    <ul class="pagination justify-content-center">
+    
+                        {% if orders.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ orders.previous_page_number }}">Previous</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                        {% endif %}
+    
+                        {% for i in orders.paginator.page_range %}
+                            {% if orders.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+    
+                        {% if orders.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ orders.next_page_number }}">Next</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        {% endif %}
+
+                    </ul>
+                </div>
+            </nav>
+
+        {% endif %}
+        
+    {% else %}
+        You did not made any orders yet.
+    {% endif %}
+
+{% else %}
+    {% include 'layouts/default/welcome.html' %}
+{% endif %}
+
+
+{% include 'layouts/default/container_close.html' %}
+
+{% include 'layouts/default/foot.html' %}

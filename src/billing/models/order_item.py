@@ -4,6 +4,7 @@ from back.domains import validate
 
 from billing.models.order import Order
 
+
 class OrderItem(models.Model):
     
     order_items = models.Manager()
@@ -29,4 +30,4 @@ class OrderItem(models.Model):
         blank=False,
     )
 
-    domain_name = models.CharField(max_length=255, unique=True, validators=[validate, ])
+    name = models.CharField(max_length=255, unique=True, validators=[validate, ])

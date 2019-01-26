@@ -5,15 +5,15 @@
 {% include 'layouts/default/container_sm_4_offset_4.html' %}
 
 
-<h4>Password change</h4>
+{% if not request.user.is_authenticated %}
+    {% include 'layouts/default/welcome.html' %}
+{% else %}
 
-<form method="post">
-    {% csrf_token %}
 
-    {% bootstrap_form form %}
+{{ order }}
 
-    <button class="btn btn-primary">Change</button>
-</form>
+
+{% endif %}
 
 
 {% include 'layouts/default/container_close.html' %}

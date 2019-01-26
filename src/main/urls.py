@@ -49,13 +49,15 @@ patterns = [
     path('domains/', front_views.account_domains, name='account_domains'),
     path('domains/add', front_views.account_domain_add, name='account_domain_add'),
     # path('domains/edit', front_views.account_domain_edit, name='account_domain_edit'),
-    # path('domains/register', front_views.account_domain_register, name='account_domain_register'),
-    # path('domains/renew', front_views.account_domain_renew, name='account_domain_renew'),
     # path('domains/transfer', front_views.account_domain_transfer, name='account_domain_transfer'),
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
-    # path('billing/', front_views.billing_overview, name='billing_overview'),
-    # path('billing/invoice', front_views.billing_invoice, name='billing_invoice'),
+    path('billing/', billing_views.billing_overview, name='billing_overview'),
+    path('billing/orders/', billing_views.orders_list, name='billing_orders'),
+    path('billing/order/register/', billing_views.order_domain_register, name='billing_order_register'),
+    path('billing/order/renew/', billing_views.order_domain_renew, name='billing_order_renew'),
+    path('billing/order/restore/', billing_views.order_domain_restore, name='billing_order_restore'),
+    path('billing/payments/', billing_views.payments_list, name='billing_payments'),
     path('billing/pay/', billing_views.new_payment, name='billing_new_payment'),
     path('billing/4csonline/pay/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),
     path('billing/4csonline/process/', pay_4csonline_views.process_payment, name='billing_4csonline_process_payment'),
@@ -63,14 +65,13 @@ patterns = [
 
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
 
-    # FAQ URLs
     path('faq/', front_views.get_faq, name='faq'),
     path('faq_epp/', front_views.get_faq_epp, name='faq_epp'),
     path('faq_auctions/', front_views.get_faq_auctions, name='faq_auctions'),
     path('faq_payments/', front_views.get_faq_payments, name='faq_payments'),
     path('correspondentbank/', front_views.get_correspondentbank, name='correspondentbank'),
     path('registrars/', front_views.get_registrars, name='registrars'),
-    # Index
+
     path('', front_views.index_page, name='index'),
 ]
 

@@ -56,3 +56,23 @@ def new_payment(request):
         return start_payment(request, transaction_id=new_payment.transaction_id)
 
     raise ValueError('invalid payment method')
+
+
+def orders_list(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+
+
+def order_create(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+
+
+def order_execute(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    
+
+def domain_get_auth_code(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')

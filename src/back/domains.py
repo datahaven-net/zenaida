@@ -3,8 +3,8 @@ import re
 
 from django.utils import timezone
 from django.conf import settings
+from django.core import exceptions
 
-from back.models.domain import Domain
 from back.models.registrar import Registrar
 
 from back import zones
@@ -51,10 +51,20 @@ def is_valid(domain_name, idn=False):
     return True
 
 
+def validate(domain):
+    """
+    Raise `ValidationError()` if domain 
+    """
+    if is_valid(domain):
+        return True
+    raise exceptions.ValidationError('value "{}" is not a valid domain name'.format(domain))
+
+
 def is_exist(domain_name='', epp_id=''):
     """
     Return `True` if domain exists, doing query in Domain table.
     """
+    from back.models.domain import Domain
     if epp_id:
         return bool(Domain.domains.filter(epp_id=epp_id).first())
     return bool(Domain.domains.filter(name=domain_name).first())
@@ -64,6 +74,7 @@ def find(domain_name='', epp_id=''):
     """
     Return `Domain` object if found in Domain table, else None.
     """
+    from back.models.domain import Domain
     if epp_id:
         return Domain.domains.filter(epp_id=epp_id).first()
     return Domain.domains.filter(name=domain_name).first()
@@ -86,6 +97,7 @@ def create(
     """
     Create new domain.
     """
+    from back.models.domain import Domain
     if is_exist(domain_name=domain_name, epp_id=epp_id):
         raise ValueError('Domain already exists')
     if not create_date:

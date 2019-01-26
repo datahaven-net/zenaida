@@ -1,26 +1,18 @@
 import logging
 
 from django.db import models
-from django.core import exceptions
 
 from accounts.models.account import Account
-from back.models.constants import EPPStatusTypes
+
+from back.constants import EPPStatusTypes
+
+from back.domains import validate
 
 from back.models.zone import Zone
 from back.models.contact import Contact
 from back.models.registrar import Registrar
 
 logger = logging.getLogger(__name__)
-
-
-def validate(domain):
-    """
-    Raise `ValidationError()` if domain 
-    """
-    from back.domains import is_valid
-    if is_valid(domain):
-        return True
-    raise exceptions.ValidationError('value "{}" is not a valid domain name'.format(domain))
 
 
 class Domain(models.Model):
@@ -40,7 +32,7 @@ class Domain(models.Model):
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
     epp_status = models.CharField(
-        max_length=32, choices=EPPStatusTypes.choices_as_tuple(), default=EPPStatusTypes.EPP_STATUS_INACTIVE.value)
+        max_length=32, choices=EPPStatusTypes.choices_as_tuple(), default=EPPStatusTypes.EPP_STATUS_INACTIVE.value)  # @UndefinedVariable
 
     auth_key = models.CharField(max_length=64, blank=True, default='')
 

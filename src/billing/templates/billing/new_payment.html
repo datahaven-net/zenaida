@@ -5,6 +5,7 @@
 <div class="container">
     <div class="row mt-3">
         <div class="col-sm-4 offset-4">
+
             {% if not request.user.is_authenticated %}
                 {% include 'layouts/default/welcome.html' %}
             {% else %}
@@ -16,9 +17,9 @@
                 </form>
 
             {% endif %}
+
         </div>
     </div>
-
 </div>
 
 {% include 'layouts/default/foot.html' %}

@@ -38,8 +38,8 @@ class Order(models.Model):
 
     @property
     def total_price(self):
-        return sum([i.price for i in self.items])
+        return sum([i.price for i in self.items.all()])
 
     @property
     def items_count(self):
-        return len(self.items)
+        return len(self.items.all())

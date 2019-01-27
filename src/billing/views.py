@@ -1,9 +1,11 @@
+import logging
 import datetime
 
 from django import shortcuts
 from django.conf import settings
 from django.utils import timezone
 from django.contrib import messages
+from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from back import domains
@@ -136,23 +138,24 @@ def order_create(request):
         return shortcuts.redirect('index')
     order_items = request.POST['order_items']
     to_be_ordered = []
-    errors = []
     for domain_name in order_items:
         domain_object = domains.find(domain_name=domain_name)
         if not domain_object:
-            errors.append((domain_name, 'not found', ))
-            continue
+            raise ValueError()
         if domain_object.owner != request.user:
-            continue
-#     new_order = orders.order_multiple_items(
-#         owner=request.user,
-#         item_type='domain_register',
-#         item_price=100.0,
-#         item_name=request.GET['domain_name'],
-#     )
-#     return shortcuts.render(request, 'billing/order.html', {
-#         'order': new_order,
-#     }, )
+            logging.critical('User %s tried to make an order with domain from another owner' % request.user)
+            raise exceptions.SuspiciousOperation()
+        to_be_ordered.append(dict(
+            item_type='domain_register',
+            item_price=100.0,
+            item_name=request.GET['domain_name'],
+        ))
+    new_order = orders.order_multiple_items(
+        owner=request.user,
+    )
+    return shortcuts.render(request, 'billing/order.html', {
+        'order': new_order,
+    }, )
 
 
 def order_execute(request):

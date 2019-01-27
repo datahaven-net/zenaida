@@ -1,0 +1,3 @@
+src/main/static/* linguist-vendored
+src/static/* linguist-vendored
+*.js linguist-vendored

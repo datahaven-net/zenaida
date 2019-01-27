@@ -11,7 +11,7 @@
     {% include 'layouts/default/welcome.html' %}
 {% else %}
 
-    {% if domains %}
+    {% if objects %}
 
         <table class="table">
             <tr>
@@ -23,7 +23,7 @@
                 <th>Register/Renew</th>
             </tr>
 
-            {% for domain in domains %}
+            {% for domain in objects %}
 
                 <tr>
                     <td scope="row"><input type="checkbox" value="{{ domain.name }}"/></td>

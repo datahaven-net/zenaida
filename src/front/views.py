@@ -130,7 +130,21 @@ def account_domain_add(request):
             'contact_amount': contact_amount
         })
     return resp
-    
+
+
+def account_domain_edit(request, domain_id):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    domain_info = shortcuts.get_object_or_404(domain.Domain, pk=domain_id, owner=request.user)
+    if request.method == 'POST':
+        form = forms.DomainAddForm(data=request.POST, current_user=request.user, instance=domain_info)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/domains/')
+    else:
+        form = forms.DomainAddForm(current_user=request.user, instance=domain_info)
+    return shortcuts.render(request, 'front/account_domain_edit.html', {'form': form, 'domain_name': domain_info.name})
+
 
 def account_profile(request):
     if not request.user.is_authenticated:

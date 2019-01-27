@@ -136,7 +136,7 @@ def order_create(request):
     """
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    order_items = request.POST['order_items']
+    order_items = request.POST.getlist('order_items')
     to_be_ordered = []
     for domain_name in order_items:
         domain_object = domains.find(domain_name=domain_name)
@@ -145,13 +145,21 @@ def order_create(request):
         if domain_object.owner != request.user:
             logging.critical('User %s tried to make an order with domain from another owner' % request.user)
             raise exceptions.SuspiciousOperation()
+        item_type = 'domain_register'
+        if domain_object.can_be_restored:
+            item_type = 'domain_restore',
+        elif domain_object.is_registered:
+            item_type = 'domain_renew',
         to_be_ordered.append(dict(
-            item_type='domain_register',
+            item_type=item_type,
             item_price=100.0,
-            item_name=request.GET['domain_name'],
+            item_name=domain_object.name,
         ))
+    if not to_be_ordered:
+        raise ValueError()
     new_order = orders.order_multiple_items(
         owner=request.user,
+        order_items=to_be_ordered,
     )
     return shortcuts.render(request, 'billing/order.html', {
         'order': new_order,

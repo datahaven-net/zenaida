@@ -10,7 +10,11 @@
 {% else %}
 
 
-{{ order }}
+{% for order_item in order.items.all() %}
+
+{{ order_item.name }}
+
+{% endfor %}
 
 
 {% endif %}

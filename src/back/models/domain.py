@@ -160,3 +160,11 @@ class Domain(models.Model):
             self.nameserver4 = ''
             return True
         return False
+
+    @property
+    def is_registered(self):
+        return bool(self.epp_id)
+
+    @property
+    def is_deactivated(self):
+        return bool(self.epp_id) and self.epp_status != EPPStatusTypes.EPP_STATUS_ACTIVE.value  # @UndefinedVariable

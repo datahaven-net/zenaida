@@ -74,7 +74,7 @@ def orders_list(request):
     except EmptyPage:
         order_objects = paginator.page(paginator.num_pages)
     return shortcuts.render(request, 'billing/account_orders.html', {
-        'orders': order_objects,
+        'objects': order_objects,
     }, )
 
 
@@ -93,7 +93,7 @@ def payments_list(request):
     except EmptyPage:
         payment_objects = paginator.page(paginator.num_pages)
     return shortcuts.render(request, 'billing/account_payments.html', {
-        'payments': payment_objects,
+        'objects': payment_objects,
     }, )
 
 

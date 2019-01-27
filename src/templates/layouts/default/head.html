@@ -46,6 +46,9 @@
               <li class="nav-item {% if url_name == 'billing_payments' %}active{% endif %}">
                   <a class="nav-link" href="{% url 'billing_payments' %}">My payments</a>
               </li>
+              <li class="nav-item {% if url_name == 'billing_orders' %}active{% endif %}">
+                  <a class="nav-link" href="{% url 'billing_orders' %}">My orders</a>
+              </li>
             </ul>
             <ul class="navbar-nav">
               <li class="nav-item {% if url_name == 'faq' %}active{% endif %}">

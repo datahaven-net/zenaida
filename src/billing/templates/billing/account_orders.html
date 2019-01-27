@@ -9,7 +9,7 @@
 
 {% if request.user.is_authenticated %}
 
-    {% if orders %}
+    {% if objects %}
 
         <table class="table">
             <tr>
@@ -21,7 +21,7 @@
                 <th>Actions</th>
             </tr>
 
-            {% for order in orders %}
+            {% for order in objects %}
 
                 <tr>
                     <td scope="row"><input type="checkbox" value="{{ order.id }}"/></td>
@@ -37,40 +37,10 @@
                 </tr>
 
             {% endfor %}
-        
+
         </table>
-        
-        {% if orders.has_other_pages %}
 
-            <nav aria-label="Page navigation example">
-                <div class="text-xs-center">
-                    <ul class="pagination justify-content-center">
-    
-                        {% if orders.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ orders.previous_page_number }}">Previous</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-                        {% endif %}
-    
-                        {% for i in orders.paginator.page_range %}
-                            {% if orders.number == i %}
-                                <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-    
-                        {% if orders.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ orders.next_page_number }}">Next</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">Next</span></li>
-                        {% endif %}
-
-                    </ul>
-                </div>
-            </nav>
-
-        {% endif %}
+        {% include 'layouts/default/pagination.html' %}
         
     {% else %}
         You did not made any orders yet.

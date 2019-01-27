@@ -43,10 +43,12 @@
                     </td>
                     <td>{{ domain.create_date|date:'d-m-Y' }}</td>
                     <td>
-                        {% if not domain.epp_id %}
-                            <a class="btn btn-danger" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
+                        {% if not domain.is_registered %}
+                            <a class="btn btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
+                        {% elif domain.can_be_restored  %}
+                            <a class="btn btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
                         {% else %}
-                            <a class="btn btn-success" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
+                            <a class="btn btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
                         {% endif %}
                     </td>
                 </tr>

@@ -9,8 +9,8 @@
             {% if not request.user.is_authenticated %}
                 {% include 'layouts/default/welcome.html' %}
             {% else %}
-
-                <form method="post">
+                Your current balance is <b>${{ user.balance }} US</b><br />
+                 <form method="post">
                     {% csrf_token %}
                     {% bootstrap_form form %}
                     <button class="btn btn-success">Next</button>

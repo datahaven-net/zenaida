@@ -17,7 +17,7 @@ class NewPaymentForm(forms.Form):
     )
 
     payment_method = forms.fields.ChoiceField(
-        label='Method',
+        label='Payment Method',
         required=True,
         choices=(
             ('pay_4csonline', 'Credit Card', ),

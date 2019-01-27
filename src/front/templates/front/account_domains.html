@@ -7,9 +7,11 @@
 {% include 'layouts/default/container_fluid.html' %}
 
 
-{% if request.user.is_authenticated %}
+{% if not request.user.is_authenticated %}
+    {% include 'layouts/default/welcome.html' %}
+{% else %}
 
-    {% if domains %}
+    {% if objects %}
 
         <table class="table">
             <tr>
@@ -21,7 +23,7 @@
                 <th>Register/Renew</th>
             </tr>
 
-            {% for domain in domains %}
+            {% for domain in objects %}
 
                 <tr>
                     <td scope="row"><input type="checkbox" value="{{ domain.name }}"/></td>
@@ -50,45 +52,13 @@
 
         </table>
 
-        {% if domains.has_other_pages %}
-    
-            <nav aria-label="Page navigation example">
-                <div class="text-xs-center">
-                    <ul class="pagination justify-content-center">
-    
-                        {% if domains.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ domains.previous_page_number }}">Previous</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-                        {% endif %}
-    
-                        {% for i in domains.paginator.page_range %}
-                            {% if domains.number == i %}
-                                <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-    
-                        {% if domains.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ domains.next_page_number }}">Next</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">Next</span></li>
-                        {% endif %}
-
-                    </ul>
-                </div>
-            </nav>
-    
-        {% endif %}
+        {% include 'layouts/default/pagination.html' %}
 
     {% else %}
         You don't have any domain yet. <br />
         Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
     {% endif %}
 
-{% else %}
-    {% include 'layouts/default/welcome.html' %}
 {% endif %}
 
 

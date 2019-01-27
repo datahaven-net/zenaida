@@ -83,7 +83,7 @@ def account_domains(request):
         return shortcuts.redirect('index')
     domain_objects = domains.list_domains(request.user.email)
     page = request.GET.get('page', 1)
-    paginator = Paginator(domain_objects, 10)
+    paginator = Paginator(domain_objects, 3)
 
     try:
         domain_objects = paginator.page(page)
@@ -93,7 +93,7 @@ def account_domains(request):
         domain_objects = paginator.page(paginator.num_pages)
 
     return shortcuts.render(request, 'front/account_domains.html', {
-        'domains': domain_objects,
+        'objects': domain_objects,
     }, )
 
 

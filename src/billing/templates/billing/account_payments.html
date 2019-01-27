@@ -11,7 +11,7 @@
     {% include 'layouts/default/welcome.html' %}
 {% else %}
 
-    {% if payments %}
+    {% if objects %}
 
         <table class="table">
             <tr>
@@ -20,7 +20,7 @@
                 <th>Started</th>
             </tr>
 
-            {% for payment in payments %}
+            {% for payment in objects %}
 
                 <tr>
                     <td>{{ payment.amount }}</td>
@@ -29,41 +29,11 @@
                 </tr>
 
             {% endfor %}
-        
+
         </table>
 
-        {% if payments.has_other_pages %}
-    
-            <nav aria-label="Page navigation example">
-                <div class="text-xs-center">
-                    <ul class="pagination justify-content-center">
-    
-                        {% if payments.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ payments.previous_page_number }}">Previous</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-                        {% endif %}
-    
-                        {% for i in payments.paginator.page_range %}
-                            {% if payments.number == i %}
-                                <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-    
-                        {% if payments.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ payments.next_page_number }}">Next</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">Next</span></li>
-                        {% endif %}
+        {% include 'layouts/default/pagination.html' %}
 
-                    </ul>
-                </div>
-            </nav>
-    
-        {% endif %}
-        
     {% else %}
         You did not made any payments yet.
     {% endif %}

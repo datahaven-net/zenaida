@@ -147,9 +147,9 @@ def order_create(request):
             raise exceptions.SuspiciousOperation()
         item_type = 'domain_register'
         if domain_object.can_be_restored:
-            item_type = 'domain_restore',
+            item_type = 'domain_restore'
         elif domain_object.is_registered:
-            item_type = 'domain_renew',
+            item_type = 'domain_renew'
         to_be_ordered.append(dict(
             item_type=item_type,
             item_price=100.0,

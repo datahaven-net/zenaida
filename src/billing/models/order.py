@@ -36,6 +36,12 @@ class Order(models.Model):
         blank=False,
     )
 
+    description = models.CharField(max_length=255, blank=True, null=False, default='')
+
+    def __str__(self):
+        return 'Order({}:{} {})'.format(self.id, self.status, self.description)
+
+
     @property
     def total_price(self):
         return sum([i.price for i in self.items.all()])

@@ -4,6 +4,16 @@ from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
 
+
+def by_id(order_id):
+    """
+    """
+    try:
+        return Order.orders.get(id=order_id)
+    except:
+        return None
+
+
 def list_orders(owner):
     """
     """

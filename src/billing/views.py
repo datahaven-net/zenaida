@@ -101,6 +101,17 @@ def payments_list(request):
     }, )
 
 
+def order_details(request):
+    """
+    """
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    existing_order = orders.by_id()
+    return shortcuts.render(request, 'billing/order.html', {
+        'order': existing_order,
+    }, )
+
+
 def order_domain_register(request):
     """
     """

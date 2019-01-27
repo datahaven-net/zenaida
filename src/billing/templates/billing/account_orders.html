@@ -13,9 +13,7 @@
 
         <table class="table">
             <tr>
-                <th scope="col"></th>
-                <th>OrderID</th>
-                <th>Items</th>
+                <th>Description</th>
                 <th>Started</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -24,9 +22,7 @@
             {% for order in objects %}
 
                 <tr>
-                    <td scope="row"><input type="checkbox" value="{{ order.id }}"/></td>
-                    <td><a href="">{{ order.id }}</a></td>
-                    <td>{{ order.items_count }}</td>
+                    <td><a href="{{ order.id }}">{{ order.description }}</a></td>
                     <td>{{ order.started_at }}</td>
                     <td>{{ order.status }}</td>
                     <td>

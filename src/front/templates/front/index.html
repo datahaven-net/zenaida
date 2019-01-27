@@ -4,72 +4,28 @@
 
 {% include 'layouts/default/container_sm_6_offset_3.html' %}
 
-
-{% if request.user.is_authenticated %}
-
-    <div class="text-center">
-
-        <h3>Logged in as <b>{{ user.email }}</b></h3>
-
-        <form method="post" action=".">
-            {% csrf_token %}
-            {{ form }}
-            <br>{{ message }}
-
-            {% if link %}
-
-                <a href="{{ link }}">register <b>{{ domain_name }}</b></a>
-                <br>
-
-            {% endif %}
-
-            <button class="btn btn-success">Search</button>
-        </form>
-
-        Current balance: <b>${{ user.balance }} US</b>
-
+<div class="text-center">
+    {% if request.user.is_authenticated %}
+        <h4>Welcome <b>{{ user.email }}</b></h4>
+        Your current balance: <b>${{ user.balance }} US</b>
         <br />
-
-        {% if domains.count > 0 %}
-
-            Number of domains that you have: <b>{{ domains.count }}</b>
+        {% if total_domains > 0 %}
+            Number of domains that you have: <b>{{ total_domains }}</b>
             <br />
             Browse your current <a href="{% url 'account_domains' %}">domains</a>
-            <br />
-            <a href="{% url 'domain_lookup' %}">Search</a> for a new domain
-
         {% else %}
-
-            You don't have any domain yet.
-            Please <a href="{% url 'domain_lookup' %}">click here</a> to register a domain.
-
+            You don't have any registered domain yet.
         {% endif %}
         <br />
-
-        Edit your <a href="{% url 'account_profile' %}">profile</a> info
-
-    </div>
-
-{% else %}
-
-    <div class="text-center">
-
+    {% else %}
         <h1>Welcome to Zenaida!</h1>
+    {% endif %}
+    <form class="form-inline justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+        <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+        <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
+</div>
 
-        <form method="post" action=".">
-            {% csrf_token %}
-            {{ form }}
-            <br>{{ message }}
-            {% if link %}
-                <a href="{% url 'login' %}">register <b>{{ domain_name }}</b></a>
-                <br>
-            {% endif %}
-            <button class="btn btn-success">Search</button>
-        </form>
-
-    </div>
-
-{% endif %}
 
 
 {% include 'layouts/default/container_close.html' %}

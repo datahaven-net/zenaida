@@ -10,22 +10,23 @@
 {% else %}
 
     {% block content %}
-    <form method="post" action=".">
-      {% csrf_token %}
-      {{ form }}
-      <input type="submit" value="Search" />
-      <br />
-      {% if is_domain_registered == 'False' %}
-        Your domain is available to register.<br />
-        <a href="{{ link }}">Click here to register!</a><br />
-      {% elif is_domain_registered == 'True' %}
-        The domain you searched for is already registered.<br />
-        Try to find another domain.
-      {% elif is_domain_registered == 'Unavailable' %}
-        Service is unavailable at this moment.<br />
-        Please try it later.
-      {% endif %}
-    </form>
+        {% if is_domain_available == True %}
+        <div class="alert alert-success" role="alert">
+            <b>{{ domain_name }}</b> is available to register. <br /><a href="{% url 'account_domain_new' %}?domain_name={{domain_name}}" class="alert-link">Click here to register it!</a>
+        </div>
+        {% elif is_domain_available == False %}
+        <div class="alert alert-warning" role="alert">
+            <b>{{ domain_name }}</b> is already registered. <br />Search for another domain!
+        </div>
+        <form class="form-inline justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+            <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+            <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+        {% elif is_domain_available == 'Unavailable' %}
+        <div class="alert alert-danger" role="alert">
+            Service is unavailable at this moment<br />Please try it later.
+        </div>
+        {% endif %}
     {% endblock %}
 
 {% endif %}

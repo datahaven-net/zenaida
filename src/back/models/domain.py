@@ -166,5 +166,5 @@ class Domain(models.Model):
         return bool(self.epp_id)
 
     @property
-    def is_deactivated(self):
-        return bool(self.epp_id) and self.epp_status != EPPStatusTypes.EPP_STATUS_ACTIVE.value  # @UndefinedVariable
+    def can_be_restored(self):
+        return bool(self.epp_id) and self.epp_status != EPPStatusTypes.EPP_STATUS_ACTIVE.name  # @UndefinedVariable

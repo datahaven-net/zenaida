@@ -30,7 +30,7 @@
 
                 <tr>
                     <td scope="row"><input name="domains_selection" type="checkbox" value="{{ domain.name }}"/></td>
-                    <td><a href="">{{ domain.name }}</a></td>
+                    <td><a href='{% url "account_domain_edit" domain.id %}'>{{ domain.name }}</a></td>
                     <td>{{ domain.get_epp_status_display }}</td>
                     <td>
                         {% if domain.expiry_datetime_as_date <= 0|add_days %}

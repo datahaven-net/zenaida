@@ -48,7 +48,7 @@ def account_domains(request):
         return shortcuts.redirect('index')
     domain_objects = domains.list_domains(request.user.email)
     page = request.GET.get('page', 1)
-    paginator = Paginator(domain_objects, 3)
+    paginator = Paginator(domain_objects, 10)
 
     try:
         domain_objects = paginator.page(page)

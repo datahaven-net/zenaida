@@ -57,6 +57,7 @@ patterns = [
     path('billing/order/register/', billing_views.order_domain_register, name='billing_order_register'),
     path('billing/order/renew/', billing_views.order_domain_renew, name='billing_order_renew'),
     path('billing/order/restore/', billing_views.order_domain_restore, name='billing_order_restore'),
+    path('billing/order/create/', billing_views.order_create, name='billing_order_create'),
     path('billing/payments/', billing_views.payments_list, name='billing_payments'),
     path('billing/pay/', billing_views.new_payment, name='billing_new_payment'),
     path('billing/4csonline/pay/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),

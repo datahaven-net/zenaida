@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+from back import domains
+
 from billing import forms
 from billing import orders
 from billing import payments
@@ -125,6 +127,32 @@ def order_domain_restore(request):
     """
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
+
+
+def order_create(request):
+    """
+    """
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    order_items = request.POST['order_items']
+    to_be_ordered = []
+    errors = []
+    for domain_name in order_items:
+        domain_object = domains.find(domain_name=domain_name)
+        if not domain_object:
+            errors.append((domain_name, 'not found', ))
+            continue
+        if domain_object.owner != request.user:
+            continue
+#     new_order = orders.order_multiple_items(
+#         owner=request.user,
+#         item_type='domain_register',
+#         item_price=100.0,
+#         item_name=request.GET['domain_name'],
+#     )
+#     return shortcuts.render(request, 'billing/order.html', {
+#         'order': new_order,
+#     }, )
 
 
 def order_execute(request):

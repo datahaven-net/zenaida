@@ -17,65 +17,30 @@ from zepp import zmaster
 
 def domain_lookup(request):
     if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-    is_domain_registered = ''
-    link = ''
-    domain_name = ''
-    if request.method != 'POST':
-        form = forms.DomainLookupForm()
+        return shortcuts.redirect('login')
+    domain_name = request.GET.get('domain_name')
+    check_result = zmaster.domains_check(
+        [domain_name, ],
+    )
+    if check_result is None:
+        # If service is unavailable, return 'Unavailable'
+        is_domain_available = 'Unavailable'
     else:
-        form = forms.DomainLookupForm(request.POST)
-        if form.is_valid():
-            domain_name = form.cleaned_data['domain_name']
-            check_result = zmaster.domains_check(
-                [domain_name, ],
-            )
-            if check_result is None:
-                # If service is unavailable, return 'Unavailable'
-                is_domain_registered = 'Unavailable'
-            else:
-                if check_result.get(domain_name):
-                    is_domain_registered = True
-                else:
-                    is_domain_registered = False
-                    link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
+        if not check_result.get(domain_name):
+            is_domain_available = True
+        else:
+            is_domain_available = False
     return shortcuts.render(request, 'front/domain_lookup.html', {
-        'form': form,
-        'link': link,
-        'is_domain_registered': str(is_domain_registered),
+        'is_domain_available': is_domain_available,
         'domain_name': domain_name,
     })
 
 
 def index_page(request):
-    message = ''
-    link = ''
-    domain_name = ''
-    if request.method != 'POST':
-        form = forms.DomainLookupForm()
-    else:
-        form = forms.DomainLookupForm(request.POST)
-        if form.is_valid():
-            domain_name = form.cleaned_data['domain_name']
-            check_result = zmaster.domains_check(domain_names=[domain_name, ], )
-            if check_result is None:
-                message = 'service temporary unavailable'
-            else:
-                if check_result.get(domain_name):
-                    message = 'domain already registered'
-                else:
-                    message = 'domain is available'
-                    link = '/domains/add?domain_name=%s' % form.cleaned_data['domain_name']
-    response = {
-        'form': form,
-        'message': message,
-        'link': link,
-        'domains': [],
-        'domain_name': domain_name,
-    }
+    total_domains = 0
     if request.user.is_authenticated:
-        response['domains'] += domains.list_domains(request.user.email)
-    return shortcuts.render(request, 'front/index.html', response)
+        total_domains = len(request.user.domains.all())
+    return shortcuts.render(request, 'front/index.html', {'total_domains': total_domains})
 
 
 def account_domains(request):
@@ -97,7 +62,7 @@ def account_domains(request):
     }, )
 
 
-def account_domain_add(request):
+def account_domain_new(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
     resp = None
@@ -122,10 +87,10 @@ def account_domain_add(request):
                 pass
         if form.is_valid():
             form_to_save.save()
-            resp = shortcuts.render(request, 'front/account_domain_add.html', {'registered': True})
+            resp = shortcuts.render(request, 'front/account_domain_new.html', {'registered': True})
 
     if not resp:
-        resp = shortcuts.render(request, 'front/account_domain_add.html', {
+        resp = shortcuts.render(request, 'front/account_domain_new.html', {
             'form': form,
             'contact_amount': contact_amount
         })

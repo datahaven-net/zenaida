@@ -375,7 +375,7 @@ class DomainSynchronizer(automat.Automat):
             self.event('error', Exception('Empty result from DomainContactsSynchronizer'))
             return
         if isinstance(dcs.outputs[-1], Exception):
-            self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % exc)
+            self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % dcs.outputs[-1])
             self.event('error', dcs.outputs[-1])
             return
         for out in dcs.outputs:

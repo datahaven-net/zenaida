@@ -28,6 +28,7 @@ class Order(models.Model):
             ('started', 'Started', ),
             ('cancelled', 'Cancelled', ),
             ('failed', 'Failed', ),
+            ('incomplete', 'Incomplete'),
             ('processed', 'Processed', ),
         ),
         default='started',
@@ -36,6 +37,12 @@ class Order(models.Model):
         blank=False,
     )
 
+    description = models.CharField(max_length=255, blank=True, null=False, default='')
+
+    def __str__(self):
+        return 'Order({} #{} : {})'.format(self.description, self.id, self.status)
+
+
     @property
     def total_price(self):
         return sum([i.price for i in self.items.all()])
@@ -43,3 +50,7 @@ class Order(models.Model):
     @property
     def items_count(self):
         return len(self.items.all())
+
+    @property
+    def is_processable(self):
+        return self.status not in ['processed', 'cancelled', ]

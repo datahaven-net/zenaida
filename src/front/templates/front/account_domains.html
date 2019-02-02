@@ -13,7 +13,7 @@
 
     {% if objects %}
 
-        <form method="post">
+        <form action="{% url 'billing_order_create' %}" method="post">
         {% csrf_token %}
 
         <table class="table">
@@ -29,7 +29,7 @@
             {% for domain in objects %}
 
                 <tr>
-                    <td scope="row"><input name="domains_selection" type="checkbox" value="{{ domain.name }}"/></td>
+                    <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
                     <td><a href='{% url "account_domain_edit" domain.id %}'>{{ domain.name }}</a></td>
                     <td>{{ domain.get_epp_status_display }}</td>
                     <td>

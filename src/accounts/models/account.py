@@ -80,7 +80,7 @@ class Account(AbstractUser):
         help_text='user email address',
     )
 
-    balance = models.IntegerField(default=0)
+    balance = models.FloatField(null=False, blank=False, default=0.0)
 
 
     def __str__(self):

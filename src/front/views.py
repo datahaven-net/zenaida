@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.conf import settings
+# from django.conf import settings
 from datetime import datetime
 
 from back.models import zone, domain
@@ -48,7 +48,7 @@ def account_domains(request):
         return shortcuts.redirect('index')
     domain_objects = domains.list_domains(request.user.email)
     page = request.GET.get('page', 1)
-    paginator = Paginator(domain_objects, 3)
+    paginator = Paginator(domain_objects, 10)
 
     try:
         domain_objects = paginator.page(page)

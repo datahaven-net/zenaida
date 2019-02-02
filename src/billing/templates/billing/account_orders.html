@@ -13,10 +13,8 @@
 
         <table class="table">
             <tr>
-                <th scope="col"></th>
-                <th>OrderID</th>
-                <th>Items</th>
-                <th>Started</th>
+                <th>Description</th>
+                <th>Date</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -24,14 +22,13 @@
             {% for order in objects %}
 
                 <tr>
-                    <td scope="row"><input type="checkbox" value="{{ order.id }}"/></td>
-                    <td><a href="">{{ order.id }}</a></td>
-                    <td>{{ order.items_count }}</td>
+                    <td><a href="{{ order.id }}">{{ order.description }}</a></td>
                     <td>{{ order.started_at }}</td>
                     <td>{{ order.status }}</td>
                     <td>
-                        {% if not order.finished_at %}
-                            <a class="btn btn-success" href="#" role="button">Pay</a>
+                        {% if order.is_processable %}
+                            <a href="{% url 'billing_order_process' order.id %}" class="btn btn-success" href="#" role="button">Confirm</a>
+                            <a href="{% url 'billing_order_cancel' order.id %}" class="btn btn-warning" href="#" role="button">Cancel</a>
                         {% endif %}
                     </td>
                 </tr>

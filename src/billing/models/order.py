@@ -40,7 +40,7 @@ class Order(models.Model):
     description = models.CharField(max_length=255, blank=True, null=False, default='')
 
     def __str__(self):
-        return 'Order({}:{} {})'.format(self.id, self.status, self.description)
+        return 'Order({} #{} : {})'.format(self.description, self.id, self.status)
 
 
     @property
@@ -50,3 +50,7 @@ class Order(models.Model):
     @property
     def items_count(self):
         return len(self.items.all())
+
+    @property
+    def is_processable(self):
+        return self.status not in ['processed', 'cancelled', ]

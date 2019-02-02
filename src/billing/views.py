@@ -68,7 +68,7 @@ def orders_list(request):
     """
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    order_objects = orders.list_orders(owner=request.user)
+    order_objects = orders.list_orders(owner=request.user, exclude_cancelled=True)
     page = request.GET.get('page', 1)
     paginator = Paginator(order_objects, 10)
     try:
@@ -112,7 +112,7 @@ def order_domain_register(request):
         item_price=100.0,
         item_name=request.GET['domain_name'],
     )
-    return shortcuts.render(request, 'billing/order.html', {
+    return shortcuts.render(request, 'billing/order_details.html', {
         'order': new_order,
     }, )
 
@@ -161,7 +161,7 @@ def order_create(request):
         owner=request.user,
         order_items=to_be_ordered,
     )
-    return shortcuts.render(request, 'billing/order.html', {
+    return shortcuts.render(request, 'billing/order_details.html', {
         'order': new_order,
     }, )
 
@@ -172,7 +172,7 @@ def order_details(request, order_id):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
     existing_order = orders.by_id(order_id)
-    return shortcuts.render(request, 'billing/order.html', {
+    return shortcuts.render(request, 'billing/order_details.html', {
         'order': existing_order,
     }, )
 
@@ -190,11 +190,27 @@ def order_execute(request, order_id):
         logging.critical('User %s tried to execute an order for another user' % request.user)
         raise exceptions.SuspiciousOperation()
     if not orders.execute_single_order(existing_order):
-        messages.add_message(request, messages.ERROR, 'There were technical problems with order processing.'
+        messages.add_message(request, messages.ERROR, 'There were technical problems with order processing. '
                                                       'Please try again later or contact customer support.')
-    return shortcuts.render(request, 'billing/order.html', {
+    return shortcuts.render(request, 'billing/order_details.html', {
         'order': existing_order,
     }, )
+
+
+def order_cancel(request, order_id):
+    """
+    """    
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    existing_order = orders.by_id(order_id)
+    if not existing_order:
+        logging.critical('User %s tried to cancel non-existing order' % request.user)
+        raise exceptions.SuspiciousOperation()
+    if not existing_order.owner == request.user:
+        logging.critical('User %s tried to cancel an order for another user' % request.user)
+        raise exceptions.SuspiciousOperation()
+    orders.cancel_single_order(existing_order)
+    return orders_list(request)
 
 
 def orders_modify(request):

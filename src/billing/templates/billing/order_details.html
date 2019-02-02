@@ -1,0 +1,63 @@
+{% include 'layouts/default/head.html' %}
+
+{% load bootstrap4 %}
+
+{% include 'layouts/default/container_sm_8_offset_2.html' %}
+
+
+{% if not request.user.is_authenticated %}
+    {% include 'layouts/default/welcome.html' %}
+{% else %}
+
+    <h1>{{ order.description }}</h1>
+    
+    <b>{{ order.get_status_display }}</b> at {{ order.started_at }}
+    <br>
+    <br>
+
+    <table class="table">
+    
+    {% for order_item in order.items.all|dictsort:"name" %}
+        <tr>
+            <td><b>{{ order_item.name }}</b></td>
+            <td>{{ order_item.get_type_display }}</td>
+            <td>{{ order_item.price }} $ US</td>
+        </tr>
+
+    {% endfor %}
+
+        <tr>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th><b>{{ order.total_price }} $ US</b></th>
+        </tr>
+
+    </table>
+
+    {% if order.is_processable %}
+
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-2 offset-4">
+                    <form action="{% url 'billing_order_cancel' order.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning" name="action_cancel">Cancel</button>
+                    </form>
+                </div>
+                <div class="col-sm-2">
+                    <form action="{% url 'billing_order_process' order.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success" name="action_pay">Confirm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+{% endif %}
+
+
+{% include 'layouts/default/container_close.html' %}
+
+{% include 'layouts/default/foot.html' %}

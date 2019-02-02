@@ -11,13 +11,10 @@
 
     {% if objects %}
 
-        <form action="{% url 'billing_orders_modify' %}" method="post">
-        {% csrf_token %}
-
         <table class="table">
             <tr>
                 <th>Description</th>
-                <th>Started</th>
+                <th>Date</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -29,8 +26,9 @@
                     <td>{{ order.started_at }}</td>
                     <td>{{ order.status }}</td>
                     <td>
-                        {% if not order.finished_at %}
-                            <a href='process/{{ order.id }}' class="btn btn-success" href="#" role="button">Pay</a>
+                        {% if order.is_processable %}
+                            <a href="{% url 'billing_order_process' order.id %}" class="btn btn-success" href="#" role="button">Confirm</a>
+                            <a href="{% url 'billing_order_cancel' order.id %}" class="btn btn-warning" href="#" role="button">Cancel</a>
                         {% endif %}
                     </td>
                 </tr>
@@ -38,9 +36,6 @@
             {% endfor %}
 
         </table>
-
-        <button type="submit" class="btn btn-danger" name="action_cancel">Cancel</button>
-        </form>
 
         {% include 'layouts/default/pagination.html' %}
         

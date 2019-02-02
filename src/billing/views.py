@@ -101,17 +101,6 @@ def payments_list(request):
     }, )
 
 
-def order_details(request):
-    """
-    """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-    existing_order = orders.by_id()
-    return shortcuts.render(request, 'billing/order.html', {
-        'order': existing_order,
-    }, )
-
-
 def order_domain_register(request):
     """
     """
@@ -177,12 +166,48 @@ def order_create(request):
     }, )
 
 
-def order_execute(request):
+def order_details(request, order_id):
     """
     """
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    
+    existing_order = orders.by_id(order_id)
+    return shortcuts.render(request, 'billing/order.html', {
+        'order': existing_order,
+    }, )
+
+
+def order_execute(request, order_id):
+    """
+    """
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    existing_order = orders.by_id(order_id)
+    if not existing_order:
+        logging.critical('User %s tried to execute non-existing order' % request.user)
+        raise exceptions.SuspiciousOperation()
+    if not existing_order.owner == request.user:
+        logging.critical('User %s tried to execute an order for another user' % request.user)
+        raise exceptions.SuspiciousOperation()
+    if not orders.execute_single_order(existing_order):
+        messages.add_message(request, messages.ERROR, 'There were technical problems with order processing.'
+                                                      'Please try again later or contact customer support.')
+    return shortcuts.render(request, 'billing/order.html', {
+        'order': existing_order,
+    }, )
+
+
+def orders_modify(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+
+    order_objects = orders.list_orders(owner=request.user)
+    name = request.POST.get('name')
+
+    return shortcuts.render(request, 'billing/account_orders.html', {
+        'objects': order_objects,
+    }, )
+
 
 def domain_get_auth_code(request):
     """

@@ -1,8 +1,11 @@
+import logging
+
 from django.utils import timezone
 
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
+from automats import domain_synchronizer
 
 
 def by_id(order_id):
@@ -66,3 +69,74 @@ def order_multiple_items(owner, order_items):
             name=order_item['item_name'],
         )
     return new_order
+
+
+def execute_single_order(order_object):
+    new_status = 'processed'
+    total_processed = 0
+    for order_item in order_object.items.all():
+        if order_item.status == 'processed':
+            continue
+        if execute_one_item(order_item):
+            total_processed += 1
+            continue
+        if total_processed > 0:
+            new_status = 'incomplete'
+            break
+        new_status = 'failed'
+        break
+    old_status = order_object.status
+    order_object.status = new_status
+    order_object.save()
+    logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
+    return True if new_status == 'processed' else False
+
+
+def update_order_item(order_item, new_status=None, save=True):
+    if new_status:
+        old_status = order_item.status
+        order_item.status = new_status
+        order_item.save()
+        logging.debug('Updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
+        return True
+    return False
+
+
+def execute_one_item(order_item):
+    if order_item.type == 'domain_register':
+        ds = domain_synchronizer.DomainSynchronizer(
+            log_events=True,
+            log_transitions=True,
+            raise_errors=True,
+        )
+        ds.event('run', order_item.name, renew_years=2, sync_contacts=True, sync_nameservers=True)
+        outputs = list(ds.outputs)
+        del ds
+        if not outputs[-1]:
+            update_order_item(order_item, new_status='failed', save=True)
+            return False
+        update_order_item(order_item, new_status='processed', save=True)
+        return True
+
+    if order_item.type == 'domain_renew':
+        ds = domain_synchronizer.DomainSynchronizer(
+            log_events=True,
+            log_transitions=True,
+            raise_errors=True,
+        )
+        ds.event('run', order_item.name, renew_years=2, sync_contacts=True, sync_nameservers=True)
+        outputs = list(ds.outputs)
+        del ds
+        if not outputs[-1]:
+            update_order_item(order_item, new_status='failed', save=True)
+            return False
+        update_order_item(order_item, new_status='processed', save=True)
+        return True
+
+    if order_item.type == 'domain_restore':
+        # TODO: domain_restore to be implemented later
+        update_order_item(order_item, new_status='failed', save=True)
+        return False
+
+    logging.critical('Order item %s have a wrong type' % order_item)
+    return False

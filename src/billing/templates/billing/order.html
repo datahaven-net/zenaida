@@ -2,20 +2,34 @@
 
 {% load bootstrap4 %}
 
-{% include 'layouts/default/container_sm_4_offset_4.html' %}
+{% include 'layouts/default/container_sm_9_offset_1.html' %}
 
 
 {% if not request.user.is_authenticated %}
     {% include 'layouts/default/welcome.html' %}
 {% else %}
 
+    <h1>Order</h1>
+    
+    <br>
+    
+    for <b>{{ order.owner.email }}</b> account owner
+    <br>
+    Latest status: {{ order.get_status_display }}
+    <br>
 
-{% for order_item in order.items.all %}
+    <p>Following domains will be processed and charges will be taken from your account:</p>
+    <ul>    
+    {% for order_item in order.items.all %}
 
-{{ order_item.name }}
+        <li>
+        <b>{{ order_item.name }}</b>
+        {{ order_item.get_type_display }}
+        {{ order_item.price }} $ US
+        </li>
 
-{% endfor %}
-
+    {% endfor %}
+    </ul>
 
 {% endif %}
 

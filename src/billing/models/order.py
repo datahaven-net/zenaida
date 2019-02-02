@@ -28,6 +28,7 @@ class Order(models.Model):
             ('started', 'Started', ),
             ('cancelled', 'Cancelled', ),
             ('failed', 'Failed', ),
+            ('incomplete', 'Incomplete'),
             ('processed', 'Processed', ),
         ),
         default='started',

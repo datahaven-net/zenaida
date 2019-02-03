@@ -57,6 +57,27 @@ def create(epp_id, owner, **kwargs):
     return new_contact
 
 
+def create_from_profile(owner, profile_object):
+    """
+    Creates a new contact from existing Profile object. 
+    """
+    new_contact = Contact.contacts.create(
+        owner=owner,
+        person_name=profile_object.person_name,
+        organization_name=profile_object.organization_name,
+        address_street=profile_object.address_street,
+        address_city=profile_object.address_city,
+        address_province=profile_object.address_province,
+        address_postal_code=profile_object.address_postal_code,
+        address_country=profile_object.address_country,
+        contact_voice=profile_object.contact_voice,
+        contact_fax=profile_object.contact_fax,
+        contact_email=profile_object.contact_email,
+    )
+    logger.debug('contact created from existing profile: %s', new_contact)
+    return new_contact
+
+
 def update(epp_id, **kwargs):
     """
     Update given Contact with new field values.
@@ -124,3 +145,19 @@ def to_dict(contact_object):
     info['contacts'][0] = c        
     return info
 
+
+def execute_contact_sync(contact_object):
+    """
+    """
+    from automats import contact_synchronizer
+    cs = contact_synchronizer.ContactSynchronizer(
+        log_events=True,
+        log_transitions=True,
+        raise_errors=False,
+    )
+    cs.event('run', contact_object)
+    outputs = list(cs.outputs)
+    del cs
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        return False
+    return True

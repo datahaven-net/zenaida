@@ -46,6 +46,25 @@ def create_profile(existing_account, **kwargs):
     return prof
 
 
+def erase_profile_details(existing_account):
+    """
+    Erase all profile fields for given user and make it invalid. 
+    """
+    prof = existing_account.profile
+    prof.person_name = ''
+    prof.organization_name = ''
+    prof.address_street = ''
+    prof.address_city = ''
+    prof.address_province = ''
+    prof.address_postal_code = ''
+    prof.address_country = ''
+    prof.contact_voice = ''
+    prof.contact_fax = ''
+    prof.contact_email = ''
+    prof.save()
+    return True
+
+
 def generate_password(length):
     """
     Call Django `make_random_password()` method.

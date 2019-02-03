@@ -20,82 +20,77 @@
 </head>
 
 <body>
+<header>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark static-top">
+        <a class="navbar-brand" href="/">Zenaida</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="navbarNavDropdown" class="navbar-collapse collapse">
+          <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            {% with url_name=request.resolver_match.url_name %}
+              {% if request.user.is_authenticated %}
+                <ul class="navbar-nav mr-auto">
+                  <li class="nav-item {% if url_name == 'account_domains' %}active{% endif %}">
+                      <a class="nav-link" href="{% url 'account_domains' %}">My Domains</a>
+                  </li>
+                  <li class="nav-item {% if url_name == 'billing_new_payment' %}active{% endif %}">
+                      <a class="nav-link" href="{% url 'billing_new_payment' %}">Buy Credits</a>
+                  </li>
+                  <li class="nav-item {% if url_name == 'billing_payments' %}active{% endif %}">
+                      <a class="nav-link" href="{% url 'billing_payments' %}">My payments</a>
+                  </li>
+                  <li class="nav-item {% if url_name == 'billing_orders' %}active{% endif %}">
+                      <a class="nav-link" href="{% url 'billing_orders' %}">My orders</a>
+                  </li>
+                </ul>
+                <ul class="navbar-nav">
+                  <li>
+                  <form class="form-inline my-2 my-lg-0" action="{% url 'domain_lookup' %}" method="get">
+                    <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                  </form>
+                  </li>
+                  <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}"
+                        href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{ user.email }}</a>
+                      <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="{% url 'billing_new_payment' %}">Current balance: ${{user.balance}} US</a>
+                        <a class="dropdown-item" href="{% url 'account_domains' %}">Your owned domains: {{user.domains.count}}</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'account_profile' %}">My Profile</a>
+                        <a class="dropdown-item" href="{% url 'account_contacts' %}">My Contacts</a>
+                        <a class="dropdown-item" href="{% url 'password_change' %}">Change password</a>
+                        <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                      </div>
+                  </li>
+                </ul>
+              {% else %}
+                <ul class="navbar-nav mr-auto">
+                  <li class="nav-item {% if url_name == 'login' %}active{% endif %}">
+                      <a class="nav-link" href="{% url 'login' %}">Log in</a>
+                  </li>
+                  <li class="nav-item {% if url_name == 'register' %}active{% endif %}">
+                      <a class="nav-link" href="{% url 'register' %}">Create an account</a>
+                  </li>
+                </ul>
+                <ul class="navbar-nav">
+                  <li>
+                  <form class="form-inline my-2 my-lg-0" action="{% url 'domain_lookup' %}" method="get">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                    <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
+                  </form>
+                  </li>
+                </ul>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+    </nav>
 
-<nav class="navbar navbar-expand-md navbar-dark bg-dark static-top">
-    <a class="navbar-brand" href="/">Zenaida</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="navbarNavDropdown" class="navbar-collapse collapse">
-      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        {% with url_name=request.resolver_match.url_name %}
-          {% if request.user.is_authenticated %}
-            <ul class="navbar-nav mr-auto">
-              <li class="nav-item {% if url_name == 'account_domains' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'account_domains' %}">My Domains</a>
-              </li>
-              <li class="nav-item {% if url_name == 'billing_new_payment' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'billing_new_payment' %}">Buy Credits</a>
-              </li>
-              <li class="nav-item {% if url_name == 'billing_payments' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'billing_payments' %}">My payments</a>
-              </li>
-              <li class="nav-item {% if url_name == 'billing_orders' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'billing_orders' %}">My orders</a>
-              </li>
-            </ul>
-            <ul class="navbar-nav">
-              <li class="nav-item {% if url_name == 'faq' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
-              </li>
-              <li>
-              <form class="form-inline my-2 my-lg-0" action="{% url 'domain_lookup' %}" method="get">
-                <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-              </form>
-              </li>
-              <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}"
-                    href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{ user.email }}</a>
-                  <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="{% url 'billing_new_payment' %}">Current balance: ${{user.balance}} US</a>
-                    <a class="dropdown-item" href="{% url 'account_domains' %}">Your owned domains: {{user.domains.count}}</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="{% url 'account_profile' %}">My Profile</a>
-                    <a class="dropdown-item" href="{% url 'account_contacts' %}">My Contacts</a>
-                    <a class="dropdown-item" href="{% url 'password_change' %}">Change password</a>
-                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-                  </div>
-              </li>
-            </ul>
-          {% else %}
-            <ul class="navbar-nav mr-auto">
-              <li class="nav-item {% if url_name == 'login' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'login' %}">Log in</a>
-              </li>
-              <li class="nav-item {% if url_name == 'register' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'register' %}">Create an account</a>
-              </li>
-              <li class="nav-item {% if url_name == 'faq' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
-              </li>
-            </ul>
-            <ul class="navbar-nav">
-              <li>
-              <form class="form-inline my-2 my-lg-0" action="{% url 'domain_lookup' %}" method="get">
-                <input class="form-control mr-sm-2" type="search" placeholder="Find your domain" aria-label="Search" name="domain_name">
-                <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
-              </form>
-              </li>
-            </ul>
-          {% endif %}
-        {% endwith %}
-      </div>
-    </div>
-</nav>
-
-{% if messages %}
-    <div class="container-fluid mt-3">
-        {% include 'bootstrap4/messages.html' %}
-    </div>
-{% endif %}
+    {% if messages %}
+        <div class="container-fluid mt-3">
+            {% include 'bootstrap4/messages.html' %}
+        </div>
+    {% endif %}
+</header>

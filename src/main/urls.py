@@ -77,6 +77,8 @@ patterns = [
     path('correspondentbank/', front_views.get_correspondentbank, name='correspondentbank'),
     path('registrars/', front_views.get_registrars, name='registrars'),
 
+    path('contact-us/', front_views.contact_us, name='contact_us'),
+
     path('', front_views.index_page, name='index'),
 ]
 

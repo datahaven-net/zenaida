@@ -211,6 +211,10 @@ def domain_lookup(request):
     })
 
 
+def contact_us(request):
+    return shortcuts.render(request, 'front/contact_us.html')
+
+
 def get_faq(request):
     return shortcuts.render(request, 'front/faq.html')
 

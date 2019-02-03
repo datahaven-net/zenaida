@@ -35,6 +35,8 @@ def account_domains(request):
         messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         return account_contacts(request)
     domain_objects = domains.list_domains(request.user.email)
+    if not domain_objects:
+        return domain_lookup(request)
     page = request.GET.get('page', 1)
     paginator = Paginator(domain_objects, 10)
     try:
@@ -196,17 +198,21 @@ def domain_lookup(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('login')
     domain_name = request.GET.get('domain_name')
+    if not domain_name:
+        return shortcuts.render(request, 'front/domain_lookup.html', {
+            'result': None,
+        })
     check_result = zmaster.domains_check(domain_names=[domain_name, ],)
     if check_result is None:
-        # If service is unavailable, return 'Unavailable'
-        is_domain_available = 'Unavailable'
+        # If service is unavailable, return 'error'
+        result = 'error'
     else:
-        if not check_result.get(domain_name):
-            is_domain_available = True
+        if check_result.get(domain_name):
+            result = 'exist'
         else:
-            is_domain_available = False
+            result = 'not exist'
     return shortcuts.render(request, 'front/domain_lookup.html', {
-        'is_domain_available': is_domain_available,
+        'result': result,
         'domain_name': domain_name,
     })
 

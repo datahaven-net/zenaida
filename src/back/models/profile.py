@@ -29,3 +29,23 @@ class Profile(models.Model):
 
     def __str__(self):
         return 'Profile({})'.format(self.account.email)
+
+    def is_complete(self):
+        # TODO: extra regex validators to be added later
+        if not self.person_name:
+            return False
+        if not self.organization_name:
+            return False
+        if not self.address_street:
+            return False
+        if not self.address_city:
+            return False
+        if not self.address_postal_code:
+            return False
+        if not self.address_country:
+            return False
+        if not self.contact_voice:
+            return False
+        if not self.contact_email:
+            return False
+        return True

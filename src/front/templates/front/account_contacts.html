@@ -8,32 +8,35 @@
 {% else %}
 
     {% if objects %}
+        <div class="table-responsive">
 
-        <table class="table">
-
-            <tr>
-                <th>Organization</th>
-                <th>Person</th>
-                <th>Address</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Action</th>
-            </tr>
-
-            {% for contact in objects %}
+            <table class="table table-hover">
 
                 <tr>
-                    <td>{{contact.person_name}}</td>
-                    <td>{{contact.organization_name}}</td>
-                    <td>{{contact.address_full}}</td>
-                    <td>{{contact.contact_voice}}</td>
-                    <td>{{contact.contact_email}}</td>
-                    <td><a class="btn btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a></td>
+                    <th>Organization</th>
+                    <th>Person</th>
+                    <th>Address</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Action</th>
                 </tr>
 
-            {% endfor %}
+                {% for contact in objects %}
 
-        </table>
+                    <tr>
+                        <td>{{contact.person_name}}</td>
+                        <td>{{contact.organization_name}}</td>
+                        <td>{{contact.address_full}}</td>
+                        <td>{{contact.contact_voice}}</td>
+                        <td>{{contact.contact_email}}</td>
+                        <td><a class="btn btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a></td>
+                    </tr>
+
+                {% endfor %}
+
+            </table>
+
+        </div>
 
         {% include 'base/pagination.html' %}
 

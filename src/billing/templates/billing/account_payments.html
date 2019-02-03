@@ -8,25 +8,28 @@
 {% else %}
 
     {% if objects %}
+        <div class="table-responsive">
 
-        <table class="table">
-            <tr>
-                <th>Amount</th>
-                <th>Payment method</th>
-                <th>Started</th>
-            </tr>
-
-            {% for payment in objects %}
-
+            <table class="table table-hover">
                 <tr>
-                    <td>{{ payment.amount }}</td>
-                    <td>{{ payment.get_method_display }}</td>
-                    <td>{{ payment.started_at }}</td>
+                    <th>Amount</th>
+                    <th>Payment method</th>
+                    <th>Started</th>
                 </tr>
 
-            {% endfor %}
+                {% for payment in objects %}
 
-        </table>
+                    <tr>
+                        <td>{{ payment.amount }}</td>
+                        <td>{{ payment.get_method_display }}</td>
+                        <td>{{ payment.started_at }}</td>
+                    </tr>
+
+                {% endfor %}
+
+            </table>
+
+        </div>
 
         {% include 'base/pagination.html' %}
 

@@ -43,10 +43,7 @@
 
     {% endif %}
 
-    <form action="{% url 'account_contact_new' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-success">Create new contact</button>
-    </form>
+    <a class="btn btn-success" href="{% url 'account_contact_create' %}" role="button">Create contact</a>
 
 {% endif %}
 

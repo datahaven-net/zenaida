@@ -22,18 +22,18 @@ class Contact(models.Model):
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
 
-    person_name = models.CharField(max_length=255, default='', blank=True,)
-    organization_name = models.CharField(max_length=255, default='', blank=True,)
+    person_name = models.CharField(max_length=255, default='', blank=True, verbose_name='Full Name')
+    organization_name = models.CharField(max_length=255, default='', blank=True, verbose_name='Organization')
 
-    address_street = models.CharField(max_length=255, default='', blank=True,)
-    address_city = models.CharField(max_length=255, default='', blank=True,)
-    address_province = models.CharField(max_length=255, default='', blank=True,)
-    address_postal_code = models.CharField(max_length=255, default='', blank=True,)
-    address_country = models.CharField(max_length=255, default='', blank=True,)
+    address_street = models.CharField(max_length=255, default='', blank=True, verbose_name='Street address')
+    address_city = models.CharField(max_length=255, default='', blank=True, verbose_name='City')
+    address_province = models.CharField(max_length=255, default='', blank=True, verbose_name='Province')
+    address_postal_code = models.CharField(max_length=255, default='', blank=True, verbose_name='ZIP code')
+    address_country = models.CharField(max_length=255, default='', blank=True, verbose_name='Country')
 
-    contact_voice = models.CharField(max_length=255, default='', blank=True,)
-    contact_fax = models.CharField(max_length=255, default='', blank=True,)
-    contact_email = models.CharField(max_length=255, default='', blank=True,)
+    contact_voice = models.CharField(max_length=255, default='', blank=True, verbose_name='Mobile')
+    contact_fax = models.CharField(max_length=255, default='', blank=True, verbose_name='Fax')
+    contact_email = models.CharField(max_length=255, default='', blank=True, verbose_name='Email')
 
     def __str__(self):
         return 'Contact ({} {})'.format(self.owner.email, self.epp_id)

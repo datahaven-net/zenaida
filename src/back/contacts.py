@@ -124,3 +124,19 @@ def to_dict(contact_object):
     info['contacts'][0] = c        
     return info
 
+
+def execute_contact_sync(contact_object):
+    """
+    """
+    from automats import contact_synchronizer
+    cs = contact_synchronizer.ContactSynchronizer(
+        log_events=True,
+        log_transitions=True,
+        raise_errors=False,
+    )
+    cs.event('run', contact_object)
+    outputs = list(cs.outputs)
+    del cs
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        return False
+    return True

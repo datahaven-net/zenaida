@@ -17,31 +17,12 @@ from front import forms
 from zepp import zmaster
 
 
-def domain_lookup(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('login')
-    domain_name = request.GET.get('domain_name')
-    check_result = zmaster.domains_check(domain_names=[domain_name, ],)
-    if check_result is None:
-        # If service is unavailable, return 'Unavailable'
-        is_domain_available = 'Unavailable'
-    else:
-        if not check_result.get(domain_name):
-            is_domain_available = True
-        else:
-            is_domain_available = False
-    return shortcuts.render(request, 'front/domain_lookup.html', {
-        'is_domain_available': is_domain_available,
-        'domain_name': domain_name,
-    })
-
-
 def index_page(request):
-    total_domains = 0
-    if request.user.is_authenticated:
-        total_domains = len(request.user.domains.all())
+    if not request.user.is_authenticated:
+        return shortcuts.render(request, 'front/index.html')
+    
     return shortcuts.render(request, 'front/index.html', {
-        'total_domains': total_domains,
+        'total_domains': len(request.user.domains.all()),
     })
 
 
@@ -130,25 +111,25 @@ def account_profile(request):
 def account_contact_create(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    error = False
-    if request.method == 'POST':
-        form = forms.ContactPersonForm(request.POST)
-        form_to_save = form.save(commit=False)
-        form_to_save.owner = request.user
-        if form.is_valid():
-            form_to_save.save()
-            # When creation of contact person is successful, return back to the page that user came from.
-            next_page = request.POST.get('next_page', '/')
-            return HttpResponseRedirect(next_page)
-        else:
-            error = True
-    # While showing the form, get the url of the page that user came from.
-    next_page = request.META.get('HTTP_REFERER')
-    return shortcuts.render(request, 'front/account_contact_new.html', {
-        'form': forms.ContactPersonForm(),
-        'contact_person_error': error,
-        'next_page': next_page,
-    })
+    if request.method != 'POST':
+        return shortcuts.render(request, 'front/account_contact_create.html', {
+            'form': forms.ContactPersonForm(),
+        })
+    form = forms.ContactPersonForm(request.POST)
+    if not form.is_valid():
+        return shortcuts.render(request, 'front/account_contact_create.html', {
+            'form': form,
+        })
+    form_to_save = form.save(commit=False)
+    form_to_save.owner = request.user
+    if not contacts.execute_contact_sync(form_to_save.instance):
+        messages.add_message(request, messages.ERROR, 'There were technical problems with contact details processing. '
+                                                      'Please try again later or contact customer support.')
+        return shortcuts.render(request, 'front/account_contact_create.html', {
+            'form': forms.ContactPersonForm(),
+        })
+    form_to_save.save()
+    return account_contacts(request)
 
 
 def account_contact_edit(request, contact_id):
@@ -172,6 +153,25 @@ def account_contacts(request):
         return shortcuts.redirect('index')
     return shortcuts.render(request, 'front/account_contacts.html', {
         'objects': contacts.list_contacts(request.user),
+    })
+
+
+def domain_lookup(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('login')
+    domain_name = request.GET.get('domain_name')
+    check_result = zmaster.domains_check(domain_names=[domain_name, ],)
+    if check_result is None:
+        # If service is unavailable, return 'Unavailable'
+        is_domain_available = 'Unavailable'
+    else:
+        if not check_result.get(domain_name):
+            is_domain_available = True
+        else:
+            is_domain_available = False
+    return shortcuts.render(request, 'front/domain_lookup.html', {
+        'is_domain_available': is_domain_available,
+        'domain_name': domain_name,
     })
 
 

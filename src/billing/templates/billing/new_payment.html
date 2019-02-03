@@ -1,25 +1,24 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
+{% block main_content %}
 
-<div class="container">
-    <div class="row mt-3">
-        <div class="col-sm-4 offset-4">
+{% include 'base/container_sm_4_offset_4.html' %}
 
-            {% if not request.user.is_authenticated %}
-                {% include 'layouts/default/welcome.html' %}
-            {% else %}
-                Your current balance is <b>${{ user.balance }} US</b><br />
-                 <form method="post">
-                    {% csrf_token %}
-                    {% bootstrap_form form %}
-                    <button class="btn btn-success">Next</button>
-                </form>
 
-            {% endif %}
+{% if not request.user.is_authenticated %}
+    {% include 'base/welcome.html' %}
+{% else %}
 
-        </div>
-    </div>
-</div>
+    Your current balance is <b>${{ user.balance }} US</b><br />
+     <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button class="btn btn-success">Next</button>
+    </form>
 
-{% include 'layouts/default/foot.html' %}
+{% endif %}
+
+
+{% include 'base/container_close.html' %}
+
+{% endblock %}

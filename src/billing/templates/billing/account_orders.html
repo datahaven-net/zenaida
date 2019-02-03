@@ -1,13 +1,11 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
-
-{% load front_filters %}
-
-{% include 'layouts/default/container_fluid.html' %}
+{% block main_content %}
 
 
-{% if request.user.is_authenticated %}
+{% if not request.user.is_authenticated %}
+    {% include 'base/welcome.html' %}
+{% else %}
 
     {% if objects %}
 
@@ -37,17 +35,13 @@
 
         </table>
 
-        {% include 'layouts/default/pagination.html' %}
+        {% include 'base/pagination.html' %}
         
     {% else %}
         You did not made any orders yet.
     {% endif %}
 
-{% else %}
-    {% include 'layouts/default/welcome.html' %}
 {% endif %}
 
 
-{% include 'layouts/default/container_close.html' %}
-
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

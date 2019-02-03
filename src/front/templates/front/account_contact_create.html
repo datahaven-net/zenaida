@@ -1,27 +1,28 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-<div class="container-fluid">
+{% block main_content %}
 
-    <div class="mt-3">
-        <div>
-            {% if not request.user.is_authenticated %}
-                {% include 'layouts/default/welcome.html' %}
-            {% else %}
+{% include 'base/container_sm_6_offset_3.html' %}
 
-                {% if contact_person_error == False %}
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                          <input type="hidden" name="next_page" value="{{ next_page }}">
-                          <button type="submit">Save your contact</button>
-                    </form>
-                {% else %}
-                    <b>Something went wrong. Go back and try to create contact person again.</b>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
 
-</div>
+{% if not request.user.is_authenticated %}
+    {% include 'base/welcome.html' %}
+{% else %}
 
-{% include 'layouts/default/foot.html' %}
+    {% if contact_person_error == False %}
+        <form method="post">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+              <input type="hidden" name="next_page" value="{{ next_page }}">
+              <button class="btn btn-success">Save your contact</button>
+        </form>
+    {% else %}
+        <b>Something went wrong. Go back and try to create contact person again.</b>
+    {% endif %}
+
+{% endif %}
+
+
+{% include 'base/container_close.html' %}
+
+{% endblock %}

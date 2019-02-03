@@ -1,14 +1,12 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
+{% block main_content %}
 
-{% load front_filters %}
-
-{% include 'layouts/default/container_sm_6_offset_3.html' %}
+{% include 'base/container_sm_6_offset_3.html' %}
 
 
 {% if not request.user.is_authenticated %}
-    {% include 'layouts/default/welcome.html' %}
+    {% include 'base/welcome.html' %}
 {% else %}
 
     <form method="post">
@@ -20,6 +18,6 @@
 {% endif %}
 
 
-{% include 'layouts/default/container_close.html' %}
+{% include 'base/container_close.html' %}
 
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

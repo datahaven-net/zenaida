@@ -40,7 +40,7 @@ def index_page(request):
     total_domains = 0
     if request.user.is_authenticated:
         total_domains = len(request.user.domains.all())
-    return shortcuts.render(request, 'front/index.html', {
+    return shortcuts.render(request, 'base/index.html', {
         'total_domains': total_domains,
     })
 
@@ -144,7 +144,7 @@ def account_contact_create(request):
             error = True
     # While showing the form, get the url of the page that user came from.
     next_page = request.META.get('HTTP_REFERER')
-    return shortcuts.render(request, 'front/account_contact_new.html', {
+    return shortcuts.render(request, 'front/account_contact_create.html', {
         'form': forms.ContactPersonForm(),
         'contact_person_error': error,
         'next_page': next_page,
@@ -192,11 +192,11 @@ def get_faq_payments(request):
 
 
 def get_correspondentbank(request):
-    return shortcuts.render(request, 'faq/correspondentbank.html')
+    return shortcuts.render(request, 'faq/faq_correspondentbank.html')
 
 
 def get_registrars(request):
-    return shortcuts.render(request, 'faq/registrars.html')
+    return shortcuts.render(request, 'faq/faq_registrars.html')
 
 
 # class ContactsView(TemplateView):

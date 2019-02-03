@@ -1,18 +1,15 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
+{% block main_content %}
 
-{% load front_filters %}
+{% include 'base/container_sm_10_offset_1.html' %}
 
-{% include 'layouts/default/container_sm_10_offset_1.html' %}
 
 {% if not request.user.is_authenticated %}
-    {% include 'layouts/default/welcome.html' %}
+    {% include 'base/welcome.html' %}
 {% else %}
 
     <h1>Personal information</h1>
-    <br>
-
     <form method="post">
         {% csrf_token %}
         <div class="row">
@@ -50,6 +47,6 @@
 {% endif %}
 
 
-{% include 'layouts/default/container_close.html' %}
+{% include 'base/container_close.html' %}
 
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

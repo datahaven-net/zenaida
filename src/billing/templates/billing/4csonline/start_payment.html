@@ -1,32 +1,31 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-<div class="container">
-    <div class="row mt-3">
-        <div class="col-sm-4 offset-4">
+{% block main_content %}
 
-            {% if not request.user.is_authenticated %}
-                {% include 'layouts/default/welcome.html' %}
-            {% else %}
+{% include 'base/container_sm_4_offset_4.html' %}
 
-                {% block content %}
 
-                <div align=center>
-                    <iframe src="{% url 'billing_4csonline_process_payment' %}?transaction_id={{transaction_id}}"
-                            scrolling=no
-                            marginwidth=0
-                            marginheight=0
-                            frameborder=0
-                            align=top
-                            width=460
-                            height=270>
-                    </iframe>
-                </div>
+{% if not request.user.is_authenticated %}
+    {% include 'base/welcome.html' %}
+{% else %}
 
-                {% endblock %}
+    {% block content %}
 
-            {% endif %}
-        </div>
+    <div align=center>
+        <iframe src="{% url 'billing_4csonline_process_payment' %}?transaction_id={{transaction_id}}"
+                scrolling=no
+                marginwidth=0
+                marginheight=0
+                frameborder=0
+                align=top
+                width=460
+                height=270>
+        </iframe>
     </div>
-</div>
 
-{% include 'layouts/default/foot.html' %}
+    {% endblock %}
+
+{% endif %}
+
+
+{% endblock %}

@@ -1,14 +1,10 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
-
-{% load front_filters %}
-
-{% include 'layouts/default/container_fluid.html' %}
+{% block main_content %}
 
 
 {% if not request.user.is_authenticated %}
-    {% include 'layouts/default/welcome.html' %}
+    {% include 'base/welcome.html' %}
 {% else %}
 
     {% if objects %}
@@ -21,7 +17,7 @@
                 <th>Address</th>
                 <th>Phone</th>
                 <th>Email</th>
-                <td>Action</th>
+                <th>Action</th>
             </tr>
 
             {% for contact in objects %}
@@ -39,15 +35,13 @@
 
         </table>
 
-        {% include 'layouts/default/pagination.html' %}
+        {% include 'base/pagination.html' %}
 
     {% endif %}
 
-    <a class="btn btn-success" href="{% url 'account_contact_create' %}" role="button">Create contact</a>
+    <a href="{% url 'account_contact_create' %}" class="btn btn-success" role="button">Create contact</a>
 
 {% endif %}
 
 
-{% include 'layouts/default/container_close.html' %}
-
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

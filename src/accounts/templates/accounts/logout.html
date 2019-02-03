@@ -1,8 +1,8 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
+{% block main_content %}
 
-{% include 'layouts/default/container_sm_4_offset_4.html' %}
+{% include 'base/container_sm_4_offset_4.html' %}
 
 
 <h4>Logged out</h4>
@@ -16,6 +16,4 @@
 </p>
 
 
-{% include 'layouts/default/container_close.html' %}
-
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

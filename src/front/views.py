@@ -1,15 +1,11 @@
-from datetime import datetime
 
 from django import shortcuts
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse, HttpResponseRedirect
-from django.views.generic import TemplateView
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
+from django.http import HttpResponseRedirect
 # from django.conf import settings
 
-from back.models import zone, domain
+from back.models import domain
 from back import domains
 from back import contacts
 from back import zones
@@ -20,7 +16,6 @@ from zepp import zmaster
 def index_page(request):
     if not request.user.is_authenticated:
         return shortcuts.render(request, 'front/index.html')
-    
     return shortcuts.render(request, 'front/index.html', {
         'total_domains': len(request.user.domains.all()),
     })
@@ -192,27 +187,8 @@ def get_faq_payments(request):
 
 
 def get_correspondentbank(request):
-    return shortcuts.render(request, 'faq/correspondentbank.html')
+    return shortcuts.render(request, 'faq/faq_correspondentbank.html')
 
 
 def get_registrars(request):
-    return shortcuts.render(request, 'faq/registrars.html')
-
-
-# class ContactsView(TemplateView):
-#     template_name = 'front/account_contacts.html'
-# 
-#     @method_decorator(login_required)
-#     def dispatch(self, request, *args, **kwargs):
-#         self.extra_context = {
-#             'contacts': request.user.contacts.all(),
-#         }
-#         return super().dispatch(request, *args, **kwargs)
-# 
-#     def post(self, request, *args, **kwargs):
-#         from automats import contact_synchronizer
-#         contact_id = request.POST['contact_id']
-#         contact_object = contacts.by_id(contact_id)
-#         cs = contact_synchronizer.ContactSynchronizer()
-#         cs.event('run', contact_object)
-#         return JsonResponse({'contact_id': contact_id, })
+    return shortcuts.render(request, 'faq/faq_registrars.html')

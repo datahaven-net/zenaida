@@ -1,8 +1,9 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
+{% block main_content %}
 
-{% include 'layouts/default/container_sm_4_offset_4.html' %}
+{% include 'base/container_sm_4_offset_4.html' %}
+
 
 <h4>Create an account</h4>
 
@@ -14,6 +15,5 @@
     <button class="btn btn-success">Create</button>
 </form>
 
-{% include 'layouts/default/container_close.html' %}
 
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

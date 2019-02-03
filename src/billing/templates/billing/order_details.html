@@ -1,12 +1,10 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
-
-{% include 'layouts/default/container_sm_8_offset_2.html' %}
+{% block main_content %}
 
 
 {% if not request.user.is_authenticated %}
-    {% include 'layouts/default/welcome.html' %}
+    {% include 'base/welcome.html' %}
 {% else %}
 
     <h1>{{ order.description }}</h1>
@@ -58,6 +56,4 @@
 {% endif %}
 
 
-{% include 'layouts/default/container_close.html' %}
-
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

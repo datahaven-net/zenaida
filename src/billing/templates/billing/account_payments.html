@@ -1,14 +1,10 @@
-{% include 'layouts/default/head.html' %}
+{% extends 'base/index.html' %}
 
-{% load bootstrap4 %}
-
-{% load front_filters %}
-
-{% include 'layouts/default/container_fluid.html' %}
+{% block main_content %}
 
 
 {% if not request.user.is_authenticated %}
-    {% include 'layouts/default/welcome.html' %}
+    {% include 'base/welcome.html' %}
 {% else %}
 
     {% if objects %}
@@ -32,7 +28,7 @@
 
         </table>
 
-        {% include 'layouts/default/pagination.html' %}
+        {% include 'base/pagination.html' %}
 
     {% else %}
         You did not made any payments yet.
@@ -41,6 +37,4 @@
 {% endif %}
 
 
-{% include 'layouts/default/container_close.html' %}
-
-{% include 'layouts/default/foot.html' %}
+{% endblock %}

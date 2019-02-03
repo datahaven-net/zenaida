@@ -1,8 +1,8 @@
-{% include 'layouts/default/head.html' %}
+{% include 'base/head.html' %}
 
-{% load bootstrap4 %}
+{% include 'base/container_fluid.html' %}
 
-{% include 'layouts/default/container_sm_6_offset_3.html' %}
+{% block main_content %}
 
 <div class="text-center">
     {% if request.user.is_authenticated %}
@@ -26,8 +26,8 @@
     </form>
 </div>
 
+{% endblock %}
 
+{% include 'base/container_close.html' %}
 
-{% include 'layouts/default/container_close.html' %}
-
-{% include 'layouts/default/foot.html' %}
+{% include 'base/foot.html' %}

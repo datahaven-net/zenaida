@@ -28,7 +28,7 @@
                     <td>{{contact.address_full}}</td>
                     <td>{{contact.contact_voice}}</td>
                     <td>{{contact.contact_email}}</td>
-                    <td><a class="btn btn-success" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a></td>
+                    <td><a class="btn btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a></td>
                 </tr>
 
             {% endfor %}
@@ -39,7 +39,11 @@
 
     {% endif %}
 
-    <a href="{% url 'account_contact_create' %}" class="btn btn-success" role="button">Create contact</a>
+    <div class="row">
+        <div class="col-12 text-center">
+            <a href="{% url 'account_contact_create' %}" class="btn btn-success" role="button">Create contact</a>
+        </div>
+    </div>
 
 {% endif %}
 

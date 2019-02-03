@@ -2,7 +2,7 @@
 from django import shortcuts
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponseRedirect
+# from django.http import HttpResponseRedirect
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -18,9 +18,8 @@ from zepp import zmaster
 def index_page(request):
     if not request.user.is_authenticated:
         return shortcuts.render(request, 'base/index.html')
-    # form = forms.AccountProfileForm(instance=request.user.profile)
-    # if not form.is_valid():
-    #     return account_profile(request)
+    if not request.user.profile.is_complete():
+        return shortcuts.redirect('account_profile')
     return shortcuts.render(request, 'base/index.html', {
         'total_domains': len(request.user.domains.all()),
     })
@@ -29,6 +28,12 @@ def index_page(request):
 def account_domains(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
+    if not request.user.profile.is_complete():
+        messages.success(request, 'Please provide your contact information to be able to register new domains.')
+        return account_profile(request)
+    if len(contacts.list_contacts(request.user)) == 0:
+        messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+        return account_contacts(request)
     domain_objects = domains.list_domains(request.user.email)
     page = request.GET.get('page', 1)
     paginator = Paginator(domain_objects, 10)
@@ -46,9 +51,12 @@ def account_domains(request):
 def account_domain_create(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    # form = forms.AccountProfileForm(instance=request.user.profile)
-    # if not form.is_valid():
-    #     return account_profile(request)
+    if not request.user.profile.is_complete():
+        messages.success(request, 'Please provide your contact information to be able to register new domains.')
+        return account_profile(request)
+    if len(contacts.list_contacts(request.user)) == 0:
+        messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+        return account_contacts(request)
     if request.method != 'POST':
         form = forms.DomainDetailsForm(current_user=request.user)
         return shortcuts.render(request, 'front/account_domain_details.html', {
@@ -79,6 +87,12 @@ def account_domain_create(request):
 def account_domain_edit(request, domain_id):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
+    if not request.user.profile.is_complete():
+        messages.success(request, 'Please provide your contact information to be able to register new domains.')
+        return account_profile(request)
+    if len(contacts.list_contacts(request.user)) == 0:
+        messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+        return account_contacts(request)
     domain_info = shortcuts.get_object_or_404(Domain, pk=domain_id, owner=request.user)
     if request.method != 'POST':
         form = forms.DomainDetailsForm(current_user=request.user, instance=domain_info)
@@ -100,22 +114,21 @@ def account_profile(request):
     if request.method == 'POST':
         form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
         if form.is_valid():
-            form.save()
             existing_contacts = contacts.list_contacts(request.user)
             if not existing_contacts:
-                new_contact = contacts.create_from_profile(request.user, request.user.profile)
+                new_contact = contacts.create_from_profile(request.user, form.instance)
                 if contacts.execute_contact_sync(new_contact):
-                    messages.success(request, 'Your profile information was successfully updated! Now you can register your first domain.')
+                    messages.success(request, 'Your profile information was successfully updated! Now you can register new domains.')
+                    form.save()
                 else:
-                    users.erase_profile_details(request.user)
                     messages.error(request, 'There were technical problems with contact details processing. '
                                             'Please try again later or contact customer support.')
             else:
                 messages.success(request, 'Your profile information was successfully updated!')
+                form.save()
         else:
             messages.error(request, 'Please correct the error below.')
     else:
-        messages.info(request, 'Please provide your personal details.')
         form = forms.AccountProfileForm(instance=request.user.profile)
     return shortcuts.render(request, 'front/account_profile.html', {
         'form': form,
@@ -150,16 +163,25 @@ def account_contact_edit(request, contact_id):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
     contact_person = shortcuts.get_object_or_404(Contact, pk=contact_id, owner=request.user)
-    if request.method == 'POST':
-        form = forms.ContactPersonForm(request.POST, instance=contact_person)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/contacts/')
-    else:
+    if request.method != 'POST':
         form = forms.ContactPersonForm(instance=contact_person)
-    return shortcuts.render(request, 'front/account_contact_edit.html', {
-        'form': form,
-    })
+        return shortcuts.render(request, 'front/account_contact_edit.html', {
+            'form': form,
+        })
+    form = forms.ContactPersonForm(request.POST, instance=contact_person)
+    if not form.is_valid():
+        return shortcuts.render(request, 'front/account_contact_edit.html', {
+            'form': form,
+        })
+    if not contacts.execute_contact_sync(form.instance):
+        messages.error(request, 'There were technical problems with contact details processing. '
+                                'Please try again later or contact customer support.')
+        return shortcuts.render(request, 'front/account_contact_edit.html', {
+            'form': form,
+        })
+    form.save()
+    messages.success(request, 'Contact details successfully updated.')
+    return account_contacts(request)
 
 
 def account_contacts(request):

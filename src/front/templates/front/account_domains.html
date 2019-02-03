@@ -23,14 +23,14 @@
                 <th>Status</th>
                 <th>Expiry Date</th>
                 <th>Creation Date</th>
-                <th>Register/Renew</th>
+                <th>Actions</th>
             </tr>
 
             {% for domain in objects %}
 
                 <tr>
                     <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
-                    <td><a href='{% url "account_domain_edit" domain.id %}'>{{ domain.name }}</a></td>
+                    <td><b>{{ domain.name }}</b></td>
                     <td>{{ domain.get_epp_status_display }}</td>
                     <td>
                         {% if domain.expiry_datetime_as_date <= 0|add_days %}
@@ -43,6 +43,7 @@
                     </td>
                     <td>{{ domain.create_date|date:'d-m-Y' }}</td>
                     <td>
+                        <a class="btn btn-secondary" href='{% url "account_domain_edit" domain.id %}' role="button">Edit</a>
                         {% if not domain.is_registered %}
                             <a class="btn btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
                         {% elif domain.can_be_restored  %}

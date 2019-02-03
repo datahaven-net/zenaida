@@ -20,6 +20,13 @@ def exists(epp_id):
     return bool(Contact.contacts.filter(epp_id=epp_id).first())
 
 
+def list_contacts(owner):
+    """
+    Returns list of contacts of given user.
+    """
+    return list(Contact.contacts.filter(owner=owner).all())
+
+
 def verify(epp_id, email=None, owner=None):
     """
     Make sure that existing contact with given epp_id have same info.

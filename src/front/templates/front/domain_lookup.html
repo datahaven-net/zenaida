@@ -12,7 +12,9 @@
     {% block content %}
         {% if is_domain_available == True %}
         <div class="alert alert-success" role="alert">
-            <b>{{ domain_name }}</b> is available to register. <br /><a href="{% url 'account_domain_new' %}?domain_name={{domain_name}}" class="alert-link">Click here to register it!</a>
+            <b>{{ domain_name }}</b> is available to register.
+            <br>
+            <a href="{% url 'account_domain_create' %}?domain_name={{domain_name}}" class="alert-link">Click here to register it!</a>
         </div>
         {% elif is_domain_available == False %}
         <div class="alert alert-warning" role="alert">

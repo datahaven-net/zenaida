@@ -36,8 +36,12 @@ class Contact(models.Model):
     contact_email = models.CharField(max_length=255, default='', blank=True,)
 
     def __str__(self):
-        return 'Contact ({} : {})'.format(self.person_name, self.organization_name)
+        return 'Contact ({} {})'.format(self.owner.email, self.epp_id)
 
     @property
     def label(self):
-        return 'Contact({}:{})'.format(self.epp_id, self.owner.email)
+        return '{} / {}'.format(self.person_name, self.organization_name)
+
+    @property
+    def address_full(self):
+        return f'{self.address_street} {self.address_city}, {self.address_province} {self.address_postal_code}, {self.address_country}'

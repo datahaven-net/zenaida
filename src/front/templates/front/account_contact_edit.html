@@ -1,0 +1,25 @@
+{% include 'layouts/default/head.html' %}
+
+{% load bootstrap4 %}
+
+{% load front_filters %}
+
+{% include 'layouts/default/container_sm_6_offset_3.html' %}
+
+
+{% if not request.user.is_authenticated %}
+    {% include 'layouts/default/welcome.html' %}
+{% else %}
+
+    <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button class="btn btn-success">Save</button>
+    </form>
+
+{% endif %}
+
+
+{% include 'layouts/default/container_close.html' %}
+
+{% include 'layouts/default/foot.html' %}

@@ -11,20 +11,21 @@
 {% else %}
 
     {% if not registered %}
+
         {% if contact_amount == 0 %}
             You don't have any contact information to register a domain.<br />
-            <a href="{% url 'account_contacts_new' %}"><b>Click here</b>
+            <a href="{% url 'account_contact_create' %}"><b>Click here</b>
             </a> to create a contact person in order to complete registration.<br />
             You will be redirected to this page again after creating a contact person.<br />
 
         {% else %}
             You have <b>{{contact_amount}}</b> contact persons.
-            <a href="{% url 'account_contacts_new' %}"><b>Click here</b>
+            <a href="{% url 'account_contact_create' %}"><b>Click here</b>
             </a> to create a new contact person.<br /><br />
             <form method="post">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success">Register new domain</button>
+                {% bootstrap_form form %}
+                <button class="btn btn-success">Save</button>
             </form>
         {% endif %}
 

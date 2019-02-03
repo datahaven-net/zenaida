@@ -44,16 +44,16 @@ class Domain(models.Model):
     registrant = models.ForeignKey(
         Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True)
     contact_admin = models.ForeignKey(
-        Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, blank=True)
+        Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, blank=True, verbose_name='Administrative')
     contact_billing = models.ForeignKey(
-        Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, blank=True)
+        Contact, on_delete=models.CASCADE, related_name='billing_domains', null=True, blank=True, verbose_name='Billing')
     contact_tech = models.ForeignKey(
-        Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, blank=True)
+        Contact, on_delete=models.CASCADE, related_name='tech_domains', null=True, blank=True, verbose_name='Technical')
 
-    nameserver1 = models.CharField(max_length=256, blank=True, default='')
-    nameserver2 = models.CharField(max_length=256, blank=True, default='')
-    nameserver3 = models.CharField(max_length=256, blank=True, default='')
-    nameserver4 = models.CharField(max_length=256, blank=True, default='')
+    nameserver1 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 1')
+    nameserver2 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 2')
+    nameserver3 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 3')
+    nameserver4 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 4')
 
     @property
     def tld_name(self):

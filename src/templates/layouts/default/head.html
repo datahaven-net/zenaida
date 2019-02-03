@@ -58,8 +58,9 @@
               </form>
               </li>
               <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ user.email }}</a>
-                  <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                  <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}"
+                    href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{ user.email }}</a>
+                  <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
                     <a class="dropdown-item" href="{% url 'billing_new_payment' %}">Current balance: ${{user.balance}} US</a>
                     <a class="dropdown-item" href="{% url 'account_domains' %}">Your owned domains: {{user.domains.count}}</a>
                     <div class="dropdown-divider"></div>

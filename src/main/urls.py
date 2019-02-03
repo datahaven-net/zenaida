@@ -42,12 +42,12 @@ auth_patterns = [
 patterns = [
     path('profile/', front_views.account_profile, name='account_profile'),
 
-    path('contacts/', front_views.ContactsView.as_view(), name='account_contacts'),
-    path('contacts/new/', front_views.create_new_contact, name='account_contacts_new'),
-    path('contacts/edit/<int:contact_id>/', front_views.edit_contact, name='account_contacts_edit'),
+    path('contacts/', front_views.account_contacts, name='account_contacts'),
+    path('contacts/create/', front_views.account_contact_create, name='account_contact_create'),
+    path('contacts/edit/<int:contact_id>/', front_views.account_contact_edit, name='account_contact_edit'),
 
     path('domains/', front_views.account_domains, name='account_domains'),
-    path('domains/new/', front_views.account_domain_new, name='account_domain_new'),
+    path('domains/create/', front_views.account_domain_create, name='account_domain_create'),
     path('domains/edit/<int:domain_id>/', front_views.account_domain_edit, name='account_domain_edit'),
     # path('domains/transfer', front_views.account_domain_transfer, name='account_domain_transfer'),
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),

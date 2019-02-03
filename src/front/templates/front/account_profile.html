@@ -1,28 +1,55 @@
 {% include 'layouts/default/head.html' %}
 
-<div class="container-fluid">
+{% load bootstrap4 %}
 
-    <div class="mt-3">
-        <div>
-            {% if not request.user.is_authenticated %}
-                {% include 'layouts/default/welcome.html' %}
-            {% else %}
+{% load front_filters %}
 
-                <form method="post">
-                    {% csrf_token %}
-                      {% for field in form %}
-                        <div class="form-group-lg">
-                            <label>{{ field.label }}</label>
-                            <input class="col-sm-4 form-control" value="{{ field.value }}">
-                        </div>
-                      {% endfor %}
-                    <button type="submit" class="btn btn-success">Save your profile</button>
-                </form>
+{% include 'layouts/default/container_sm_10_offset_1.html' %}
 
-            {% endif %}
+{% if not request.user.is_authenticated %}
+    {% include 'layouts/default/welcome.html' %}
+{% else %}
+
+    <h1>Personal information</h1>
+    <br>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-6">
+                <fieldset>
+                    {% bootstrap_field form.person_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.organization_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                </fieldset>
+                <fieldset>
+                    {% bootstrap_field form.contact_email layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.contact_voice layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.contact_fax layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                </fieldset>
+            </div>
+            <div class="col-6">
+                <fieldset>
+                    {% bootstrap_field form.address_street layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.address_city layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.address_province layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.address_postal_code layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    {% bootstrap_field form.address_country layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                </fieldset>
+            </div>
         </div>
-    </div>
+        <div class="row">
+            <div class="col-12 text-center">
+                {% buttons %}
+                    <button type="submit" class="form-button btn btn-success">
+                    Save</button>
+                {% endbuttons %}
+            </div>
+        </div>
+    </form>
 
-</div>
+{% endif %}
+
+
+{% include 'layouts/default/container_close.html' %}
 
 {% include 'layouts/default/foot.html' %}

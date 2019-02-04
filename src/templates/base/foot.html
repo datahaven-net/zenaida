@@ -1,5 +1,35 @@
 {% load staticfiles %}
+<footer>
+    {% with url_name=request.resolver_match.url_name %}
 
+        <nav class="navbar navbar-expand-lg fixed-bottom navbar-light bg-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse"  data-target="#navbarTogglerFooter" aria-controls="navbarTogglerFooter" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarTogglerFooter">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <li class="nav-item {% if url_name == 'contact_us' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'contact_us' %}">Contact Us</a>
+                </li>
+                <li class="nav-item dropup">
+                    <a class="nav-link dropdown-toggle {% if 'faq' in url_name %}active{% endif %}"
+                      href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      FAQ
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="{% url 'faq_epp' %}">EPP</a>
+                        <a class="dropdown-item" href="{% url 'faq_auctions' %}">Auctions</a>
+                        <a class="dropdown-item" href="{% url 'faq_payments' %}">Payments</a>
+                        <a class="dropdown-item" href="{% url 'faq' %}">General</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        </nav>
+
+    {% endwith %}
+
+</footer>
 <script src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 
 <script src="{% static 'vendor/popper/popper.min.js' %}"></script>

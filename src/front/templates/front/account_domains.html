@@ -13,49 +13,49 @@
 
         <form action="{% url 'billing_order_create' %}" method="post">
         {% csrf_token %}
-
-        <table class="table">
-            <tr>
-                <th scope="col"></th>
-                <th>Domain Name</th>
-                <th>Status</th>
-                <th>Expiry Date</th>
-                <th>Creation Date</th>
-                <th>Actions</th>
-            </tr>
-
-            {% for domain in objects %}
-
+        <div class="table-responsive">
+            <table class="table table-hover">
                 <tr>
-                    <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
-                    <td><b>{{ domain.name }}</b></td>
-                    <td>{{ domain.get_epp_status_display }}</td>
-                    <td>
-                        {% if domain.expiry_datetime_as_date <= 0|add_days %}
-                            <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
-                        {% elif 90|add_days > domain.expiry_datetime_as_date %}
-                            <div class="text-warning">{{ domain.expiry_date|date:'d-m-Y' }}</div>
-                        {% else %}
-                            <div class="text-success">{{ domain.expiry_date|date:'d-m-Y' }}</div>
-                        {% endif %}
-                    </td>
-                    <td>{{ domain.create_date|date:'d-m-Y' }}</td>
-                    <td>
-                        <a class="btn btn-secondary" href='{% url "account_domain_edit" domain.id %}' role="button">Edit</a>
-                        {% if not domain.is_registered %}
-                            <a class="btn btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
-                        {% elif domain.can_be_restored  %}
-                            <a class="btn btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
-                        {% else %}
-                            <a class="btn btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
-                        {% endif %}
-                    </td>
+                    <th scope="col"></th>
+                    <th>Domain Name</th>
+                    <th>Status</th>
+                    <th>Expiry Date</th>
+                    <th>Creation Date</th>
+                    <th>Actions</th>
                 </tr>
 
-            {% endfor %}
+                {% for domain in objects %}
 
-        </table>
+                    <tr>
+                        <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
+                        <td><b>{{ domain.name }}</b></td>
+                        <td>{{ domain.get_epp_status_display }}</td>
+                        <td>
+                            {% if domain.expiry_datetime_as_date <= 0|add_days %}
+                                <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                            {% elif 90|add_days > domain.expiry_datetime_as_date %}
+                                <div class="text-warning">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                            {% else %}
+                                <div class="text-success">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ domain.create_date|date:'d-m-Y' }}</td>
+                        <td>
+                            <a class="btn btn-secondary" href='{% url "account_domain_edit" domain.id %}' role="button">Edit</a>
+                            {% if not domain.is_registered %}
+                                <a class="btn btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
+                            {% elif domain.can_be_restored  %}
+                                <a class="btn btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
+                            {% else %}
+                                <a class="btn btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
+                            {% endif %}
+                        </td>
+                    </tr>
 
+                {% endfor %}
+
+            </table>
+        </div>
         <button type="submit" class="btn btn-success">Register/Renew/Restore</button>
         </form>
 

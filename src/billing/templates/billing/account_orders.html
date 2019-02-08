@@ -41,7 +41,10 @@
         {% include 'base/pagination.html' %}
         
     {% else %}
-        You did not made any orders yet.
+        <div class="alert alert-warning text-center" role="alert">
+            You did not make any orders yet.<br />
+            You can buy a new domain or renew your existing domains.
+        </div>
     {% endif %}
 
 {% endif %}

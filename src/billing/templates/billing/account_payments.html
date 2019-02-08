@@ -34,7 +34,10 @@
         {% include 'base/pagination.html' %}
 
     {% else %}
-        You did not made any payments yet.
+        <div class="alert alert-warning text-center" role="alert">
+            You didn't make any payment yet.<br />
+            <a href="{% url 'billing_new_payment' %}" class="alert-link">Click here to buy credits!</a>
+        </div>
     {% endif %}
 
 {% endif %}

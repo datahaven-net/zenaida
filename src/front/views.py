@@ -1,8 +1,9 @@
+import datetime
 
 from django import shortcuts
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-# from django.http import HttpResponseRedirect
+from django.utils import timezone
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -10,7 +11,6 @@ from back.models.contact import Contact
 from back import domains
 from back import contacts
 from back import zones
-from back import users
 from front import forms
 from zepp import zmaster
 
@@ -78,6 +78,8 @@ def account_domain_create(request):
     # form_to_save.create_date = datetime.now()
     form_to_save.owner = request.user
     form_to_save.zone = zones.make(domain_tld)
+    form_to_save.expiry_date = timezone.now()
+    form_to_save.create_date = timezone.now() + datetime.timedelta(days=365)
     if not form.is_valid():
         return shortcuts.render(request, 'front/account_domain_details.html', {
             'form': form,

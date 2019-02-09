@@ -23,6 +23,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False):
     dc = domains_checker.DomainsChecker(
         skip_info=(not verify_registrant),
         verify_registrant=verify_registrant,
+        stop_on_error=True,
         raise_errors=raise_errors,
     )
     dc.event('run', domain_names)

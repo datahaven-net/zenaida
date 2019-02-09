@@ -121,7 +121,7 @@ def account_profile(request):
             existing_contacts = contacts.list_contacts(request.user)
             if not existing_contacts:
                 new_contact = contacts.create_from_profile(request.user, form.instance)
-                if zmaster.contact_check_create_update(new_contact):
+                if zmaster.contact_create_update(new_contact):
                     messages.success(request, 'Your profile information was successfully updated! Now you can register new domains.')
                     form.save()
                 else:
@@ -153,7 +153,7 @@ def account_contact_create(request):
         })
     form_to_save = form.save(commit=False)
     form_to_save.owner = request.user
-    if not zmaster.contact_check_create_update(form_to_save.instance):
+    if not zmaster.contact_create_update(form_to_save.instance):
         messages.error(request, 'There were technical problems with contact details processing. '
                                 'Please try again later or contact customer support.')
         return shortcuts.render(request, 'front/account_contact_create.html', {
@@ -177,7 +177,7 @@ def account_contact_edit(request, contact_id):
         return shortcuts.render(request, 'front/account_contact_edit.html', {
             'form': form,
         })
-    if not zmaster.contact_check_create_update(form.instance):
+    if not zmaster.contact_create_update(form.instance):
         messages.error(request, 'There were technical problems with contact details processing. '
                                 'Please try again later or contact customer support.')
         return shortcuts.render(request, 'front/account_contact_edit.html', {

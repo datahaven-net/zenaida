@@ -9,8 +9,10 @@ from automats import contact_synchronizer
 logger = logging.getLogger(__name__)
 
 
-def contact_check_create_update(contact_object, raise_errors=False, log_events=True, log_transitions=True):
+def contact_create_update(contact_object, raise_errors=False, log_events=True, log_transitions=True):
     """
+    If `epp_id` field is empty, creates a new contact on back-end.
+    Otherwise update existing contact from `contact_object` info.
     """
     cs = contact_synchronizer.ContactSynchronizer(
         log_events=log_events,
@@ -64,6 +66,10 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
 def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None,
                                      raise_errors=False, log_events=True, log_transitions=True, ):
     """
+    Check if domain exists first and then update it from `domain_object` info.
+    If domain not exist create a new domain on back-end.
+    If `renew_years` is positive integer it will also renew domain for that amount of years.
+    If `renew_years=-1` it will use `domain_object.expiry_date` to decide how many days more needs to be added. 
     """
     ds = domain_synchronizer.DomainSynchronizer(
         log_events=log_events,

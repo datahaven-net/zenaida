@@ -1,18 +1,37 @@
 import logging
 
-from pika.exceptions import AMQPError
-
-from zepp import zclient
-from zepp import zerrors
 
 from automats import domains_checker
 from automats import domain_synchronizer
+from automats import contact_synchronizer
 
 
 logger = logging.getLogger(__name__)
 
 
-def domains_check(domain_names, verify_registrant=False, raise_errors=False):
+def contact_check_create_update(contact_object, raise_errors=False, log_events=True, log_transitions=True):
+    """
+    """
+    cs = contact_synchronizer.ContactSynchronizer(
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    cs.event('run', contact_object)
+    outputs = list(cs.outputs)
+    del cs
+    logger.debug('contact_synchronizer(%r) outputs: %r', contact_object, outputs)
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if isinstance(outputs[-1], Exception):
+            logger.error(outputs[-1])
+        return False
+
+    logger.info('contact_synchronizer(%r) OK', contact_object)
+    return True
+
+
+def domains_check(domain_names, verify_registrant=False, raise_errors=False, log_events=True, log_transitions=True):
     """
     Checks if those domains existing on Back-End.
     Returns dictionary object with check results.
@@ -24,21 +43,31 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False):
         skip_info=(not verify_registrant),
         verify_registrant=verify_registrant,
         stop_on_error=True,
+        log_events=log_events,
+        log_transitions=log_transitions,
         raise_errors=raise_errors,
     )
     dc.event('run', domain_names)
-    result = dc.outputs[-1]
-    if isinstance(result, Exception):
-        if raise_errors:
-            raise result
+    outputs = list(dc.outputs)
+    del dc
+    logger.debug('domains_checker(%r) outputs: %r', domain_names, outputs)
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if isinstance(outputs[-1], Exception):
+            logger.error(outputs[-1])
         return None
-    return result
+
+    logger.info('domains_checker(%r) OK', domain_names)
+    return outputs[-1]
 
 
-def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, raise_errors=False, ):
+def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None,
+                                     raise_errors=False, log_events=True, log_transitions=True, ):
     """
     """
     ds = domain_synchronizer.DomainSynchronizer(
+        log_events=log_events,
+        log_transitions=log_transitions,
         raise_errors=raise_errors,
     )
     ds.event('run', domain_object,
@@ -46,14 +75,33 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
         sync_nameservers=sync_nameservers,
         renew_years=renew_years,
     )
-    result = ds.outputs[-1]
-    if isinstance(result, Exception):
-        if raise_errors:
-            raise result
-        return None
-    if result is not True:
-        if raise_errors:
-            raise Exception('Unexpected result in domain create flow')
-        return None
-    return result
+    outputs = list(ds.outputs)
+    del ds
+    logger.debug('domain_synchronizer(%r) outputs: %r', domain_object, outputs)
 
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if isinstance(outputs[-1], Exception):
+            logger.error(outputs[-1])
+        return False
+
+    logger.info('domain_synchronizer(%r) OK', domain_object)
+    return True
+
+
+def domain_set_auth_info(domain, auth_info=None):
+    # TODO: finish it
+#     if not auth_info:
+#         auth_info = users.generatePassword()
+#     #--- UPDATE DOMAIN AUTH INFO
+#     update = epp_client.cmd_domain_update(
+#         domain,
+#         auth_info=auth_info,
+#     )
+#     if update['epp']['response']['result']['@code'] != '1000':
+#         if update['epp']['response']['result']['@code'] == '2304':
+#             raise epp_client.EPPObjectStatusProhibitsOperation(
+#                 message='EPP domain_update failed because %s' % (
+#                     update['epp']['response']['result']['msg'], ))
+#         raise epp_client.EPPCommandFailed(message='EPP request domain update failed with error code: %s' % (
+#             update['epp']['response']['result']['@code'], ))
+    return auth_info

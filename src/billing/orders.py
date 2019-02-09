@@ -8,7 +8,7 @@ from billing.models.order_item import OrderItem
 
 from back import domains
 
-from automats import domain_synchronizer
+from zepp import zmaster
 
 
 def by_id(order_id):
@@ -100,41 +100,35 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
 
 
 def execute_domain_register(order_item, target_domain):
-    ds = domain_synchronizer.DomainSynchronizer(
+    if not zmaster.domain_check_create_update_renew(
+        domain_object=target_domain,
+        sync_contacts=True,
+        sync_nameservers=True,
+        renew_years=2,
         log_events=True,
         log_transitions=True,
         raise_errors=False,
-    )
-    ds.event('run', target_domain, renew_years=2, sync_contacts=True, sync_nameservers=True)
-    outputs = list(ds.outputs)
-    logging.debug('domain_synchronizer outputs: %r', outputs)
-    del ds
-    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+    ):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
-        if isinstance(outputs[-1], Exception):
-            logging.error(outputs[-1])
-            return False
         return False
+
     update_order_item(order_item, new_status='processed', charge_user=True, save=True)
     return True
 
 
 def execute_domain_renew(order_item, target_domain):
-    ds = domain_synchronizer.DomainSynchronizer(
+    if not zmaster.domain_check_create_update_renew(
+        domain_object=target_domain,
+        sync_contacts=True,
+        sync_nameservers=True,
+        renew_years=2,
         log_events=True,
         log_transitions=True,
         raise_errors=False,
-    )
-    ds.event('run', target_domain, renew_years=2, sync_contacts=True, sync_nameservers=True)
-    outputs = list(ds.outputs)
-    logging.debug('domain_synchronizer outputs: %r', outputs)
-    del ds
-    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+    ):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
-        if isinstance(outputs[-1], Exception):
-            logging.error(outputs[-1])
-            return False
         return False
+
     update_order_item(order_item, new_status='processed', charge_user=True, save=True)
     return True
 

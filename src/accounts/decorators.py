@@ -9,7 +9,7 @@ import requests
 def check_recaptcha(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        request.recaptcha_is_valid = False
+        request.request.recaptcha_is_valid = None
         if request.request.method == 'POST':
             recaptcha_response = request.request.POST.get('g-recaptcha-response')
             data = {
@@ -21,6 +21,7 @@ def check_recaptcha(view_func):
             if result.get('success'):
                 request.request.recaptcha_is_valid = True
             else:
+                request.request.recaptcha_is_valid = False
                 messages.error(request.request, 'Invalid reCAPTCHA. Please try again.')
         return view_func(request, *args, **kwargs)
     return _wrapped_view

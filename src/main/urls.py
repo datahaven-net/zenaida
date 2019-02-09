@@ -49,7 +49,7 @@ patterns = [
     path('domains/', front_views.account_domains, name='account_domains'),
     path('domains/create/', front_views.account_domain_create, name='account_domain_create'),
     path('domains/edit/<int:domain_id>/', front_views.account_domain_edit, name='account_domain_edit'),
-    # path('domains/transfer', front_views.account_domain_transfer, name='account_domain_transfer'),
+    path('domains/transfer', front_views.account_domain_transfer, name='account_domain_transfer'),
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),

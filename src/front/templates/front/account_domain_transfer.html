@@ -1,0 +1,18 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+
+{% if not request.user.is_authenticated %}
+    {% include 'base/welcome.html' %}
+{% else %}
+
+    <div class="alert alert-success text-center" role="alert">
+      Use given auth code to transfer <b>{{ domain_name }}</b> to another registrar.<br />
+      <h4>{{ transfer_code }}</h4>
+    </div>
+
+{% endif %}
+
+
+{% endblock %}

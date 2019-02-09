@@ -16,7 +16,7 @@
         <div class="alert alert-success text-center" role="alert">
             <b>{{ domain_name }}</b> is available to register.
             <br />
-            <a href="{% url 'account_domain_create' %}?domain_name={{domain_name}}" class="alert-link">Click here to register it!</a>
+          <h4><a href="{% url 'account_domain_create' %}?domain_name={{domain_name}}" class="alert-link">Click here to register it!</a></h4>
         </div>
     {% elif result == 'exist' %}
         <div class="alert alert-warning text-center" role="alert">

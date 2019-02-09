@@ -45,6 +45,7 @@
                               href="#" id="navbarDropdownMenuDomains" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">My Domains</a>
                             <div class="dropdown-menu dropdown-menu-right bg" aria-labelledby="navbarDropdownMenuDomains">
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">Domains List ({{user.domains.count}})</a>
+                                <a class="dropdown-item" href="{% url 'domain_lookup' %}">Register Domain</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">

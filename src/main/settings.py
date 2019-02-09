@@ -333,9 +333,10 @@ BILLING_4CSONLINE_MERCHANT_ID = getattr(params, 'BILLING_4CSONLINE_MERCHANT_ID',
 BILLING_4CSONLINE_MERCHANT_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_LINK', '')
 BILLING_4CSONLINE_MERCHANT_VERIFY_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_VERIFY_LINK', '')
 
-#------------------------------------------------------------------------------
-#--- Last line, just for testing purposes
-LOADED_OK = 'OK'
-
-GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
 GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
+GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
+
+
+#------------------------------------------------------------------------------
+#--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded
+LOADED_OK = 'OK'

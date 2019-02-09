@@ -33,7 +33,7 @@ def create_account(email, account_password=None, also_profile=True, is_active=Fa
     )
     if also_profile:
         create_profile(new_account, **kwargs)
-    logger.debug('account created: %s', new_account)
+    logger.debug('account created: %r', new_account)
     return new_account
 
 
@@ -42,7 +42,7 @@ def create_profile(existing_account, **kwargs):
     Creates new Profile for given Account.
     """
     prof = Profile.profiles.create(account=existing_account, **kwargs)
-    logger.debug('profile created: %s', prof)
+    logger.debug('profile created: %r', prof)
     return prof
 
 

@@ -115,25 +115,61 @@ def account_domain_edit(request, domain_id):
 def account_profile(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    if request.method == 'POST':
-        form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
-        if form.is_valid():
-            existing_contacts = contacts.list_contacts(request.user)
-            if not existing_contacts:
-                new_contact = contacts.create_from_profile(request.user, form.instance)
-                if zmaster.contact_create_update(new_contact):
-                    messages.success(request, 'Your profile information was successfully updated! Now you can register new domains.')
-                    form.save()
-                else:
-                    messages.error(request, 'There were technical problems with contact details processing. '
-                                            'Please try again later or contact customer support.')
-            else:
-                messages.success(request, 'Your profile information was successfully updated!')
-                form.save()
-        else:
-            messages.error(request, 'Please correct the error below.')
+    if request.method != 'POST':
+        return shortcuts.render(request, 'front/account_profile.html', {
+            'form': forms.AccountProfileForm(instance=request.user.profile),
+        })
+    
+    form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
+    if not form.is_valid():
+        messages.error(request, 'Please correct the error below.')
+        return shortcuts.render(request, 'front/account_profile.html', {
+            'form': form,
+        })
+        
+    found_existing_contacts = False
+    found_existing_registrant = False
+    failed = False
+
+    existing_contacts = contacts.list_contacts(request.user)
+    if not existing_contacts:
+        new_contact = contacts.create_from_profile(request.user, form.instance)
+        if not zmaster.contact_create_update(new_contact):
+            failed = True
     else:
-        form = forms.AccountProfileForm(instance=request.user.profile)
+        found_existing_contacts = True
+
+    if failed:
+        messages.error(request, 'There were technical problems with contact details processing. '
+                                    'Please try again later or contact customer support.')
+        return shortcuts.render(request, 'front/account_profile.html', {
+            'form': form,
+        })
+
+    existing_registrant = contacts.get_registrant(request.user)
+    if not existing_registrant:
+        new_registrant = contacts.create_registrant_from_profile(request.user, form.instance)
+        if not zmaster.contact_create_update(new_registrant):
+            failed = True
+    else:
+        found_existing_registrant = True
+        contacts.update_registrant_from_profile(existing_registrant, form.instance)
+        if not zmaster.contact_create_update(existing_registrant):
+            failed = True
+
+    if failed:
+        messages.error(request, 'There were technical problems with contact details processing. '
+                                    'Please try again later or contact customer support.')
+        return shortcuts.render(request, 'front/account_profile.html', {
+            'form': form,
+        })
+
+    form.save()
+
+    if found_existing_contacts and found_existing_registrant:
+        messages.success(request, 'Your profile information was successfully updated.')
+    else:
+        messages.success(request, 'Your profile information was successfully updated, you can register new domains now.')
     return shortcuts.render(request, 'front/account_profile.html', {
         'form': form,
     })

@@ -134,7 +134,7 @@ def create(
         new_domain.set_nameserver(host_position, nameserver)
         host_position += 1
     new_domain.save()
-    logger.debug('domain created: %s', new_domain)
+    logger.debug('domain created: %r', new_domain)
     return new_domain
 
 

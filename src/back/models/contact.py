@@ -15,7 +15,6 @@ class Contact(models.Model):
         default_manager_name = 'contacts'
 
     # related fields:
-    # registrant_domains -> back.models.domain.Domain
     # admin_domains -> back.models.domain.Domain
     # billing_domains -> back.models.domain.Domain
     # tech_domains -> back.models.domain.Domain
@@ -47,3 +46,36 @@ class Contact(models.Model):
     @property
     def address_full(self):
         return f'{self.address_street} {self.address_city}, {self.address_province} {self.address_postal_code}, {self.address_country}'
+
+
+class Registrant(models.Model):
+    
+    registrants = models.Manager()
+
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'registrants'
+        default_manager_name = 'registrants'
+
+    # related fields:
+    # registrant_domains -> back.models.domain.Domain
+
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='registrants', )
+
+    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
+
+    person_name = models.CharField(max_length=255, verbose_name='Full Name')
+    organization_name = models.CharField(max_length=255, verbose_name='Organization')
+
+    address_street = models.CharField(max_length=255, verbose_name='Street address')
+    address_city = models.CharField(max_length=255, verbose_name='City')
+    address_province = models.CharField(max_length=255, verbose_name='Province')
+    address_postal_code = models.CharField(max_length=255, verbose_name='ZIP code')
+    address_country = CountryField(verbose_name='Country')
+
+    contact_voice = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Mobile')
+    contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Fax')
+    contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
+
+    def __str__(self):
+        return 'Registrant ({} {})'.format(self.owner.email, self.epp_id)

@@ -1,6 +1,6 @@
 import logging
 
-from back.models.contact import Contact
+from back.models.contact import Contact, Registrant
 from zepp import iso_countries
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ def create(epp_id, owner, **kwargs):
 
 def create_from_profile(owner, profile_object):
     """
-    Creates a new contact from existing Profile object. 
+    Creates a new Contact from existing Profile object. 
     """
     new_contact = Contact.contacts.create(
         owner=owner,
@@ -144,3 +144,57 @@ def to_dict(contact_object):
         c['address']['cc'] = iso_countries.clean_country_code(c['address']['cc'])
     info['contacts'][0] = c        
     return info
+
+
+def create_registrant_from_profile(owner, profile_object):
+    """
+    Creates a new Registrant from existing Profile object. 
+    """
+    new_contact = Registrant.registrants.create(
+        owner=owner,
+        person_name=profile_object.person_name,
+        organization_name=profile_object.organization_name,
+        address_street=profile_object.address_street,
+        address_city=profile_object.address_city,
+        address_province=profile_object.address_province,
+        address_postal_code=profile_object.address_postal_code,
+        address_country=profile_object.address_country,
+        contact_voice=profile_object.contact_voice,
+        contact_fax=profile_object.contact_fax,
+        contact_email=profile_object.contact_email,
+    )
+    logger.debug('registrant created from existing profile: %s', new_contact)
+    return new_contact
+
+
+def update_registrant_from_profile(registrant_object, profile_object, save=True):
+    """
+    Populate required fields for given `registrant_object` from existing Profile. 
+    """
+    registrant_object.person_name = profile_object.person_name
+    registrant_object.organization_name = profile_object.organization_name
+    registrant_object.address_street = profile_object.address_street
+    registrant_object.address_city = profile_object.address_city
+    registrant_object.address_province = profile_object.address_province
+    registrant_object.address_postal_code = profile_object.address_postal_code
+    registrant_object.address_country = profile_object.address_country
+    registrant_object.contact_voice = profile_object.contact_voice
+    registrant_object.contact_fax = profile_object.contact_fax
+    registrant_object.contact_email = profile_object.contact_email
+    if save:
+        registrant_object.save()
+    return True
+
+
+def registrant_exists(epp_id):
+    """
+    Return `True` if Registrant with given epp_id exists, doing query in Registrant table.
+    """
+    return bool(Registrant.registrants.filter(epp_id=epp_id).first())
+
+
+def get_registrant(owner):
+    """
+    Return Registrant object for given user or None, doing query in Registrant table.
+    """
+    return Registrant.registrants.filter(owner=owner).first()

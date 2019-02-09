@@ -9,7 +9,7 @@ from back.constants import EPPStatusTypes
 from back.domains import validate
 
 from back.models.zone import Zone
-from back.models.contact import Contact
+from back.models.contact import Contact, Registrant
 from back.models.registrar import Registrar
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,8 @@ class Domain(models.Model):
     registrar = models.ForeignKey(Registrar, on_delete=models.CASCADE, related_name='domains', null=True, blank=True)
 
     registrant = models.ForeignKey(
-        Contact, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True)
+        Registrant, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True)
+
     contact_admin = models.ForeignKey(
         Contact, on_delete=models.CASCADE, related_name='admin_domains', null=True, blank=True, verbose_name='Administrative')
     contact_billing = models.ForeignKey(

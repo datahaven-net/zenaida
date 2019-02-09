@@ -237,5 +237,3 @@ class ContactSynchronizer(automat.Automat):
         """
         self.target_contact = None
         self.destroy(**kwargs)
-
-

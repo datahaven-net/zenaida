@@ -48,6 +48,7 @@
                                 <a class="btn btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
                             {% else %}
                                 <a class="btn btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
+                                <a class="btn btn-info" href="{% url 'account_domain_transfer' %}?domain_name={{ domain.name }}" role="button">Transfer</a>
                             {% endif %}
                         </td>
                     </tr>

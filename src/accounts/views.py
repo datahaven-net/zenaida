@@ -23,6 +23,11 @@ class SignInView(SuccessURLAllowedHostsMixin, FormView):
     redirect_field_name = REDIRECT_FIELD_NAME
     success_url = '/'
 
+    def get_context_data(self, **kwargs):
+        context = super(SignInView, self).get_context_data(**kwargs)
+        context['recaptcha_site_key'] = settings.GOOGLE_RECAPTCHA_SITE_KEY
+        return context
+
     def get_success_url(self):
         url = self.get_redirect_url()
         return url or resolve_url(settings.LOGIN_REDIRECT_URL)
@@ -44,10 +49,14 @@ class SignInView(SuccessURLAllowedHostsMixin, FormView):
         kwargs['request'] = self.request
         return kwargs
 
+    @check_recaptcha
     def form_valid(self, form):
-        login(self.request, form.get_user())
-        messages.add_message(self.request, messages.SUCCESS, 'Successfully logged in!')
-        return HttpResponseRedirect(self.get_success_url())
+        if self.request.recaptcha_is_valid:
+            login(self.request, form.get_user())
+            messages.add_message(self.request, messages.SUCCESS, 'Successfully logged in!')
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
 
 
 class SignUpView(FormView):

@@ -4,8 +4,6 @@ from django.db import models
 
 from accounts.models.account import Account
 
-from back.constants import EPPStatusTypes
-
 from back.domains import validate
 
 from back.models.zone import Zone
@@ -32,7 +30,19 @@ class Domain(models.Model):
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
     epp_status = models.CharField(
-        max_length=32, choices=EPPStatusTypes.choices_as_tuple(), default=EPPStatusTypes.EPP_STATUS_INACTIVE.value)  # @UndefinedVariable
+        max_length=32,
+        choices=(
+            ('inactive', 'INACTIVE', ),
+            ('deactivated', 'DEACTIVATED', ),
+            ('client_hold', 'CLIENT HOLD', ),
+            ('server_hold', 'SERVER HOLD', ),
+            ('to_be_deleted', 'TO BE DELETED', ),
+            ('to_be_restored', 'TO BE RESTORED', ),
+            ('unknown', 'UNKNOWN', ),
+            ('active', 'ACTIVE', ),
+        ),
+        default='inactive',
+    )
 
     auth_key = models.CharField(max_length=64, blank=True, default='')
 
@@ -81,7 +91,6 @@ class Domain(models.Model):
         Always returns list of 4 tuples, empty contact means contact was not set for that role.
         """
         return [
-            ('registrant', self.registrant, ),
             ('admin', self.contact_admin, ),
             ('billing', self.contact_billing, ),
             ('tech', self.contact_tech, ),
@@ -168,4 +177,4 @@ class Domain(models.Model):
 
     @property
     def can_be_restored(self):
-        return bool(self.epp_id) and self.epp_status != EPPStatusTypes.EPP_STATUS_ACTIVE.name  # @UndefinedVariable
+        return bool(self.epp_id) and self.epp_status != 'active'

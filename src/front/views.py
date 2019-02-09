@@ -112,6 +112,18 @@ def account_domain_edit(request, domain_id):
     return account_domains(request)
 
 
+def account_domain_transfer(request):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
+    # TODO Make a call to get a transfer code for domain_name
+    transfer_code = '12345'
+    return shortcuts.render(request, 'front/account_domain_transfer.html', {
+        'transfer_code': transfer_code,
+        'domain_name': domain.name,
+    })
+
+
 def account_profile(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')

@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 def contact_create_update(contact_object, raise_errors=False, log_events=True, log_transitions=True):
     """
-    If `epp_id` field is empty, creates a new contact on back-end.
-    Otherwise update existing contact from `contact_object` info.
+    If `epp_id` field is empty, creates a new Contact or Registrant on back-end.
+    Otherwise update existing object from `contact_object` info.
     """
     cs = contact_synchronizer.ContactSynchronizer(
         log_events=log_events,

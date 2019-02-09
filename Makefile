@@ -179,7 +179,7 @@ runuwsgi: $(VENV_DEPLOY)
 
 
 runserver: $(VENV_DEPLOY)
-	$(PYTHON) src/manage.py runserver
+	SERVER_PROTOCOL="HTTP/1.1" $(PYTHON) src/manage.py runserver
 
 
 createsuperuser: $(VENV_DEPLOY)

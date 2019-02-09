@@ -7,13 +7,18 @@
     {% include 'base/welcome.html' %}
 {% else %}
 
-    {% if is_domain_available == True %}
+    {% if not result %}
+        <form class="form-inline justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+            <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+            <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+    {% elif result == 'not exist' %}
         <div class="alert alert-success text-center" role="alert">
             <b>{{ domain_name }}</b> is available to register.
             <br />
             <a href="{% url 'account_domain_create' %}?domain_name={{domain_name}}" class="alert-link">Click here to register it!</a>
         </div>
-    {% elif is_domain_available == False %}
+    {% elif result == 'exist' %}
         <div class="alert alert-warning text-center" role="alert">
             <b>{{ domain_name }}</b> is already registered. <br />Search for another domain!
         </div>
@@ -21,7 +26,7 @@
             <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
             <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
         </form>
-    {% elif is_domain_available == 'Unavailable' %}
+    {% elif result == 'error' %}
         <div class="alert alert-danger text-center" role="alert">
             Service is unavailable at this moment<br />Please try it later.
         </div>

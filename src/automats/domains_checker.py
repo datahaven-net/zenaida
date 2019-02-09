@@ -35,7 +35,7 @@ class DomainsChecker(automat.Automat):
     This class implements all the functionality of ``domains_checker()`` state machine.
     """
 
-    def __init__(self, verify_registrant=True, skip_check=False, skip_info=False,
+    def __init__(self, verify_registrant=True, skip_check=False, skip_info=False, stop_on_error=False,
                  debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domains_checker()` state machine.
@@ -43,6 +43,7 @@ class DomainsChecker(automat.Automat):
         self.skip_check = skip_check
         self.skip_info = skip_info
         self.verify_registrant = verify_registrant
+        self.stop_on_error = stop_on_error
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -204,14 +205,18 @@ class DomainsChecker(automat.Automat):
             self.log(self.debug_level, 'Exception in doEppDomainCheckMany: %s' % exc)
             self.event('error', exc)
         else:
-            self.event('response', response)
+            _errors = self._do_find_errors_in_response(response)
+            if _errors:
+                self.event('error', _errors[0])
+            else:
+                self.event('response', response)
 
     def doEppDomainInfo(self, *args, **kwargs):
         """
         Action method.
         """
         if self.skip_info:
-            self.check_results = {dn: dn in self.existing_domains for dn in self.target_domain_names}
+            self.check_results = {dn: (dn in self.existing_domains) for dn in self.target_domain_names}
             self.event('skip-info')
             return
         try:
@@ -242,6 +247,7 @@ class DomainsChecker(automat.Automat):
         existing_domains = []
         results = args[0]['epp']['response']['resData']['chkData']['cd']
         if not results:
+            self.outputs.append(zerrors.EPPResponseFailed())
             return
         if not isinstance(results, list):
             results = [results, ]
@@ -250,8 +256,14 @@ class DomainsChecker(automat.Automat):
             if not name:
                 self.log(self.debug_level, 'Invalid EPP response, unknown domain name: %s' % args[0])
                 continue
-            if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('the domain exists'):
-                existing_domains.append(name)
+            if result.get('name', {}).get('@avail') == '0':
+                if result.get('reason').lower().count('the domain exists'):
+                    existing_domains.append(name)
+                    self.check_results[name] = True
+                else:
+                    self.check_results[name] = zerrors.EPPUnexpectedResponse(response=args[0])
+            else:
+                self.check_results[name] = False
         self.outputs.append(existing_domains)
         self.outputs.append(args[0])
 
@@ -288,4 +300,18 @@ class DomainsChecker(automat.Automat):
         self.available_domain_names = None
         self.destroy()
 
-
+    def _do_find_errors_in_response(self, response):
+        results = response['epp']['response']['resData']['chkData']['cd']
+        if not results:
+            self.log(self.debug_level, 'Invalid EPP response, no results')
+            return [zerrors.EPPResponseFailed(), ]
+        if not isinstance(results, list):
+            results = [results, ]
+        for result in results:
+            if not result.get('name', {}).get('#text'):
+                self.log(self.debug_level, 'Invalid EPP response, unknown domain name: %s' % response)
+                return [zerrors.EPPResponseFailed(), ]
+            if result.get('name', {}).get('@avail') == '0':
+                if not result.get('reason').lower().count('the domain exists'):
+                    return [zerrors.EPPUnexpectedResponse(response=response), ]
+        return []

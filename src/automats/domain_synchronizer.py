@@ -29,6 +29,7 @@ from automats import domain_contacts_synchronizer
 from automats import domain_hostnames_synchronizer
 
 from back import domains
+from back import constants
 
 from zepp import zclient
 from zepp import zerrors
@@ -205,7 +206,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Condition method.
         """
-        return self.renew_years is not None
+        return self.renew_years is not None and not self.DomainToBeCreated
 
     def doInit(self, *args, **kwargs):
         """
@@ -269,9 +270,8 @@ class DomainSynchronizer(automat.Automat):
             period_value = str(days_difference)
         contacts_dict = {}
         for role, contact_object in self.target_domain.list_contacts():
-            if role == 'registrant':
-                continue
-            contacts_dict[role] = contact_object.epp_id
+            if contact_object:
+                contacts_dict[role] = contact_object.epp_id
         try:
             response = zclient.cmd_domain_create(
                 domain=self.target_domain.name,
@@ -370,22 +370,23 @@ class DomainSynchronizer(automat.Automat):
             self.log(self.debug_level, 'Exception in DomainContactsSynchronizer: %s' % exc)
             self.event('error', exc)
             return
-        if not dcs.outputs:
-            self.log(self.debug_level, 'Empty result from DomainContactsSynchronizer: %s' % exc)
+        outputs = list(dcs.outputs)
+        del dcs
+        if not outputs:
+            self.log(self.debug_level, 'empty result from DomainContactsSynchronizer: %s' % exc)
             self.event('error', Exception('Empty result from DomainContactsSynchronizer'))
             return
-        if isinstance(dcs.outputs[-1], Exception):
-            self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % dcs.outputs[-1])
-            self.event('error', dcs.outputs[-1])
+        if isinstance(outputs[-1], Exception):
+            self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % outputs[-1])
+            self.event('error', outputs[-1])
             return
-        for out in dcs.outputs:
+        for out in outputs:
             if not isinstance(out, tuple):
                 continue
-            if not out[0] in ['registrant', 'admin', 'billing', 'tech', ]:
+            if not out[0] in ['admin', 'billing', 'tech', ]:
                 self.log(self.debug_level, 'Unexpected output from DomainContactsSynchronizer: %r' % out[0])
                 continue
-            out[1]
-        self.outputs.extend(dcs.outputs)
+        self.outputs.extend(outputs)
         self.event('contacts-ok')
 
     def doRunDomainNameserversSync(self, *args, **kwargs):
@@ -405,7 +406,8 @@ class DomainSynchronizer(automat.Automat):
             self.log(self.debug_level, 'Exception in DomainHostnamesSynchronizer: %s' % exc)
             self.event('error', exc)
             return
-        self.outputs.extend(dhs.outputs)
+        self.outputs.extend(list(dhs.outputs))
+        del dhs
         self.event('nameservers-ok')
         
     def doDBWriteDomainCreated(self, *args, **kwargs):
@@ -417,6 +419,7 @@ class DomainSynchronizer(automat.Automat):
             args[0]['epp']['response']['resData']['creData']['crDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.target_domain.expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        self.target_domain.epp_status = 'active'
         self.target_domain.save()
 
     def doDBWriteDomainRenew(self, *args, **kwargs):

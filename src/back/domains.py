@@ -197,15 +197,16 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
         'id': i['#text'],
     } for i in current_contacts]
     for role, contact_object in target_contacts:
-        if role != 'registrant' and contact_object.epp_id:
-            new_contacts.append({'type': role, 'id': contact_object.epp_id, })
+        if contact_object:
+            if contact_object.epp_id:
+                new_contacts.append({'type': role, 'id': contact_object.epp_id, })
     current_contacts_ids = [old_contact['id'] for old_contact in current_contacts]
     for new_cont in new_contacts:
         if new_cont['id'] not in current_contacts_ids:
             add_contacts.append(new_cont)
     new_contacts_ids = [new_cont['id'] for new_cont in new_contacts]
     for old_cont in current_contacts:
-        if old_cont['type'] != 'registrant' and old_cont['id'] not in new_contacts_ids:
+        if old_cont['id'] not in new_contacts_ids:
             remove_contacts.append(old_cont)
     #--- registrant
     current_registrant = None

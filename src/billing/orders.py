@@ -102,8 +102,8 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
 def execute_domain_register(order_item, target_domain):
     if not zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
-        sync_contacts=True,
-        sync_nameservers=True,
+        sync_contacts=False,
+        sync_nameservers=False,
         renew_years=2,
         log_events=True,
         log_transitions=True,
@@ -119,7 +119,7 @@ def execute_domain_register(order_item, target_domain):
 def execute_domain_renew(order_item, target_domain):
     if not zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
-        sync_contacts=True,
+        sync_contacts=False,
         sync_nameservers=True,
         renew_years=2,
         log_events=True,
@@ -161,6 +161,7 @@ def execute_one_item(order_item):
 def execute_single_order(order_object):
     new_status = 'processed'
     total_processed = 0
+    # TODO: check/verify every item against Back-end before start processing
     for order_item in order_object.items.all():
         if order_item.status == 'processed':
             continue

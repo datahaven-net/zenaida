@@ -152,7 +152,6 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         self.target_contacts = {}
         possible_contacts = {
-            'registrant': self.target_domain.registrant,
             'admin': self.target_domain.contact_admin,
             'billing': self.target_domain.contact_billing,
             'tech': self.target_domain.contact_tech,
@@ -176,7 +175,9 @@ class DomainContactsSynchronizer(automat.Automat):
                 self.log(self.debug_level, 'Exception in ContactSynchronizer: %s' % exc)
                 self.event('error', exc)
                 break
-            result = cs.outputs[0]
+            outputs = list(cs.outputs)
+            del cs
+            result = outputs[0]
             if isinstance(result, Exception):
                 self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % result)
                 self.event('error', result)

@@ -44,7 +44,7 @@ def new_payment(request):
         my_latest_payment = payments.latest_payment(request.user)
         if my_latest_payment:
             if timezone.now() - my_latest_payment.started_at < datetime.timedelta(minutes=3):
-                messages.add_message(request, messages.INFO, 'Please wait few minutes and then try again.')
+                messages.info(request, 'Please wait few minutes and then try again.')
                 return shortcuts.render(request, 'billing/new_payment.html', {
                     'form': form,
                 })
@@ -190,11 +190,10 @@ def order_execute(request, order_id):
         logging.critical('User %s tried to execute an order for another user' % request.user)
         raise exceptions.SuspiciousOperation()
     if not orders.execute_single_order(existing_order):
-        messages.add_message(request, messages.ERROR, 'There were technical problems with order processing. '
+        messages.error(request, 'There were technical problems with order processing. '
                                                       'Please try again later or contact customer support.')
-    return shortcuts.render(request, 'billing/order_details.html', {
-        'order': existing_order,
-    }, )
+    messages.success(request, 'Order processed successfully.')
+    return orders_list(request)
 
 
 def order_cancel(request, order_id):
@@ -210,6 +209,7 @@ def order_cancel(request, order_id):
         logging.critical('User %s tried to cancel an order for another user' % request.user)
         raise exceptions.SuspiciousOperation()
     orders.cancel_single_order(existing_order)
+    messages.success(request, 'Order of %s cancelled.' % existing_order.description)
     return orders_list(request)
 
 

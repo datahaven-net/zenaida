@@ -336,3 +336,6 @@ BILLING_4CSONLINE_MERCHANT_VERIFY_LINK = getattr(params, 'BILLING_4CSONLINE_MERC
 #------------------------------------------------------------------------------
 #--- Last line, just for testing purposes
 LOADED_OK = 'OK'
+
+GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
+GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')

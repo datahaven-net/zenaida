@@ -9,6 +9,7 @@ from django.views.generic import RedirectView
 from django.views.generic.edit import FormView
 from django.conf import settings
 
+from accounts.decorators import check_recaptcha
 from accounts.utils import get_login_form
 from accounts.forms import SignUpForm
 from accounts.models.activation import Activation
@@ -54,29 +55,37 @@ class SignUpView(FormView):
     form_class = SignUpForm
     success_url = '/'
 
+    def get_context_data(self, **kwargs):
+        context = super(SignUpView, self).get_context_data(**kwargs)
+        context['recaptcha_site_key'] = settings.GOOGLE_RECAPTCHA_SITE_KEY
+        return context
+
+    @check_recaptcha
     def form_valid(self, form):
-        if settings.ENABLE_USER_ACTIVATION:
-            user = form.save(commit=False)
-            user.is_active = False
-            user.save()
+        if self.request.recaptcha_is_valid:
+            if settings.ENABLE_USER_ACTIVATION:
+                user = form.save(commit=False)
+                user.is_active = False
+                user.save()
 
-            form.send_activation_email(self.request, user)
+                form.send_activation_email(self.request, user)
 
-            messages.add_message(self.request, messages.SUCCESS,
-                                 'You are registered. To activate the account, follow the link sent to the mail.')
+                messages.add_message(self.request, messages.SUCCESS,
+                                     'You are registered. To activate the account, follow the link sent to the mail.')
+            else:
+                form.save()
+
+                email = form.cleaned_data.get('email')
+                raw_password = form.cleaned_data.get('password1')
+
+                user = authenticate(username=email, password=raw_password)
+                login(self.request, user)
+                create_profile(user, contact_email=email)
+
+                messages.add_message(self.request, messages.SUCCESS, 'You are successfully registered!')
+            return super().form_valid(form)
         else:
-            form.save()
-
-            email = form.cleaned_data.get('email')
-            raw_password = form.cleaned_data.get('password1')
-
-            user = authenticate(username=email, password=raw_password)
-            login(self.request, user)
-            create_profile(user, contact_email=email)
-
-            messages.add_message(self.request, messages.SUCCESS, 'You are successfully registered!')
-
-        return super().form_valid(form)
+            return self.render_to_response(self.get_context_data(form=form))
 
 
 class ActivateView(RedirectView):

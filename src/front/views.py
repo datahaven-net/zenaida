@@ -74,10 +74,9 @@ def account_domain_create(request):
         })
     form_to_save = form.save(commit=False)
     form_to_save.name = domain_name
-    # form_to_save.expiry_date = datetime.now()
-    # form_to_save.create_date = datetime.now()
     form_to_save.owner = request.user
     form_to_save.zone = zones.make(domain_tld)
+    form_to_save.registrant = contacts.get_registrant(request.user)
     form_to_save.expiry_date = timezone.now()
     form_to_save.create_date = timezone.now() + datetime.timedelta(days=365)
     if not form.is_valid():
@@ -85,7 +84,7 @@ def account_domain_create(request):
             'form': form,
         })
     form_to_save.save()
-    return account_domains(request)
+    return shortcuts.redirect('account_domains')
 
 
 def account_domain_edit(request, domain_id):

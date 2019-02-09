@@ -138,46 +138,37 @@ def account_profile(request):
             'form': form,
         })
         
-    found_existing_contacts = False
-    found_existing_registrant = False
-    failed = False
-
     existing_contacts = contacts.list_contacts(request.user)
     if not existing_contacts:
         new_contact = contacts.create_from_profile(request.user, form.instance)
         if not zmaster.contact_create_update(new_contact):
-            failed = True
-    else:
-        found_existing_contacts = True
-
-    if failed:
-        messages.error(request, 'There were technical problems with contact details processing. '
-                                    'Please try again later or contact customer support.')
-        return shortcuts.render(request, 'front/account_profile.html', {
-            'form': form,
-        })
+            messages.error(request, 'There were technical problems with contact details processing. '
+                                        'Please try again later or contact customer support.')
+            return shortcuts.render(request, 'front/account_profile.html', {
+                'form': form,
+            })
 
     existing_registrant = contacts.get_registrant(request.user)
     if not existing_registrant:
         new_registrant = contacts.create_registrant_from_profile(request.user, form.instance)
         if not zmaster.contact_create_update(new_registrant):
-            failed = True
+            messages.error(request, 'There were technical problems with contact details processing. '
+                                        'Please try again later or contact customer support.')
+            return shortcuts.render(request, 'front/account_profile.html', {
+                'form': form,
+            })
     else:
-        found_existing_registrant = True
         contacts.update_registrant_from_profile(existing_registrant, form.instance)
         if not zmaster.contact_create_update(existing_registrant):
-            failed = True
-
-    if failed:
-        messages.error(request, 'There were technical problems with contact details processing. '
-                                    'Please try again later or contact customer support.')
-        return shortcuts.render(request, 'front/account_profile.html', {
-            'form': form,
-        })
+            messages.error(request, 'There were technical problems with contact details processing. '
+                                        'Please try again later or contact customer support.')
+            return shortcuts.render(request, 'front/account_profile.html', {
+                'form': form,
+            })
 
     form.save()
 
-    if found_existing_contacts and found_existing_registrant:
+    if existing_registrant and existing_contacts:
         messages.success(request, 'Your profile information was successfully updated.')
     else:
         messages.success(request, 'Your profile information was successfully updated, you can register new domains now.')

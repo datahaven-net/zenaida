@@ -51,3 +51,8 @@ ENV = 'development'
 # AUTOMATS_LOG_FILENAME = '/home/zenaida/logs/automats.log'
 # BILLING_4CSONLINE_MERCHANT_ID = ''
 # BILLING_4CSONLINE_MERCHANT_LINK = ''
+
+
+"""Google reCaptcha Keys"""
+# GOOGLE_RECAPTCHA_SECRET_KEY = 'dummy_secret_key'
+# GOOGLE_RECAPTCHA_SITE_KEY = 'dummy_site_key'

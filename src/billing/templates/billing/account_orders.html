@@ -7,8 +7,11 @@
     {% include 'base/welcome.html' %}
 {% else %}
 
-    {% if objects %}
-        <div class="table-responsive">
+            <form method="post">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button class="btn btn-success">Next</button>
+            </form>
 
             <table class="table table-hover">
                 <tr>
@@ -35,17 +38,12 @@
                 {% endfor %}
 
             </table>
-
+            {% if is_order_filtered == True %}
+                <a class="btn btn-success" href="{% url 'billing_orders' %}" role="button">Go Back to All Orders</a>
+            {% endif %}
         </div>
 
         {% include 'base/pagination.html' %}
-        
-    {% else %}
-        <div class="alert alert-warning text-center" role="alert">
-            You did not make any orders yet.<br />
-            You can buy a new domain or renew your existing domains.
-        </div>
-    {% endif %}
 
 {% endif %}
 

@@ -1,7 +1,7 @@
 from django import forms
 
-class NewPaymentForm(forms.Form):
 
+class NewPaymentForm(forms.Form):
     amount = forms.fields.ChoiceField(
         label='Amount',
         required=True,
@@ -23,4 +23,34 @@ class NewPaymentForm(forms.Form):
             ('pay_4csonline', 'Credit Card', ),
             ('pay_bank_transfer_anguilla', 'Bank Transfer', ),
         ),
+    )
+
+
+class FilterOrdersByDateForm(forms.Form):
+    year = forms.fields.ChoiceField(
+        choices=(
+            ('2019', '2019',),
+            ('2018', '2018',),
+            ('2017', '2017',),
+            ('2016', '2016',),
+            ('2015', '2015', ),
+        ),
+    )
+    month = forms.fields.ChoiceField(
+        choices=(
+            (None, '-'),
+            ('1', 'January',),
+            ('2', 'February',),
+            ('3', 'March',),
+            ('4', 'April',),
+            ('5', 'May',),
+            ('6', 'June',),
+            ('7', 'July',),
+            ('8', 'August',),
+            ('9', 'September',),
+            ('10', 'October',),
+            ('11', 'November',),
+            ('12', 'December',),
+        ),
+        required=False,
     )

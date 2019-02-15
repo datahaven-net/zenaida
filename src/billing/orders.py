@@ -29,6 +29,17 @@ def list_orders(owner, exclude_cancelled=False):
     return list(qs.all())
 
 
+def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
+    if not month:
+        orders = Order.orders.filter(owner=owner, finished_at__year=year)
+    else:
+        orders = Order.orders.filter(owner=owner, finished_at__year=year, finished_at__month=month)
+
+    if exclude_cancelled:
+        orders = orders.exclude(status='cancelled')
+    return list(orders.all())
+
+
 def order_single_item(owner, item_type, item_price, item_name):
     """
     """

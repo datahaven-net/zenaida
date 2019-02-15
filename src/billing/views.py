@@ -68,7 +68,18 @@ def orders_list(request):
     """
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-    order_objects = orders.list_orders(owner=request.user, exclude_cancelled=True)
+
+    is_order_filtered = False
+
+    if request.method == 'POST':
+        form = forms.FilterOrdersByDateForm(request.POST)
+        order_objects = orders.list_orders_by_date(
+            owner=request.user, year=form.data.get('year'), month=form.data.get('month'), exclude_cancelled=True
+        )
+        is_order_filtered = True
+    else:
+        form = forms.FilterOrdersByDateForm()
+        order_objects = orders.list_orders(owner=request.user, exclude_cancelled=True)
     page = request.GET.get('page', 1)
     paginator = Paginator(order_objects, 10)
     try:
@@ -78,7 +89,7 @@ def orders_list(request):
     except EmptyPage:
         order_objects = paginator.page(paginator.num_pages)
     return shortcuts.render(request, 'billing/account_orders.html', {
-        'objects': order_objects,
+        'objects': order_objects, 'form': form, 'is_order_filtered': is_order_filtered
     }, )
 
 

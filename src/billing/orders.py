@@ -1,5 +1,6 @@
 import logging
 
+from django import shortcuts
 from django.utils import timezone
 from django.core import exceptions
 
@@ -27,6 +28,10 @@ def list_orders(owner, exclude_cancelled=False):
     if exclude_cancelled:
         qs = qs.exclude(status='cancelled')
     return list(qs.all())
+
+
+def list_only_processed_orders(owner, order_id):
+    return shortcuts.get_object_or_404(Order.orders.filter(owner=owner, id=order_id, status='processed'))
 
 
 def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):

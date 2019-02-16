@@ -7,43 +7,66 @@
     {% include 'base/welcome.html' %}
 {% else %}
 
-            <form method="post">
-                {% csrf_token %}
-                {% bootstrap_form form %}
-                <button class="btn btn-success">Next</button>
-            </form>
+    <div class="alert alert-secondary text-center" role="alert">
 
-            <table class="table table-hover">
-                <tr>
-                    <th>Description</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
+        <form method="post">
+        {% csrf_token %}
+            <div class="row">
+                <div class="row col-6">
+                    <div class="col-3">
+                        <fieldset>
+                            {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                        </fieldset>
+                    </div>
+                    <div class="col-3">
+                        <fieldset>
+                            {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                        </fieldset>
+                    </div>
+                    <div class="col-1">
+                        <button class="form-button btn-sm btn-success">Show</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 
-                {% for order in objects %}
+    <h3>You are seeing {{ period }} orders history</h3>
 
-                    <tr>
-                        <td><a href="{{ order.id }}">{{ order.description }}</a></td>
-                        <td>{{ order.started_at }}</td>
-                        <td>{{ order.status }}</td>
-                        <td>
-                            {% if order.is_processable %}
-                                <a href="{% url 'billing_order_process' order.id %}" class="btn btn-success" href="#" role="button">Confirm</a>
-                                <a href="{% url 'billing_order_cancel' order.id %}" class="btn btn-warning" href="#" role="button">Cancel</a>
-                            {% endif %}
-                        </td>
-                    </tr>
+    <table class="table table-hover">
+        <tr>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
 
-                {% endfor %}
+        {% for order in objects %}
 
-            </table>
-            {% if is_order_filtered == True %}
-                <a class="btn btn-success" href="{% url 'billing_orders' %}" role="button">Go Back to All Orders</a>
-            {% endif %}
-        </div>
+            <tr>
+                <td><a href="{{ order.id }}">{{ order.description }}</a></td>
+                <td>{{ order.started_at }}</td>
+                <td>{{ order.status }}</td>
+                <td>
+                    {% if order.is_processable %}
+                        <a class="btn btn-success" role="button" href="{% url 'billing_order_process' order.id %}">Confirm</a>
+                        <a class="btn btn-warning" role="button" href="{% url 'billing_order_cancel' order.id %}">Cancel</a>
+                    {% elif order.is_processed %}
+                        <a  class="btn btn-info" role="button" href="{% url 'billing_invoice' %}?order_id={{ order.id }}">Download Invoice</a>
+                    {% endif %}
+                </td>
+            </tr>
 
-        {% include 'base/pagination.html' %}
+        {% endfor %}
+
+    </table>
+
+    {% if is_order_filtered == True %}
+        <a class="btn btn-info" role="button" href="{% url 'billing_invoice' %}?order_id={{ order_id_list }}&period={{ period }}">Download Invoice for This Period</a>
+        <a class="btn btn-success" role="button" href="{% url 'billing_orders' %}">Back to All Orders History</a>
+    {% endif %}
+
+{% include 'base/pagination.html' %}
 
 {% endif %}
 

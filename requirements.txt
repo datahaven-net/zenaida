@@ -11,6 +11,7 @@ elasticsearch==6.3.1
 fqn-decorators==1.2.3
 idna==2.8
 influxdb==5.2.1
+pdfkit==0.6.1
 pika==0.13.0
 pkgsettings==0.12.0
 psycopg2-binary==2.7.6.1

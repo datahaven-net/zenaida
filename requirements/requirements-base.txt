@@ -13,3 +13,4 @@ django-bootstrap4
 django-nested-admin
 django-grappelli
 django-extensions
+pdfkit

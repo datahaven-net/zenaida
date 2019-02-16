@@ -54,6 +54,7 @@ patterns = [
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),
     path('billing/orders/', billing_views.orders_list, name='billing_orders'),
+    path('billing/orders/invoice/', billing_views.billing_invoice, name='billing_invoice'),
     path('billing/orders/<int:order_id>/', billing_views.order_details, name='billing_order_details'),
     path('billing/orders/process/<int:order_id>/', billing_views.order_execute, name='billing_order_process'),
     path('billing/orders/cancel/<int:order_id>/', billing_views.order_cancel, name='billing_order_cancel'),

@@ -53,3 +53,7 @@ class Order(models.Model):
     @property
     def is_processable(self):
         return self.status not in ['processed', 'cancelled', ]
+
+    @property
+    def is_processed(self):
+        return self.status == 'processed'

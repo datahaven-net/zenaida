@@ -31,9 +31,9 @@ def list_orders(owner, exclude_cancelled=False):
 
 def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
     if not month:
-        orders = Order.orders.filter(owner=owner, finished_at__year=year)
+        orders = Order.orders.filter(owner=owner, started_at__year=year)
     else:
-        orders = Order.orders.filter(owner=owner, finished_at__year=year, finished_at__month=month)
+        orders = Order.orders.filter(owner=owner, started_at__year=year, started_at__month=month)
 
     if exclude_cancelled:
         orders = orders.exclude(status='cancelled')

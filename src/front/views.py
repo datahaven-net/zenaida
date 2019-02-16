@@ -80,8 +80,8 @@ def account_domain_create(request):
     domains.create(
         domain_name=domain_name,
         owner=request.user,
-        expiry_date=timezone.now(),
-        create_date=timezone.now() + datetime.timedelta(days=365),
+        create_date=timezone.now(),
+        expiry_date=timezone.now() + datetime.timedelta(days=365),
         registrant=contacts.get_registrant(request.user),
         contact_admin=domain_obj.contact_admin,
         contact_tech=domain_obj.contact_tech,

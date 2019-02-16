@@ -30,8 +30,8 @@ def list_orders(owner, exclude_cancelled=False):
     return list(qs.all())
 
 
-def list_only_processed_orders(owner, order_id):
-    return shortcuts.get_object_or_404(Order.orders.filter(owner=owner, id=order_id, status='processed'))
+def list_processed_orders(owner, order_id_list):
+    return shortcuts.get_list_or_404(Order.orders.filter(owner=owner, id__in=order_id_list, status='processed'))
 
 
 def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):

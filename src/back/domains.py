@@ -93,6 +93,7 @@ def create(
         contact_tech=None,
         contact_billing=None,
         nameservers=[],
+        save=True,
     ):
     """
     Create new domain.
@@ -131,10 +132,12 @@ def create(
         new_domain.contact_billing = contact_billing
     host_position = 0
     for nameserver in nameservers:
-        new_domain.set_nameserver(host_position, nameserver)
+        if nameserver:
+            new_domain.set_nameserver(host_position, nameserver)
         host_position += 1
-    new_domain.save()
-    logger.debug('domain created: %r', new_domain)
+    if save:
+        new_domain.save()
+        logger.debug('domain created: %r', new_domain)
     return new_domain
 
 

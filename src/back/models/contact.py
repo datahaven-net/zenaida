@@ -47,6 +47,10 @@ class Contact(models.Model):
     def address_full(self):
         return f'{self.address_street} {self.address_city}, {self.address_province} {self.address_postal_code}, {self.address_country}'
 
+    @property
+    def has_any_domains(self):
+        return bool(self.admin_domains.first() or self.billing_domains.first() or self.tech_domains.first())
+
 
 class Registrant(models.Model):
     

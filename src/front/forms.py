@@ -50,12 +50,16 @@ class DomainDetailsForm(ModelForm):
         contact_tech = cleaned_data.get('contact_tech')
         if not any([contact_admin, contact_billing, contact_tech, ]):
             raise forms.ValidationError('At least one Contact Person must be specified for the domain.')
-        nameserver1 = cleaned_data.get('nameserver1')
-        nameserver2 = cleaned_data.get('nameserver2')
-        nameserver3 = cleaned_data.get('nameserver3')
-        nameserver4 = cleaned_data.get('nameserver4')
-        if not any([nameserver1, nameserver2, nameserver3, nameserver4, ]):
+        ns_list = [
+            cleaned_data.get('nameserver1'),
+            cleaned_data.get('nameserver2'),
+            cleaned_data.get('nameserver3'),
+            cleaned_data.get('nameserver4'),
+        ]
+        if not any(ns_list):
             raise forms.ValidationError('At least one Name Server must be specified for the domain.')
+        if len(ns_list) != len(set(ns_list)):
+            raise forms.ValidationError('Name Servers must not be duplicated.')
         return cleaned_data
 
 

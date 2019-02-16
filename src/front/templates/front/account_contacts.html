@@ -29,7 +29,12 @@
                         <td>{{contact.address_full}}</td>
                         <td>{{contact.contact_voice}}</td>
                         <td>{{contact.contact_email}}</td>
-                        <td><a class="btn btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a></td>
+                        <td>
+                            <a class="btn btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a>
+                            {% if not contact.has_any_domains %}
+                                <a class="btn btn-danger" href='{% url "account_contact_delete" contact.id %}' role="button">Delete</a>
+                            {% endif %}
+                        </td>
                     </tr>
 
                 {% endfor %}
@@ -43,8 +48,8 @@
     {% endif %}
 
     <div class="row">
-        <div class="col-12 text-center">
-            <a href="{% url 'account_contact_create' %}" class="btn btn-success" role="button">Create contact</a>
+        <div class="col-12 text-left">
+            <a href="{% url 'account_contact_create' %}" class="btn btn-success" role="button">New contact person</a>
         </div>
     </div>
 

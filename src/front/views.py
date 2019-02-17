@@ -29,10 +29,10 @@ def account_domains(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
     if not request.user.profile.is_complete():
-        messages.success(request, 'Please provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please provide your contact information to be able to register new domains.')
         return account_profile(request)
     if len(contacts.list_contacts(request.user)) == 0:
-        messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         return account_contacts(request)
     domain_objects = domains.list_domains(request.user.email)
     if not domain_objects:
@@ -54,10 +54,10 @@ def account_domain_create(request):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
     if not request.user.profile.is_complete():
-        messages.success(request, 'Please provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please provide your contact information to be able to register new domains.')
         return account_profile(request)
     if len(contacts.list_contacts(request.user)) == 0:
-        messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         return account_contacts(request)
     if request.method != 'POST':
         form = forms.DomainDetailsForm(current_user=request.user)
@@ -72,18 +72,29 @@ def account_domain_create(request):
         return shortcuts.render(request, 'front/account_domain_details.html', {
             'form': form,
         })
-    form_to_save = form.save(commit=False)
-    form_to_save.name = domain_name
-    form_to_save.owner = request.user
-    form_to_save.zone = zones.make(domain_tld)
-    form_to_save.registrant = contacts.get_registrant(request.user)
-    form_to_save.expiry_date = timezone.now()
-    form_to_save.create_date = timezone.now() + datetime.timedelta(days=365)
     if not form.is_valid():
         return shortcuts.render(request, 'front/account_domain_details.html', {
             'form': form,
         })
-    form_to_save.save()
+    domain_obj = form.save(commit=False)
+    domains.create(
+        domain_name=domain_name,
+        owner=request.user,
+        create_date=timezone.now(),
+        expiry_date=timezone.now() + datetime.timedelta(days=365),
+        registrant=contacts.get_registrant(request.user),
+        contact_admin=domain_obj.contact_admin,
+        contact_tech=domain_obj.contact_tech,
+        contact_billing=domain_obj.contact_billing,
+        nameservers=[
+            domain_obj.nameserver1,
+            domain_obj.nameserver2,
+            domain_obj.nameserver3,
+            domain_obj.nameserver4,
+        ],
+        save=True,
+    )
+    messages.success(request, 'New domain was added to your account, now click "Register" to confirm the order and activate it.')
     return shortcuts.redirect('account_domains')
 
 
@@ -91,10 +102,10 @@ def account_domain_edit(request, domain_id):
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
     if not request.user.profile.is_complete():
-        messages.success(request, 'Please provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please provide your contact information to be able to register new domains.')
         return account_profile(request)
     if len(contacts.list_contacts(request.user)) == 0:
-        messages.success(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         return account_contacts(request)
     domain_info = shortcuts.get_object_or_404(Domain, pk=domain_id, owner=request.user)
     if request.method != 'POST':
@@ -107,8 +118,25 @@ def account_domain_edit(request, domain_id):
         return shortcuts.render(request, 'front/account_domain_details.html', {
             'form': form,
         })
+    if form.instance.epp_id:
+        if not zmaster.domain_check_create_update_renew(
+            domain_object=form.instance,
+            sync_contacts=True,
+            sync_nameservers=True,
+            renew_years=None,
+            save_to_db=False,
+            raise_errors=False,
+            log_events=True,
+            log_transitions=True,
+        ):
+            messages.error(request, 'There were technical problems with domain info processing. '
+                                    'Please try again later or contact customer support.')
+            return shortcuts.render(request, 'front/account_domain_details.html', {
+                'form': form,
+            })
     form.save()
-    return account_domains(request)
+    messages.success(request, 'Domain details successfully updated.')
+    return shortcuts.redirect('account_domains')
 
 
 def account_domain_transfer(request):
@@ -140,7 +168,7 @@ def account_profile(request):
         
     existing_contacts = contacts.list_contacts(request.user)
     if not existing_contacts:
-        new_contact = contacts.create_from_profile(request.user, form.instance)
+        new_contact = contacts.create_from_profile(request.user, form)
         if not zmaster.contact_create_update(new_contact):
             messages.error(request, 'There were technical problems with contact details processing. '
                                         'Please try again later or contact customer support.')
@@ -150,7 +178,7 @@ def account_profile(request):
 
     existing_registrant = contacts.get_registrant(request.user)
     if not existing_registrant:
-        new_registrant = contacts.create_registrant_from_profile(request.user, form.instance)
+        new_registrant = contacts.create_registrant_from_profile(request.user, form)
         if not zmaster.contact_create_update(new_registrant):
             messages.error(request, 'There were technical problems with contact details processing. '
                                         'Please try again later or contact customer support.')
@@ -158,7 +186,7 @@ def account_profile(request):
                 'form': form,
             })
     else:
-        contacts.update_registrant_from_profile(existing_registrant, form.instance)
+        contacts.update_registrant_from_profile(existing_registrant, form)
         if not zmaster.contact_create_update(existing_registrant):
             messages.error(request, 'There were technical problems with contact details processing. '
                                         'Please try again later or contact customer support.')
@@ -189,16 +217,17 @@ def account_contact_create(request):
         return shortcuts.render(request, 'front/account_contact_create.html', {
             'form': form,
         })
-    form_to_save = form.save(commit=False)
-    form_to_save.owner = request.user
-    if not zmaster.contact_create_update(form_to_save.instance):
+    form = form.save(commit=False)
+    form.owner = request.user
+    if not zmaster.contact_create_update(form):
         messages.error(request, 'There were technical problems with contact details processing. '
                                 'Please try again later or contact customer support.')
         return shortcuts.render(request, 'front/account_contact_create.html', {
             'form': forms.ContactPersonForm(),
         })
-    form_to_save.save()
-    return account_contacts(request)
+    form.save()
+    messages.success(request, 'New contact person successfully added.')
+    return shortcuts.redirect('account_contacts')
 
 
 def account_contact_edit(request, contact_id):
@@ -222,8 +251,17 @@ def account_contact_edit(request, contact_id):
             'form': form,
         })
     form.save()
-    messages.success(request, 'Contact details successfully updated.')
-    return account_contacts(request)
+    messages.success(request, 'Contact person details successfully updated.')
+    return shortcuts.redirect('account_contacts')
+
+
+def account_contact_delete(request, contact_id):
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    contact_person = shortcuts.get_object_or_404(Contact, pk=contact_id, owner=request.user)
+    contact_person.delete()
+    messages.success(request, 'Contact person successfully deleted.')
+    return shortcuts.redirect('account_contacts')
 
 
 def account_contacts(request):

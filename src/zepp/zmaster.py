@@ -63,7 +63,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     return outputs[-1]
 
 
-def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None,
+def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, save_to_db=True,
                                      raise_errors=False, log_events=True, log_transitions=True, ):
     """
     Check if domain exists first and then update it from `domain_object` info.
@@ -80,6 +80,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
         sync_contacts=sync_contacts,
         sync_nameservers=sync_nameservers,
         renew_years=renew_years,
+        save_to_db=save_to_db,
     )
     outputs = list(ds.outputs)
     del ds

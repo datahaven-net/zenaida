@@ -29,7 +29,6 @@ from automats import domain_contacts_synchronizer
 from automats import domain_hostnames_synchronizer
 
 from back import domains
-from back import constants
 
 from zepp import zclient
 from zepp import zerrors
@@ -216,6 +215,7 @@ class DomainSynchronizer(automat.Automat):
         self.renew_years = kwargs.get('renew_years', None)
         self.sync_contacts = kwargs.get('sync_contacts', True)
         self.sync_nameservers = kwargs.get('sync_nameservers', True)
+        self.save_to_db = kwargs.get('save_to_db', True)
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
@@ -420,7 +420,8 @@ class DomainSynchronizer(automat.Automat):
         self.target_domain.expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.target_domain.epp_status = 'active'
-        self.target_domain.save()
+        if self.save_to_db:
+            self.target_domain.save()
 
     def doDBWriteDomainRenew(self, *args, **kwargs):
         """
@@ -429,14 +430,16 @@ class DomainSynchronizer(automat.Automat):
         # TODO: args[0]['epp']['response']['trID']['svTRID']  store in history
         self.target_domain.expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['renData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        self.target_domain.save()
+        if self.save_to_db:
+            self.target_domain.save()
 
     def doDBWriteDomainEPPId(self, *args, **kwargs):
         """
         Action method.
         """
         self.target_domain.epp_id = args[0]['epp']['response']['resData']['infData']['roid']
-        self.target_domain.save()
+        if self.save_to_db:
+            self.target_domain.save()
 
     def doReportDone(self, event, *args, **kwargs):
         """

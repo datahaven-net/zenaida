@@ -5,27 +5,17 @@
 {% include 'base/container_sm_4_offset_4.html' %}
 
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
-
-    {% block content %}
-
-    <div align=center>
-        <iframe src="{% url 'billing_4csonline_process_payment' %}?transaction_id={{transaction_id}}"
-                scrolling=no
-                marginwidth=0
-                marginheight=0
-                frameborder=0
-                align=top
-                width=460
-                height=270>
-        </iframe>
-    </div>
-
-    {% endblock %}
-
-{% endif %}
+<div align=center>
+    <iframe src="{% url 'billing_4csonline_process_payment' %}?transaction_id={{transaction_id}}"
+            scrolling=no
+            marginwidth=0
+            marginheight=0
+            frameborder=0
+            align=top
+            width=460
+            height=270>
+    </iframe>
+</div>
 
 
 {% endblock %}

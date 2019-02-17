@@ -7,44 +7,38 @@
 {% include 'base/container_sm_10_offset_1.html' %}
 
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
-
-    <h1>{{ form.instance.name }}</h1>
-    <form method="post">
-        {% csrf_token %}
-        {% bootstrap_form_errors form %}
-        <div class="row">
-            <div class="col-8">
-                <fieldset name="contacts">
-                    <legend class="text-right">Domain Contacts</legend>
-                    {% bootstrap_field form.contact_admin layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                    {% bootstrap_field form.contact_billing layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                    {% bootstrap_field form.contact_tech layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                </fieldset>
-            </div>
-            <div class="col-4">
-                <fieldset>
-                    <legend class="text-right">Name Servers</legend>
-                    {% bootstrap_field form.nameserver1 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
-                    {% bootstrap_field form.nameserver2 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
-                    {% bootstrap_field form.nameserver3 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
-                    {% bootstrap_field form.nameserver4 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
-                </fieldset>
-            </div>
+<h1>{{ form.instance.name }}</h1>
+<form method="post">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    <div class="row">
+        <div class="col-8">
+            <fieldset name="contacts">
+                <legend class="text-right">Domain Contacts</legend>
+                {% bootstrap_field form.contact_admin layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                {% bootstrap_field form.contact_billing layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                {% bootstrap_field form.contact_tech layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+            </fieldset>
         </div>
-        <div class="row">
-            <div class="col-12 text-center">
-                {% buttons %}
-                    <button type="submit" class="form-button btn btn-success">Save</button>
-                {% endbuttons %}
-            </div>
+        <div class="col-4">
+            <fieldset>
+                <legend class="text-right">Name Servers</legend>
+                {% bootstrap_field form.nameserver1 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
+                {% bootstrap_field form.nameserver2 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
+                {% bootstrap_field form.nameserver3 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
+                {% bootstrap_field form.nameserver4 layout="horizontal" placeholder="" show_label=False size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-12" %}
+            </fieldset>
         </div>
-        <input type="hidden" name="next_page" value="{{ next_page }}">
-    </form>
-
-{% endif %}
+    </div>
+    <div class="row">
+        <div class="col-12 text-center">
+            {% buttons %}
+                <button type="submit" class="form-button btn btn-success">Save</button>
+            {% endbuttons %}
+        </div>
+    </div>
+    <input type="hidden" name="next_page" value="{{ next_page }}">
+</form>
 
 
 {% include 'base/container_close.html' %}

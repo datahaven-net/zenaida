@@ -5,18 +5,12 @@
 {% include 'base/container_sm_4_offset_4.html' %}
 
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
-
-    Your current balance is <b>${{ user.balance }} US</b><br />
-     <form method="post">
-        {% csrf_token %}
-        {% bootstrap_form form %}
-        <button class="btn btn-success">Next</button>
-    </form>
-
-{% endif %}
+Your current balance is <b>${{ user.balance }} US</b><br />
+ <form method="post">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    <button class="btn btn-success">Next</button>
+</form>
 
 
 {% include 'base/container_close.html' %}

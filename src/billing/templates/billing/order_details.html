@@ -3,58 +3,52 @@
 {% block main_content %}
 
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
+<h1>{{ order.description }}</h1>
 
-    <h1>{{ order.description }}</h1>
-    
-    <b>{{ order.get_status_display }}</b> at {{ order.started_at }}
-    <br>
-    <br>
-    <div class="table-responsive">
+<b>{{ order.get_status_display }}</b> at {{ order.started_at }}
+<br>
+<br>
+<div class="table-responsive">
 
-        <table class="table table-hover">
+    <table class="table table-hover">
 
-        {% for order_item in order.items.all|dictsort:"name" %}
-            <tr>
-                <td><b>{{ order_item.name }}</b></td>
-                <td>{{ order_item.get_type_display }}</td>
-                <td>{{ order_item.price }} $ US</td>
-            </tr>
+    {% for order_item in order.items.all|dictsort:"name" %}
+        <tr>
+            <td><b>{{ order_item.name }}</b></td>
+            <td>{{ order_item.get_type_display }}</td>
+            <td>{{ order_item.price }} $ US</td>
+        </tr>
 
-        {% endfor %}
+    {% endfor %}
 
-            <tr>
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-                <th><b>{{ order.total_price }} $ US</b></th>
-            </tr>
+        <tr>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th><b>{{ order.total_price }} $ US</b></th>
+        </tr>
 
-        </table>
+    </table>
 
-    </div>
+</div>
 
-    {% if order.is_processable %}
+{% if order.is_processable %}
 
-        <div class="container">
-            <div class="row">
-                <div class="col-sm-2 offset-4">
-                    <form action="{% url 'billing_order_cancel' order.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-warning" name="action_cancel">Cancel</button>
-                    </form>
-                </div>
-                <div class="col-sm-2">
-                    <form action="{% url 'billing_order_process' order.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success" name="action_pay">Confirm</button>
-                    </form>
-                </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-2 offset-4">
+                <form action="{% url 'billing_order_cancel' order.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning" name="action_cancel">Cancel</button>
+                </form>
+            </div>
+            <div class="col-sm-2">
+                <form action="{% url 'billing_order_process' order.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success" name="action_pay">Confirm</button>
+                </form>
             </div>
         </div>
-
-    {% endif %}
+    </div>
 
 {% endif %}
 

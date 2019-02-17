@@ -195,14 +195,17 @@ def order_execute(request, order_id):
     if not existing_order:
         logging.critical('User %s tried to execute non-existing order' % request.user)
         raise exceptions.SuspiciousOperation()
-    if not existing_order.owner == request.user:
+    if existing_order.owner != request.user:
         logging.critical('User %s tried to execute an order for another user' % request.user)
         raise exceptions.SuspiciousOperation()
-    if not billing_orders.execute_single_order(existing_order):
+    if existing_order.total_price > existing_order.owner.balance:
+        messages.error(request, 'Not enough funds on your balance to complete order. Please buy more credits to be able to register/renew domains.')
+        return shortcuts.redirect('billing_orders')
+    if billing_orders.execute_single_order(existing_order):
+        messages.success(request, 'Order processed successfully.')
+    else:
         messages.error(request, 'There were technical problems with order processing. '
                                                       'Please try again later or contact customer support.')
-    else:
-        messages.success(request, 'Order processed successfully.')
     return shortcuts.redirect('billing_orders')
 
 

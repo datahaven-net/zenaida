@@ -1,8 +1,13 @@
 import logging
+import os
+import calendar
+
+import pdfkit  # @UnresolvedImport
 
 from django import shortcuts
 from django.utils import timezone
 from django.core import exceptions
+from django.template.loader import get_template
 
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
@@ -35,13 +40,16 @@ def list_processed_orders(owner, order_id_list):
 
 
 def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
-    if not month:
-        orders = Order.orders.filter(owner=owner, started_at__year=year)
-    else:
+    if year and month:
         orders = Order.orders.filter(owner=owner, started_at__year=year, started_at__month=month)
-
+    else:
+        if year:
+            orders = Order.orders.filter(owner=owner, started_at__year=year)
+        else:
+            orders = Order.orders.filter(owner=owner)
     if exclude_cancelled:
         orders = orders.exclude(status='cancelled')
+    orders = orders.order_by('finished_at')
     return list(orders.all())
 
 
@@ -52,7 +60,7 @@ def order_single_item(owner, item_type, item_price, item_name):
         owner=owner,
         status='started',
         started_at=timezone.now(),
-        description='{}'.format(item_type.replace('_', ' ')),
+        description='{} {}'.format(item_name, item_type.replace('_', ' ').split(' ')[1]),
     )
     OrderItem.order_items.create(
         order=new_order,
@@ -76,9 +84,10 @@ def order_multiple_items(owner, order_items):
                 items_by_type[order_item['item_type']] = []
             items_by_type[order_item['item_type']].append(order_item)
         for item_type, items_of_that_type in items_by_type.items():
-            description.append('{} {}'.format(
-                len(items_of_that_type),
-                item_type.replace('_', ' ').replace('domain', 'domains')))
+            item_label, _, order_type = item_type.partition('_')
+            if len(items_of_that_type) > 1:
+                item_label = item_label.replace('domain', 'domains')
+            description.append('{} {} {}'.format(order_type, len(items_of_that_type), item_label, ))
         description = ', '.join(description)
     new_order = Order.orders.create(
         owner=owner,
@@ -203,3 +212,60 @@ def cancel_single_order(order_object):
     order_object.save()
     logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
     return True
+
+
+def build_receipt(owner, year=None, month=None, order_id=None):
+    """
+    """
+    order_objects = [] 
+    invoice_period = ''
+    if order_id:
+        order_object = by_id(order_id)
+        if not order_object:
+            return None
+        order_objects.append(order_object)
+        invoice_period = order_object.finished_at.strftime('%B %Y')
+    else:
+        order_objects = list_orders_by_date(owner=owner, year=year, month=month, exclude_cancelled=True)
+        if not order_objects:
+            return None
+        if year and month:
+            month_label = calendar.month_name[int(month)]
+            invoice_period = f'{year} {month_label}'
+        else:
+            if year:
+                invoice_period = f'{year}'
+            else:
+                invoice_period = order_objects[-1].finished_at.strftime('%B %Y')
+
+    domain_orders = []
+    total_price = 0
+    for order in order_objects:
+        for order_item in order.items.all():
+            domain_orders.append({
+                'domain_name': order_item.name,
+                'transaction_date': order.finished_at.strftime('%d %B %Y'),
+                'transaction_type': order_item.get_type_display().replace('Domain ', ''),
+                'price': int(order_item.price)
+            })
+            total_price += int(order_item.price)
+
+    # Fill html template with the domain orders and user profile info
+    html_template = get_template('billing/billing_invoice.html')
+    rendered_html = html_template.render({
+        'domain_orders': domain_orders,
+        'user_profile': owner.profile,
+        'total_price': total_price,
+        'invoice_period': invoice_period
+    })
+
+    # Create pdf file from a html file
+    pdfkit.from_string(rendered_html, 'out.pdf')
+    pdf_file = open("out.pdf", "rb")
+    pdf_raw = pdf_file.read()
+    pdf_file.close()
+    os.remove("out.pdf")
+    return {
+        'body': pdf_raw,
+        'filename': '{}_invoice.pdf'.format(invoice_period.replace(' ', '_')),
+    }

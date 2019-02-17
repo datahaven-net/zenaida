@@ -47,7 +47,7 @@
                             <a class="nav-link dropdown-toggle {% if url_name == 'account_domains' %}active{% endif %}"
                               href="#" id="navbarDropdownMenuDomains" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Domains</a>
                             <div class="dropdown-menu dropdown-menu-right bg" aria-labelledby="navbarDropdownMenuDomains">
-                                <a class="dropdown-item" href="{% url 'domain_lookup' %}">Add Domain</a>
+                                <a class="dropdown-item" href="{% url 'domain_lookup' %}">New Domain</a>
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">My Domains ({{user.domains.count}})</a>
                                 <a class="dropdown-item" href="{% url 'account_contacts' %}">Contact details</a>
                             </div>

@@ -54,24 +54,30 @@
                             Domain name
                         </th>
                         <th align=left bgcolor="#D0D0D0">
-                            Register/Renew Date
+                            Register/Renew date
+                        </th>
+                        <th align=left bgcolor="#D0D0D0">
+                            Order type
                         </th>
                         <th align=right bgcolor="#D0D0D0">
                             Price
                         </th>
                     </tr>
                     {% for domain_order in domain_orders %}
-                    <tr>
-                        <td align=left>
-                            {{ domain_order.domain_name }}
-                        </td>
-                        <td align=left>
-                            {{ domain_order.transaction_date }}
-                        </td>
-                        <td align=right>
-                            ${{ domain_order.price }} US
-                        </td>
-                    </tr>
+                        <tr>
+                            <td align=left>
+                                {{ domain_order.domain_name }}
+                            </td>
+                            <td align=left>
+                                {{ domain_order.transaction_date }}
+                            </td>
+                            <td align=left>
+                                {{ domain_order.transaction_type }}
+                            </td>
+                            <td align=right>
+                                ${{ domain_order.price }} US
+                            </td>
+                        </tr>
                     {% endfor %}
                 </table>
             </td>

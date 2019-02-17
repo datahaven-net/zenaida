@@ -28,7 +28,7 @@
 
                     <tr>
                         <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
-                        <td><b>{{ domain.name }}</b></td>
+                        <td><a href='{% url "account_domain_edit" domain.id %}' role="button"><b>{{ domain.name }}</b></a></td>
                         <td>{{ domain.get_epp_status_display }}</td>
                         <td>
                             {% if domain.expiry_datetime_as_date <= 0|add_days %}
@@ -41,14 +41,13 @@
                         </td>
                         <td>{{ domain.create_date|date:'d-m-Y' }}</td>
                         <td>
-                            <a class="btn btn-secondary" href='{% url "account_domain_edit" domain.id %}' role="button">Edit</a>
                             {% if not domain.is_registered %}
-                                <a class="btn btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
+                                <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
                             {% elif domain.can_be_restored  %}
-                                <a class="btn btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
+                                <a class="btn btn-sm btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
                             {% else %}
-                                <a class="btn btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
-                                <a class="btn btn-info" href="{% url 'account_domain_transfer' %}?domain_name={{ domain.name }}" role="button">Transfer</a>
+                                <a class="btn btn-sm btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
+                                <a class="btn btn-sm btn-info" href="{% url 'account_domain_transfer' %}?domain_name={{ domain.name }}" role="button">Transfer</a>
                             {% endif %}
                         </td>
                     </tr>

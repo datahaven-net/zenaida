@@ -1,11 +1,5 @@
-import ast
-import calendar
 import logging
 import datetime
-import os
-
-
-import pdfkit  # @UnresolvedImport
 
 from django import shortcuts
 from django.conf import settings
@@ -14,7 +8,6 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.template.loader import get_template
 
 from back import domains
 
@@ -76,24 +69,14 @@ def orders_list(request):
     """
     if not request.user.is_authenticated:
         return shortcuts.redirect('index')
-
-    is_order_filtered = False
-    order_id_list = []
-    period = "all"
     if request.method == 'POST':
         form = billing_forms.FilterOrdersByDateForm(request.POST)
-        year = form.data.get('year')
-        month = form.data.get('month')
         order_objects = billing_orders.list_orders_by_date(
-            owner=request.user, year=year, month=month, exclude_cancelled=True
+            owner=request.user,
+            year=form.data.get('year'),
+            month=form.data.get('month'),
+            exclude_cancelled=True,
         )
-        for order in order_objects:
-            order_id_list.append(order.id)
-        if not month:
-            period = f'{year}'
-        else:
-            period = f'{year} {calendar.month_name[int(month)]}'
-        is_order_filtered = True
     else:
         form = billing_forms.FilterOrdersByDateForm()
         order_objects = billing_orders.list_orders(owner=request.user, exclude_cancelled=True)
@@ -107,67 +90,10 @@ def orders_list(request):
         order_objects = paginator.page(paginator.num_pages)
     return shortcuts.render(
         request, 'billing/account_orders.html', {
-            'objects': order_objects, 'order_id_list': order_id_list, 'period': period,
-            'form': form, 'is_order_filtered': is_order_filtered
+            'objects': order_objects,
+            'form': form,
         },
     )
-
-
-def billing_invoice(request):
-    """
-    """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-
-    if isinstance(ast.literal_eval(request.GET['order_id']), list):
-        order_id_list = ast.literal_eval(request.GET['order_id'])
-    else:
-        order_id_list = [request.GET['order_id']]
-
-    order_objects = (billing_orders.list_processed_orders(owner=request.user, order_id_list=order_id_list))
-
-    domain_orders = []
-    total_price = 0
-    for order in order_objects:
-        for order_item in order.items.all():
-            domain_orders.append(
-                {
-                    'domain_name': order_item.name,
-                    'transaction_date': order.finished_at.strftime('%d %B %Y'),
-                    'price': int(order_item.price)
-                }
-            )
-            total_price += int(order_item.price)
-
-    invoice_period = request.GET.get('period')
-    attachment_file_name = f'attachment; filename={invoice_period}_invoice.pdf'
-    if not invoice_period:
-        # if invoice_period was not given, there is only one order.
-        # because of this, invoice period is the month and year of the transaction
-        transaction_date = domain_orders[0]['transaction_date']
-        invoice_period = transaction_date.split(' ', 1)[1]
-        attachment_file_name = f'attachment; filename={transaction_date}_invoice.pdf'
-
-    user_profile = request.user.profile
-    html_template = get_template('billing/billing_invoice.html')
-
-    # Fill html template with the domain orders and user profile info
-    rendered_html = html_template.render(
-        {
-            'domain_orders': domain_orders,
-            'user_profile': user_profile,
-            'total_price': total_price,
-            'invoice_period': invoice_period
-        }
-    )
-    # Create pdf file from a html file
-    pdfkit.from_string(rendered_html, 'out.pdf')
-
-    with open("out.pdf", "rb") as pdf:
-        response = HttpResponse(pdf.read(), content_type='application/pdf')
-        response['Content-Disposition'] = attachment_file_name
-    os.remove("out.pdf")
-    return response
 
 
 def payments_list(request):
@@ -244,7 +170,8 @@ def order_create(request):
             item_name=domain_object.name,
         ))
     if not to_be_ordered:
-        raise ValueError()
+        messages.error(request, 'No domains were selected.')
+        return shortcuts.redirect('billing_orders')
     new_order = billing_orders.order_multiple_items(
         owner=request.user,
         order_items=to_be_ordered,
@@ -312,6 +239,29 @@ def orders_modify(request):
     return shortcuts.render(request, 'billing/account_orders.html', {
         'objects': order_objects,
     }, )
+
+
+def order_receipt_download(request, order_id=None):
+    """
+    """
+    if not request.user.is_authenticated:
+        return shortcuts.redirect('index')
+    if order_id:
+        pdf_info = billing_orders.build_receipt(
+            owner=request.user,
+            order_id=order_id,
+        )
+    else:
+        pdf_info = billing_orders.build_receipt(
+            owner=request.user,
+            year=request.GET.get('year'),
+            month=request.GET.get('month'),
+        )
+    if not pdf_info:
+        return shortcuts.redirect('billing_orders')
+    response = HttpResponse(pdf_info['body'], content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
+    return response
 
 
 def domain_get_auth_code(request):

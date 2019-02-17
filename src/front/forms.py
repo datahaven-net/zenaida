@@ -3,15 +3,6 @@ from back.models.profile import Profile
 from back.models.domain import Contact, Domain
 
 
-class DomainLookupForm(forms.Form):
-    domain_name = fields.CharField(label='', max_length=100, required=True,
-                                   widget=TextInput(attrs={'placeholder': 'Find your domain'}),)
-
-
-class DomainCreateForm(forms.Form):
-    domain_name = fields.CharField(label='Domain Name', max_length=100, required=True)
-
-
 class ContactPersonForm(ModelForm):
     class Meta:
         model = Contact
@@ -58,7 +49,8 @@ class DomainDetailsForm(ModelForm):
         ]
         if not any(ns_list):
             raise forms.ValidationError('At least one Name Server must be specified for the domain.')
-        if len(ns_list) != len(set(ns_list)):
+        filled_ns_list = list(filter(None, ns_list))
+        if len(filled_ns_list) != len(set(filled_ns_list)):
             raise forms.ValidationError('Name Servers must not be duplicated.')
         return cleaned_data
 

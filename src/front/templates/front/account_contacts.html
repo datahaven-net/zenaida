@@ -26,9 +26,9 @@
                     <td>{{contact.contact_voice}}</td>
                     <td>{{contact.contact_email}}</td>
                     <td>
-                        <a class="btn btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a>
+                        <a class="btn btn-sm btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a>
                         {% if not contact.has_any_domains %}
-                            <a class="btn btn-danger" href='{% url "account_contact_delete" contact.id %}' role="button">Delete</a>
+                            <a class="btn btn-sm btn-danger" href='{% url "account_contact_delete" contact.id %}' role="button">Delete</a>
                         {% endif %}
                     </td>
                 </tr>

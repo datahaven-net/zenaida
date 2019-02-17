@@ -51,7 +51,7 @@ class SignInView(SuccessURLAllowedHostsMixin, FormView):
 
     @check_recaptcha
     def form_valid(self, form):
-        if self.request.recaptcha_is_valid:
+        if self.request.recaptcha_is_valid or not settings.GOOGLE_RECAPTCHA_SITE_KEY:
             login(self.request, form.get_user())
             messages.add_message(self.request, messages.SUCCESS, 'Successfully logged in!')
             return HttpResponseRedirect(self.get_success_url())
@@ -71,7 +71,7 @@ class SignUpView(FormView):
 
     @check_recaptcha
     def form_valid(self, form):
-        if self.request.recaptcha_is_valid:
+        if self.request.recaptcha_is_valid or not settings.GOOGLE_RECAPTCHA_SITE_KEY:
             if settings.ENABLE_USER_ACTIVATION:
                 user = form.save(commit=False)
                 user.is_active = False

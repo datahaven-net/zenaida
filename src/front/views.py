@@ -173,7 +173,7 @@ def account_profile(request):
         
     existing_contacts = contacts.list_contacts(request.user)
     if not existing_contacts:
-        new_contact = contacts.create_from_profile(request.user, form)
+        new_contact = contacts.create_from_profile(request.user, form.instance)
         if not zmaster.contact_create_update(new_contact):
             messages.error(request, 'There were technical problems with contact details processing. '
                                         'Please try again later or contact customer support.')
@@ -183,7 +183,7 @@ def account_profile(request):
 
     existing_registrant = contacts.get_registrant(request.user)
     if not existing_registrant:
-        new_registrant = contacts.create_registrant_from_profile(request.user, form)
+        new_registrant = contacts.create_registrant_from_profile(request.user, form.instance)
         if not zmaster.contact_create_update(new_registrant):
             messages.error(request, 'There were technical problems with contact details processing. '
                                         'Please try again later or contact customer support.')
@@ -191,7 +191,7 @@ def account_profile(request):
                 'form': form,
             })
     else:
-        contacts.update_registrant_from_profile(existing_registrant, form)
+        contacts.update_registrant_from_profile(existing_registrant, form.instance)
         if not zmaster.contact_create_update(existing_registrant):
             messages.error(request, 'There were technical problems with contact details processing. '
                                         'Please try again later or contact customer support.')

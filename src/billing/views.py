@@ -4,7 +4,8 @@ import logging
 import datetime
 import os
 
-import pdfkit
+
+import pdfkit  # @UnresolvedImport
 
 from django import shortcuts
 from django.conf import settings
@@ -281,8 +282,9 @@ def order_execute(request, order_id):
     if not billing_orders.execute_single_order(existing_order):
         messages.error(request, 'There were technical problems with order processing. '
                                                       'Please try again later or contact customer support.')
-    messages.success(request, 'Order processed successfully.')
-    return orders_list(request)
+    else:
+        messages.success(request, 'Order processed successfully.')
+    return shortcuts.redirect('billing_orders')
 
 
 def order_cancel(request, order_id):
@@ -299,7 +301,7 @@ def order_cancel(request, order_id):
         raise exceptions.SuspiciousOperation()
     billing_orders.cancel_single_order(existing_order)
     messages.success(request, 'Order of %s cancelled.' % existing_order.description)
-    return orders_list(request)
+    return shortcuts.redirect('billing_orders')
 
 
 def orders_modify(request):

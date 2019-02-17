@@ -2,69 +2,61 @@
 
 {% block main_content %}
 
+<div class="alert alert-secondary text-center" role="alert">
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
-
-    <div class="panel panel-secondary text-center" role="panel">
-
-        <form method="post">
-        {% csrf_token %}
-            <div class="row">
-                <div class="row col-6">
-                    <div class="col-3">
-                        <fieldset>
-                            {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                        </fieldset>
-                    </div>
-                    <div class="col-3">
-                        <fieldset>
-                            {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                        </fieldset>
-                    </div>
-                    <div class="col-1">
-                        <button class="btn btn-sm btn-secondary">Show</button>
-                    </div>
-                    <div class="col-3">
-                        <a class="btn btn-sm btn-info" role="button" href="{% url 'billing_receipt_download' %}?year={{ form.year.value|default:"" }}&month={{ form.month.value|default:"" }}">Full Receipt</a>
-                    </div>
+    <form method="post">
+    {% csrf_token %}
+        <div class="row">
+            <div class="row col-6">
+                <div class="col-3">
+                    <fieldset>
+                        {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    </fieldset>
+                </div>
+                <div class="col-3">
+                    <fieldset>
+                        {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    </fieldset>
+                </div>
+                <div class="col-1">
+                    <button class="btn btn-sm btn-success">Show</button>
+                </div>
+                <div class="col-3">
+                    <a class="btn btn-sm btn-info" role="button" href="{% url 'billing_receipt_download' %}?year={{ form.year.value|default:"" }}&month={{ form.month.value|default:"" }}">Full Receipt</a>
                 </div>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
+</div>
 
-    <table class="table table-hover">
+<table class="table table-hover">
+    <tr>
+        <th>Description</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+
+    {% for order in objects %}
+
         <tr>
-            <th>Description</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <td><a href="{{ order.id }}">{{ order.description }}</a></td>
+            <td>{{ order.started_at }}</td>
+            <td>{{ order.status }}</td>
+            <td>
+                {% if order.is_processable %}
+                    <a class="btn btn-success" role="button" href="{% url 'billing_order_process' order.id %}">Confirm</a>
+                    <a class="btn btn-warning" role="button" href="{% url 'billing_order_cancel' order.id %}">Cancel</a>
+                {% elif order.is_processed %}
+                    <a  class="btn btn-sm btn-info" role="button" href="{% url 'billing_receipt_download' order.id %}">Receipt</a>
+                {% endif %}
+            </td>
         </tr>
 
-        {% for order in objects %}
+    {% endfor %}
 
-            <tr>
-                <td><a href="{{ order.id }}">{{ order.description }}</a></td>
-                <td>{{ order.started_at }}</td>
-                <td>{{ order.status }}</td>
-                <td>
-                    {% if order.is_processable %}
-                        <a class="btn btn-sm btn-success" role="button" href="{% url 'billing_order_process' order.id %}">Confirm</a>
-                        <a class="btn btn-sm btn-warning" role="button" href="{% url 'billing_order_cancel' order.id %}">Cancel</a>
-                    {% elif order.is_processed %}
-                        <a  class="btn btn-sm btn-info" role="button" href="{% url 'billing_receipt_download' order.id %}">Receipt</a>
-                    {% endif %}
-                </td>
-            </tr>
-
-        {% endfor %}
-
-    </table>
+</table>
 
 {% include 'base/pagination.html' %}
-
-{% endif %}
-
 
 {% endblock %}

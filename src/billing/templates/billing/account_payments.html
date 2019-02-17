@@ -3,43 +3,37 @@
 {% block main_content %}
 
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
+{% if objects %}
+    <div class="table-responsive">
 
-    {% if objects %}
-        <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Amount</th>
+                <th>Payment method</th>
+                <th>Started</th>
+            </tr>
 
-            <table class="table table-hover">
+            {% for payment in objects %}
+
                 <tr>
-                    <th>Amount</th>
-                    <th>Payment method</th>
-                    <th>Started</th>
+                    <td>{{ payment.amount }}</td>
+                    <td>{{ payment.get_method_display }}</td>
+                    <td>{{ payment.started_at }}</td>
                 </tr>
 
-                {% for payment in objects %}
+            {% endfor %}
 
-                    <tr>
-                        <td>{{ payment.amount }}</td>
-                        <td>{{ payment.get_method_display }}</td>
-                        <td>{{ payment.started_at }}</td>
-                    </tr>
+        </table>
 
-                {% endfor %}
+    </div>
 
-            </table>
+    {% include 'base/pagination.html' %}
 
-        </div>
-
-        {% include 'base/pagination.html' %}
-
-    {% else %}
-        <div class="alert alert-warning text-center" role="alert">
-            You didn't make any payment yet.<br />
-            <a href="{% url 'billing_new_payment' %}" class="alert-link">Click here to buy credits!</a>
-        </div>
-    {% endif %}
-
+{% else %}
+    <div class="alert alert-warning text-center" role="alert">
+        You didn't make any payment yet.<br />
+        <a href="{% url 'billing_new_payment' %}" class="alert-link">Click here to buy credits!</a>
+    </div>
 {% endif %}
 
 

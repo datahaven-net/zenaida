@@ -2,6 +2,7 @@ import datetime
 
 from django import shortcuts
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 
@@ -15,9 +16,8 @@ from front import forms
 from zepp import zmaster
 
 
+@login_required
 def index_page(request):
-    if not request.user.is_authenticated:
-        return shortcuts.render(request, 'base/index.html')
     if not request.user.profile.is_complete():
         return shortcuts.redirect('account_profile')
     return shortcuts.render(request, 'base/index.html', {
@@ -25,9 +25,8 @@ def index_page(request):
     })
 
 
+@login_required
 def account_domains(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     if not request.user.profile.is_complete():
         messages.info(request, 'Please provide your contact information to be able to register new domains.')
         return account_profile(request)
@@ -50,9 +49,8 @@ def account_domains(request):
     })
 
 
+@login_required
 def account_domain_create(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     if not request.user.profile.is_complete():
         messages.info(request, 'Please provide your contact information to be able to register new domains.')
         return account_profile(request)
@@ -98,9 +96,8 @@ def account_domain_create(request):
     return shortcuts.redirect('account_domains')
 
 
+@login_required
 def account_domain_edit(request, domain_id):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     if not request.user.profile.is_complete():
         messages.info(request, 'Please provide your contact information to be able to register new domains.')
         return account_profile(request)
@@ -139,9 +136,8 @@ def account_domain_edit(request, domain_id):
     return shortcuts.redirect('account_domains')
 
 
+@login_required
 def account_domain_transfer(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
     # TODO Make a call to get a transfer code for domain_name
     transfer_code = '12345'
@@ -151,9 +147,8 @@ def account_domain_transfer(request):
     })
 
 
+@login_required
 def account_profile(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     if request.method != 'POST':
         return shortcuts.render(request, 'front/account_profile.html', {
             'form': forms.AccountProfileForm(instance=request.user.profile),
@@ -205,9 +200,8 @@ def account_profile(request):
     })
 
 
+@login_required
 def account_contact_create(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     if request.method != 'POST':
         return shortcuts.render(request, 'front/account_contact_create.html', {
             'form': forms.ContactPersonForm(),
@@ -230,9 +224,8 @@ def account_contact_create(request):
     return shortcuts.redirect('account_contacts')
 
 
+@login_required
 def account_contact_edit(request, contact_id):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     contact_person = shortcuts.get_object_or_404(Contact, pk=contact_id, owner=request.user)
     if request.method != 'POST':
         form = forms.ContactPersonForm(instance=contact_person)
@@ -255,26 +248,23 @@ def account_contact_edit(request, contact_id):
     return shortcuts.redirect('account_contacts')
 
 
+@login_required
 def account_contact_delete(request, contact_id):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     contact_person = shortcuts.get_object_or_404(Contact, pk=contact_id, owner=request.user)
     contact_person.delete()
     messages.success(request, 'Contact person successfully deleted.')
     return shortcuts.redirect('account_contacts')
 
 
+@login_required
 def account_contacts(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     return shortcuts.render(request, 'front/account_contacts.html', {
         'objects': contacts.list_contacts(request.user),
     })
 
 
+@login_required
 def domain_lookup(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('login')
     domain_name = request.GET.get('domain_name')
     if not domain_name:
         return shortcuts.render(request, 'front/domain_lookup.html', {

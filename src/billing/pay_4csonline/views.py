@@ -3,29 +3,26 @@ import requests
 
 from django import urls
 from django import shortcuts
+from django.contrib.auth.decorators import login_required
 from django.core import exceptions
 from django.conf import settings
 
 from billing import payments
 
 
+@login_required
 def start_payment(request, transaction_id):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-
     return shortcuts.render(request, 'billing/4csonline/start_payment.html', {
         'transaction_id': transaction_id,
     })
 
 
+@login_required
 def process_payment(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-    
     transaction_id = request.GET.get('transaction_id', '')
     payment_object = payments.by_transaction_id(transaction_id=transaction_id)
 
@@ -53,6 +50,7 @@ def process_payment(request):
     })
 
 
+@login_required
 def verify_payment(request):
     """
     """

@@ -5,73 +5,69 @@
 {% block main_content %}
 
 
-{% if not request.user.is_authenticated %}
-    {% include 'base/welcome.html' %}
-{% else %}
+{% if objects %}
 
-    {% if objects %}
+    <form action="{% url 'billing_order_create' %}" method="post">
+    {% csrf_token %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th scope="col"></th>
+                <th>Domain Name</th>
+                <th>Status</th>
+                <th>Expiry Date</th>
+                <th>Creation Date</th>
+                <th>Actions</th>
+            </tr>
 
-        <form action="{% url 'billing_order_create' %}" method="post">
-        {% csrf_token %}
-        <div class="table-responsive">
-            <table class="table table-hover">
+            {% for domain in objects %}
+
                 <tr>
-                    <th scope="col"></th>
-                    <th>Domain Name</th>
-                    <th>Status</th>
-                    <th>Expiry Date</th>
-                    <th>Creation Date</th>
-                    <th>Actions</th>
+                    <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
+                    <td><a href='{% url "account_domain_edit" domain.id %}' role="button"><b>{{ domain.name }}</b></a></td>
+                    <td>{{ domain.get_epp_status_display }}</td>
+                    <td>
+                        {% if domain.expiry_datetime_as_date <= 0|add_days %}
+                            <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                        {% elif 90|add_days > domain.expiry_datetime_as_date %}
+                            <div class="text-warning">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                        {% else %}
+                            <div class="text-success">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ domain.create_date|date:'d-m-Y' }}</td>
+                    <td>
+                        {% if not domain.is_registered %}
+                            <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
+                        {% elif domain.can_be_restored  %}
+                            <a class="btn btn-sm btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
+                        {% else %}
+                            <a class="btn btn-sm btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
+                            <a class="btn btn-sm btn-info" href="{% url 'account_domain_transfer' %}?domain_name={{ domain.name }}" role="button">Transfer</a>
+                        {% endif %}
+                    </td>
                 </tr>
 
-                {% for domain in objects %}
+            {% endfor %}
 
-                    <tr>
-                        <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
-                        <td><a href='{% url "account_domain_edit" domain.id %}' role="button"><b>{{ domain.name }}</b></a></td>
-                        <td>{{ domain.get_epp_status_display }}</td>
-                        <td>
-                            {% if domain.expiry_datetime_as_date <= 0|add_days %}
-                                <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
-                            {% elif 90|add_days > domain.expiry_datetime_as_date %}
-                                <div class="text-warning">{{ domain.expiry_date|date:'d-m-Y' }}</div>
-                            {% else %}
-                                <div class="text-success">{{ domain.expiry_date|date:'d-m-Y' }}</div>
-                            {% endif %}
-                        </td>
-                        <td>{{ domain.create_date|date:'d-m-Y' }}</td>
-                        <td>
-                            {% if not domain.is_registered %}
-                                <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
-                            {% elif domain.can_be_restored  %}
-                                <a class="btn btn-sm btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
-                            {% else %}
-                                <a class="btn btn-sm btn-primary" href="{% url 'billing_order_renew' %}?domain_name={{ domain.name }}" role="button">Renew</a>
-                                <a class="btn btn-sm btn-info" href="{% url 'account_domain_transfer' %}?domain_name={{ domain.name }}" role="button">Transfer</a>
-                            {% endif %}
-                        </td>
-                    </tr>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-success">Register/Renew/Restore</button>
+    </form>
 
-                {% endfor %}
+    {% include 'base/pagination.html' %}
 
-            </table>
-        </div>
-        <button type="submit" class="btn btn-success">Register/Renew/Restore</button>
-        </form>
+{% else %}
 
-        {% include 'base/pagination.html' %}
-
-    {% else %}
-        <div class="alert alert-warning text-center" role="alert">
-            You don't have any domain yet.
-            <p>
-                <form class="form-inline justify-content-center" action="{% url 'domain_lookup' %}" method="get">
-                    <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
-                    <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
-                </form>
-            </p>
-        </div>
-    {% endif %}
+    <div class="alert alert-warning text-center" role="alert">
+        You don't have any domain yet.
+        <p>
+            <form class="form-inline justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+                <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+        </p>
+    </div>
 
 {% endif %}
 

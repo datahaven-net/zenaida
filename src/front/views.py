@@ -29,10 +29,12 @@ def index_page(request):
 def account_domains(request):
     if not request.user.profile.is_complete():
         messages.info(request, 'Please provide your contact information to be able to register new domains.')
-        return account_profile(request)
+        # return account_profile(request)
+        return shortcuts.redirect('account_profile')
     if len(contacts.list_contacts(request.user)) == 0:
         messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
-        return account_contacts(request)
+        # return account_contacts(request)
+        return shortcuts.redirect('account_contacts')
     domain_objects = domains.list_domains(request.user.email)
     if not domain_objects:
         return domain_lookup(request)
@@ -53,10 +55,12 @@ def account_domains(request):
 def account_domain_create(request):
     if not request.user.profile.is_complete():
         messages.info(request, 'Please provide your contact information to be able to register new domains.')
-        return account_profile(request)
+        # return account_profile(request)
+        return shortcuts.redirect('account_profile')
     if len(contacts.list_contacts(request.user)) == 0:
         messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
-        return account_contacts(request)
+        # return account_contacts(request)
+        return shortcuts.redirect('account_contacts')
     if request.method != 'POST':
         form = forms.DomainDetailsForm(current_user=request.user)
         return shortcuts.render(request, 'front/account_domain_details.html', {
@@ -100,10 +104,12 @@ def account_domain_create(request):
 def account_domain_edit(request, domain_id):
     if not request.user.profile.is_complete():
         messages.info(request, 'Please provide your contact information to be able to register new domains.')
-        return account_profile(request)
+        # return account_profile(request)
+        return shortcuts.redirect('account_profile')
     if len(contacts.list_contacts(request.user)) == 0:
         messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
-        return account_contacts(request)
+        # return account_contacts(request)
+        return shortcuts.redirect('account_contacts')
     domain_info = shortcuts.get_object_or_404(Domain, pk=domain_id, owner=request.user)
     if request.method != 'POST':
         form = forms.DomainDetailsForm(current_user=request.user, instance=domain_info)
@@ -133,7 +139,10 @@ def account_domain_edit(request, domain_id):
             })
     form.save()
     messages.success(request, 'Domain details successfully updated.')
-    return shortcuts.redirect('account_domains')
+    # return shortcuts.redirect('account_domains')
+    return shortcuts.render(request, 'front/account_domain_details.html', {
+        'form': form,
+    })
 
 
 @login_required

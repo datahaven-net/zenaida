@@ -124,9 +124,7 @@ def billing_invoice(request):
     else:
         order_id_list = [request.GET['order_id']]
 
-    order_objects = []
-    for order_id in order_id_list:
-        order_objects.append(billing_orders.list_only_processed_orders(owner=request.user, order_id=order_id))
+    order_objects = (billing_orders.list_processed_orders(owner=request.user, order_id_list=order_id_list))
 
     domain_orders = []
     total_price = 0

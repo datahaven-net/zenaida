@@ -8,6 +8,7 @@ import pdfkit
 
 from django import shortcuts
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.utils import timezone
 from django.contrib import messages
@@ -22,19 +23,18 @@ from billing import orders as billing_orders
 from billing import payments
 
 
+@login_required
 def billing_overview(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
+    # TODO: this needs to be done
+    pass
 
 
+@login_required
 def new_payment(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-
     if request.method != 'POST':
         form = billing_forms.NewPaymentForm()
         return shortcuts.render(request, 'billing/new_payment.html', {
@@ -70,12 +70,10 @@ def new_payment(request):
     raise ValueError('invalid payment method')
 
 
+@login_required
 def orders_list(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-
     is_order_filtered = False
     order_id_list = []
     period = "all"
@@ -112,12 +110,10 @@ def orders_list(request):
     )
 
 
+@login_required
 def billing_invoice(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-
     if isinstance(ast.literal_eval(request.GET['order_id']), list):
         order_id_list = ast.literal_eval(request.GET['order_id'])
     else:
@@ -169,11 +165,10 @@ def billing_invoice(request):
     return response
 
 
+@login_required
 def payments_list(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     payment_objects = payments.list_payments(owner=request.user, statuses=['processed', ])
     page = request.GET.get('page', 1)
     paginator = Paginator(payment_objects, 10)
@@ -188,11 +183,10 @@ def payments_list(request):
     }, )
 
 
+@login_required
 def order_domain_register(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     new_order = billing_orders.order_single_item(
         owner=request.user,
         item_type='domain_register',
@@ -204,25 +198,26 @@ def order_domain_register(request):
     }, )
 
 
+@login_required
 def order_domain_renew(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
+    # TODO: this needs to be done
+    pass
 
 
+@login_required
 def order_domain_restore(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
+    # TODO: this needs to be done
+    pass
 
 
+@login_required
 def order_create(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     order_items = request.POST.getlist('order_items')
     to_be_ordered = []
     for domain_name in order_items:
@@ -253,22 +248,20 @@ def order_create(request):
     }, )
 
 
+@login_required
 def order_details(request, order_id):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     existing_order = billing_orders.by_id(order_id)
     return shortcuts.render(request, 'billing/order_details.html', {
         'order': existing_order,
     }, )
 
 
+@login_required
 def order_execute(request, order_id):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
     existing_order = billing_orders.by_id(order_id)
     if not existing_order:
         logging.critical('User %s tried to execute non-existing order' % request.user)
@@ -283,11 +276,10 @@ def order_execute(request, order_id):
     return orders_list(request)
 
 
+@login_required
 def order_cancel(request, order_id):
     """
-    """    
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
+    """
     existing_order = billing_orders.by_id(order_id)
     if not existing_order:
         logging.critical('User %s tried to cancel non-existing order' % request.user)
@@ -300,10 +292,8 @@ def order_cancel(request, order_id):
     return orders_list(request)
 
 
+@login_required
 def orders_modify(request):
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-
     order_objects = billing_orders.list_orders(owner=request.user)
     name = request.POST.get('name')
 
@@ -312,8 +302,9 @@ def orders_modify(request):
     }, )
 
 
+@login_required
 def domain_get_auth_code(request):
     """
     """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
+    # TODO: this needs to be done
+    pass

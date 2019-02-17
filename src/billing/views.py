@@ -232,6 +232,7 @@ def orders_modify(request):
     }, )
 
 
+@login_required
 def order_receipt_download(request, order_id=None):
     """
     """

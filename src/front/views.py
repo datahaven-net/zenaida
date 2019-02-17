@@ -16,8 +16,9 @@ from front import forms
 from zepp import zmaster
 
 
-@login_required
 def index_page(request):
+    if not request.user.is_authenticated:
+        return shortcuts.render(request, 'base/index.html')
     if not request.user.profile.is_complete():
         return shortcuts.redirect('account_profile')
     return shortcuts.render(request, 'base/index.html', {

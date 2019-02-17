@@ -42,11 +42,10 @@ def list_processed_orders(owner, order_id_list):
 def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
     if year and month:
         orders = Order.orders.filter(owner=owner, started_at__year=year, started_at__month=month)
+    elif year:
+        orders = Order.orders.filter(owner=owner, started_at__year=year)
     else:
-        if year:
-            orders = Order.orders.filter(owner=owner, started_at__year=year)
-        else:
-            orders = Order.orders.filter(owner=owner)
+        orders = Order.orders.filter(owner=owner)
     if exclude_cancelled:
         orders = orders.exclude(status='cancelled')
     orders = orders.order_by('finished_at')
@@ -232,11 +231,10 @@ def build_receipt(owner, year=None, month=None, order_id=None):
         if year and month:
             month_label = calendar.month_name[int(month)]
             invoice_period = f'{year} {month_label}'
+        elif year:
+            invoice_period = f'{year}'
         else:
-            if year:
-                invoice_period = f'{year}'
-            else:
-                invoice_period = order_objects[-1].finished_at.strftime('%B %Y')
+            invoice_period = order_objects[-1].finished_at.strftime('%B %Y')
 
     domain_orders = []
     total_price = 0
@@ -261,9 +259,8 @@ def build_receipt(owner, year=None, month=None, order_id=None):
 
     # Create pdf file from a html file
     pdfkit.from_string(rendered_html, 'out.pdf')
-    pdf_file = open("out.pdf", "rb")
-    pdf_raw = pdf_file.read()
-    pdf_file.close()
+    with open("out.pdf", "rb") as pdf_file:
+        pdf_raw = pdf_file.read()
     os.remove("out.pdf")
     return {
         'body': pdf_raw,

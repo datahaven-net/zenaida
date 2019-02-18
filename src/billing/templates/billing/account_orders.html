@@ -45,8 +45,8 @@
             <td>{{ order.status }}</td>
             <td>
                 {% if order.is_processable %}
-                    <a class="btn btn-success" role="button" href="{% url 'billing_order_process' order.id %}">Confirm</a>
-                    <a class="btn btn-warning" role="button" href="{% url 'billing_order_cancel' order.id %}">Cancel</a>
+                    <a class="btn btn-sm btn-success" role="button" href="{% url 'billing_order_process' order.id %}">Confirm</a>
+                    <a class="btn btn-sm btn-warning" role="button" href="{% url 'billing_order_cancel' order.id %}">Cancel</a>
                 {% elif order.is_processed %}
                     <a  class="btn btn-sm btn-info" role="button" href="{% url 'billing_receipt_download' order.id %}">Receipt</a>
                 {% endif %}

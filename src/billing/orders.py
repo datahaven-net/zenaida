@@ -217,24 +217,24 @@ def build_receipt(owner, year=None, month=None, order_id=None):
     """
     """
     order_objects = [] 
-    invoice_period = ''
+    receipt_period = ''
     if order_id:
         order_object = by_id(order_id)
         if not order_object:
             return None
         order_objects.append(order_object)
-        invoice_period = order_object.finished_at.strftime('%B %Y')
+        receipt_period = order_object.finished_at.strftime('%B %Y')
     else:
         order_objects = list_orders_by_date(owner=owner, year=year, month=month, exclude_cancelled=True)
         if not order_objects:
             return None
         if year and month:
             month_label = calendar.month_name[int(month)]
-            invoice_period = f'{year} {month_label}'
+            receipt_period = f'{year} {month_label}'
         elif year:
-            invoice_period = f'{year}'
+            receipt_period = f'{year}'
         else:
-            invoice_period = order_objects[-1].finished_at.strftime('%B %Y')
+            receipt_period = order_objects[-1].finished_at.strftime('%B %Y')
 
     domain_orders = []
     total_price = 0
@@ -249,12 +249,12 @@ def build_receipt(owner, year=None, month=None, order_id=None):
             total_price += int(order_item.price)
 
     # Fill html template with the domain orders and user profile info
-    html_template = get_template('billing/billing_invoice.html')
+    html_template = get_template('billing/billing_receipt.html')
     rendered_html = html_template.render({
         'domain_orders': domain_orders,
         'user_profile': owner.profile,
         'total_price': total_price,
-        'invoice_period': invoice_period
+        'receipt_period': receipt_period
     })
 
     # Create pdf file from a html file
@@ -264,5 +264,5 @@ def build_receipt(owner, year=None, month=None, order_id=None):
     os.remove("out.pdf")
     return {
         'body': pdf_raw,
-        'filename': '{}_invoice.pdf'.format(invoice_period.replace(' ', '_')),
+        'filename': '{}_receipt.pdf'.format(receipt_period.replace(' ', '_')),
     }

@@ -1,3 +1,5 @@
+import os
+
 from django.forms import forms, fields, models, ModelForm, TextInput
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
@@ -51,7 +53,13 @@ class DomainDetailsForm(ModelForm):
             raise forms.ValidationError('At least one Name Server must be specified for the domain.')
         filled_ns_list = list(filter(None, ns_list))
         if len(filled_ns_list) != len(set(filled_ns_list)):
-            raise forms.ValidationError('Name Servers must not be duplicated.')
+            raise forms.ValidationError('Name Servers can not be duplicated.')
+        invalid_ns_list = []
+        for ns in filled_ns_list:
+            if not os.system("ping -c 1 " + ns) == 0:
+                invalid_ns_list.append(ns)
+        if invalid_ns_list:
+            raise forms.ValidationError(f"Invalid nameserver(s): {', '.join(map(str, invalid_ns_list))}")
         return cleaned_data
 
 

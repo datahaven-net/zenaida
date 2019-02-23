@@ -299,31 +299,3 @@ def domain_lookup(request):
         'result': result,
         'domain_name': domain_name,
     })
-
-
-def contact_us(request):
-    return shortcuts.render(request, 'front/contact_us.html')
-
-
-def get_faq(request):
-    return shortcuts.render(request, 'front/faq.html')
-
-
-def get_faq_epp(request):
-    return shortcuts.render(request, 'faq/faq_epp.html')
-
-
-def get_faq_auctions(request):
-    return shortcuts.render(request, 'faq/faq_auctions.html')
-
-
-def get_faq_payments(request):
-    return shortcuts.render(request, 'faq/faq_payments.html')
-
-
-def get_correspondentbank(request):
-    return shortcuts.render(request, 'faq/faq_correspondentbank.html')
-
-
-def get_registrars(request):
-    return shortcuts.render(request, 'faq/faq_registrars.html')

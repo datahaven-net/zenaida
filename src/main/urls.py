@@ -5,6 +5,7 @@ from django.contrib.auth import views as auth_views
 
 from django.urls import path
 from django.conf.urls import include
+from django.views.generic import TemplateView
 
 from front import views as front_views
 from billing import views as billing_views
@@ -73,14 +74,15 @@ patterns = [
 
     path('lookup/', front_views.domain_lookup, name='domain_lookup'),
 
-    path('faq/', front_views.get_faq, name='faq'),
-    path('faq_epp/', front_views.get_faq_epp, name='faq_epp'),
-    path('faq_auctions/', front_views.get_faq_auctions, name='faq_auctions'),
-    path('faq_payments/', front_views.get_faq_payments, name='faq_payments'),
-    path('correspondentbank/', front_views.get_correspondentbank, name='correspondentbank'),
-    path('registrars/', front_views.get_registrars, name='registrars'),
+    path('faq/', TemplateView.as_view(template_name='front/faq.html'), name='faq'),
+    path('faq_epp/', TemplateView.as_view(template_name='faq/faq_epp.html'), name='faq_epp'),
+    path('faq_auctions/', TemplateView.as_view(template_name='faq/faq_auctions.html'), name='faq_auctions'),
+    path('faq_payments/', TemplateView.as_view(template_name='faq/faq_payments.html'), name='faq_payments'),
+    path('correspondentbank/', TemplateView.as_view(
+        template_name='faq/faq_correspondentbank.html'), name='correspondentbank'),
+    path('registrars/', TemplateView.as_view(template_name='faq/faq_registrars.html'), name='registrars'),
 
-    path('contact-us/', front_views.contact_us, name='contact_us'),
+    path('contact-us/', TemplateView.as_view(template_name='front/contact_us.html'), name='contact_us'),
 
     path('', front_views.index_page, name='index'),
 ]

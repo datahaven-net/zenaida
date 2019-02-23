@@ -21,10 +21,7 @@
     {% endif %}
 
     <style>
-        .dropdown:hover>.dropdown-menu{
-            display: block;
-        }
-        .dropup:hover>.dropdown-menu{
+        .navbar-nav li:hover .dropdown-menu {
             display: block;
         }
         body {
@@ -46,18 +43,16 @@
                 {% if request.user.is_authenticated %}
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'account_domains' %}active{% endif %}"
-                              href="#" id="navbarDropdownMenuDomains" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Domains</a>
-                            <div class="dropdown-menu dropdown-menu-right bg" aria-labelledby="navbarDropdownMenuDomains">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'account_domains' or url_name == 'domain_lookup' or url_name == 'account_contacts' %}active{% endif %}" href="#" id="navbarDropdownMenuDomains" role="button" aria-haspopup="true" aria-expanded="false">Domains</a>
+                            <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuDomains">
                                 <a class="dropdown-item" href="{% url 'domain_lookup' %}">New Domain</a>
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">My Domains ({{user.domains.count}})</a>
                                 <a class="dropdown-item" href="{% url 'account_contacts' %}">Contact details</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'billing_new_payment' or url_name == 'billing_payments' or url_name == 'billing_orders' %}active{% endif %}"
-                              href="#" id="navbarDropdownMenuBilling" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Billing</a>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuBilling">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'billing_new_payment' or url_name == 'billing_payments' or url_name == 'billing_orders' %}active{% endif %}" href="#" id="navbarDropdownMenuBilling" role="button" aria-haspopup="true" aria-expanded="false">Billing</a>
+                            <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuBilling">
                                 <a class="dropdown-item" href="{% url 'billing_new_payment' %}">Buy Credits</a>
                                 <a class="dropdown-item" href="{% url 'billing_payments' %}">My Payments</a>
                                 <a class="dropdown-item" href="{% url 'billing_orders' %}">My Orders</a>
@@ -72,9 +67,8 @@
                         </form>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}"
-                              href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{ user.email }}</a>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}" href="#" id="navbarDropdownMenuProfile" data-role="button" aria-haspopup="true" aria-expanded="false">{{ user.email }}</a>
+                            <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuProfile">
                                 <a class="dropdown-item" href="{% url 'billing_new_payment' %}">Current balance: ${{user.balance}} US</a>
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">Your owned domains: {{user.domains.count}}</a>
                                 <div class="dropdown-divider"></div>

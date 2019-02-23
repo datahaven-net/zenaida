@@ -12,7 +12,7 @@ from back.models.contact import Contact
 from back import domains
 from back import contacts
 from back import zones
-from front import forms
+from front import forms, helpers
 from zepp import zmaster
 
 
@@ -149,8 +149,8 @@ def account_domain_edit(request, domain_id):
 @login_required
 def account_domain_transfer(request):
     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
-    # TODO Make a call to get a transfer code for domain_name
-    transfer_code = '12345'
+    transfer_code = helpers.get_transfer_code()
+    # TODO Send this code to the Cocca.
     return shortcuts.render(request, 'front/account_domain_transfer.html', {
         'transfer_code': transfer_code,
         'domain_name': domain.name,

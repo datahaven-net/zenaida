@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import datetime, timedelta
 
 from django.utils import timezone
 from django.conf import settings
@@ -68,6 +69,26 @@ def is_exist(domain_name='', epp_id=''):
     if epp_id:
         return bool(Domain.domains.filter(epp_id=epp_id).first())
     return bool(Domain.domains.filter(name=domain_name).first())
+
+
+def is_domain_available(domain_name):
+    """
+    Check if domain name exists, if it does not exist, then return True.
+
+    If it exists, check if it's not created in last hour and if it doesn't have an epp_id
+    OR if its expiry date is older than now and it doesn't have an epp_id, delete from internal DB and return True.
+    """
+    domain = find(domain_name=domain_name)
+    if domain:
+        if domain.create_date.replace(tzinfo=None) + timedelta(hours=1) < datetime.utcnow() and not domain.epp_id:
+            delete(domain.id)
+            return True
+        elif domain.expiry_date.replace(tzinfo=None) < datetime.utcnow() and not domain.epp_id:
+            delete(domain.id)
+            return True
+        else:
+            return False
+    return True
 
 
 def find(domain_name='', epp_id=''):
@@ -139,6 +160,11 @@ def create(
         new_domain.save()
         logger.debug('domain created: %r', new_domain)
     return new_domain
+
+
+def delete(domain_id):
+    from back.models.domain import Domain
+    return Domain.domains.filter(id=domain_id).delete()
 
 
 def list_domains(registrant_email):

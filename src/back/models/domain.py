@@ -28,7 +28,7 @@ class Domain(models.Model):
     expiry_date = models.DateTimeField()
     create_date = models.DateTimeField()
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, default=None)
+    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
     epp_status = models.CharField(
         max_length=32,
         choices=(
@@ -84,6 +84,11 @@ class Domain(models.Model):
 
     def __str__(self):
         return 'Domain({}:{}:{})'.format(self.name, self.epp_id, self.owner.email)
+
+    def save(self, *args, **kwargs):
+        if not self.epp_id:
+            self.epp_id = None
+        super(Domain, self).save(*args, **kwargs)
 
     def list_contacts(self):
         """

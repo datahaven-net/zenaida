@@ -115,6 +115,9 @@ def payments_list(request):
 def order_domain_register(request):
     """
     """
+    if request.user.balance < 100:
+        messages.error(request, 'You don\'t have enough credits to register a domain.')
+        return shortcuts.redirect('billing_new_payment')
     new_order = billing_orders.order_single_item(
         owner=request.user,
         item_type='domain_register',

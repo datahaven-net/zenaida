@@ -61,7 +61,7 @@ def validate(domain):
     raise exceptions.ValidationError('value "{}" is not a valid domain name'.format(domain))
 
 
-def is_exist(domain_name='', epp_id=''):
+def is_exist(domain_name='', epp_id=None):
     """
     Return `True` if domain exists, doing query in Domain table.
     """
@@ -91,7 +91,7 @@ def is_domain_available(domain_name):
     return True
 
 
-def find(domain_name='', epp_id=''):
+def find(domain_name='', epp_id=None):
     """
     Return `Domain` object if found in Domain table, else None.
     """
@@ -106,7 +106,7 @@ def create(
         owner,
         expiry_date=None,
         create_date=None,
-        epp_id='',
+        epp_id=None,
         auth_key='',
         registrar=None,
         registrant=None,

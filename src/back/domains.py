@@ -79,16 +79,13 @@ def is_domain_available(domain_name):
     OR if its expiry date is older than now and it doesn't have an epp_id, delete from internal DB and return True.
     """
     domain = find(domain_name=domain_name)
-    if domain:
-        if domain.create_date.replace(tzinfo=None) + timedelta(hours=1) < datetime.utcnow() and not domain.epp_id:
-            delete(domain.id)
-            return True
-        elif domain.expiry_date.replace(tzinfo=None) < datetime.utcnow() and not domain.epp_id:
-            delete(domain.id)
-            return True
-        else:
-            return False
-    return True
+    if not domain:
+        return True
+    if domain.epp_id:
+        return False
+    if domain.create_date.replace(tzinfo=None) + timedelta(hours=1) < datetime.utcnow():
+        return True
+    return False
 
 
 def find(domain_name='', epp_id=None):

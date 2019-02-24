@@ -65,6 +65,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         Method to initialize additional variables and flags
         at creation phase of `domain_hostnames_synchronizer()` machine.
         """
+        self.known_domain_info = None
 
     def state_changed(self, oldstate, newstate, event, *args, **kwargs):
         """
@@ -87,10 +88,15 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 self.state = 'DONE'
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'run' and self.isUpdateRequired(*args, **kwargs):
+            elif event == 'run' and self.isExisting(*args, **kwargs) and self.isUpdateRequired(*args, **kwargs):
                 self.state = 'DOMAIN_INFO?'
                 self.doInit(*args, **kwargs)
                 self.doEppDomainInfo(*args, **kwargs)
+            elif event == 'run' and not self.isExisting(*args, **kwargs) and self.isUpdateRequired(*args, **kwargs):
+                self.state = 'HOSTS_CHECK'
+                self.doInit(*args, **kwargs)
+                self.doPrepareHosts(*args, **kwargs)
+                self.doEppHostCheckMany(*args, **kwargs)
         #---DOMAIN_INFO?---
         elif self.state == 'DOMAIN_INFO?':
             if event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isUpdateRequired(*args, **kwargs):
@@ -150,16 +156,19 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         return args[0] == int(args[1]['epp']['response']['result']['@code'])
 
+    def isExisting(self, *args, **kwargs):
+        """
+        Condition method.
+        """
+        return bool(kwargs.get('known_domain_info', None) or self.known_domain_info)
+
     def isUpdateRequired(self, *args, **kwargs):
         """
         Condition method.
         """
-        known_domain_info = kwargs.get('known_domain_info', None)
-        if known_domain_info is None:
-            return True
         return domains.check_nameservers_changed( 
             domain_object=kwargs['target_domain'],
-            domain_info_response=known_domain_info,
+            domain_info_response=(kwargs.get('known_domain_info', None) or self.known_domain_info),
         )
 
     def doInit(self, *args, **kwargs):
@@ -278,3 +287,5 @@ class DomainHostnamesSynchronizer(automat.Automat):
         self.hosts_to_be_added = None
         self.hosts_to_be_removed = None
         self.destroy()
+
+

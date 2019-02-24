@@ -21,7 +21,7 @@ class Contact(models.Model):
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contacts', )
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, default=None)
+    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
 
     person_name = models.CharField(max_length=255, verbose_name='Full Name')
     organization_name = models.CharField(max_length=255, verbose_name='Organization')
@@ -38,6 +38,11 @@ class Contact(models.Model):
 
     def __str__(self):
         return 'Contact ({} {})'.format(self.owner.email, self.epp_id)
+
+    def save(self, *args, **kwargs):
+        if not self.epp_id:
+            self.epp_id = None
+        super(Contact, self).save(*args, **kwargs)
 
     @property
     def label(self):
@@ -66,7 +71,7 @@ class Registrant(models.Model):
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='registrants', )
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, default=None)
+    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
 
     person_name = models.CharField(max_length=255, verbose_name='Full Name')
     organization_name = models.CharField(max_length=255, verbose_name='Organization')
@@ -83,3 +88,8 @@ class Registrant(models.Model):
 
     def __str__(self):
         return 'Registrant ({} {})'.format(self.owner.email, self.epp_id)
+
+    def save(self, *args, **kwargs):
+        if not self.epp_id:
+            self.epp_id = None
+        super(Registrant, self).save(*args, **kwargs)

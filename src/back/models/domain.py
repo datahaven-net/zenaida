@@ -28,7 +28,7 @@ class Domain(models.Model):
     expiry_date = models.DateTimeField()
     create_date = models.DateTimeField()
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
+    epp_id = models.CharField(max_length=32, unique=True, null=True, default=None)
     epp_status = models.CharField(
         max_length=32,
         choices=(

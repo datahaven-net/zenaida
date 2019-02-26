@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime, timedelta
+import datetime
 
 from django.utils import timezone
 from django.conf import settings
@@ -83,7 +83,7 @@ def is_domain_available(domain_name):
         return True
     if domain.epp_id:
         return False
-    if domain.create_date.replace(tzinfo=None) + timedelta(hours=1) < datetime.utcnow():
+    if domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
         return True
     return False
 

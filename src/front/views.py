@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime
 
 from django import shortcuts
 from django.contrib import messages
@@ -87,7 +87,7 @@ def account_domain_create(request):
             return shortcuts.render(request, 'front/account_domain_details.html', {
                 'form': form,
             })
-        if existing_domain.create_date.replace(tzinfo=None) + timedelta(hours=1) < datetime.utcnow():
+        if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
             domains.delete(domain_id=existing_domain.id)
         else:
             messages.warning(request, 'This domain is not available now.')

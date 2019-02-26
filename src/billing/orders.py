@@ -127,7 +127,7 @@ def execute_domain_register(order_item, target_domain):
     if not zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
         sync_contacts=False,
-        sync_nameservers=False,
+        sync_nameservers=True,
         renew_years=2,
         log_events=True,
         log_transitions=True,

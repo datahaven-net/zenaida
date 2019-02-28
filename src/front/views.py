@@ -3,11 +3,16 @@ import datetime
 from django import shortcuts
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.utils import timezone
+from django.views.generic import UpdateView
 
 from back.models.domain import Domain
 from back.models.contact import Contact
+from back.models.profile import Profile
 
 from back import domains
 from back import contacts
@@ -171,57 +176,57 @@ def account_domain_transfer(request):
     })
 
 
-@login_required
-def account_profile(request):
-    if request.method != 'POST':
-        return shortcuts.render(request, 'front/account_profile.html', {
-            'form': forms.AccountProfileForm(instance=request.user.profile),
-        })
-    
-    form = forms.AccountProfileForm(request.POST, instance=request.user.profile)
-    if not form.is_valid():
-        messages.error(request, 'Please correct the error below.')
-        return shortcuts.render(request, 'front/account_profile.html', {
-            'form': form,
-        })
-        
-    existing_contacts = contacts.list_contacts(request.user)
-    if not existing_contacts:
-        new_contact = contacts.create_from_profile(request.user, form.instance)
-        if not zmaster.contact_create_update(new_contact):
-            messages.error(request, 'There were technical problems with contact details processing. '
-                                        'Please try again later or contact customer support.')
-            return shortcuts.render(request, 'front/account_profile.html', {
-                'form': form,
-            })
+class AccountProfileView(UpdateView, LoginRequiredMixin):
+    template_name = 'front/account_profile.html'
+    model = Profile
+    form_class = forms.AccountProfileForm
+    success_url = reverse_lazy('account_profile')
 
-    existing_registrant = contacts.get_registrant(request.user)
-    if not existing_registrant:
-        new_registrant = contacts.create_registrant_from_profile(request.user, form.instance)
-        if not zmaster.contact_create_update(new_registrant):
-            messages.error(request, 'There were technical problems with contact details processing. '
-                                        'Please try again later or contact customer support.')
-            return shortcuts.render(request, 'front/account_profile.html', {
-                'form': form,
-            })
-    else:
-        contacts.update_registrant_from_profile(existing_registrant, form.instance)
-        if not zmaster.contact_create_update(existing_registrant):
-            messages.error(request, 'There were technical problems with contact details processing. '
-                                        'Please try again later or contact customer support.')
-            return shortcuts.render(request, 'front/account_profile.html', {
-                'form': form,
-            })
+    def get_object(self, queryset=None):
+        return self.request.user.profile
 
-    form.save()
+    def form_valid(self, form):
+        existing_contacts = contacts.list_contacts(self.request.user)
+        if not existing_contacts:
+            new_contact = contacts.create_from_profile(self.request.user, form.instance)
+            if not zmaster.contact_create_update(new_contact):
+                messages.error(
+                    self.request,
+                    'There were technical problems with contact details processing. '
+                    'Please try again later or contact customer support.'
+                )
+                return redirect('account_profile')
 
-    if existing_registrant and existing_contacts:
-        messages.success(request, 'Your profile information was successfully updated.')
-    else:
-        messages.success(request, 'Your profile information was successfully updated, you can register new domains now.')
-    return shortcuts.render(request, 'front/account_profile.html', {
-        'form': form,
-    })
+        existing_registrant = contacts.get_registrant(self.request.user)
+        if not existing_registrant:
+            new_registrant = contacts.create_registrant_from_profile(self.request.user, form.instance)
+            if not zmaster.contact_create_update(new_registrant):
+                messages.error(
+                    self.request,
+                    'There were technical problems with contact details processing. '
+                    'Please try again later or contact customer support.'
+                )
+                return redirect('account_profile')
+        else:
+            contacts.update_registrant_from_profile(existing_registrant, form.instance)
+            if not zmaster.contact_create_update(existing_registrant):
+                messages.error(
+                    self.request,
+                    'There were technical problems with contact details processing. '
+                    'Please try again later or contact customer support.'
+                )
+                return redirect('account_profile')
+
+        if existing_registrant and existing_contacts:
+            messages.success(self.request, 'Your profile information was successfully updated.')
+        else:
+            messages.success(
+                self.request,
+                'Your profile information was successfully updated, you can register new domains now.'
+            )
+
+        form.save()
+        return super().form_valid(form)
 
 
 @login_required

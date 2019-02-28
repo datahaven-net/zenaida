@@ -4,8 +4,7 @@ import pytest
 
 from automats import contact_synchronizer
 
-from zepp import zclient
-
+from zen import zclient
 from zen import zcontacts
 
 from tests import testsupport

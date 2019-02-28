@@ -8,8 +8,7 @@ from django.core import exceptions
 
 from back.models.registrar import Registrar
 
-from back import zones
-
+from zen import zzones
 from zen import zusers
 
 logger = logging.getLogger(__name__)
@@ -130,7 +129,7 @@ def create(
         registrar = Registrar.registrars.get_or_create(
             epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
         )[0]
-    zone = zones.make('.'.join(domain_name.split('.')[1:]))
+    zone = zzones.make('.'.join(domain_name.split('.')[1:]))
     new_domain = Domain(
         name=domain_name,
         owner=owner,

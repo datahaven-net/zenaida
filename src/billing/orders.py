@@ -12,9 +12,8 @@ from django.template.loader import get_template
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
-from zepp import zmaster
-
 from zen import zdomains
+from zen import zmaster
 
 
 def by_id(order_id):

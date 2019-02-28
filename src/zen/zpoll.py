@@ -1,13 +1,12 @@
 #!/usr/bin/python
 
 import logging
-import os
-import sys
 import time
 import json
 
-from zepp import xml2json
-from zepp import zclient
+from lib import xml2json
+
+from zen import zclient
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +52,12 @@ def do_domain_nameservers_changed(domain):
     # TODO: to be continue
     return False
 
+
+def do_domain_contacts_changed(domain):
+    logger.info('domain %s contacts changed', domain)
+    # TODO: to be continue
+    return False
+
 #------------------------------------------------------------------------------
 
 def on_queue_response(resData):
@@ -62,7 +67,7 @@ def on_queue_response(resData):
             trStatus = str(resData['trnData']['trStatus'])
             from_client = resData['trnData']['acID']
             to_client = resData['trnData']['reID']
-        except Exception as exc:
+        except:
             logger.exception('can not process queue response: %s' % resData)
             return False
 
@@ -79,7 +84,7 @@ def on_queue_response(resData):
 def on_queue_message(msgQ):
     try:
         json_input = json.loads(xml2json.xml2json(msgQ['msg']['#text'], XML2JsonOptions(), strip_ns=1, strip=1))
-    except Exception as exc:
+    except:
         logger.exception('can not process queue message: %s' % msgQ)
         return False
 
@@ -88,13 +93,8 @@ def on_queue_message(msgQ):
             domain = str(json_input['offlineUpdate']['domain']['name'])
             change = str(json_input['offlineUpdate']['domain']['change'])
             details = str(json_input['offlineUpdate']['domain']['details'])
-        except Exception as exc:
+        except:
             logger.exception('can not process queue json message: %s' % json_input)
-            return False
-
-        if change == 'CONTACTS_CHANGED':
-            # TODO: take action to keep DB domain in sync
-            logger.warn('CONTACTS_CHANGED for %s' % domain)
             return False
 
         if change == 'TRANSFER':
@@ -107,41 +107,41 @@ def on_queue_message(msgQ):
         if change == 'DELETION':
             if details.lower() == 'domain deleted':
                 return do_domain_deleted(domain)
-
             if details.lower() == 'domain pending delete' or details.lower() == 'domain pending deletion':
                 return do_domain_status_changed(domain)
 
         if change == 'RESTORED':
             if details.lower() == 'domain restored':
                 return do_domain_status_changed(domain)
-            # TODO: DB domain to be in sync - need to check other scenarios during restore
+            # TODO: domain to be sync, check other scenarios ?
 
         if change == 'STATE_CHANGE':
             if details.lower() == 'domain status updated':
                 return do_domain_status_changed(domain)
             if details.lower() == 'domain activated':
                 return do_domain_status_changed(domain)
+            # TODO: domain to be sync, check other scenarios ?
 
         if change == 'EXCLUSION':
             if details.lower() == 'domain excluded':
                 return do_domain_status_changed(domain)
-            # TODO: check other scenarios ?
+            # TODO: domain to be sync, check other scenarios ?
 
         if change == 'SUSPENSION':
             if details.lower() == 'domain suspended':
                 return do_domain_status_changed(domain)
-            # TODO: check other scenarios ?
+            # TODO: domain to be sync, check other scenarios ?
 
         if change == 'DETAILS_CHANGED':
             if details.lower() == 'domain expiry date updated':
                 return do_domain_expiry_date_updated(domain)
             # TODO: domain to be sync, check other scenarios ?
-        
+
+        if change == 'CONTACTS_CHANGED':
+            return do_domain_contacts_changed(domain)
+
         if change == 'NAMESERVERS_CHANGED':
             return do_domain_nameservers_changed(domain)
-            # TODO: take action to keep DB domain in sync
-            # logger.warn('NAMESERVERS_CHANGED for %s' % domain)
-            # return False
 
         if change == 'UNKNOWN':
             if details.lower().count('domain epp statuses updated'):
@@ -186,7 +186,7 @@ def main():
             try:
                 req = zclient.cmd_poll_req()
                 resp_code = req['epp']['response']['result']['@code']
-            except Exception as exc:
+            except:
                 logger.exception('ERROR in cmd_poll_req()')
                 break
 
@@ -202,13 +202,13 @@ def main():
             try:
                 msg_id = req['epp']['response']['msgQ']['@id']
                 zclient.cmd_poll_ack(msg_id)
-            except Exception as exc:
+            except:
                 logger.exception('ERROR in cmd_poll_ack()')
                 break
 
             try:
                 result = handle_event(req)
-            except Exception as exc:
+            except:
                 logger.exception('ERROR in handle_event()')
                 break
 

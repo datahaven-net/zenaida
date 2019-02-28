@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 from django.conf import settings
 
-from zepp import xml2json
-from zepp import zerrors
+from lib import xml2json
+
+from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -158,7 +159,7 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                     logger.error('bad formatted response: ' + json_output)
                 raise zerrors.EPPBadResponse('bad formatted response, response code not found')
             skip_logger_for_response_codes = ['1000', ]
-            if False:
+            if True:  # just to be able to debug poll script packets
                 skip_logger_for_response_codes.extend([ '1300', '1301', ])
             if code not in skip_logger_for_response_codes:
                 if logs:

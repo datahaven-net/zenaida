@@ -12,9 +12,9 @@ from django.template.loader import get_template
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
-from back import zdomains
-
 from zepp import zmaster
+
+from zen import zdomains
 
 
 def by_id(order_id):
@@ -158,7 +158,7 @@ def execute_domain_renew(order_item, target_domain):
 
 
 def execute_one_item(order_item):
-    target_domain = domains.find(order_item.name)
+    target_domain = zdomains.find(order_item.name)
     if not target_domain:
         logging.critical('Domain not exist', order_item.name)
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)

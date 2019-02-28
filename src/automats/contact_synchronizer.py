@@ -21,10 +21,10 @@ from django.conf import settings
 
 from automats import automat
 
-from back import zcontacts
-
 from zepp import zclient
 from zepp import zerrors
+
+from zen import zcontacts
 
 #------------------------------------------------------------------------------
 

@@ -1,8 +1,8 @@
 from django.db import models
 
-from back.zdomains import validate
-
 from billing.models.order import Order
+
+from zen.zdomains import validate_domain_name
 
 
 class OrderItem(models.Model):
@@ -30,7 +30,7 @@ class OrderItem(models.Model):
         blank=False,
     )
 
-    name = models.CharField(max_length=255, validators=[validate, ])
+    name = models.CharField(max_length=255, validators=[validate_domain_name, ])
 
     status = models.CharField(
         choices=(

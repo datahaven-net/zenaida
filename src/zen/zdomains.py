@@ -9,7 +9,8 @@ from django.core import exceptions
 from back.models.registrar import Registrar
 
 from back import zones
-from back import zusers
+
+from zen import zusers
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ def is_valid(domain_name, idn=False):
     return True
 
 
-def validate(domain):
+def validate_domain_name(domain):
     """
     Raise `ValidationError()` if domain 
     """

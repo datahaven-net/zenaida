@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from back import zdomains
+from zen import zdomains
 
 class SimpleTestCase(TestCase):
 

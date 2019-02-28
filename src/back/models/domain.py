@@ -4,11 +4,11 @@ from django.db import models
 
 from accounts.models.account import Account
 
-from back.zdomains import validate
-
 from back.models.zone import Zone
 from back.models.contact import Contact, Registrant
 from back.models.registrar import Registrar
+
+from zen.zdomains import validate_domain_name
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class Domain(models.Model):
         default_manager_name = 'domains'
         ordering = ['expiry_date']
 
-    name = models.CharField(max_length=255, unique=True, validators=[validate, ])
+    name = models.CharField(max_length=255, unique=True, validators=[validate_domain_name, ])
 
     expiry_date = models.DateTimeField()
     create_date = models.DateTimeField()

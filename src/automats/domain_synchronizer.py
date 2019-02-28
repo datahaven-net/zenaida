@@ -28,10 +28,10 @@ from automats import automat
 from automats import domain_contacts_synchronizer
 from automats import domain_hostnames_synchronizer
 
-from back import zdomains
-
 from zepp import zclient
 from zepp import zerrors
+
+from zen import zdomains
 
 #------------------------------------------------------------------------------
 

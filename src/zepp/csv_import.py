@@ -5,9 +5,9 @@ import csv
 
 from django.utils.timezone import make_aware
 
-from back import zdomains
-from back import zcontacts
-from back import zusers
+from zen import zdomains
+from zen import zcontacts
+from zen import zusers
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,10 @@
 import datetime
 
 from django.utils.timezone import make_aware
-from django.conf import settings
 
-from back import zcontacts
-from back import zdomains
-from back import zusers
+from zen import zcontacts
+from zen import zdomains
+from zen import zusers
 
 
 def prepare_tester_account(email='tester@zenaida.ai', account_password='tester'):

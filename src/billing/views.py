@@ -10,11 +10,11 @@ from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from back import zdomains
-
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
+
+from zen import zdomains
 
 
 @login_required

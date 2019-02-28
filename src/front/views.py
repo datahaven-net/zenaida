@@ -18,7 +18,7 @@ from front import forms, helpers
 
 from zen import zdomains
 from zen import zcontacts
-from zen import zones
+from zen import zzones
 from zen import zmaster
 
 
@@ -76,7 +76,7 @@ def account_domain_create(request):
     form = forms.DomainDetailsForm(current_user=request.user, data=request.POST)
     domain_name = request.GET['domain_name']
     domain_tld = domain_name.split('.')[-1].lower()
-    if not zones.is_supported(domain_tld):
+    if not zzones.is_supported(domain_tld):
         messages.error(request, 'Domain zone ".%s" is not supported by that server.' % domain_tld)
         return shortcuts.render(request, 'front/account_domain_details.html', {
             'form': form,

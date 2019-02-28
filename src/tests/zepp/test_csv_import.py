@@ -1,10 +1,10 @@
 import os
 import pytest
 
-from back import zdomains
-from back import zusers 
-
 from zepp import csv_import
+
+from zen import zdomains
+from zen import zusers 
 
 
 @pytest.mark.django_db

@@ -4,15 +4,10 @@ import logging
 import os
 import sys
 import time
-import tempfile
 import json
-import string
-
-# from email.Utils import formatdate, parsedate
 
 from zepp import xml2json
 from zepp import zclient
-from zepp import zmaster
 
 logger = logging.getLogger(__name__)
 
@@ -31,215 +26,31 @@ def do_domain_transfer_to_us(domain):
 
 def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=False):
     logger.info('domain %s transferred away', domain)
+    # TODO: to be continue
     return False
-#     dpath = scanForDomain(domain)
-#     if dpath == 'error':
-#         print '\n%s' % time.asctime()
-#         print '\ncan not find domain form "%s"' % domain
-#         return False
-#     if dpath == 'free':
-#         print '\n%s' % time.asctime()
-#         print '\ndomain "%s" is free, can not be transferred away' % domain
-#         return False
-#     try:
-#         db = loadDB(named_path())
-#         dform = {}
-#         fin = open(dpath, 'r')
-#         readform(dform, fin)
-#         fin.close()
-#         write2logDir(dform)
-#         if os.path.isfile(dpath):
-#             fd, _ = tempfile.mkstemp(
-#                 prefix='{}.'.format(domain),
-#                 dir=deleted_domains_path()
-#             )
-#             os.write(fd, open(dpath, 'r').read())
-#             os.close(fd)
-#         os.remove(dpath)
-#         if domain in db:
-#             del db[domain]
-#         if dform['4l.'].strip() != '':
-#             if notify and not TESTING():
-#                 sendDomainTransferredNotification(dform['4l.'].strip(), domain)
-#             removeUserDomain(dform['4l.'].strip(), domain)
-#         if dform['5l.'].strip() != '':
-#             if notify and not TESTING():
-#                 sendDomainTransferredNotification(dform['5l.'].strip(), domain)
-#             removeUserDomain(dform['5l.'].strip(), domain)
-#         if dform['6l.'].strip() != '':
-#             if notify and not TESTING():
-#                 sendDomainTransferredNotification(dform['6l.'].strip(), domain)
-#             removeUserDomain(dform['6l.'].strip(), domain)
-#         epp_master.delete_domain_epp_info(domain)
-#         remove_domains_from_index([domain, ])
-#         writeDB(db, named_path())
-#     except Exception as exc:
-#         epp_client.log_epp_errors(epp_errors=['failed processing domain "%s" transfer to another registrar' % domain, ])
-#         print '\n%s' % time.asctime()
-#         print '\nfailed processing domain "%s" transfer to another registrar: %s' % (domain, str(exc))
-#         return False
-#     if to_client:
-#         print '\n%s' % time.asctime()
-#         print '\ndomain', domain, 'transferred to', to_client
-#     else:
-#         print '\n%s' % time.asctime()
-#         print '\ndomain', domain, 'transferred away'
-#     return True
 
 
 def do_domain_deleted(domain, notify=False):
     logger.info('domain %s deleted', domain)
+    # TODO: to be continue
     return False
-#     dpath = scanForDomain(domain)
-#     if dpath == 'error':
-#         print '\n%s' % time.asctime()
-#         print '\ncan not find domain form "%s"' % domain
-#         return False
-#     if dpath == 'free':
-#         print '\n%s' % time.asctime()
-#         print '\ndomain "%s" is free, can not be deleted' % domain
-#         return False
-#     try:
-#         db = loadDB(named_path())
-#         dform = {}
-#         fin = open(dpath, 'r')
-#         readform(dform, fin)
-#         fin.close()
-#         write2logDir(dform)
-#         if os.path.isfile(dpath):
-#             fd, _ = tempfile.mkstemp(
-#                 prefix='{}.'.format(domain),
-#                 dir=deleted_domains_path()
-#             )
-#             os.write(fd, open(dpath, 'r').read())
-#             os.close(fd)
-#         os.remove(dpath)
-#         if domain in db:
-#             del db[domain]
-#         if dform['4l.'].strip() != '':
-#             if notify and not TESTING():
-#                 sendDomainDeleteNotification(dform['4l.'].strip(), domain)
-#             removeUserDomain(dform['4l.'].strip(), domain)
-#         if dform['5l.'].strip() != '':
-#             if notify and not TESTING():
-#                 sendDomainDeleteNotification(dform['5l.'].strip(), domain)
-#             removeUserDomain(dform['5l.'].strip(), domain)
-#         if dform['6l.'].strip() != '':
-#             if notify and not TESTING():
-#                 sendDomainDeleteNotification(dform['6l.'].strip(), domain)
-#             removeUserDomain(dform['6l.'].strip(), domain)
-#         epp_master.delete_domain_epp_info(domain)
-#         remove_domains_from_index([domain, ])
-#         writeDB(db, named_path())
-#     except Exception as exc:
-#         epp_client.log_epp_errors(epp_errors=['failed processing domain "%s" deletion' % domain, ])
-#         print '\n%s' % time.asctime()
-#         print '\nfailed processing domain "%s" deletion: %s' % (domain, str(exc))
-#         return False
-#     print '\n%s' % time.asctime()
-#     print '\ndomain', domain, 'deleted'
-#     return True
 
 
 def do_domain_status_changed(domain, notify=False):
     logger.info('domain %s status changed', domain)
+    # TODO: to be continue
     return False
-#     try:
-#         old, new = epp_master.do_domain_update_statuses(domain)
-#     except:
-#         epp_client.log_epp_errors()
-#         print '\n%s' % time.asctime()
-#         print '\nfailed processing domain "%s" status modifications' % domain
-#         return False
-#     old_statuses = filter(lambda k: old[k], old)
-#     new_statuses = filter(lambda k: new[k], new)
-#     if ('pendingDelete' in old_statuses) and ('ok' in new_statuses):
-#         # this will only be triggered when user asked to restore domain from pending delete state
-#         dpath = scanForDomain(domain)
-#         if dpath != 'free' and dpath != 'error':
-#             db_changes = False
-#             dform = {}
-#             try:
-#                 fin = open(dpath, 'r')
-#                 readform(dform, fin)
-#                 fin.close()
-#             except:
-#                 epp_client.log_epp_errors()
-#                 print '\n%s' % time.asctime()
-#                 print '\nfailed reading domain "%s" form' % domain
-#                 return False
-#             epp_info = epp_master.read_domain_epp_info(domain) or {}
-#             login = epp_info.get('restore_request', None)
-#             if not login:
-#                 print '\n%s' % time.asctime()
-#                 print '\nunknown request to restore domain "%s", status not in sync' % domain
-#                 return False
-#             uinfo = {}
-#             if not read_info(login, uinfo):
-#                 print '\n%s' % time.asctime()
-#                 print '\nfailed reading user %s info' % login
-#                 return False
-#             try:
-#                 cur_balance = int(float(uinfo['balance']))
-#             except:
-#                 print '\n%s' % time.asctime()
-#                 print '\nfailed reading user %s balance' % login
-#                 return False
-#             results, errors = epp_master.domains_synchronize([domain, ], renew=True, renew_years=2, fix_errors=True)
-#             if errors:
-#                 print '\n%s' % time.asctime()
-#                 print '\ndomain %s status changed, but errors happened: %s' % (domain, errors, )
-#                 return False
-#             cur_balance -= 200
-#             uinfo['balance'] = str(cur_balance)
-#             save_info(login, uinfo)
-#             invoice = addBalancePayment(
-#                 domain+';',
-#                 login,
-#                 success=('successful>>>' + formatdate(time.time(), True) + ' from balance ' + domain),
-#             )
-#             addUserDomain(login, domain, expire=dform['1b.'])
-#             print '\n%s' % time.asctime()
-#             print '\ndomain "%s" restored, user %s spent 200$' % (domain, login, )
-#     if notify:
-#         dpath = scanForDomain(domain)
-#         try:
-#             dform = {}
-#             fin = open(dpath, 'r')
-#             readform(dform, fin)
-#             fin.close()
-#         except:
-#             epp_client.log_epp_errors()
-#         else:
-#             if dform['4l.'].strip() != '':
-#                 sendDomainStatusChangedNotification(dform['4l.'].strip(), domain, new_statuses)
-#             if dform['5l.'].strip() != '':
-#                 sendDomainStatusChangedNotification(dform['5l.'].strip(), domain, new_statuses)
-#             if dform['6l.'].strip() != '':
-#                 sendDomainStatusChangedNotification(dform['6l.'].strip(), domain, new_statuses)
-#     print '\n%s' % time.asctime()
-#     print '\ndomain %s status changed,   old=%s   new=%s' % (domain, old_statuses, new_statuses, )
-#     return True
 
 
 def do_domain_expiry_date_updated(domain):
     logger.info('domain %s expiry date updated', domain)
+    # TODO: to be continue
     return False
-#     results, errors = epp_master.domains_synchronize([domain, ], renew=False, fix_errors=True)
-#     if errors:
-#         print '\n%s' % time.asctime()
-#         print '\ndomain %s expiry date updated, but error happened: %s' % (domain, errors, )
-#         return False
-# #     if not do_domain_status_changed(domain):
-# #         print '\n%s' % time.asctime()
-# #         print '\ndomain %s expiry date updated, but error happened during EPP status sync' % domain
-# #         return False
-#     print '\n%s' % time.asctime()
-#     print '\ndomain %s expiry date updated' % domain
-#     return True
+
 
 def do_domain_nameservers_changed(domain):
     logger.info('domain %s nameservers changed', domain)
+    # TODO: to be continue
     return False
 
 #------------------------------------------------------------------------------

@@ -14,11 +14,12 @@ from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
 
-from back import domains
-from back import contacts
-from back import zones
 from front import forms, helpers
-from zepp import zmaster
+
+from zen import zdomains
+from zen import zcontacts
+from zen import zones
+from zen import zmaster
 
 
 def index_page(request):
@@ -34,14 +35,14 @@ def index_page(request):
 @login_required
 def account_domains(request):
     if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please provide your contact information to be able to register new zdomains.')
         # return account_profile(request)
         return shortcuts.redirect('account_profile')
-    if len(contacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+    if len(zcontacts.list_contacts(request.user)) == 0:
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new zdomains.')
         # return account_contacts(request)
         return shortcuts.redirect('account_contacts')
-    domain_objects = domains.list_domains(request.user.email)
+    domain_objects = zdomains.list_domains(request.user.email)
     if not domain_objects:
         return domain_lookup(request)
     page = request.GET.get('page', 1)
@@ -60,11 +61,11 @@ def account_domains(request):
 @login_required
 def account_domain_create(request):
     if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please provide your contact information to be able to register new zdomains.')
         # return account_profile(request)
         return shortcuts.redirect('account_profile')
-    if len(contacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+    if len(zcontacts.list_contacts(request.user)) == 0:
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new zdomains.')
         # return account_contacts(request)
         return shortcuts.redirect('account_contacts')
     if request.method != 'POST':
@@ -85,7 +86,7 @@ def account_domain_create(request):
             'form': form,
         })
     domain_obj = form.save(commit=False)
-    existing_domain = domains.find(domain_name=domain_name)
+    existing_domain = zdomains.find(domain_name=domain_name)
     if existing_domain:
         if existing_domain.epp_id:
             messages.error(request, 'This domain is already registered.')
@@ -93,18 +94,18 @@ def account_domain_create(request):
                 'form': form,
             })
         if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
-            domains.delete(domain_id=existing_domain.id)
+            zdomains.delete(domain_id=existing_domain.id)
         else:
             messages.warning(request, 'This domain is not available now.')
             return shortcuts.render(request, 'front/account_domain_details.html', {
                 'form': form,
             })
-    domains.create(
+    zdomains.create(
         domain_name=domain_name,
         owner=request.user,
         create_date=timezone.now(),
         expiry_date=timezone.now() + datetime.timedelta(days=365),
-        registrant=contacts.get_registrant(request.user),
+        registrant=zcontacts.get_registrant(request.user),
         contact_admin=domain_obj.contact_admin,
         contact_tech=domain_obj.contact_tech,
         contact_billing=domain_obj.contact_billing,
@@ -123,11 +124,11 @@ def account_domain_create(request):
 @login_required
 def account_domain_edit(request, domain_id):
     if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new domains.')
+        messages.info(request, 'Please provide your contact information to be able to register new zdomains.')
         # return account_profile(request)
         return shortcuts.redirect('account_profile')
-    if len(contacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
+    if len(zcontacts.list_contacts(request.user)) == 0:
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new zdomains.')
         # return account_contacts(request)
         return shortcuts.redirect('account_contacts')
     domain_info = shortcuts.get_object_or_404(Domain, pk=domain_id, owner=request.user)
@@ -186,9 +187,9 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
         return self.request.user.profile
 
     def form_valid(self, form):
-        existing_contacts = contacts.list_contacts(self.request.user)
+        existing_contacts = zcontacts.list_contacts(self.request.user)
         if not existing_contacts:
-            new_contact = contacts.create_from_profile(self.request.user, form.instance)
+            new_contact = zcontacts.create_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_contact):
                 messages.error(
                     self.request,
@@ -197,9 +198,9 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
                 )
                 return redirect('account_profile')
 
-        existing_registrant = contacts.get_registrant(self.request.user)
+        existing_registrant = zcontacts.get_registrant(self.request.user)
         if not existing_registrant:
-            new_registrant = contacts.create_registrant_from_profile(self.request.user, form.instance)
+            new_registrant = zcontacts.create_registrant_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_registrant):
                 messages.error(
                     self.request,
@@ -208,7 +209,7 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
                 )
                 return redirect('account_profile')
         else:
-            contacts.update_registrant_from_profile(existing_registrant, form.instance)
+            zcontacts.update_registrant_from_profile(existing_registrant, form.instance)
             if not zmaster.contact_create_update(existing_registrant):
                 messages.error(
                     self.request,
@@ -287,8 +288,8 @@ def account_contact_delete(request, contact_id):
 
 @login_required
 def account_contacts(request):
-    return shortcuts.render(request, 'front/account_contacts.html', {
-        'objects': contacts.list_contacts(request.user),
+    return shortcuts.render(request, 'front/account_zcontacts.html', {
+        'objects': zcontacts.list_contacts(request.user),
     })
 
 
@@ -300,7 +301,7 @@ def domain_lookup(request):
             'result': None,
         })
 
-    domain_available = domains.is_domain_available(domain_name)
+    domain_available = zdomains.is_domain_available(domain_name)
 
     if domain_available:
         check_result = zmaster.domains_check(domain_names=[domain_name, ], )

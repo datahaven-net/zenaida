@@ -5,9 +5,9 @@ import csv
 
 from django.utils.timezone import make_aware
 
-from back import domains
-from back import contacts
-from back import users
+from back import zdomains
+from back import zcontacts
+from back import zusers
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +192,7 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
                 domain_name, known_epp_contact_id, real_epp_contact_id, ))
             to_be_created = True
         else:
-            if not contacts.verify(
+            if not zcontacts.verify(
                 epp_id=real_epp_contact_id,
                 owner=real_owner,
             ):
@@ -220,13 +220,13 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         errors.append('failed processing csv record: ' + str(exc))
         return errors
 
-    if not domains.is_valid(domain):
+    if not zdomains.is_valid(domain):
     #--- invalid domain name
         errors.append('invalid domain name')
         return errors
 
     #--- lookup existing domain
-    known_domain = domains.find(domain)
+    known_domain = zdomains.find(domain)
     real_registrar_id = csv_record.get('registrar_id_9')
 
     if wanted_registrar and real_registrar_id != wanted_registrar:
@@ -269,14 +269,14 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     need_tech_contact = False
     need_billing_contact = False
 
-    owner_account = users.find_account(real_registrant_email)
+    owner_account = zusers.find_account(real_registrant_email)
     if not owner_account:
         if dry_run:
             errors.append('account %s not exist' % real_registrant_email)
             return errors
     #--- account check/create
-        new_password=users.generate_password(length=10)
-        owner_account = users.create_account(
+        new_password=zusers.generate_password(length=10)
+        owner_account = zusers.create_account(
             email=real_registrant_email,
             account_password=new_password,
             is_active=True,
@@ -351,21 +351,21 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     if not dry_run:
         if need_registrant:
     #--- registrant create
-            new_registrant_contact = contacts.create(
+            new_registrant_contact = zcontacts.create(
                 epp_id=real_registrant_contact_id,
                 owner=owner_account,
                 **csv_info['registrant'],
             )
             # TODO: make sure contact was assigned to the domain
         else:
-            contacts.update(
+            zcontacts.update(
                 epp_id=real_registrant_contact_id,
                 **csv_info['registrant'],
             )
     
         if need_admin_contact:
     #--- admin contact create
-            new_admin_contact = contacts.create(
+            new_admin_contact = zcontacts.create(
                 epp_id=real_admin_contact_id,
                 owner=owner_account,
                 **csv_info['admin'],
@@ -373,14 +373,14 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             # TODO: make sure contact was assigned to the domain
         else:
             if real_admin_contact_id and real_admin_email:
-                contacts.update(
+                zcontacts.update(
                     epp_id=real_admin_contact_id,
                     **csv_info['admin'],
                 )
 
         if need_tech_contact:
     #--- tech contact create
-            new_tech_contact = contacts.create(
+            new_tech_contact = zcontacts.create(
                 epp_id=real_tech_contact_id,
                 owner=owner_account,
                 **csv_info['tech'],
@@ -388,14 +388,14 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             # TODO: make sure contact was assigned to the domain
         else:
             if real_tech_contact_id and real_tech_email:
-                contacts.update(
+                zcontacts.update(
                     epp_id=real_tech_contact_id,
                     **csv_info['tech'],
                 )
     
         if need_billing_contact:
     #--- billing contact create
-            new_billing_contact = contacts.create(
+            new_billing_contact = zcontacts.create(
                 epp_id=real_billing_contact_id,
                 owner=owner_account,
                 **csv_info['billing'],
@@ -403,7 +403,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             # TODO: make sure contact was assigned to the domain
         else:
             if real_billing_contact_id and real_billing_email:
-                contacts.update(
+                zcontacts.update(
                     epp_id=real_billing_contact_id,
                     **csv_info['billing'],
                 )
@@ -414,7 +414,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             errors.append('%s: domain not exist' % domain)
             return errors
     #--- create new domain
-        new_domain = domains.create(
+        new_domain = zdomains.create(
             domain_name=domain,
             owner=owner_account,
             expiry_date=real_expiry_date,
@@ -532,7 +532,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
 
     #--- update nameservers
-    domains.update_nameservers(domain, real_nameservers)
+    zdomains.update_nameservers(domain, real_nameservers)
 
     if errors and dry_run:
         return errors

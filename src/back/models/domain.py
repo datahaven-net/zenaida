@@ -4,7 +4,7 @@ from django.db import models
 
 from accounts.models.account import Account
 
-from back.domains import validate
+from back.zdomains import validate
 
 from back.models.zone import Zone
 from back.models.contact import Contact, Registrant

@@ -21,7 +21,7 @@ from django.conf import settings
 
 from automats import automat
 
-from back import contacts
+from back import zcontacts
 
 from zepp import zclient
 from zepp import zerrors
@@ -149,14 +149,14 @@ class ContactSynchronizer(automat.Automat):
         """
         Action method.
         """
-        self.contact_info = contacts.to_dict(self.target_contact)
+        self.contact_info = zcontacts.to_dict(self.target_contact)
         self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email'])
 
     def doPrepareUpdate(self, *args, **kwargs):
         """
         Action method.
         """
-        self.contact_info = contacts.to_dict(self.target_contact)
+        self.contact_info = zcontacts.to_dict(self.target_contact)
         self.contact_info['id'] = self.target_contact.epp_id
 
     def doPrepareRetry(self, *args, **kwargs):

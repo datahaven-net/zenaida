@@ -1,6 +1,6 @@
 from django.db import models
 
-from back.domains import validate
+from back.zdomains import validate
 
 from billing.models.order import Order
 

@@ -28,7 +28,7 @@ from automats import automat
 from automats import domain_contacts_synchronizer
 from automats import domain_hostnames_synchronizer
 
-from back import domains
+from back import zdomains
 
 from zepp import zclient
 from zepp import zerrors
@@ -295,11 +295,11 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-        add_contacts, remove_contacts, change_registrant = domains.compare_contacts(
+        add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             domain_object=self.target_domain,
             domain_info_response=args[0],
         )
-        add_nameservers, remove_nameservers = domains.compare_nameservers(
+        add_nameservers, remove_nameservers = zdomains.compare_nameservers(
             domain_object=self.target_domain,
             domain_info_response=args[0],
         )

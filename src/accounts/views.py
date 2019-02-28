@@ -14,7 +14,7 @@ from accounts.utils import get_login_form
 from accounts.forms import SignUpForm
 from accounts.models.activation import Activation
 
-from back.users import create_profile
+from back.zusers import create_profile
 
 
 class SignInView(SuccessURLAllowedHostsMixin, FormView):

@@ -9,7 +9,7 @@ from django.core import exceptions
 from back.models.registrar import Registrar
 
 from back import zones
-from back import users
+from back import zusers
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ def list_domains(registrant_email):
     """
     List all domains for given user identified by email where he have registrant role assigned.
     """
-    existing_account = users.find_account(registrant_email)
+    existing_account = zusers.find_account(registrant_email)
     if not existing_account:
         return []
     return list(existing_account.domains.all())

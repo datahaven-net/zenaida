@@ -27,7 +27,7 @@ from email.utils import formatdate
 
 from automats import automat
 
-from back import domains
+from back import zdomains
 
 from zepp import zclient
 from zepp import zerrors

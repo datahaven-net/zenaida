@@ -12,7 +12,7 @@ from django.template.loader import get_template
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
-from back import domains
+from back import zdomains
 
 from zepp import zmaster
 

@@ -23,7 +23,7 @@ from django.conf import settings
 from automats import automat
 from automats import contact_synchronizer
 
-from back import domains
+from back import zdomains
 
 from zepp import zclient
 from zepp import zerrors

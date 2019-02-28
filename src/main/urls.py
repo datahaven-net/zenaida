@@ -41,7 +41,7 @@ auth_patterns = [
 ]
 
 patterns = [
-    path('profile/', front_views.account_profile, name='account_profile'),
+    path('profile/', front_views.AccountProfileView.as_view(), name='account_profile'),
 
     path('contacts/', front_views.account_contacts, name='account_contacts'),
     path('contacts/create/', front_views.account_contact_create, name='account_contact_create'),

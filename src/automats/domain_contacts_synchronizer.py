@@ -23,10 +23,9 @@ from django.conf import settings
 from automats import automat
 from automats import contact_synchronizer
 
-from back import domains
-
-from zepp import zclient
-from zepp import zerrors
+from zen import zclient
+from zen import zerrors
+from zen import zdomains
 
 #------------------------------------------------------------------------------
 
@@ -208,7 +207,7 @@ class DomainContactsSynchronizer(automat.Automat):
         self.add_contacts = []
         self.remove_contacts = []
         self.change_registrant = None
-        self.add_contacts, self.remove_contacts, self.change_registrant = domains.compare_contacts(
+        self.add_contacts, self.remove_contacts, self.change_registrant = zdomains.compare_contacts(
             domain_object=self.target_domain,
             domain_info_response=args[0],
             target_contacts=list(self.target_contacts.items()),

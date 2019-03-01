@@ -6,7 +6,7 @@ from django.utils.timezone import now
 
 from automats import domain_synchronizer
 
-from zepp import zerrors
+from zen import zerrors
 
 from tests import testsupport
 

@@ -27,10 +27,9 @@ from email.utils import formatdate
 
 from automats import automat
 
-from back import domains
-
-from zepp import zclient
-from zepp import zerrors
+from zen import zclient
+from zen import zerrors
+from zen import zdomains
 
 #------------------------------------------------------------------------------
 
@@ -148,7 +147,7 @@ class DomainReader(automat.Automat):
             self.log(self.debug_level, 'Domain registrant unknown from response: %s' % self.target_domain.name)
             self.event('error', zerrors.EPPRegistrantUnknown(response=args[0]))
             return
-        known_domain = domains.find(domain_name=self.target_domain.name)
+        known_domain = zdomains.find(domain_name=self.target_domain.name)
         if not known_domain:
             return
         if known_domain.registrant.epp_id == self.registrant_epp_id:

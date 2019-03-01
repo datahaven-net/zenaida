@@ -80,7 +80,7 @@ LOGGING = {
             'propagate': False,
             'handlers': ['console', ]
         },
-        'zepp.csv_import': {
+        'back.csv_import': {
             'level': 'DEBUG',
             'propagate': False,
             'handlers': ['console', ]
@@ -101,7 +101,7 @@ if EPP_LOG_FILENAME:
         'backupCount' : 10,
         'formatter': 'timestamped',
     }
-    LOGGING['loggers']['zepp.zclient'] = {
+    LOGGING['loggers']['zen.zclient'] = {
         'level': 'DEBUG',
         'propagate': False,
         'handlers': ['epp', ]

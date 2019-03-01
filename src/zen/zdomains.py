@@ -8,8 +8,8 @@ from django.core import exceptions
 
 from back.models.registrar import Registrar
 
-from back import zones
-from back import users
+from zen import zzones
+from zen import zusers
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def is_valid(domain_name, idn=False):
     return True
 
 
-def validate(domain):
+def validate_domain_name(domain):
     """
     Raise `ValidationError()` if domain 
     """
@@ -129,7 +129,7 @@ def create(
         registrar = Registrar.registrars.get_or_create(
             epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
         )[0]
-    zone = zones.make('.'.join(domain_name.split('.')[1:]))
+    zone = zzones.make('.'.join(domain_name.split('.')[1:]))
     new_domain = Domain(
         name=domain_name,
         owner=owner,
@@ -168,7 +168,7 @@ def list_domains(registrant_email):
     """
     List all domains for given user identified by email where he have registrant role assigned.
     """
-    existing_account = users.find_account(registrant_email)
+    existing_account = zusers.find_account(registrant_email)
     if not existing_account:
         return []
     return list(existing_account.domains.all())

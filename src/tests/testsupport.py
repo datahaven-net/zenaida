@@ -1,17 +1,16 @@
 import datetime
 
 from django.utils.timezone import make_aware
-from django.conf import settings
 
-from back import contacts
-from back import domains
-from back import users
+from zen import zcontacts
+from zen import zdomains
+from zen import zusers
 
 
 def prepare_tester_account(email='tester@zenaida.ai', account_password='tester'):
-    tester = users.find_account(email)
+    tester = zusers.find_account(email)
     if not tester:
-        tester = users.create_account(email, account_password=account_password, is_active=True, )
+        tester = zusers.create_account(email, account_password=account_password, is_active=True, )
     return tester
 
 
@@ -20,7 +19,7 @@ def prepare_tester_contact(tester=None):
         tester = prepare_tester_account()
     tester_contact = tester.contacts.first()
     if not tester_contact:
-        tester_contact = contacts.create(
+        tester_contact = zcontacts.create(
             epp_id=None,
             owner=tester,
             person_name='Tester Tester',
@@ -48,7 +47,7 @@ def prepare_tester_domain(
     ):
     if not tester:
         tester = prepare_tester_account()
-    tester_registrant = contacts.create(
+    tester_registrant = zcontacts.create(
         epp_id=epp_id_dict.get('registrant'),
         owner=tester,
         person_name='Tester Tester Registrant',
@@ -62,7 +61,7 @@ def prepare_tester_domain(
         contact_fax='1234567890',
         contact_email='tester@zenaida.ai',
     ) if 'registrant' in add_contacts else None
-    tester_contact_admin = contacts.create(
+    tester_contact_admin = zcontacts.create(
         epp_id=epp_id_dict.get('admin'),
         owner=tester,
         person_name='Tester Tester Admin',
@@ -76,7 +75,7 @@ def prepare_tester_domain(
         contact_fax='1234567890',
         contact_email='tester@zenaida.ai',
     ) if 'admin' in add_contacts else None
-    tester_contact_tech = contacts.create(
+    tester_contact_tech = zcontacts.create(
         epp_id=epp_id_dict.get('tech'),
         owner=tester,
         person_name='Tester Tester Tech',
@@ -90,7 +89,7 @@ def prepare_tester_domain(
         contact_fax='1234567890',
         contact_email='tester@zenaida.ai',
     ) if 'tech' in add_contacts else None
-    tester_contact_billing = contacts.create(
+    tester_contact_billing = zcontacts.create(
         epp_id=epp_id_dict.get('billing'),
         owner=tester,
         person_name='Tester Tester Billing',
@@ -104,7 +103,7 @@ def prepare_tester_domain(
         contact_fax='1234567890',
         contact_email='tester@zenaida.ai',
     ) if 'billing' in add_contacts else None
-    tester_domain = domains.create(
+    tester_domain = zdomains.create(
         domain_name=domain_name,
         owner=tester,
         expiry_date=make_aware(datetime.datetime.now() + datetime.timedelta(days=365)),

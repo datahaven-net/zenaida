@@ -5,7 +5,7 @@ from django.conf import settings
 
 from automats import domain_hostnames_synchronizer
 
-from zepp import zclient
+from zen import zclient
 
 from tests import testsupport
 

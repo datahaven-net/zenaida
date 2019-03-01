@@ -1,7 +1,8 @@
 import logging
 
 from back.models.contact import Contact, Registrant
-from zepp import iso_countries
+
+from lib import iso_countries
 
 logger = logging.getLogger(__name__)
 

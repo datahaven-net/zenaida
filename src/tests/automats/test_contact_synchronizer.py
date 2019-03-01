@@ -4,9 +4,8 @@ import pytest
 
 from automats import contact_synchronizer
 
-from back import contacts
-
-from zepp import zclient
+from zen import zclient
+from zen import zcontacts
 
 from tests import testsupport
 
@@ -83,7 +82,7 @@ def test_contact_update():
         return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_contact = testsupport.prepare_tester_contact()
     existing_contact_id = zclient.make_epp_id(tester_contact.contact_email)
-    existing_contact_info = contacts.to_dict(tester_contact)
+    existing_contact_info = zcontacts.to_dict(tester_contact)
     create_response = zclient.cmd_contact_create(
         contact_id=existing_contact_id,
         email=existing_contact_info['email'],

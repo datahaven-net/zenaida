@@ -5,7 +5,7 @@ from django.conf import settings
 
 from automats import domains_checker
 
-from zepp import zerrors
+from zen import zerrors
 
 from tests import testsupport
 

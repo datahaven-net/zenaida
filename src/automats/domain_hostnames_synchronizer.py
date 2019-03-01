@@ -26,10 +26,9 @@ from django.conf import settings
 
 from automats import automat
 
-from back import domains
-
-from zepp import zclient
-from zepp import zerrors
+from zen import zdomains
+from zen import zclient
+from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -166,7 +165,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         Condition method.
         """
-        return domains.check_nameservers_changed( 
+        return zdomains.check_nameservers_changed( 
             domain_object=kwargs['target_domain'],
             domain_info_response=(kwargs.get('known_domain_info', None) or self.known_domain_info),
         )
@@ -199,7 +198,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         self.hosts_to_be_added = []
         self.hosts_to_be_removed = []
-        self.hosts_to_be_added, self.hosts_to_be_removed = domains.compare_nameservers(
+        self.hosts_to_be_added, self.hosts_to_be_removed = zdomains.compare_nameservers(
             domain_object=self.target_domain,
             domain_info_response=self.known_domain_info,
         )

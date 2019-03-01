@@ -3,7 +3,7 @@ import time
 
 from django.core.management.base import BaseCommand, CommandError
 
-from zepp.csv_import import load_from_csv
+from back.csv_import import load_from_csv
 
 
 class Command(BaseCommand):

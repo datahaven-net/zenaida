@@ -1,6 +1,6 @@
 import os
 
-from django.forms import forms, fields, models, ModelForm, TextInput
+from django.forms import forms, models, ModelForm
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
 

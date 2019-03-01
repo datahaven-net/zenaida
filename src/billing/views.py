@@ -10,11 +10,11 @@ from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from back import domains
-
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
+
+from zen import zdomains
 
 
 @login_required
@@ -152,7 +152,7 @@ def order_create(request):
     order_items = request.POST.getlist('order_items')
     to_be_ordered = []
     for domain_name in order_items:
-        domain_object = domains.find(domain_name=domain_name)
+        domain_object = zdomains.find(domain_name=domain_name)
         if not domain_object:
             raise ValueError()
         if domain_object.owner != request.user:

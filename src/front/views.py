@@ -224,8 +224,6 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
                 self.request,
                 'Your profile information was successfully updated, you can register new domains now.'
             )
-
-        form.save()
         return super().form_valid(form)
 
 
@@ -241,35 +239,31 @@ class AccountContactCreateView(CreateView, LoginRequiredMixin):
             messages.error(self.request,
                            'There were technical problems with contact details processing. '
                            'Please try again later or contact customer support.')
-            return redirect('account_contacts')
+            return redirect('account_contact_create')
 
         self.object.save()
         messages.success(self.request, 'New contact person successfully created.')
         return super().form_valid(form)
 
 
-@login_required
-def account_contact_edit(request, contact_id):
-    contact_person = shortcuts.get_object_or_404(Contact, pk=contact_id, owner=request.user)
-    if request.method != 'POST':
-        form = forms.ContactPersonForm(instance=contact_person)
-        return shortcuts.render(request, 'front/account_contact_edit.html', {
-            'form': form,
-        })
-    form = forms.ContactPersonForm(request.POST, instance=contact_person)
-    if not form.is_valid():
-        return shortcuts.render(request, 'front/account_contact_edit.html', {
-            'form': form,
-        })
-    if not zmaster.contact_create_update(form.instance):
-        messages.error(request, 'There were technical problems with contact details processing. '
-                                'Please try again later or contact customer support.')
-        return shortcuts.render(request, 'front/account_contact_edit.html', {
-            'form': form,
-        })
-    form.save()
-    messages.success(request, 'Contact person details successfully updated.')
-    return shortcuts.redirect('account_contacts')
+class AccountContactUpdateView(UpdateView, LoginRequiredMixin):
+    template_name = 'front/account_contact_edit.html'
+    model = Contact
+    form_class = forms.ContactPersonForm
+    success_url = reverse_lazy('account_contacts')
+    pk_url_kwarg = 'contact_id'
+
+    def form_valid(self, form):
+        if not zmaster.contact_create_update(form.instance):
+            messages.error(
+                self.request,
+                'There were technical problems with contact details processing. '
+                'Please try again later or contact customer support.'
+            )
+            return redirect('account_contact_edit')
+
+        messages.success(self.request, 'Contact person details successfully updated.')
+        return super().form_valid(form)
 
 
 @login_required

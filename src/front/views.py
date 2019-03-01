@@ -8,7 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import UpdateView
+from django.views.generic import UpdateView, CreateView
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -230,28 +230,23 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
         return super().form_valid(form)
 
 
-@login_required
-def account_contact_create(request):
-    if request.method != 'POST':
-        return shortcuts.render(request, 'front/account_contact_create.html', {
-            'form': forms.ContactPersonForm(),
-        })
-    form = forms.ContactPersonForm(request.POST)
-    if not form.is_valid():
-        return shortcuts.render(request, 'front/account_contact_create.html', {
-            'form': form,
-        })
-    form = form.save(commit=False)
-    form.owner = request.user
-    if not zmaster.contact_create_update(form):
-        messages.error(request, 'There were technical problems with contact details processing. '
-                                'Please try again later or contact customer support.')
-        return shortcuts.render(request, 'front/account_contact_create.html', {
-            'form': forms.ContactPersonForm(),
-        })
-    form.save()
-    messages.success(request, 'New contact person successfully added.')
-    return shortcuts.redirect('account_contacts')
+class AccountContactCreateView(CreateView, LoginRequiredMixin):
+    template_name = 'front/account_contact_create.html'
+    form_class = forms.ContactPersonForm
+    success_url = reverse_lazy('account_contacts')
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.owner = self.request.user
+        if not zmaster.contact_create_update(self.object):
+            messages.error(self.request,
+                           'There were technical problems with contact details processing. '
+                           'Please try again later or contact customer support.')
+            return redirect('account_contacts')
+
+        self.object.save()
+        messages.success(self.request, 'New contact person successfully created.')
+        return super().form_valid(form)
 
 
 @login_required

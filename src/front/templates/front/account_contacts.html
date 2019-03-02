@@ -3,45 +3,33 @@
 {% block main_content %}
 
 
-{% if objects %}
-    <div class="table-responsive">
-
-        <table class="table table-hover">
-
-            <tr>
-                <th>Person</th>
-                <th>Organization</th>
-                <th>Address</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Action</th>
-            </tr>
-
-            {% for contact in objects %}
-
-                <tr>
-                    <td>{{contact.person_name}}</td>
-                    <td>{{contact.organization_name}}</td>
-                    <td>{{contact.address_full}}</td>
-                    <td>{{contact.contact_voice}}</td>
-                    <td>{{contact.contact_email}}</td>
-                    <td>
-                        <a class="btn btn-sm btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a>
-                        {% if not contact.has_any_domains %}
-                            <a class="btn btn-sm btn-danger" href='{% url "account_contact_delete" contact.id %}' role="button">Delete</a>
-                        {% endif %}
-                    </td>
-                </tr>
-
-            {% endfor %}
-
-        </table>
-
-    </div>
-
-    {% include 'base/pagination.html' %}
-
-{% endif %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <tr>
+            <th>Person</th>
+            <th>Organization</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
+        {% for contact in object_list %}
+        <tr>
+            <td>{{contact.person_name}}</td>
+            <td>{{contact.organization_name}}</td>
+            <td>{{contact.address_full}}</td>
+            <td>{{contact.contact_voice}}</td>
+            <td>{{contact.contact_email}}</td>
+            <td>
+                <a class="btn btn-sm btn-secondary" href='{% url "account_contact_edit" contact.id %}' role="button">Edit</a>
+                {% if not contact.has_any_domains %}
+                    <a class="btn btn-sm btn-danger" href='{% url "account_contact_delete" contact.id %}' role="button">Delete</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 
 <div class="row">
     <div class="col-12 text-left">
@@ -49,5 +37,7 @@
     </div>
 </div>
 
+
+{% include 'base/pagination_class_based_views.html' %}
 
 {% endblock %}

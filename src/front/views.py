@@ -8,7 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import UpdateView, CreateView, DeleteView
+from django.views.generic import UpdateView, CreateView, DeleteView, ListView
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -181,6 +181,8 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
     template_name = 'front/account_profile.html'
     model = Profile
     form_class = forms.AccountProfileForm
+    error_message = 'There were technical problems with contact details processing. ' \
+                    'Please try again later or contact customer support.'
     success_url = reverse_lazy('account_profile')
 
     def get_object(self, queryset=None):
@@ -191,31 +193,19 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
         if not existing_contacts:
             new_contact = zcontacts.create_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_contact):
-                messages.error(
-                    self.request,
-                    'There were technical problems with contact details processing. '
-                    'Please try again later or contact customer support.'
-                )
+                messages.error(self.request, self.error_message)
                 return redirect('account_profile')
 
         existing_registrant = zcontacts.get_registrant(self.request.user)
         if not existing_registrant:
             new_registrant = zcontacts.create_registrant_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_registrant):
-                messages.error(
-                    self.request,
-                    'There were technical problems with contact details processing. '
-                    'Please try again later or contact customer support.'
-                )
+                messages.error(self.request, self.error_message)
                 return redirect('account_profile')
         else:
             zcontacts.update_registrant_from_profile(existing_registrant, form.instance)
             if not zmaster.contact_create_update(existing_registrant):
-                messages.error(
-                    self.request,
-                    'There were technical problems with contact details processing. '
-                    'Please try again later or contact customer support.'
-                )
+                messages.error(self.request, self.error_message)
                 return redirect('account_profile')
 
         if existing_registrant and existing_contacts:
@@ -231,19 +221,20 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
 class AccountContactCreateView(CreateView, LoginRequiredMixin):
     template_name = 'front/account_contact_create.html'
     form_class = forms.ContactPersonForm
+    error_message = 'There were technical problems with contact details processing. ' \
+                    'Please try again later or contact customer support.'
+    success_message = 'New contact person successfully created.'
     success_url = reverse_lazy('account_contacts')
 
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.owner = self.request.user
         if not zmaster.contact_create_update(self.object):
-            messages.error(self.request,
-                           'There were technical problems with contact details processing. '
-                           'Please try again later or contact customer support.')
+            messages.error(self.request, self.error_message)
             return redirect('account_contact_create')
 
         self.object.save()
-        messages.success(self.request, 'New contact person successfully created.')
+        messages.success(self.request, self.success_message)
         return super().form_valid(form)
 
 
@@ -251,25 +242,24 @@ class AccountContactUpdateView(UpdateView, LoginRequiredMixin):
     template_name = 'front/account_contact_edit.html'
     model = Contact
     form_class = forms.ContactPersonForm
-    success_url = reverse_lazy('account_contacts')
     pk_url_kwarg = 'contact_id'
+    error_message = 'There were technical problems with contact details processing. ' \
+                    'Please try again later or contact customer support.'
+    success_message = 'Contact person details successfully updated.'
+    success_url = reverse_lazy('account_contacts')
 
     def form_valid(self, form):
         if not zmaster.contact_create_update(form.instance):
-            messages.error(
-                self.request,
-                'There were technical problems with contact details processing. '
-                'Please try again later or contact customer support.'
-            )
+            messages.error(self.request, self.error_message)
             return redirect('account_contact_edit')
 
-        messages.success(self.request, 'Contact person details successfully updated.')
+        messages.success(self.request, self.success_message)
         return super().form_valid(form)
 
 
 class AccountContactDeleteView(DeleteView, LoginRequiredMixin):
-    model = Contact
     template_name = 'front/account_contact_delete.html'
+    model = Contact
     pk_url_kwarg = 'contact_id'
     success_message = 'Contact person successfully deleted.'
     success_url = reverse_lazy('account_contacts')
@@ -279,11 +269,10 @@ class AccountContactDeleteView(DeleteView, LoginRequiredMixin):
         return super().delete(request, *args, **kwargs)
 
 
-@login_required
-def account_contacts(request):
-    return shortcuts.render(request, 'front/account_contacts.html', {
-        'objects': zcontacts.list_contacts(request.user),
-    })
+class AccountContactsView(ListView, LoginRequiredMixin):
+    template_name = 'front/account_contacts.html'
+    model = Contact
+    paginate_by = 10
 
 
 @login_required

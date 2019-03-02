@@ -46,7 +46,7 @@ patterns = [
     path('contacts/', front_views.account_contacts, name='account_contacts'),
     path('contacts/create/', front_views.AccountContactCreateView.as_view(), name='account_contact_create'),
     path('contacts/delete/<int:contact_id>/', front_views.account_contact_delete, name='account_contact_delete'),
-    path('contacts/edit/<int:contact_id>/', front_views.account_contact_edit, name='account_contact_edit'),
+    path('contacts/edit/<int:contact_id>/', front_views.AccountContactUpdateView.as_view(), name='account_contact_edit'),
 
     path('domains/', front_views.account_domains, name='account_domains'),
     path('domains/create/', front_views.account_domain_create, name='account_domain_create'),

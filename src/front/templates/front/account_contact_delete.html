@@ -1,0 +1,17 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+
+<div class="alert alert-warning text-center" role="alert">
+    <form method="post">{% csrf_token %}
+        <p>Are you sure you want to delete <b>"{{ object.person_name }}"</b> from your contacts?</p>
+        <a class="btn btn-danger" href="{% url 'account_contacts' %}" role="button">Cancel</a>
+        <input type="submit" class="btn btn-success" value="Confirm" />
+    </form>
+</div>
+
+
+{% include 'base/container_close.html' %}
+
+{% endblock %}

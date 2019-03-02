@@ -8,7 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import UpdateView, CreateView
+from django.views.generic import UpdateView, CreateView, DeleteView
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -267,17 +267,21 @@ class AccountContactUpdateView(UpdateView, LoginRequiredMixin):
         return super().form_valid(form)
 
 
-@login_required
-def account_contact_delete(request, contact_id):
-    contact_person = shortcuts.get_object_or_404(Contact, pk=contact_id, owner=request.user)
-    contact_person.delete()
-    messages.success(request, 'Contact person successfully deleted.')
-    return shortcuts.redirect('account_contacts')
+class AccountContactDeleteView(DeleteView, LoginRequiredMixin):
+    model = Contact
+    template_name = 'front/account_contact_delete.html'
+    pk_url_kwarg = 'contact_id'
+    success_message = 'Contact person successfully deleted.'
+    success_url = reverse_lazy('account_contacts')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(request, *args, **kwargs)
 
 
 @login_required
 def account_contacts(request):
-    return shortcuts.render(request, 'front/account_zcontacts.html', {
+    return shortcuts.render(request, 'front/account_contacts.html', {
         'objects': zcontacts.list_contacts(request.user),
     })
 

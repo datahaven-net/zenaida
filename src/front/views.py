@@ -3,13 +3,13 @@ import datetime
 from django import shortcuts
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import UpdateView, CreateView, DeleteView, ListView
 
+from auth.views import BaseLoginRequiredMixin
 from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
@@ -177,7 +177,7 @@ def account_domain_transfer(request):
     })
 
 
-class AccountProfileView(UpdateView, LoginRequiredMixin):
+class AccountProfileView(UpdateView, BaseLoginRequiredMixin):
     template_name = 'front/account_profile.html'
     model = Profile
     form_class = forms.AccountProfileForm
@@ -218,7 +218,7 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
         return super().form_valid(form)
 
 
-class AccountContactCreateView(CreateView, LoginRequiredMixin):
+class AccountContactCreateView(CreateView, BaseLoginRequiredMixin):
     template_name = 'front/account_contact_create.html'
     form_class = forms.ContactPersonForm
     error_message = 'There were technical problems with contact details processing. ' \
@@ -238,7 +238,7 @@ class AccountContactCreateView(CreateView, LoginRequiredMixin):
         return super().form_valid(form)
 
 
-class AccountContactUpdateView(UpdateView, LoginRequiredMixin):
+class AccountContactUpdateView(UpdateView, BaseLoginRequiredMixin):
     template_name = 'front/account_contact_edit.html'
     model = Contact
     form_class = forms.ContactPersonForm
@@ -260,7 +260,7 @@ class AccountContactUpdateView(UpdateView, LoginRequiredMixin):
         return super().form_valid(form)
 
 
-class AccountContactDeleteView(DeleteView, LoginRequiredMixin):
+class AccountContactDeleteView(DeleteView, BaseLoginRequiredMixin):
     template_name = 'front/account_contact_delete.html'
     model = Contact
     pk_url_kwarg = 'contact_id'
@@ -275,7 +275,7 @@ class AccountContactDeleteView(DeleteView, LoginRequiredMixin):
         return super().delete(request, *args, **kwargs)
 
 
-class AccountContactsListView(ListView, LoginRequiredMixin):
+class AccountContactsListView(ListView, BaseLoginRequiredMixin):
     template_name = 'front/account_contacts.html'
     model = Contact
     paginate_by = 10

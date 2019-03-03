@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import UpdateView, CreateView, DeleteView, ListView
@@ -194,19 +194,19 @@ class AccountProfileView(UpdateView, LoginRequiredMixin):
             new_contact = zcontacts.create_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_contact):
                 messages.error(self.request, self.error_message)
-                return redirect('account_profile')
+                return HttpResponseRedirect(self.request.path_info)
 
         existing_registrant = zcontacts.get_registrant(self.request.user)
         if not existing_registrant:
             new_registrant = zcontacts.create_registrant_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_registrant):
                 messages.error(self.request, self.error_message)
-                return redirect('account_profile')
+                return HttpResponseRedirect(self.request.path_info)
         else:
             zcontacts.update_registrant_from_profile(existing_registrant, form.instance)
             if not zmaster.contact_create_update(existing_registrant):
                 messages.error(self.request, self.error_message)
-                return redirect('account_profile')
+                return HttpResponseRedirect(self.request.path_info)
 
         if existing_registrant and existing_contacts:
             messages.success(self.request, 'Your profile information was successfully updated.')
@@ -231,7 +231,7 @@ class AccountContactCreateView(CreateView, LoginRequiredMixin):
         self.object.owner = self.request.user
         if not zmaster.contact_create_update(self.object):
             messages.error(self.request, self.error_message)
-            return redirect('account_contact_create')
+            return HttpResponseRedirect(self.request.path_info)
 
         self.object.save()
         messages.success(self.request, self.success_message)
@@ -248,10 +248,13 @@ class AccountContactUpdateView(UpdateView, LoginRequiredMixin):
     success_message = 'Contact person details successfully updated.'
     success_url = reverse_lazy('account_contacts')
 
+    def get_object(self, queryset=None):
+        return shortcuts.get_object_or_404(Contact, pk=self.kwargs.get('contact_id'), owner=self.request.user)
+
     def form_valid(self, form):
         if not zmaster.contact_create_update(form.instance):
             messages.error(self.request, self.error_message)
-            return redirect('account_contact_edit')
+            return HttpResponseRedirect(self.request.path_info)
 
         messages.success(self.request, self.success_message)
         return super().form_valid(form)
@@ -264,15 +267,21 @@ class AccountContactDeleteView(DeleteView, LoginRequiredMixin):
     success_message = 'Contact person successfully deleted.'
     success_url = reverse_lazy('account_contacts')
 
+    def get_object(self, queryset=None):
+        return shortcuts.get_object_or_404(Contact, pk=self.kwargs.get('contact_id'), owner=self.request.user)
+
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
 
 
-class AccountContactsView(ListView, LoginRequiredMixin):
+class AccountContactsListView(ListView, LoginRequiredMixin):
     template_name = 'front/account_contacts.html'
     model = Contact
     paginate_by = 10
+
+    def get_queryset(self):
+        return zcontacts.list_contacts(self.request.user)
 
 
 @login_required

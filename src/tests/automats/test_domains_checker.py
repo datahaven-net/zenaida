@@ -141,7 +141,7 @@ def test_single_domain_another_registrant():
         epp_id_dict={
             'registrant': 'ThisIDNotExist',
         },
-        nameservers=['ns1.google.com', 'ns2.google.com', ],
+        nameservers=['notexist1.com', 'notexist2.com', ],
     )
     scenario = []
     dc = domains_checker.DomainsChecker(

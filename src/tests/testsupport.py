@@ -43,23 +43,11 @@ def prepare_tester_domain(
         domain_epp_id=None,
         add_contacts=['registrant', 'admin', 'billing', 'tech', ],
         epp_id_dict={},
-        nameservers=['ns1.google.com', 'ns2.google.com', ],
+        nameservers=['notexist1.com', 'notexist2.com', ],
     ):
     if not tester:
         tester = prepare_tester_account()
-    tester_registrant = zcontacts.create(
-        epp_id=epp_id_dict.get('registrant'),
-        owner=tester,
-        person_name='Tester Tester Registrant',
-        organization_name='TestingCorp',
-        address_street='TestStreet',
-        address_city='TestCity',
-        address_province='TestProvince',
-        address_postal_code='TestPostalCode',
-        address_country='TestCountry',
-        contact_voice='1234567890',
-        contact_fax='1234567890',
-        contact_email='tester@zenaida.ai',
+    tester_registrant = zcontacts.create_registrant_from_profile(tester, tester.profile, epp_id=epp_id_dict.get('registrant')
     ) if 'registrant' in add_contacts else None
     tester_contact_admin = zcontacts.create(
         epp_id=epp_id_dict.get('admin'),

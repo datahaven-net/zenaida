@@ -147,12 +147,13 @@ def to_dict(contact_object):
     return info
 
 
-def create_registrant_from_profile(owner, profile_object):
+def create_registrant_from_profile(owner, profile_object, epp_id=None):
     """
     Creates a new Registrant from existing Profile object. 
     """
     new_contact = Registrant.registrants.create(
         owner=owner,
+        epp_id=epp_id,
         person_name=profile_object.person_name,
         organization_name=profile_object.organization_name,
         address_street=profile_object.address_street,

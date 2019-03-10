@@ -191,19 +191,19 @@ class AccountProfileView(UpdateView, BaseLoginRequiredMixin):
     def form_valid(self, form):
         existing_contacts = zcontacts.list_contacts(self.request.user)
         if not existing_contacts:
-            new_contact = zcontacts.create_from_profile(self.request.user, form.instance)
+            new_contact = zcontacts.contact_create_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_contact):
                 messages.error(self.request, self.error_message)
                 return HttpResponseRedirect(self.request.path_info)
 
         existing_registrant = zcontacts.get_registrant(self.request.user)
         if not existing_registrant:
-            new_registrant = zcontacts.create_registrant_from_profile(self.request.user, form.instance)
+            new_registrant = zcontacts.registrant_create_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_registrant):
                 messages.error(self.request, self.error_message)
                 return HttpResponseRedirect(self.request.path_info)
         else:
-            zcontacts.update_registrant_from_profile(existing_registrant, form.instance)
+            zcontacts.registrant_update_from_profile(existing_registrant, form.instance)
             if not zmaster.contact_create_update(existing_registrant):
                 messages.error(self.request, self.error_message)
                 return HttpResponseRedirect(self.request.path_info)

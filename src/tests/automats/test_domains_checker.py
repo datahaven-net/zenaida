@@ -139,7 +139,8 @@ def test_single_domain_another_registrant():
         domain_name='test-readonly.%s' % settings.SUPPORTED_ZONES[0],
         add_contacts=['registrant', 'admin', ],
         epp_id_dict={
-            'registrant': 'ThisIDNotExist',
+            'registrant': 'ThisIDNotExist1',
+            'admin': 'ThisIDNotExist2',
         },
         nameservers=['notexist1.com', 'notexist2.com', ],
     )
@@ -186,10 +187,10 @@ def test_no_domains():
     del dc
     assert scenario == [
         ('AT_STARTUP', 'CHECK_MANY', 'run'),
-        ('CHECK_MANY', 'FAILED', 'response'),
+        ('CHECK_MANY', 'FAILED', 'error'),
     ]
     assert len(outputs) == 1
-    assert isinstance(outputs[0], zerrors.EPPUnexpectedResponse)
+    assert isinstance(outputs[0], zerrors.EPPCommandInvalid)
 
 
 @pytest.mark.django_db

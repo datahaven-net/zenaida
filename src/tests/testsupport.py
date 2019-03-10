@@ -14,13 +14,13 @@ def prepare_tester_account(email='tester@zenaida.ai', account_password='tester')
     return tester
 
 
-def prepare_tester_contact(tester=None):
+def prepare_tester_contact(tester=None, epp_id=None, create_new=False):
     if not tester:
         tester = prepare_tester_account()
     tester_contact = tester.contacts.first()
-    if not tester_contact:
-        tester_contact = zcontacts.create(
-            epp_id=None,
+    if not tester_contact or create_new:
+        tester_contact = zcontacts.contact_create(
+            epp_id=epp_id,
             owner=tester,
             person_name='Tester Tester',
             organization_name='TestingCorp',
@@ -28,7 +28,7 @@ def prepare_tester_contact(tester=None):
             address_city='TestCity',
             address_province='TestProvince',
             address_postal_code='TestPostalCode',
-            address_country='TestCountry',
+            address_country='AI',
             contact_voice='1234567890',
             contact_fax='1234567890',
             contact_email='tester@zenaida.ai',
@@ -47,50 +47,31 @@ def prepare_tester_domain(
     ):
     if not tester:
         tester = prepare_tester_account()
-    tester_registrant = zcontacts.create_registrant_from_profile(tester, tester.profile, epp_id=epp_id_dict.get('registrant')
+
+    tester_registrant = zcontacts.registrant_create_from_profile(
+        tester,
+        profile_object=tester.profile,
+        epp_id=epp_id_dict.get('registrant', '')
     ) if 'registrant' in add_contacts else None
-    tester_contact_admin = zcontacts.create(
-        epp_id=epp_id_dict.get('admin'),
-        owner=tester,
-        person_name='Tester Tester Admin',
-        organization_name='TestingCorp',
-        address_street='TestStreet',
-        address_city='TestCity',
-        address_province='TestProvince',
-        address_postal_code='TestPostalCode',
-        address_country='TestCountry',
-        contact_voice='1234567890',
-        contact_fax='1234567890',
-        contact_email='tester@zenaida.ai',
+
+    tester_contact_admin = prepare_tester_contact(
+        tester,
+        epp_id=epp_id_dict.get('admin', ''),
+        create_new=True,
     ) if 'admin' in add_contacts else None
-    tester_contact_tech = zcontacts.create(
-        epp_id=epp_id_dict.get('tech'),
-        owner=tester,
-        person_name='Tester Tester Tech',
-        organization_name='TestingCorp',
-        address_street='TestStreet',
-        address_city='TestCity',
-        address_province='TestProvince',
-        address_postal_code='TestPostalCode',
-        address_country='TestCountry',
-        contact_voice='1234567890',
-        contact_fax='1234567890',
-        contact_email='tester@zenaida.ai',
+
+    tester_contact_tech = prepare_tester_contact(
+        tester,
+        epp_id=epp_id_dict.get('tech', ''),
+        create_new=True,
     ) if 'tech' in add_contacts else None
-    tester_contact_billing = zcontacts.create(
-        epp_id=epp_id_dict.get('billing'),
-        owner=tester,
-        person_name='Tester Tester Billing',
-        organization_name='TestingCorp',
-        address_street='TestStreet',
-        address_city='TestCity',
-        address_province='TestProvince',
-        address_postal_code='TestPostalCode',
-        address_country='TestCountry',
-        contact_voice='1234567890',
-        contact_fax='1234567890',
-        contact_email='tester@zenaida.ai',
+
+    tester_contact_billing = prepare_tester_contact(
+        tester,
+        epp_id=epp_id_dict.get('billing', ''),
+        create_new=True,
     ) if 'billing' in add_contacts else None
+
     tester_domain = zdomains.create(
         domain_name=domain_name,
         owner=tester,
@@ -105,4 +86,5 @@ def prepare_tester_domain(
         contact_billing=tester_contact_billing,
         nameservers=nameservers,
     )
+
     return tester_domain

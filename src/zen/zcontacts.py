@@ -42,7 +42,7 @@ def verify(epp_id, email=None, owner=None):
     return True
 
 
-def create(epp_id, owner, **kwargs):
+def contact_create(epp_id, owner, **kwargs):
     """
     Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
     """
@@ -58,7 +58,7 @@ def create(epp_id, owner, **kwargs):
     return new_contact
 
 
-def create_from_profile(owner, profile_object):
+def contact_create_from_profile(owner, profile_object):
     """
     Creates a new Contact from existing Profile object. 
     """
@@ -147,7 +147,7 @@ def to_dict(contact_object):
     return info
 
 
-def create_registrant_from_profile(owner, profile_object, epp_id=None):
+def registrant_create_from_profile(owner, profile_object, epp_id=None):
     """
     Creates a new Registrant from existing Profile object. 
     """
@@ -169,7 +169,7 @@ def create_registrant_from_profile(owner, profile_object, epp_id=None):
     return new_contact
 
 
-def update_registrant_from_profile(registrant_object, profile_object, save=True):
+def registrant_update_from_profile(registrant_object, profile_object, save=True):
     """
     Populate required fields for given `registrant_object` from existing Profile. 
     """

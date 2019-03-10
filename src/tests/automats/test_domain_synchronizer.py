@@ -71,11 +71,10 @@ def test_domain_create():
         ('NAMESERVERS', 'CREATE!', 'nameservers-ok'),
         ('CREATE!', 'READ', 'response'),
         ('READ', 'UPDATE!', 'response'),
-        ('UPDATE!', 'RENEW', 'no-updates'),
-        ('RENEW', 'DONE', 'response'),
+        ('UPDATE!', 'DONE', 'no-updates'),
     ]
     assert tester_domain.epp_id is not None
-    assert len(outputs) == 8
+    assert len(outputs) == 7
     assert outputs[-1] is True
 
 

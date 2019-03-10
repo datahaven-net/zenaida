@@ -154,6 +154,7 @@ class DomainContactsSynchronizer(automat.Automat):
             'admin': self.target_domain.contact_admin,
             'billing': self.target_domain.contact_billing,
             'tech': self.target_domain.contact_tech,
+            'registrant': self.target_domain.registrant,
         }
         for role, possbile_contact in possible_contacts.items():
             if role in self.skip_roles:
@@ -166,7 +167,8 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         Action method.
         """
-        for role, contact_object in self.target_contacts.items():
+        for role in sorted(self.target_contacts.keys()):
+            contact_object = self.target_contacts[role]
             cs = contact_synchronizer.ContactSynchronizer(raise_errors=True)
             try:
                 cs.event('run', contact_object)

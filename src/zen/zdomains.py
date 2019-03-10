@@ -223,6 +223,8 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
         'id': i['#text'],
     } for i in current_contacts]
     for role, contact_object in target_contacts:
+        if role == 'registrant':
+            continue
         if contact_object:
             if contact_object.epp_id:
                 new_contacts.append({'type': role, 'id': contact_object.epp_id, })

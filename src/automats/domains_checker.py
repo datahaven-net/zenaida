@@ -195,6 +195,9 @@ class DomainsChecker(automat.Automat):
         if self.skip_check:
             self.event('skip-check')
             return
+        if not self.target_domain_names:
+            self.event('error', zerrors.EPPCommandInvalid('No domains specified'))
+            return
         try:
             response = zclient.cmd_domain_check(
                 domains=self.target_domain_names,

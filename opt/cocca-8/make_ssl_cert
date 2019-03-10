@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# How to use:
+# sudo ./make_ssl_cert <ssl password>
+# sudo mv epp.zenaida.ai.keystore /opt/cocca-8/keys/
+# sudo /opt/cocca-8/ctlscript.sh stop
+# sudo /opt/cocca-8/ctlscript.sh start
+
+echo " -- Cleaning -- "
+sudo rm -rf request.csr
+sudo rm -rf *.pem
+
+echo " -- Delete Keystore -- "
+sudo rm -rf epp.zenaida.ai.keystore
+
+echo " -- Recreate Keystore -- "
+sudo /opt/cocca-8/java/bin/keytool -genkey -noprompt -alias cocca -dname "CN=epp.zenaida.ai, OU=Zenaida, O=DataHaven.Net, L=TheValley, S=Anguilla, C=AI" -keystore epp.zenaida.ai.keystore -storepass "$1" -KeySize 2048 -keypass "$1" -keyalg RSA
+sudo /opt/cocca-8/java/bin/keytool -list -keystore epp.zenaida.ai.keystore -v -storepass "$1" > key.check
+
+echo " -- Build CSR -- "
+sudo /opt/cocca-8/java/bin/keytool -certreq -alias cocca -file request.csr -keystore epp.zenaida.ai.keystore -storepass "$1"
+
+echo " -- Request Certificate -- "
+sudo certbot certonly --csr ./request.csr --standalone
+
+echo " -- import Certificate -- "
+sudo /opt/cocca-8/java/bin/keytool -import -trustcacerts -alias cocca -file 0001_chain.pem -keystore epp.zenaida.ai.keystore -storepass "$1"

@@ -42,11 +42,11 @@ def test_domain_update():
         ('DOMAIN_UPDATE', 'DONE', 'response'),
     ]
     assert len(outputs) == 5
-    assert outputs[0][0] == 'registrant'
-    assert outputs[0][1]['epp']['response']['resData']['creData']['id'] == tester_domain.registrant.epp_id
-    assert outputs[1][0] == 'admin'
-    assert outputs[1][1]['epp']['response']['resData']['creData']['id'] == tester_domain.contact_admin.epp_id
-    assert outputs[2][0] == 'billing'
-    assert outputs[2][1]['epp']['response']['resData']['creData']['id'] == tester_domain.contact_billing.epp_id
+    assert outputs[0][0] == 'admin'
+    assert outputs[0][1]['epp']['response']['resData']['creData']['id'] == tester_domain.contact_admin.epp_id
+    assert outputs[1][0] == 'billing'
+    assert outputs[1][1]['epp']['response']['resData']['creData']['id'] == tester_domain.contact_billing.epp_id
+    assert outputs[2][0] == 'registrant'
+    assert outputs[2][1]['epp']['response']['resData']['creData']['id'] == tester_domain.registrant.epp_id
     assert outputs[3][0] == 'tech'
     assert outputs[3][1]['epp']['response']['resData']['creData']['id'] == tester_domain.contact_tech.epp_id

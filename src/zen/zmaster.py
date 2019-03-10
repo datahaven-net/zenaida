@@ -13,6 +13,7 @@ def contact_create_update(contact_object, raise_errors=False, log_events=True, l
     """
     If `epp_id` field is empty, creates a new Contact or Registrant on back-end.
     Otherwise update existing object from `contact_object` info.
+    Returns False if error happened, or raise Exception if `raise_errors` is True,
     """
     cs = contact_synchronizer.ContactSynchronizer(
         log_events=log_events,
@@ -39,7 +40,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     Returns dictionary object with check results.
     If `verify_registrant` is True process will also send domain_info() request to check epp_id on Back-End
     and compare with current registrant information stored in DB for every domain : epp_id must be in sync.
-    Returns None if error happened, or raise Exception if `raise_errors` is False.
+    Returns None if error happened, or raise Exception if `raise_errors` is True.
     """
     dc = domains_checker.DomainsChecker(
         skip_info=(not verify_registrant),
@@ -93,6 +94,18 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
 
     logger.info('domain_synchronizer(%r) OK', domain_object)
     return True
+
+
+def domain_synchronize_from_backend():
+    """
+    Requests domain info from backend and take required actions to update local DB
+    to be fully in sync with  backend.
+    If domain not exists in local DB it will be created.
+    Returns False if error happened, or raise Exception if `raise_errors` is True,
+    if all is okay returns domain object from local DB.
+    """
+    # TODO: implement domain_refresher() state machine here
+    return None
 
 
 def domain_set_auth_info(domain, auth_info=None):

@@ -10,7 +10,21 @@ from zen import zusers
 def prepare_tester_account(email='tester@zenaida.ai', account_password='tester'):
     tester = zusers.find_account(email)
     if not tester:
-        tester = zusers.create_account(email, account_password=account_password, is_active=True, )
+        tester = zusers.create_account(
+            email,
+            account_password=account_password,
+            is_active=True,
+            person_name='Tester Tester',
+            organization_name='TestingCorp',
+            address_street='TestStreet',
+            address_city='TestCity',
+            address_province='TestProvince',
+            address_postal_code='TestPostalCode',
+            address_country='AI',
+            contact_voice='1234567890',
+            contact_fax='1234567890',
+            contact_email='tester@zenaida.ai',
+        )
     return tester
 
 

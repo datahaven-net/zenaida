@@ -166,7 +166,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         Condition method.
         """
         return zdomains.check_nameservers_changed( 
-            domain_object=kwargs['target_domain'],
+            domain_object=(kwargs.get('target_domain', None) or self.target_domain),
             domain_info_response=(kwargs.get('known_domain_info', None) or self.known_domain_info),
         )
 

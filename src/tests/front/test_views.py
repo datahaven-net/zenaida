@@ -63,3 +63,35 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post(self.target_url, data=self.test_data, follow=True)
             self.assertEqual(response.status_code, 200)
             self.assertIsNone(contact.Contact.contacts.filter(person_name='TesterA').first())
+
+
+class TestFAQViews(TestCase):
+    def test_faq_successful(self):
+        response = self.client.get('/faq/')
+        assert response.status_code == 200
+
+    def test_faq_epp_successful(self):
+        response = self.client.get('/faq-epp/')
+        assert response.status_code == 200
+
+    def test_faq_auctions_successful(self):
+        response = self.client.get('/faq-auctions/')
+        assert response.status_code == 200
+
+    def test_faq_payments_successful(self):
+        response = self.client.get('/faq-payments/')
+        assert response.status_code == 200
+
+    def test_faq_correspondentbank_successful(self):
+        response = self.client.get('/faq-correspondentbank/')
+        assert response.status_code == 200
+
+    def test_faq_registrars_successful(self):
+        response = self.client.get('/faq-registrars/')
+        assert response.status_code == 200
+
+
+class TemplateContactUsTemplateView(TestCase):
+    def test_contact_us_successful(self):
+        response = self.client.get('/contact-us/')
+        assert response.status_code == 200

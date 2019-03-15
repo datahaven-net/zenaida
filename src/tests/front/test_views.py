@@ -86,6 +86,31 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             assert contact.Contact.contacts.filter(person_name='TesterA').first() is None
 
 
+class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_contact_delete_successful(self):
+        if os.environ.get('E2E', '0') == '1':
+            return True
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            # First create contact_person
+            self.client.post('/contacts/create/', data=contact_person)
+        # Check if contact is created on DB
+        assert len(contact.Contact.contacts.all()) == 1
+        response = self.client.delete('/contacts/delete/1/')
+        assert response.status_code == 302
+        assert response.url == '/contacts/'
+        # Check if contact list is empty after deletion
+        assert len(contact.Contact.contacts.all()) == 0
+
+    def test_contact_delete_returns_404(self):
+        if os.environ.get('E2E', '0') == '1':
+            return True
+        response = self.client.delete('/contacts/delete/1/')
+        # User has not this contact, so can't delete
+        assert response.status_code == 404
+
+
 class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_contact_list_successful(self):

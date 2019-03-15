@@ -9,7 +9,9 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.generic import TemplateView
 
+from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
@@ -129,12 +131,26 @@ def order_domain_register(request):
     }, )
 
 
-@login_required
-def order_domain_renew(request):
-    """
-    """
-    # TODO: this needs to be done
-    pass
+class OrderDomainRenewView(TemplateView, BaseLoginRequiredMixin):
+    template_name = 'billing/order_details.html'
+    error_message = 'You don\'t have enough credits to renew a domain.'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.balance < 100:
+            messages.error(request, self.error_message)
+            return shortcuts.redirect('billing_new_payment')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        renewal_order = billing_orders.order_single_item(
+            owner=self.request.user,
+            item_type='domain_renew',
+            item_price=100.0,
+            item_name=kwargs.get('domain_name'),
+        )
+        context.update({'order': renewal_order})
+        return context
 
 
 @login_required

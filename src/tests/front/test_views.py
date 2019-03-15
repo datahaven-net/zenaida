@@ -1,3 +1,4 @@
+import copy
 import os
 import mock
 import pytest
@@ -52,25 +53,22 @@ class TestIndexViewForUnknownUser(TestCase):
 
 
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
-
-    target_url = '/contacts/create/'
-
     @pytest.mark.django_db
-    def test_e2e_success(self):
+    def test_e2e_successful(self):
         if os.environ.get('E2E', '0') == '0':
             return True
-        response = self.client.post(self.target_url, data=contact_person, follow=True)
+        response = self.client.post('/contacts/create/', data=contact_person, follow=True)
         assert response.status_code == 200
         c = contact.Contact.contacts.filter(person_name='TesterA').first()
         assert c.person_name == 'TesterA'
 
     @pytest.mark.django_db
-    def test_create_db_success(self):
+    def test_create_db_successful(self):
         if os.environ.get('E2E', '0') == '1':
             return True
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
-            response = self.client.post(self.target_url, data=contact_person, follow=True)
+            response = self.client.post('/contacts/create/', data=contact_person, follow=True)
             assert response.status_code == 200
             c = contact.Contact.contacts.filter(person_name='TesterA').first()
             assert c.person_name == 'TesterA'
@@ -81,9 +79,52 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             return True
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = False
-            response = self.client.post(self.target_url, data=contact_person, follow=True)
+            response = self.client.post('/contacts/create/', data=contact_person, follow=True)
             assert response.status_code == 200
             assert contact.Contact.contacts.filter(person_name='TesterA').first() is None
+
+
+class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_e2e_successful(self):
+        if os.environ.get('E2E', '0') == '0':
+            return True
+        updated_contact_person = copy.deepcopy(contact_person)
+        updated_contact_person['person_name'] = 'TesterB'
+        response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
+        assert response.status_code == 200
+        c = contact.Contact.contacts.all()[0]
+        assert c.person_name == 'TesterB'
+
+    @pytest.mark.django_db
+    def test_update_db_successful(self):
+        if os.environ.get('E2E', '0') == '1':
+            return True
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            # First create contact person
+            self.client.post('/contacts/create/', data=contact_person)
+
+        # Check if contact person is created successfully with given data
+        c = contact.Contact.contacts.filter(person_name='TesterA').first()
+        assert c.person_name == 'TesterA'
+
+        # Update the contact person
+        updated_contact_person = copy.deepcopy(contact_person)
+        updated_contact_person['person_name'] = 'TesterB'
+        response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
+
+        assert response.status_code == 302
+        assert response.url == '/contacts/'
+        # Check if contact person is updated successfully
+        c = contact.Contact.contacts.all()[0]
+        assert c.person_name == 'TesterB'
+
+    def test_contact_update_returns_404(self):
+        if os.environ.get('E2E', '0') == '1':
+            return True
+        response = self.client.put('/contacts/edit/1/')
+        assert response.status_code == 404
 
 
 class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
@@ -93,7 +134,7 @@ class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
             return True
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
-            # First create contact_person
+            # First create contact person
             self.client.post('/contacts/create/', data=contact_person)
         # Check if contact is created on DB
         assert len(contact.Contact.contacts.all()) == 1

@@ -51,7 +51,7 @@ patterns = [
     path('domains/', front_views.account_domains, name='account_domains'),
     path('domains/create/', front_views.account_domain_create, name='account_domain_create'),
     path('domains/edit/<int:domain_id>/', front_views.account_domain_edit, name='account_domain_edit'),
-    path('domains/transfer', front_views.account_domain_transfer, name='account_domain_transfer'),
+    path('domains/transfer/', front_views.account_domain_transfer, name='account_domain_transfer'),
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),
@@ -62,7 +62,7 @@ patterns = [
     path('billing/orders/process/<int:order_id>/', billing_views.order_execute, name='billing_order_process'),
     path('billing/orders/cancel/<int:order_id>/', billing_views.order_cancel, name='billing_order_cancel'),
     path('billing/order/create/register/', billing_views.order_domain_register, name='billing_order_register'),
-    path('billing/order/create/renew/', billing_views.order_domain_renew, name='billing_order_renew'),
+    path('billing/order/create/renew/<str:domain_name>/', billing_views.OrderDomainRenewView.as_view(), name='billing_order_renew'),
     path('billing/order/create/restore/', billing_views.order_domain_restore, name='billing_order_restore'),
     path('billing/order/create/', billing_views.order_create, name='billing_order_create'),
     path('billing/order/modify/', billing_views.orders_modify, name='billing_orders_modify'),

@@ -7,7 +7,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import UpdateView, CreateView, DeleteView, ListView
+from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView
 
 from auth.views import BaseLoginRequiredMixin
 from back.models.domain import Domain
@@ -22,24 +22,30 @@ from zen import zzones
 from zen import zmaster
 
 
-def index_page(request):
-    if not request.user.is_authenticated:
-        return shortcuts.render(request, 'base/index.html')
-    if not request.user.profile.is_complete():
-        return shortcuts.redirect('account_profile')
-    return shortcuts.render(request, 'base/index.html', {
-        'total_domains': len(request.user.domains.all()),
-    })
+class IndexPageView(TemplateView):
+    template_name = 'base/index.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if not request.user.profile.is_complete():
+                return shortcuts.redirect('account_profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_authenticated:
+            context['total_domains'] = len(self.request.user.domains.all())
+        return context
 
 
 @login_required
 def account_domains(request):
     if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new zdomains.')
+        messages.info(request, 'Please provide your contact information to be able to register new domains.')
         # return account_profile(request)
         return shortcuts.redirect('account_profile')
     if len(zcontacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new zdomains.')
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         # return account_contacts(request)
         return shortcuts.redirect('account_contacts')
     domain_objects = zdomains.list_domains(request.user.email)
@@ -61,11 +67,11 @@ def account_domains(request):
 @login_required
 def account_domain_create(request):
     if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new zdomains.')
+        messages.info(request, 'Please provide your contact information to be able to register new domains.')
         # return account_profile(request)
         return shortcuts.redirect('account_profile')
     if len(zcontacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new zdomains.')
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         # return account_contacts(request)
         return shortcuts.redirect('account_contacts')
     if request.method != 'POST':
@@ -124,11 +130,11 @@ def account_domain_create(request):
 @login_required
 def account_domain_edit(request, domain_id):
     if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new zdomains.')
+        messages.info(request, 'Please provide your contact information to be able to register new domains.')
         # return account_profile(request)
         return shortcuts.redirect('account_profile')
     if len(zcontacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new zdomains.')
+        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
         # return account_contacts(request)
         return shortcuts.redirect('account_contacts')
     domain_info = shortcuts.get_object_or_404(Domain, pk=domain_id, owner=request.user)
@@ -255,7 +261,6 @@ class AccountContactUpdateView(UpdateView, BaseLoginRequiredMixin):
         if not zmaster.contact_create_update(form.instance):
             messages.error(self.request, self.error_message)
             return HttpResponseRedirect(self.request.path_info)
-
         messages.success(self.request, self.success_message)
         return super().form_valid(form)
 

@@ -113,22 +113,26 @@ def payments_list(request):
     })
 
 
-@login_required
-def order_domain_register(request):
-    """
-    """
-    if request.user.balance < 100:
-        messages.error(request, 'You don\'t have enough credits to register a domain.')
-        return shortcuts.redirect('billing_new_payment')
-    new_order = billing_orders.order_single_item(
-        owner=request.user,
-        item_type='domain_register',
-        item_price=100.0,
-        item_name=request.GET['domain_name'],
-    )
-    return shortcuts.render(request, 'billing/order_details.html', {
-        'order': new_order,
-    }, )
+class OrderDomainRegisterView(TemplateView, BaseLoginRequiredMixin):
+    template_name = 'billing/order_details.html'
+    error_message = 'You don\'t have enough credits to register a domain.'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.balance < 100:
+            messages.error(request, self.error_message)
+            return shortcuts.redirect('billing_new_payment')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        new_order = billing_orders.order_single_item(
+            owner=self.request.user,
+            item_type='domain_register',
+            item_price=100.0,
+            item_name=kwargs.get('domain_name'),
+        )
+        context.update({'order': new_order})
+        return context
 
 
 class OrderDomainRenewView(TemplateView, BaseLoginRequiredMixin):

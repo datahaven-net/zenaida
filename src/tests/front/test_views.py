@@ -17,6 +17,26 @@ class BaseAuthTesterMixin(object):
         self.client.login(email='tester@zenaida.ai', password='123')
 
 
+class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
+    def test_index_page_successful(self):
+        with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:
+            mock_user_profile_complete.return_value = True
+            response = self.client.get('')
+        assert response.status_code == 200
+        assert response.context['total_domains'] == 0
+
+    def test_index_page_redirects_to_profile_page(self):
+        response = self.client.get('')
+        assert response.status_code == 302
+        assert response.url == '/profile/'
+
+
+class TestIndexViewForUnknownUser(TestCase):
+    def test_index_page_successful(self):
+        response = self.client.get('')
+        assert response.status_code == 200
+
+
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
     test_data = {

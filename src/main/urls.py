@@ -84,7 +84,7 @@ patterns = [
 
     path('contact-us/', TemplateView.as_view(template_name='front/contact_us.html'), name='contact_us'),
 
-    path('', front_views.index_page, name='index'),
+    path('', front_views.IndexPageView.as_view(), name='index'),
 ]
 
 urlpatterns = admin_patterns + auth_patterns + patterns

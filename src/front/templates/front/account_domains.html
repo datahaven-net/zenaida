@@ -38,7 +38,7 @@
                     <td>{{ domain.create_date|date:'d-m-Y' }}</td>
                     <td>
                         {% if not domain.is_registered %}
-                            <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Register</a>
+                            <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' domain.name %}" role="button">Register</a>
                         {% elif domain.can_be_restored  %}
                             <a class="btn btn-sm btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
                         {% else %}

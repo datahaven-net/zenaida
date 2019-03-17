@@ -5,7 +5,7 @@
 {% block main_content %}
 
 
-{% if objects %}
+{% if object_list %}
 
     <form action="{% url 'billing_order_create' %}" method="post">
     {% csrf_token %}
@@ -20,7 +20,7 @@
                 <th>Actions</th>
             </tr>
 
-            {% for domain in objects %}
+            {% for domain in object_list %}
 
                 <tr>
                     <td scope="row"><input name="order_items" type="checkbox" value="{{ domain.name }}"/></td>
@@ -55,8 +55,6 @@
     <button type="submit" class="btn btn-success">Register/Renew/Restore</button>
     </form>
 
-    {% include 'base/pagination.html' %}
-
 {% else %}
 
     <div class="alert alert-warning text-center" role="alert">
@@ -71,5 +69,7 @@
 
 {% endif %}
 
+
+{% include 'base/pagination_class_based_views.html' %}
 
 {% endblock %}

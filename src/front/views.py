@@ -38,30 +38,22 @@ class IndexPageView(TemplateView):
         return context
 
 
-@login_required
-def account_domains(request):
-    if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new domains.')
-        # return account_profile(request)
-        return shortcuts.redirect('account_profile')
-    if len(zcontacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
-        # return account_contacts(request)
-        return shortcuts.redirect('account_contacts')
-    domain_objects = zdomains.list_domains(request.user.email)
-    if not domain_objects:
-        return domain_lookup(request)
-    page = request.GET.get('page', 1)
-    paginator = Paginator(domain_objects, 10)
-    try:
-        domain_objects = paginator.page(page)
-    except PageNotAnInteger:
-        domain_objects = paginator.page(1)
-    except EmptyPage:
-        domain_objects = paginator.page(paginator.num_pages)
-    return shortcuts.render(request, 'front/account_domains.html', {
-        'objects': domain_objects,
-    })
+class AccountDomainsListView(ListView, BaseLoginRequiredMixin):
+    template_name = 'front/account_domains.html'
+    paginate_by = 10
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return zdomains.list_domains(self.request.user.email)
 
 
 @login_required

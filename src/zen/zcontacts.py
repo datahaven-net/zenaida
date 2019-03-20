@@ -22,7 +22,7 @@ def by_epp_id(epp_id):
     """
     if not epp_id:
         return None
-    return Contact.contacts.get(epp_id=epp_id)
+    return Contact.contacts.filter(epp_id=epp_id).first()
 
 
 def exists(epp_id):

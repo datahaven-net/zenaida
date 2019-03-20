@@ -325,7 +325,12 @@ class DomainRefresher(automat.Automat):
             received_contact_id = received_contacts_info.get(role, {'id': None, })['id']
             if not received_contact_id:
                 continue
-            if zcontacts.exists(epp_id=received_contact_id):
+            existing_contact = zcontacts.by_epp_id(epp_id=received_contact_id)
+            if existing_contact:
+                if existing_contact.owner != self.known_registrant.owner:
+                    self.log(self.debug_level, 'Error in doDBCheckCreateUpdateContacts: existing contact have another owner in local DB')
+                    self.event('error', zerrors.EPPRegistrantAuthFailed('existing contact have another owner in local DB'))
+                    return
                 zcontacts.contact_refresh(
                     epp_id=received_contact_id,
                     contact_info_response=received_contacts_info[role]['response'],

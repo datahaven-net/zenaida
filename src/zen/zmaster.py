@@ -114,12 +114,12 @@ def domain_synchronize_from_backend(domain_name,
     )
     dr.event('run',
         domain_name=domain_name,
+        change_owner_allowed=change_owner_allowed,
         refresh_contacts=refresh_contacts,
     )
     outputs = list(dr.outputs)
     del dr
     logger.debug('domain_refresher(%r) outputs: %r', domain_name, outputs)
-
     return None
 
 

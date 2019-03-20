@@ -7,6 +7,8 @@ import json
 from lib import xml2json
 
 from zen import zclient
+from zen import zmaster
+from zen import zerrors
 
 logger = logging.getLogger(__name__)
 
@@ -18,21 +20,45 @@ class XML2JsonOptions(object):
 #------------------------------------------------------------------------------
 
 def do_domain_transfer_to_us(domain):
-    # TODO: implement when required
     logger.info('domain %s transferred to Zenaida', domain)
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=True,
+            change_owner_allowed=True,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
     return True
 
 
 def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=False):
     logger.info('domain %s transferred away', domain)
-    # TODO: to be continue
-    return False
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=True,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
 
 
 def do_domain_deleted(domain, notify=False):
     logger.info('domain %s deleted', domain)
-    # TODO: to be continue
-    return False
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=True,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
 
 
 def do_domain_status_changed(domain, notify=False):
@@ -43,22 +69,44 @@ def do_domain_status_changed(domain, notify=False):
 
 def do_domain_expiry_date_updated(domain):
     logger.info('domain %s expiry date updated', domain)
-    # from zen import zmaster
-    # zmaster.domain_synchronize_from_backend(domain)
-    # TODO: to be continue
-    return False
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
 
 
 def do_domain_nameservers_changed(domain):
     logger.info('domain %s nameservers changed', domain)
-    # TODO: to be continue
-    return False
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
 
 
 def do_domain_contacts_changed(domain):
     logger.info('domain %s contacts changed', domain)
-    # TODO: to be continue
-    return False
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=True,
+            change_owner_allowed=True,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
 
 #------------------------------------------------------------------------------
 

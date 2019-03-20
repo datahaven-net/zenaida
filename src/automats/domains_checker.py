@@ -230,7 +230,7 @@ class DomainsChecker(automat.Automat):
             self.event('error', exc)
         else:
             if self.verify_registrant:
-                known_domain = zdomains.find(domain_name=self.current_domain_name)
+                known_domain = zdomains.domain_find(domain_name=self.current_domain_name)
                 known_registrant_epp_id = None if not known_domain else known_domain.registrant.epp_id
                 real_registrant_epp_id = response['epp']['response']['resData']['infData'].get('registrant', None)
                 if real_registrant_epp_id and known_registrant_epp_id and known_registrant_epp_id != real_registrant_epp_id:

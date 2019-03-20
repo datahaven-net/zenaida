@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # domain_refresher.py
-#
-
 
 """
 .. module:: domain_refresher
@@ -10,61 +8,55 @@
 Zenaida domain_refresher() Automat
 
 EVENTS:
+    * :red:`all-contacts-received`
     * :red:`error`
     * :red:`response`
     * :red:`run`
 """
 
+#------------------------------------------------------------------------------ 
+
+import logging
+import datetime
+
+from django.conf import settings
+
+#------------------------------------------------------------------------------
 
 from automats import automat
 
+from zen import zclient
+from zen import zerrors
+from zen import zdomains
+from zen import zcontacts
 
-_DomainRefresher = None
+#------------------------------------------------------------------------------
 
+logger = logging.getLogger(__name__)
 
-def A(event=None, *args, **kwargs):
-    """
-    Access method to interact with `domain_refresher()` machine.
-    """
-    global _DomainRefresher
-    if event is None:
-        return _DomainRefresher
-    if _DomainRefresher is None:
-        # TODO: set automat name and starting state here
-        _DomainRefresher = DomainRefresher(name='domain_refresher', state='AT_STARTUP')
-    if event is not None:
-        _DomainRefresher.automat(event, *args, **kwargs)
-    return _DomainRefresher
-
-
-def Destroy():
-    """
-    Destroy `domain_refresher()` automat and remove its instance from memory.
-    """
-    global _DomainRefresher
-    if _DomainRefresher is None:
-        return
-    _DomainRefresher.destroy()
-    del _DomainRefresher
-    _DomainRefresher = None
-
+#------------------------------------------------------------------------------
 
 class DomainRefresher(automat.Automat):
     """
     This class implements all the functionality of ``domain_refresher()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=False, log_transitions=False, publish_events=False, **kwargs):
+    def __init__(self, debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domain_refresher()` state machine.
         """
+        if log_events is None:
+            log_events=settings.DEBUG
+        if log_transitions is None:
+            log_transitions=settings.DEBUG
         super(DomainRefresher, self).__init__(
             name="domain_refresher",
             state="AT_STARTUP",
+            outputs=[],
             debug_level=debug_level,
             log_events=log_events,
             log_transitions=log_transitions,
-            publish_events=publish_events,
+            raise_errors=raise_errors,
             **kwargs
         )
 
@@ -73,6 +65,14 @@ class DomainRefresher(automat.Automat):
         Method to initialize additional variables and flags
         at creation phase of `domain_refresher()` machine.
         """
+        self.contacts_changed = False
+        self.refresh_contacts = False 
+        self.domain_info_response = None
+        self.received_registrant = None
+        self.received_contacts = []
+        self.received_contact_roles = {}
+        self.received_nameservers = []
+        self.known_registrant = None
 
     def state_changed(self, oldstate, newstate, event, *args, **kwargs):
         """
@@ -99,6 +99,7 @@ class DomainRefresher(automat.Automat):
         elif self.state == 'EXISTS?':
             if event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isDomainExist(*args, **kwargs):
                 self.state = 'DONE'
+                self.doDBDeleteDomain(*args, **kwargs)
                 self.doReportNotExist(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'response' and self.isCode(1000, *args, **kwargs) and self.isDomainExist(*args, **kwargs):
@@ -108,72 +109,395 @@ class DomainRefresher(automat.Automat):
                 self.state = 'FAILED'
                 self.doReportCheckFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+        #---INFO?---
+        elif self.state == 'INFO?':
+            if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportInfoFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(1000, *args, **kwargs) and self.isContactsNeeded(*args, **kwargs):
+                self.state = 'CONTACTS?'
+                self.doReportDomainInfo(*args, **kwargs)
+                self.doEPPContactsInfoMany(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isContactsNeeded(*args, **kwargs):
+                self.state = 'DONE'
+                self.doDBCheckCreateDomain(*args, **kwargs)
+                self.doDBCheckUpdateNameservers(*args, **kwargs)
+                self.doDBCheckUpdateDomainInfo(*args, **kwargs)
+                self.doReportDomainInfo(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+        #---CONTACTS?---
+        elif self.state == 'CONTACTS?':
+            if event == 'all-contacts-received':
+                self.state = 'DONE'
+                self.doDBCheckCreateUpdateContacts(*args, **kwargs)
+                self.doDBCheckCreateDomain(*args, **kwargs)
+                self.doDBCheckChangeOwner(*args, **kwargs)
+                self.doDBCheckChangeContacts(*args, **kwargs)
+                self.doDBCheckUpdateNameservers(*args, **kwargs)
+                self.doDBCheckUpdateDomainInfo(*args, **kwargs)
+                self.doReportContactsInfo(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'error':
+                self.state = 'FAILED'
+                self.doReportContactsFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---FAILED---
         elif self.state == 'FAILED':
             pass
         #---DONE---
         elif self.state == 'DONE':
             pass
-        #---INFO?---
-        elif self.state == 'INFO?':
-            if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs):
-                self.state = 'FAILED'
-                self.doReportInfoFailed(event, *args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000, *args, **kwargs):
-                self.state = 'DONE'
-                self.doReportDone(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-
+        return None
 
     def isCode(self, *args, **kwargs):
         """
         Condition method.
         """
+        return args[0] == int(args[1]['epp']['response']['result']['@code'])
 
     def isDomainExist(self, *args, **kwargs):
         """
         Condition method.
         """
+        return args[0]['epp']['response']['resData']['chkData']['cd']['name']['@avail'] == '0'
 
-    def doEppDomainInfo(self, *args, **kwargs):
+    def isContactsNeeded(self, *args, **kwargs):
         """
-        Action method.
+        Condition method.
         """
-
-    def doReportInfoFailed(event, *args, **kwargs):
-        """
-        Action method.
-        """
-
-    def doReportCheckFailed(event, *args, **kwargs):
-        """
-        Action method.
-        """
-
-    def doDestroyMe(self, *args, **kwargs):
-        """
-        Remove all references to the state machine object to destroy it.
-        """
-        self.destroy()
+        return self.refresh_contacts or self.contacts_changed
 
     def doInit(self, *args, **kwargs):
         """
         Action method.
         """
+        self.domain_name = kwargs['domain_name']
+        self.target_domain = zdomains.domain_find(domain_name=self.domain_name)
+        self.change_owner_allowed = kwargs.get('change_owner_allowed', False)
+        self.refresh_contacts = kwargs.get('refresh_contacts', False)
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
         Action method.
         """
+        try:
+            response = zclient.cmd_domain_check(
+                domains=[self.domain_name, ],
+                raise_for_result=False,
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainCheck: %s' % exc)
+            self.event('error', exc)
+        else:
+            self.event('response', response)
+
+    def doEppDomainInfo(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        try:
+            response = zclient.cmd_domain_info(
+                domain=self.domain_name,
+                raise_for_result=False,
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.event('error', exc)
+            return
+
+        # read current contacts
+        try:
+            datetime.datetime.strptime(
+                response['epp']['response']['resData']['infData']['exDate'],
+                '%Y-%m-%dT%H:%M:%S.%fZ',
+            )
+            datetime.datetime.strptime(
+                response['epp']['response']['resData']['infData']['crDate'],
+                '%Y-%m-%dT%H:%M:%S.%fZ',
+            )
+        except Exception as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            raise zerrors.EPPBadResponse('response field not recognized')
+
+        # detect current nameservers
+        try:
+            current_nameservers = response['epp']['response']['resData']['infData']['ns']['hostObj']
+        except:
+            current_nameservers = []
+        if not isinstance(current_nameservers, list):
+            current_nameservers = [current_nameservers, ]
+        self.received_nameservers = current_nameservers
+
+        # detect current contacts
+        try:
+            current_contacts = response['epp']['response']['resData']['infData']['contact']
+        except:
+            current_contacts = []
+        if not isinstance(current_contacts, list):
+            current_contacts = [current_contacts, ]
+        self.received_contacts = [{
+            'type': i['@type'],
+            'id': i['#text'],
+        } for i in current_contacts]
+        self.received_contact_roles = {i['@type']:i['#text'] for i in current_contacts}
+
+        # compare known contacts we have in DB with contacts received from back-end
+        if not self.target_domain:
+            self.contacts_changed = True
+        else:
+            add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
+                domain_object=self.target_domain,
+                domain_info_response=response,
+            )
+            if add_contacts or remove_contacts or change_registrant:
+                self.contacts_changed = True
+
+        # detect current registrant
+        try:
+            self.received_registrant = response['epp']['response']['resData']['infData']['registrant']
+        except Exception as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.event('error', zerrors.EPPRegistrantUnknown(response=response))
+            return
+
+        # find registrant in local DB
+        self.known_registrant = zcontacts.registrant_find(self.received_registrant)
+        # fail if registrant is not exist in local DB
+        if not self.known_registrant:
+            self.log(self.debug_level, 'Error in doEppDomainInfo: registrant not exist in local DB')
+            self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
+            return
+
+        self.domain_info_response = response
+        self.event('response', response)
+
+    def doEPPContactsInfoMany(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        received_contacts_info = {}
+        # request info about contacts
+        for received_contact in self.received_contacts:
+            try:
+                response = zclient.cmd_contact_info(
+                    contact_id=received_contact['id'],
+                    raise_for_result=True,
+                )
+            except zerrors.EPPError as exc:
+                self.log(self.debug_level, 'Exception in doEPPContactsInfoMany: %s' % exc)
+                self.event('error', exc)
+                return
+            received_contacts_info[received_contact['type']] = {
+                'id': received_contact['id'],
+                'response': response,
+            }
+        # request registrant info
+        try:
+            response = zclient.cmd_contact_info(
+                contact_id=self.received_registrant,
+                raise_for_result=True,
+            )
+        except zerrors.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEPPContactsInfoMany: %s' % exc)
+            self.event('error', exc)
+            return
+        received_contacts_info['registrant'] = {
+            'id': self.received_registrant,
+            'response': response,
+        }
+        self.event('all-contacts-received', received_contacts_info)
+
+    def doDBDeleteDomain(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        zdomains.domain_delete(domain_name=self.domain_name)
+
+    def doDBCheckCreateUpdateContacts(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        received_contacts_info = args[0]
+        # even if domain not exist yet make sure all contacts really exists in DB and in sync with back-end
+        for role in ['admin', 'billing', 'tech', ]:
+            received_contact_id = received_contacts_info.get(role, {'id': None, })['id']
+            if not received_contact_id:
+                continue
+            if zcontacts.exists(epp_id=received_contact_id):
+                zcontacts.contact_refresh(
+                    epp_id=received_contact_id,
+                    contact_info_response=received_contacts_info[role]['response'],
+                )
+            else:
+                zcontacts.contact_create(
+                    epp_id=received_contact_id,
+                    owner=self.known_registrant.owner,
+                    contact_info_response=received_contacts_info[role]['response'],
+                )
+
+    def doDBCheckCreateDomain(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        if self.target_domain:
+            return
+        zdomains.domain_create(
+            self.domain_name,
+            owner=self.known_registrant.owner,
+            expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),
+            create_date=zdomains.response_to_datetime('crDate', self.domain_info_response),
+            epp_id=self.domain_info_response['epp']['response']['resData']['infData']['roid'],
+            auth_key='',
+            registrar=None,
+            registrant=self.known_registrant,
+            contact_admin=zcontacts.by_epp_id(self.received_contact_roles.get('admin')),
+            contact_tech=zcontacts.by_epp_id(self.received_contact_roles.get('tech')),
+            contact_billing=zcontacts.by_epp_id(self.received_contact_roles.get('billing')),
+            nameservers=self.received_nameservers,
+            save=True,
+        )
+
+    def doDBCheckChangeOwner(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        if not self.target_domain:
+            return
+        # update registrant of the domain if it is known
+        if self.target_domain.registrant != self.known_registrant:
+            if not self.change_owner_allowed:
+                self.event('error', zerrors.EPPRegistrantAuthFailed('domain already have another registrant in local DB'))
+                return
+            logger.info('domain %r going to switch registrant %r to %r',
+                        self.target_domain, self.target_domain.registrant, self.known_registrant)
+            zdomains.domain_change_registrant(self.target_domain, self.known_registrant)
+
+        # make sure owner of the domain is correct
+        if self.target_domain.owner != self.known_registrant.owner:
+            # just in case given user have multiple registrant contacts... 
+            if not self.change_owner_allowed:
+                self.event('error', zerrors.EPPRegistrantAuthFailed('domain already have another owner in local DB'))
+                return
+            logger.info('domain %r going to switch owner %r to %r',
+                        self.target_domain, self.target_domain.owner, self.known_registrant.owner)
+            zdomains.domain_change_owner(self.target_domain, self.known_registrant.owner)
+
+    def doDBCheckChangeContacts(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        if not self.target_domain:
+            return
+        received_contacts_info = args[0]
+        for role in ['admin', 'billing', 'tech', ]:
+            received_contact_id = received_contacts_info.get(role, {'id': None, })['id']
+            known_contact_id = None
+            known_contact = self.target_domain.get_contact(role)
+            if known_contact:
+                known_contact_id = known_contact.epp_id
+            if not received_contact_id and not known_contact_id:
+                continue
+            if not received_contact_id:
+                logger.info('domain %r going to remove existing contact %s', self.target_domain, role)
+                zdomains.domain_detach_contact(self.target_domain, role)
+                continue
+            new_contact = zcontacts.by_epp_id(received_contact_id)
+            if not new_contact:
+                raise zerrors.EPPCommandFailed('can not assign contact to domain, epp_id not found')
+            if not known_contact_id:
+                logger.info('domain %r going to add new contact %s : %r',
+                            self.target_domain, role, self.known_registrant.owner)
+                zdomains.domain_join_contact(self.target_domain, role, new_contact)
+                continue
+            if received_contact_id != known_contact_id:
+                logger.info('domain %r going to switch contact %s from %r to %r',
+                            self.target_domain, role, self.known_registrant.owner)
+                zdomains.domain_join_contact(self.target_domain, role, new_contact)
+                continue
+            logger.info('domain %r current %s contact in sync', self.target_domain, role)
+
+    def doDBCheckUpdateNameservers(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        if not self.target_domain:
+            return
+        zdomains.update_nameservers(
+            domain_object=self.target_domain,
+            domain_info_response=self.domain_info_response,
+        )
+
+    def doDBCheckUpdateDomainInfo(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        if not self.target_domain:
+            return
+        zdomains.domain_update(
+            expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),
+            create_date=zdomains.response_to_datetime('crDate', self.domain_info_response),
+        )
 
     def doReportNotExist(self, *args, **kwargs):
         """
         Action method.
         """
+        self.outputs.append(None)
 
-    def doReportDone(self, *args, **kwargs):
+    def doReportCheckFailed(self, event, *args, **kwargs):
         """
         Action method.
         """
+        if event == 'error':
+            self.outputs.append(args[0])
+        else:
+            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+
+    def doReportInfoFailed(self, event, *args, **kwargs):
+        """
+        Action method.
+        """
+        if event == 'error':
+            self.outputs.append(args[0])
+        else:
+            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+
+    def doReportDomainInfo(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.outputs.append(args[0])
+
+    def doReportContactsFailed(self, event, *args, **kwargs):
+        """
+        Action method.
+        """
+        if event == 'error':
+            self.outputs.append(args[0])
+        else:
+            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+
+    def doReportContactsInfo(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        received_contacts_info = args[0] 
+        for role, response in received_contacts_info.items():
+            self.outputs.append(response['response'])
+
+    def doDestroyMe(self, *args, **kwargs):
+        """
+        Remove all references to the state machine object to destroy it.
+        """
+        self.domain_name = None
+        self.target_domain = None
+        self.contacts_changed = False
+        self.domain_info_response = None
+        self.received_contacts = []
+        self.received_contact_roles = {}
+        self.received_nameservers = []
+        self.destroy()
+
 

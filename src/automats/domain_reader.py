@@ -147,7 +147,7 @@ class DomainReader(automat.Automat):
             self.log(self.debug_level, 'Domain registrant unknown from response: %s' % self.target_domain.name)
             self.event('error', zerrors.EPPRegistrantUnknown(response=args[0]))
             return
-        known_domain = zdomains.find(domain_name=self.target_domain.name)
+        known_domain = zdomains.domain_find(domain_name=self.target_domain.name)
         if not known_domain:
             return
         if known_domain.registrant.epp_id == self.registrant_epp_id:

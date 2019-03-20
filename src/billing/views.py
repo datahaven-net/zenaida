@@ -172,7 +172,7 @@ def order_create(request):
     order_items = request.POST.getlist('order_items')
     to_be_ordered = []
     for domain_name in order_items:
-        domain_object = zdomains.find(domain_name=domain_name)
+        domain_object = zdomains.domain_find(domain_name=domain_name)
         if not domain_object:
             raise ValueError()
         if domain_object.owner != request.user:

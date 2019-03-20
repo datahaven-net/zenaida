@@ -3,6 +3,7 @@ import logging
 
 from automats import domains_checker
 from automats import domain_synchronizer
+from automats import domain_refresher
 from automats import contact_synchronizer
 
 
@@ -65,7 +66,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
 
 
 def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, save_to_db=True,
-                                     raise_errors=False, log_events=True, log_transitions=True, ):
+                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Check if domain exists first and then update it from `domain_object` info.
     If domain not exist create a new domain on back-end.
@@ -96,7 +97,9 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     return True
 
 
-def domain_synchronize_from_backend():
+def domain_synchronize_from_backend(domain_name,
+                                    refresh_contacts=False, change_owner_allowed=False,
+                                    raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from backend and take required actions to update local DB
     to be fully in sync with  backend.
@@ -104,7 +107,19 @@ def domain_synchronize_from_backend():
     Returns False if error happened, or raise Exception if `raise_errors` is True,
     if all is okay returns domain object from local DB.
     """
-    # TODO: implement domain_refresher() state machine here
+    dr = domain_refresher.DomainRefresher(
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dr.event('run',
+        domain_name=domain_name,
+        refresh_contacts=refresh_contacts,
+    )
+    outputs = list(dr.outputs)
+    del dr
+    logger.debug('domain_refresher(%r) outputs: %r', domain_name, outputs)
+
     return None
 
 

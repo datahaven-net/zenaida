@@ -43,8 +43,8 @@ def do_domain_status_changed(domain, notify=False):
 
 def do_domain_expiry_date_updated(domain):
     logger.info('domain %s expiry date updated', domain)
-    from zen import zmaster
-    zmaster.domain_synchronize_from_backend(domain)
+    # from zen import zmaster
+    # zmaster.domain_synchronize_from_backend(domain)
     # TODO: to be continue
     return False
 

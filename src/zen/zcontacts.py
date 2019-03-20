@@ -9,15 +9,28 @@ logger = logging.getLogger(__name__)
 
 def by_id(contact_id):
     """
-    Return Contact object with given id.
+    Return Contact object with given id or None.
     """
+    if not contact_id:
+        return None
     return Contact.contacts.get(id=contact_id)
+
+
+def by_epp_id(epp_id):
+    """
+    Return Contact object with given epp_id or None.
+    """
+    if not epp_id:
+        return None
+    return Contact.contacts.get(epp_id=epp_id)
 
 
 def exists(epp_id):
     """
     Return `True` if contact with given epp_id exists, doing query in Contact table.
     """
+    if not epp_id:
+        return False
     return bool(Contact.contacts.filter(epp_id=epp_id).first())
 
 
@@ -42,7 +55,44 @@ def verify(epp_id, email=None, owner=None):
     return True
 
 
-def contact_create(epp_id, owner, **kwargs):
+def extract_address_info(contact_info_response):
+    """
+    From given contact info EPP response extracts address info into flat dictionary.   
+    """
+    d = contact_info_response['epp']['response']['resData']['infData']
+    a = {}
+    postal_info_list = d['postalInfo'] if isinstance(d['postalInfo'], list) else [d['postalInfo'], ]
+    local_address = False
+    for pi in postal_info_list:
+        if pi['@type'] == 'loc':
+            local_address = True
+            a.update({
+                'name': pi.get('name', ''),
+                'org': pi.get('org', ''),
+                'cc': pi.get('addr', {}).get('cc'),
+                'city': pi.get('addr', {}).get('city'),
+                'pc': pi.get('addr', {}).get('pc'),
+                'sp': pi.get('addr', {}).get('sp'),
+                'street': (' '.join(pi.get('addr', {}).get('street'))) if isinstance(
+                    pi.get('addr', {}).get('street'), list) else pi.get('addr', {}).get('street'),
+            })
+            break
+    if not local_address:
+        for pi in postal_info_list:
+            a.update({
+                'name': pi.get('name', ''),
+                'org': pi.get('org', ''),
+                'cc': pi.get('addr', {}).get('cc'),
+                'city': pi.get('addr', {}).get('city'),
+                'pc': pi.get('addr', {}).get('pc'),
+                'sp': pi.get('addr', {}).get('sp'),
+                'street': (' '.join(pi.get('addr', {}).get('street'))) if isinstance(
+                    pi.get('addr', {}).get('street'), list) else pi.get('addr', {}).get('street'),
+            })
+    return a
+
+
+def contact_create(epp_id, owner, contact_info_response=None, **kwargs):
     """
     Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
     """
@@ -53,6 +103,25 @@ def contact_create(epp_id, owner, **kwargs):
                 raise Exception('Invalid owner, existing contact have another owner already')
             logger.debug('contact with epp_id=%s already exist', epp_id)
             return existing_contact
+    if contact_info_response:
+        d = contact_info_response['epp']['response']['resData']['infData']
+        a = extract_address_info(contact_info_response)
+        new_contact = Contact.contacts.create(
+            epp_id=epp_id,
+            owner=owner,
+            person_name=a['name'],
+            organization_name=a['org'],
+            address_street=a['street'],
+            address_city=a['city'],
+            address_province=a['sp'],
+            address_postal_code=a['pc'],
+            address_country=a['cc'],
+            contact_voice=str(d.get('voice', '')),
+            contact_fax=str(d.get('fax', '')),
+            contact_email=str(d['email']),
+        )
+        logger.debug('contact created: %s', new_contact)
+        return new_contact
     new_contact = Contact.contacts.create(epp_id=epp_id, owner=owner, **kwargs)
     logger.debug('contact created: %s', new_contact)
     return new_contact
@@ -88,6 +157,31 @@ def contact_update(epp_id, **kwargs):
         raise Exception('Contact not found')
     updated = Contact.contacts.filter(pk=existing_contact.pk).update(**kwargs)
     logger.debug('contact updated: %s', existing_contact)
+    return updated
+
+
+def contact_refresh(epp_id, contact_info_response):
+    """
+    Update given Contact with new field values.
+    """
+    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+    if not existing_contact:
+        raise Exception('Contact not found')
+    d = contact_info_response['epp']['response']['resData']['infData']
+    a = extract_address_info(contact_info_response)
+    updated = Contact.contacts.filter(pk=existing_contact.pk).update(
+        person_name=a['name'],
+        organization_name=a['org'],
+        address_street=a['street'],
+        address_city=a['city'],
+        address_province=a['sp'],
+        address_postal_code=a['pc'],
+        address_country=a['cc'],
+        contact_voice=str(d.get('voice', '')),
+        contact_fax=str(d.get('fax', '')),
+        contact_email=str(d['email']),
+    )
+    logger.debug('contact refreshed: %s', existing_contact)
     return updated
 
 
@@ -149,10 +243,10 @@ def to_dict(contact_object):
 
 def registrant_create(epp_id, owner, **kwargs):
     """
-    Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
+    Creates new Registrant for given owner, but only if Registrant with same epp_id not exist yet.
     """
     if epp_id:
-        existing_registrant = Registrant.registrants.filter(epp_id=epp_id).first()
+        existing_registrant = registrant_find(epp_id)
         if existing_registrant:
             if existing_registrant.owner.pk != owner.pk:
                 raise Exception('Invalid owner, existing registrant have another owner already')
@@ -189,7 +283,7 @@ def registrant_update(epp_id, **kwargs):
     """
     Update given Registrant with new field values.
     """
-    existing_registrant = Registrant.registrants.filter(epp_id=epp_id).first()
+    existing_registrant = registrant_find(epp_id)
     if not existing_registrant:
         raise Exception('Registrant not found')
     updated = Registrant.registrants.filter(pk=existing_registrant.pk).update(**kwargs)
@@ -214,6 +308,13 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
     if save:
         registrant_object.save()
     return True
+
+
+def registrant_find(epp_id):
+    """
+    If such Registrant exists with given epp_id - returns it, otherwise None.
+    """
+    return Registrant.registrants.filter(epp_id=epp_id).first()
 
 
 def registrant_exists(epp_id):

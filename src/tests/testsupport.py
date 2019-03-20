@@ -50,6 +50,35 @@ def prepare_tester_contact(tester=None, epp_id=None, create_new=False):
     return tester_contact
 
 
+def prepare_tester_registrant(tester=None, epp_id=None, profile_object=None, create_new=False):
+    if not tester:
+        tester = prepare_tester_account()
+    tester_registrant = tester.registrants.first()
+    if not tester_registrant or create_new:
+        if profile_object:
+            tester_registrant = zcontacts.registrant_create_from_profile(
+                owner=tester,
+                profile_object=profile_object,
+                epp_id=epp_id,
+            )
+        else:
+            tester_registrant = zcontacts.registrant_create(
+                epp_id=epp_id,
+                owner=tester,
+                person_name='Tester Registrant',
+                organization_name='TestingCorp',
+                address_street='TestStreet',
+                address_city='TestCity',
+                address_province='TestProvince',
+                address_postal_code='TestPostalCode',
+                address_country='AI',
+                contact_voice='1234567890',
+                contact_fax='1234567890',
+                contact_email='tester@zenaida.ai',
+            )
+    return tester_registrant
+
+
 def prepare_tester_domain(
         domain_name,
         tester=None,
@@ -62,10 +91,11 @@ def prepare_tester_domain(
     if not tester:
         tester = prepare_tester_account()
 
-    tester_registrant = zcontacts.registrant_create_from_profile(
+    tester_registrant = prepare_tester_registrant(
         tester,
+        epp_id=epp_id_dict.get('registrant', ''),
         profile_object=tester.profile,
-        epp_id=epp_id_dict.get('registrant', '')
+        create_new=True,
     ) if 'registrant' in add_contacts else None
 
     tester_contact_admin = prepare_tester_contact(
@@ -86,7 +116,7 @@ def prepare_tester_domain(
         create_new=True,
     ) if 'billing' in add_contacts else None
 
-    tester_domain = zdomains.create(
+    tester_domain = zdomains.domain_create(
         domain_name=domain_name,
         owner=tester,
         expiry_date=make_aware(datetime.datetime.now() + datetime.timedelta(days=365)),

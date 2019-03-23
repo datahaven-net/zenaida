@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, FormView, DetailView
 
 from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
@@ -190,27 +190,22 @@ def order_create(request):
     }, )
 
 
-@login_required
-def order_details(request, order_id):
-    """
-    """
-    existing_order = billing_orders.by_id(order_id)
-    return shortcuts.render(request, 'billing/order_details.html', {
-        'order': existing_order,
-    }, )
+class OrderDetailsView(DetailView, BaseLoginRequiredMixin):
+    template_name = 'billing/order_details.html'
+
+    def get_object(self, queryset=None):
+        return billing_orders.get_order_by_id_and_owner(
+            order_id=self.kwargs.get('order_id'), owner=self.request.user, log_action='check'
+        )
 
 
 @login_required
 def order_execute(request, order_id):
     """
     """
-    existing_order = billing_orders.by_id(order_id)
-    if not existing_order:
-        logging.critical('User %s tried to execute non-existing order' % request.user)
-        raise exceptions.SuspiciousOperation()
-    if existing_order.owner != request.user:
-        logging.critical('User %s tried to execute an order for another user' % request.user)
-        raise exceptions.SuspiciousOperation()
+    existing_order = billing_orders.get_order_by_id_and_owner(
+        order_id=order_id, owner=request.user, log_action='execute'
+    )
     if existing_order.total_price > existing_order.owner.balance:
         messages.error(request, 'Not enough funds on your balance to complete order. Please buy more credits to be able to register/renew domains.')
         return shortcuts.redirect('billing_orders')
@@ -226,13 +221,9 @@ def order_execute(request, order_id):
 def order_cancel(request, order_id):
     """
     """
-    existing_order = billing_orders.by_id(order_id)
-    if not existing_order:
-        logging.critical('User %s tried to cancel non-existing order' % request.user)
-        raise exceptions.SuspiciousOperation()
-    if not existing_order.owner == request.user:
-        logging.critical('User %s tried to cancel an order for another user' % request.user)
-        raise exceptions.SuspiciousOperation()
+    existing_order = billing_orders.get_order_by_id_and_owner(
+        order_id=order_id, owner=request.user, log_action='cancel'
+    )
     billing_orders.cancel_single_order(existing_order)
     messages.success(request, 'Order of %s cancelled.' % existing_order.description)
     return shortcuts.redirect('billing_orders')

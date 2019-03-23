@@ -16,7 +16,6 @@ class Order(models.Model):
     # related fields:
     # items -> billing.models.order_item.OrderItem
 
-
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='orders')
 
     started_at = models.DateTimeField(null=False)

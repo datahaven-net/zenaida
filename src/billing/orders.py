@@ -19,10 +19,18 @@ from zen import zmaster
 def by_id(order_id):
     """
     """
-    try:
-        return Order.orders.get(id=order_id)
-    except:
-        return None
+    return Order.orders.filter(id=order_id).first()
+
+
+def get_order_by_id_and_owner(order_id, owner, log_action=None):
+    order = by_id(order_id)
+    if not order:
+        logging.critical(f'User {owner} tried to {log_action} non-existing order')
+        raise exceptions.SuspiciousOperation()
+    if order.owner != owner:
+        logging.critical(f'User {owner} tried to {log_action} an order for another user')
+        raise exceptions.SuspiciousOperation()
+    return order
 
 
 def list_orders(owner, exclude_cancelled=False):

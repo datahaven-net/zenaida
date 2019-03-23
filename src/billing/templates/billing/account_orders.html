@@ -37,7 +37,7 @@
         <th>Actions</th>
     </tr>
 
-    {% for order in objects %}
+    {% for order in object_list %}
 
         <tr>
             <td><a href="{{ order.id }}">{{ order.description }}</a></td>
@@ -57,6 +57,7 @@
 
 </table>
 
-{% include 'base/pagination.html' %}
+
+{% include 'base/pagination_class_based_views.html' %}
 
 {% endblock %}

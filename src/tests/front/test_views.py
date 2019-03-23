@@ -93,12 +93,14 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') == '0':
             return True
+        # First create a contact person
+        self.client.post('/contacts/create/', data=contact_person, follow=True)
         updated_contact_person = copy.deepcopy(contact_person)
         updated_contact_person['person_name'] = 'TesterB'
+        # Update existing contact
         response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
-        assert response.status_code == 200
-        c = contact.Contact.contacts.all()[0]
-        assert c.person_name == 'TesterB'
+        assert response.status_code == 302
+        assert response.url == '/contacts/'
 
     @pytest.mark.django_db
     def test_update_db_successful(self):
@@ -116,7 +118,9 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
         # Update the contact person
         updated_contact_person = copy.deepcopy(contact_person)
         updated_contact_person['person_name'] = 'TesterB'
-        response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
 
         assert response.status_code == 302
         assert response.url == '/contacts/'
@@ -180,6 +184,43 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
         response = self.client.get('/contacts/')
         assert response.status_code == 200
         assert len(contact.Contact.contacts.all()) == 0
+
+
+class TestDomainLookupView(TestCase):
+    def test_e2e_successful(self):
+        if os.environ.get('E2E', '0') == '0':
+            return True
+        response = self.client.get('/lookup/?domain_name=bitdust.ai')
+        assert response.status_code == 200
+        assert response.context['result'] == 'not exist'
+
+    def test_e2e_domain_exists(self):
+        # Even though this test is e2e, as there is already test above which is testing EPP connection,
+        # in this test domain check on EPP is mocked.
+        with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
+            mock_domain_check.get.return_value = True
+            response = self.client.get('/lookup/?domain_name=bitdust.ai')
+        assert response.status_code == 200
+        assert response.context['result'] == 'exist'
+
+    def test_domain_lookup_returns_error(self):
+        with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
+            mock_domain_check.return_value = None
+            response = self.client.get('/lookup/?domain_name=bitdust.ai')
+        assert response.status_code == 200
+        assert response.context['result'] == 'error'
+
+    def test_domain_is_already_in_db(self):
+        with mock.patch('zen.zdomains.is_domain_available') as mock_is_domain_available:
+            mock_is_domain_available.return_value = False
+            response = self.client.get('/lookup/?domain_name=bitdust.ai')
+        assert response.status_code == 200
+        assert response.context['result'] == 'exist'
+
+    def test_domain_lookup_page(self):
+        response = self.client.get('/lookup/')
+        assert response.status_code == 200
+        assert response.context['result'] is None
 
 
 class TestFAQViews(TestCase):

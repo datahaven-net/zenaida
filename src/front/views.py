@@ -281,29 +281,25 @@ class AccountContactsListView(ListView, BaseLoginRequiredMixin):
         return zcontacts.list_contacts(self.request.user)
 
 
-@login_required
-def domain_lookup(request):
-    domain_name = request.GET.get('domain_name')
-    if not domain_name:
-        return shortcuts.render(request, 'front/domain_lookup.html', {
-            'result': None,
-        })
+class DomainLookupView(TemplateView):
+    template_name = 'front/domain_lookup.html'
 
-    domain_available = zdomains.is_domain_available(domain_name)
-
-    if domain_available:
-        check_result = zmaster.domains_check(domain_names=[domain_name, ], )
-        if check_result is None:
-            result = 'error'
-        else:
-            if check_result.get(domain_name):
-                result = 'exist'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['result'] = None
+        domain_name = self.request.GET.get('domain_name')
+        context['domain_name'] = domain_name
+        if domain_name:
+            domain_available = zdomains.is_domain_available(domain_name)
+            if domain_available:
+                check_result = zmaster.domains_check(domain_names=[domain_name, ], )
+                if check_result is None:
+                    context['result'] = 'error'
+                else:
+                    if check_result.get(domain_name):
+                        context['result'] = 'exist'
+                    else:
+                        context['result'] = 'not exist'
             else:
-                result = 'not exist'
-    else:
-        result = 'exist'
-
-    return shortcuts.render(request, 'front/domain_lookup.html', {
-        'result': result,
-        'domain_name': domain_name,
-    })
+                context['result'] = 'exist'
+        return context

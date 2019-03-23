@@ -32,6 +32,10 @@ class BaseAuthTesterMixin(object):
         self.client.login(email='tester@zenaida.ai', password='123')
 
 
+class AccountDomainsListView(BaseAuthTesterMixin, TestCase):
+    pass
+
+
 class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
     def test_index_page_successful(self):
         with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:

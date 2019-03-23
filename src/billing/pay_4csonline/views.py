@@ -20,10 +20,9 @@ def start_payment(request, transaction_id):
 
 
 @login_required
-def process_payment(request):
+def process_payment(request, transaction_id):
     """
     """
-    transaction_id = request.GET.get('transaction_id', '')
     payment_object = payments.by_transaction_id(transaction_id=transaction_id)
 
     if not payment_object:

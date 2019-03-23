@@ -5,16 +5,18 @@ from django import shortcuts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 
 from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
+from billing.pay_4csonline  import views as pay_4csonline_views
 
 from zen import zdomains
 
@@ -27,43 +29,31 @@ def billing_overview(request):
     pass
 
 
-@login_required
-def new_payment(request):
-    """
-    """
-    if request.method != 'POST':
-        form = billing_forms.NewPaymentForm()
-        return shortcuts.render(request, 'billing/new_payment.html', {
-            'form': form,
-        })
+class NewPaymentView(FormView, BaseLoginRequiredMixin):
+    template_name = 'billing/new_payment.html'
+    form_class = billing_forms.NewPaymentForm
+    error_message = 'Payment method is invalid'
+    success_url = reverse_lazy('billing_new_payment')
 
-    form = billing_forms.NewPaymentForm(request.POST)
-    if not form.is_valid():
-        return shortcuts.render(request, 'billing/new_payment.html', {
-            'form': form,
-        })
+    def form_valid(self, form):
+        if not settings.BILLING_BYPASS_PAYMENT_TIME_CHECK:
+            my_latest_payment = payments.latest_payment(self.request.user)
+            if my_latest_payment:
+                if timezone.now() - my_latest_payment.started_at < datetime.timedelta(minutes=3):
+                    messages.info(self.request, 'Please wait few minutes and then try again.')
+                    return shortcuts.redirect('billing_new_payment')
 
-    if not settings.BILLING_BYPASS_PAYMENT_TIME_CHECK:
-        my_latest_payment = payments.latest_payment(request.user)
-        if my_latest_payment:
-            if timezone.now() - my_latest_payment.started_at < datetime.timedelta(minutes=3):
-                messages.info(request, 'Please wait few minutes and then try again.')
-                return shortcuts.render(request, 'billing/new_payment.html', {
-                    'form': form,
-                })
+        new_payment = payments.start_payment(
+            owner=self.request.user,
+            amount=form.cleaned_data['amount'],
+            payment_method=form.cleaned_data['payment_method'],
 
-    new_payment = payments.start_payment(
-        owner=request.user,
-        amount=form.cleaned_data['amount'],
-        payment_method=form.cleaned_data['payment_method'],
-        
-    )
+        )
 
-    if new_payment.method == 'pay_4csonline':
-        from billing.pay_4csonline.views import start_payment
-        return start_payment(request, transaction_id=new_payment.transaction_id)
-
-    raise ValueError('invalid payment method')
+        if new_payment.method == 'pay_4csonline':
+            return pay_4csonline_views.start_payment(self.request, transaction_id=new_payment.transaction_id)
+        messages.error(self.request, self.error_message)
+        return super().form_valid(form)
 
 
 @login_required

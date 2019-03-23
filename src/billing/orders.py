@@ -157,7 +157,7 @@ def execute_domain_renew(order_item, target_domain):
 
 
 def execute_one_item(order_item):
-    target_domain = zdomains.find(order_item.name)
+    target_domain = zdomains.domain_find(order_item.name)
     if not target_domain:
         logging.critical('Domain not exist', order_item.name)
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)

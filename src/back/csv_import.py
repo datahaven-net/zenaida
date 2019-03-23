@@ -226,7 +226,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         return errors
 
     #--- lookup existing domain
-    known_domain = zdomains.find(domain)
+    known_domain = zdomains.domain_find(domain)
     real_registrar_id = csv_record.get('registrar_id_9')
 
     if wanted_registrar and real_registrar_id != wanted_registrar:
@@ -414,7 +414,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             errors.append('%s: domain not exist' % domain)
             return errors
     #--- create new domain
-        new_domain = zdomains.create(
+        new_domain = zdomains.domain_create(
             domain_name=domain,
             owner=owner_account,
             expiry_date=real_expiry_date,
@@ -532,7 +532,8 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
 
     #--- update nameservers
-    zdomains.update_nameservers(domain, real_nameservers)
+    if not dry_run:
+        zdomains.update_nameservers(known_domain, real_nameservers)
 
     if errors and dry_run:
         return errors

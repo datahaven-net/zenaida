@@ -10,6 +10,7 @@ from back.models.registrar import Registrar
 
 from zen import zzones
 from zen import zusers
+from zen import zcontacts
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def is_domain_available(domain_name):
     If it exists, check if it's not created in last hour and if it doesn't have an epp_id
     OR if its expiry date is older than now and it doesn't have an epp_id, delete from internal DB and return True.
     """
-    domain = find(domain_name=domain_name)
+    domain = domain_find(domain_name=domain_name)
     if not domain:
         return True
     if domain.epp_id:
@@ -88,7 +89,7 @@ def is_domain_available(domain_name):
     return False
 
 
-def find(domain_name='', epp_id=None):
+def domain_find(domain_name='', epp_id=None):
     """
     Return `Domain` object if found in Domain table, else None.
     """
@@ -98,7 +99,7 @@ def find(domain_name='', epp_id=None):
     return Domain.domains.filter(name=domain_name).first()
 
 
-def create(
+def domain_create(
         domain_name,
         owner,
         expiry_date=None,
@@ -114,7 +115,7 @@ def create(
         save=True,
     ):
     """
-    Create new domain.
+    Create new domain object in DB.
     """
     from back.models.domain import Domain
     if is_exist(domain_name=domain_name, epp_id=epp_id):
@@ -159,9 +160,81 @@ def create(
     return new_domain
 
 
-def delete(domain_id):
+def domain_update(domain_name, **kwargs):
+    """
+    Simply updates domain info with new values.
+    """
     from back.models.domain import Domain
+    Domain.domains.filter(name=domain_name).update(**kwargs)
+    return None
+
+
+def domain_delete(domain_id=None, domain_name=None):
+    """
+    Removes domain with given primary ID from DB.
+    """
+    from back.models.domain import Domain
+    if domain_name is not None:
+        return Domain.domains.filter(name=domain_name).delete()
     return Domain.domains.filter(id=domain_id).delete()
+
+
+def domain_change_registrant(domain_object, new_registrant_object, save=True):
+    """
+    Change registrant of the domain.
+    Need to keep in mind that each registrant must have same owner as a domain he controls.
+    """
+    new_owner = new_registrant_object.owner
+    current_registrant = domain_object.registrant
+    domain_object.registrant = new_registrant_object
+    domain_object.owner = new_owner
+    if save:
+        domain_object.save()
+        logger.debug('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
+    return domain_object
+
+def domain_change_owner(domain_object, new_owner, save=True):
+    """
+    Change owner of the domain.
+    Need to keep in mind that each registrant must have same owner as a domain he controls.
+    """
+    current_owner = domain_object.owner
+    count = 0
+    for registrant in domain_object.registrants:
+        # change owners all of my known registrant contacts (I can have multiple ...)
+        registrant.owner = new_owner
+        if save:
+            registrant.owner.save()
+        count += 1
+    domain_object.owner = new_owner
+    if save:
+        domain_object.save()
+        logger.debug('domain %s owner changed (and all %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
+    return domain_object
+
+
+def domain_join_contact(domain_object, role, new_contact_object):
+    """
+    Add/Change single contact with given role of that domain.
+    This will only create a new relation, contact object must already exist.
+    """
+    current_contact = domain_object.get_contact(role)
+    domain_object.set_contact(role, new_contact_object)
+    domain_object.save()
+    logger.debug('domain %s contact "%s" modified : %r -> %r', domain_object.name, role, current_contact, new_contact_object)
+    return domain_object
+
+
+def domain_detach_contact(domain_object, role):
+    """
+    Remove given contact with given role from that domain.
+    This will only remove existing relation, contact object is not removed.
+    """
+    current_contact = domain_object.get_contact(role)
+    domain_object.set_contact(role, None)
+    domain_object.save()
+    logger.debug('domain %s contact "%s" disconnected, previous was : %r', domain_object.name, role, current_contact)
+    return domain_object
 
 
 def list_domains(registrant_email):
@@ -173,34 +246,85 @@ def list_domains(registrant_email):
         return []
     return list(existing_account.domains.all())
 
+#------------------------------------------------------------------------------
 
-def update_nameservers(domain_name, hosts):
+def check_nameservers_changed(domain_object, domain_info_response=None):
+    """
+    Compares known domain nameservers received from EPP response and currently stored in db,
+    return True if some change found: add or remove nameserver.
+    TODO: check can't we just compare two lists... ?
+    """
+    try:
+        current_servers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
+    except:
+        current_servers = []
+    if not isinstance(current_servers, list):
+        current_servers = [current_servers, ]
+    for old_server in current_servers:
+        if old_server and old_server not in domain_object.list_nameservers():
+            return True
+    for new_server in domain_object.list_nameservers():
+        if new_server and new_server not in current_servers:
+            return True
+    return False
+
+
+def compare_nameservers(domain_object, domain_info_response=None):
+    """
+    Based on known EPP domain info and local info from database identify which name servers needs to be added or removed.
+    """
+    remove_nameservers = []
+    add_nameservers = []
+    try:
+        current_nameservers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
+    except:
+        current_nameservers = []
+    if not isinstance(current_nameservers, list):
+        current_nameservers = [current_nameservers, ]
+    new_nameservers = domain_object.list_nameservers()
+    for old_server in current_nameservers:
+        if old_server and old_server not in new_nameservers:
+            remove_nameservers.append(old_server)
+    for new_server in new_nameservers:
+        if new_server and new_server not in current_nameservers:
+            add_nameservers.append(new_server)
+    return add_nameservers, remove_nameservers
+
+
+def update_nameservers(domain_object, hosts=[], domain_info_response=None):
     """
     Create or update nameservers hosts for given domain.
     Value `hosts` is a list of 4 items.
     None or empty string in the list means nameserver not set at given position.
     """
-    existing_domain = find(domain_name=domain_name)
-    if not existing_domain:
-        raise ValueError('Domain not exist')
-    existing_nameservers = existing_domain.list_nameservers()
+    if domain_info_response:
+        try:
+            current_nameservers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
+        except:
+            current_nameservers = []
+        if not isinstance(current_nameservers, list):
+            current_nameservers = [current_nameservers, ]
+        hosts = current_nameservers
+    existing_nameservers = domain_object.list_nameservers()
     domain_modified = False
     for i in range(len(hosts)):
         if hosts[i]:
             if existing_nameservers[i] != hosts[i]:
-                logger.debug('nameserver host to be changed for %s : %s -> %s',
-                             existing_domain, existing_nameservers[i], hosts[i])
-                existing_domain.set_nameserver(i, hosts[i])
+                logger.debug('nameserver host at position %d to be changed for %s : %s -> %s',
+                             i, domain_object, existing_nameservers[i], hosts[i])
+                domain_object.set_nameserver(i, hosts[i])
                 domain_modified = True
         else:
-            existing_domain.clear_nameserver(i)
+            logger.debug('nameserver host at position %d to be erased for %s', i, domain_object)
+            domain_object.clear_nameserver(i)
             domain_modified = True
     if domain_modified:
-        existing_domain.save()
+        domain_object.save()
     return domain_modified
 
+#------------------------------------------------------------------------------
 
-def compare_contacts(domain_object, domain_info_response=None, target_contacts=None, ):
+def compare_contacts(domain_object, domain_info_response=None, target_contacts=None):
     """
     Based on known EPP domain info and local info from database identify which contacts needs to be added or removed.
     Also checks if registrant needs to be changed.
@@ -246,46 +370,10 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
         change_registrant = domain_object.registrant.epp_id
     return add_contacts, remove_contacts, change_registrant
 
+#------------------------------------------------------------------------------
 
-def check_nameservers_changed(domain_object, domain_info_response=None):
-    """
-    Compares known domain nameservers received from EPP response and currently stored in db,
-    return True if some change found: add or remove nameserver.
-    TODO: check can't we just compare two lists... ?
-    """
-    try:
-        current_servers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
-    except:
-        current_servers = []
-    if not isinstance(current_servers, list):
-        current_servers = [current_servers, ]
-    for old_server in current_servers:
-        if old_server and old_server not in domain_object.list_nameservers():
-            return True
-    for new_server in domain_object.list_nameservers():
-        if new_server and new_server not in current_servers:
-            return True
-    return False
-
-
-def compare_nameservers(domain_object, domain_info_response=None):
-    """
-    Based on known EPP domain info and local info from database identify which name servers needs to be added or removed.
-    """
-    remove_nameservers = []
-    add_nameservers = []
-    try:
-        current_nameservers = domain_info_response['epp']['response']['resData']['infData']['ns']['hostObj']
-    except:
-        current_nameservers = []
-    if not isinstance(current_nameservers, list):
-        current_nameservers = [current_nameservers, ]
-    new_nameservers = domain_object.list_nameservers()
-    for old_server in current_nameservers:
-        if old_server and old_server not in new_nameservers:
-            remove_nameservers.append(old_server)
-    for new_server in new_nameservers:
-        if new_server and new_server not in current_nameservers:
-            add_nameservers.append(new_server)
-    return add_nameservers, remove_nameservers
-
+def response_to_datetime(field_name, domain_info_response):
+    return datetime.datetime.strptime(
+        domain_info_response['epp']['response']['resData']['infData'][field_name],
+        '%Y-%m-%dT%H:%M:%S.%fZ',
+    )

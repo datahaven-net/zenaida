@@ -92,7 +92,7 @@ def account_domain_create(request):
             'form': form,
         })
     domain_obj = form.save(commit=False)
-    existing_domain = zdomains.find(domain_name=domain_name)
+    existing_domain = zdomains.domain_find(domain_name=domain_name)
     if existing_domain:
         if existing_domain.epp_id:
             messages.error(request, 'This domain is already registered.')
@@ -100,13 +100,13 @@ def account_domain_create(request):
                 'form': form,
             })
         if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
-            zdomains.delete(domain_id=existing_domain.id)
+            zdomains.domain_delete(domain_id=existing_domain.id)
         else:
             messages.warning(request, 'This domain is not available now.')
             return shortcuts.render(request, 'front/account_domain_details.html', {
                 'form': form,
             })
-    zdomains.create(
+    zdomains.domain_create(
         domain_name=domain_name,
         owner=request.user,
         create_date=timezone.now(),

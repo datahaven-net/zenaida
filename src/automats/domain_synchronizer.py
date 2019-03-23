@@ -39,7 +39,7 @@ class DomainSynchronizer(automat.Automat):
     This class implements all the functionality of ``domain_synchronizer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
+    def __init__(self, debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domain_synchronizer()` state machine.
         """

@@ -5,7 +5,7 @@ import copy
 import traceback
 import random
 import string
-import pika
+import pika  # @UnresolvedImport
 import uuid
 import logging
 
@@ -35,7 +35,7 @@ def _enc(s):
 def _tr(_s):
     s = _enc(_s)
     try:
-        from transliterate import translit
+        from transliterate import translit  # @UnresolvedImport
         s = translit(s, reversed=True)
     except:
         pass

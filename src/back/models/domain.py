@@ -88,7 +88,7 @@ class Domain(models.Model):
     def save(self, *args, **kwargs):
         if not self.epp_id:
             self.epp_id = None
-        super(Domain, self).save(*args, **kwargs)
+        return super(Domain, self).save(*args, **kwargs)
 
     def list_contacts(self):
         """
@@ -128,6 +128,31 @@ class Domain(models.Model):
             return self.nameserver4
         raise ValueError('Invalid position for nameserver')
 
+    def get_contact(self, role):
+        """
+        Return corresponding contact object for given role: 'admin', 'billing', 'tech'
+        If such contact object not exist for that domain it will be None.
+        """
+        if role == 'admin':
+            return self.contact_admin
+        if role == 'billing':
+            return self.contact_billing
+        if role == 'tech':
+            return self.contact_tech
+        raise ValueError('Invalid contact role')
+
+    def set_contact(self, role, new_contact_object):
+        if role == 'admin':
+            self.contact_admin = new_contact_object
+            return True
+        if role == 'billing':
+            self.contact_billing = new_contact_object
+            return True
+        if role == 'tech':
+            self.contact_tech = new_contact_object
+            return True
+        raise ValueError('Invalid contact role')
+
     def set_nameserver(self, pos, nameserver):
         """
         Set nameserver on given position.
@@ -136,19 +161,19 @@ class Domain(models.Model):
         if pos == 0:
             self.nameserver1 = nameserver
             logger.debug('nameserver %s set for %s at position 1', nameserver, self)
-            return
+            return True
         if pos == 1:
             self.nameserver2 = nameserver
             logger.debug('nameserver %s set for %s at position 2', nameserver, self)
-            return
+            return True
         if pos == 2:
             self.nameserver3 = nameserver
             logger.debug('nameserver %s set for %s at position 3', nameserver, self)
-            return
+            return True
         if pos == 3:
             self.nameserver4 = nameserver
             logger.debug('nameserver %s set for %s at position 4', nameserver, self)
-            return
+            return True
         raise ValueError('Invalid position for nameserver')
 
     def clear_nameserver(self, pos):

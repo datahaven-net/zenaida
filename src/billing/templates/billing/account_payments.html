@@ -3,7 +3,7 @@
 {% block main_content %}
 
 
-{% if objects %}
+{% if object_list %}
     <div class="table-responsive">
 
         <table class="table table-hover">
@@ -13,7 +13,7 @@
                 <th>Started</th>
             </tr>
 
-            {% for payment in objects %}
+            {% for payment in object_list %}
 
                 <tr>
                     <td>{{ payment.amount }}</td>
@@ -27,8 +27,6 @@
 
     </div>
 
-    {% include 'base/pagination.html' %}
-
 {% else %}
     <div class="alert alert-warning text-center" role="alert">
         You didn't make any payment yet.<br />
@@ -36,5 +34,7 @@
     </div>
 {% endif %}
 
+
+{% include 'base/pagination_class_based_views.html' %}
 
 {% endblock %}

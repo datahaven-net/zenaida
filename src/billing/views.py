@@ -4,13 +4,13 @@ import datetime
 from django import shortcuts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import TemplateView, FormView, DetailView
+from django.views.generic import TemplateView, FormView, DetailView, CreateView
 
 from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
@@ -155,39 +155,37 @@ def order_domain_restore(request):
     pass
 
 
-@login_required
-def order_create(request):
-    """
-    """
-    order_items = request.POST.getlist('order_items')
-    to_be_ordered = []
-    for domain_name in order_items:
-        domain_object = zdomains.domain_find(domain_name=domain_name)
-        if not domain_object:
-            raise ValueError()
-        if domain_object.owner != request.user:
-            logging.critical('User %s tried to make an order with domain from another owner' % request.user)
-            raise exceptions.SuspiciousOperation()
-        item_type = 'domain_register'
-        if domain_object.can_be_restored:
-            item_type = 'domain_restore'
-        elif domain_object.is_registered:
-            item_type = 'domain_renew'
-        to_be_ordered.append(dict(
-            item_type=item_type,
-            item_price=100.0,
-            item_name=domain_object.name,
-        ))
-    if not to_be_ordered:
-        messages.error(request, 'No domains were selected.')
-        return shortcuts.redirect('billing_orders')
-    new_order = billing_orders.order_multiple_items(
-        owner=request.user,
-        order_items=to_be_ordered,
-    )
-    return shortcuts.render(request, 'billing/order_details.html', {
-        'order': new_order,
-    }, )
+class OrderCreateView(CreateView, BaseLoginRequiredMixin):
+    error_message = 'No domains were selected.'
+
+    def post(self, request, *args, **kwargs):
+        order_items = request.POST.getlist('order_items')
+        to_be_ordered = []
+        for domain_name in order_items:
+            domain_object = zdomains.domain_find(domain_name=domain_name)
+            if not domain_object:
+                raise Http404
+            if domain_object.owner != request.user:
+                logging.critical('User %s tried to make an order with domain from another owner' % request.user)
+                raise exceptions.SuspiciousOperation()
+            item_type = 'domain_register'
+            if domain_object.can_be_restored:
+                item_type = 'domain_restore'
+            elif domain_object.is_registered:
+                item_type = 'domain_renew'
+            to_be_ordered.append(dict(
+                item_type=item_type,
+                item_price=100.0,
+                item_name=domain_object.name,
+            ))
+        if not to_be_ordered:
+            messages.error(request, self.error_message)
+            return shortcuts.redirect('account_domains')
+        new_order = billing_orders.order_multiple_items(
+            owner=request.user,
+            order_items=to_be_ordered,
+        )
+        return shortcuts.render(request, 'billing/order_details.html', {'order': new_order})
 
 
 class OrderDetailsView(DetailView, BaseLoginRequiredMixin):

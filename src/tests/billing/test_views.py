@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 from django.test import TestCase, override_settings
 
+from billing.models.order import Order
 from billing.payments import finish_payment
 from zen import zusers
 
@@ -21,8 +22,8 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
     def test_create_new_payment_in_db(self):
         response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
         # Payment is started, so that redirect to the starting 4csonline page.
-        assert response.status_code == 302
-        assert response.url.startswith('/billing/4csonline/pay/')
+        assert response.status_code == 200
+        assert response.context['transaction_id']
 
     @mock.patch('billing.payments.latest_payment')
     @mock.patch('django.utils.timezone.now')
@@ -83,3 +84,42 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
         response = self.client.get('/billing/order/create/register/test.ai/')
         assert response.status_code == 302
         assert response.url == '/billing/pay/'
+
+
+class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_order_detail_successful(self):
+        Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+
+        response = self.client.get('/billing/orders/1/')
+        assert response.status_code == 200
+        assert response.context['object'].id == 1
+        assert response.context['object'].status == 'processed'
+
+    @pytest.mark.django_db
+    def test_get_order_details_suspicious(self):
+        """
+        User tries to reach another person's domain order details.
+        Test if user will get 400 bad request error.
+        """
+        owner = zusers.create_account('other_user@zenaida.ai', account_password='123', is_active=True)
+        Order.orders.create(
+            owner=owner,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+
+        response = self.client.get('/billing/orders/1/')
+        assert response.status_code == 400
+
+    def test_unknown_order_returns_bad_request(self):
+        """
+        User tries to reach a domain which is not existing.
+        Test if user will get 400 bad request error.
+        """
+        response = self.client.get('/billing/orders/1/')
+        assert response.status_code == 400

@@ -1,11 +1,17 @@
 from __future__ import unicode_literals
 
-#--- MAIN
 ENV = 'development'
 # ENV = 'production'
 # DEBUG = True
 # RAISE_EXCEPTIONS = True
 # SECRET_KEY = 'must be declared here !!!'
+
+DATABASES_ENGINE = 'django.db.backends.postgresql_psycopg2'
+DATABASES_NAME = 'zenaida_db_01'
+DATABASES_USER = 'zenaida_db_user'
+DATABASES_PASSWORD = 'zenaida_db_user'
+DATABASES_HOST = 'postgres'
+DATABASES_PORT = ''
 
 #--- SQlite3
 # DATABASES_ENGINE = 'django.db.backends.sqlite3'

@@ -7,6 +7,10 @@ services:
 
 language: python
 
+python:
+  - "3.6"
+
+
 before_install:
   - set -e
   - sudo rm /usr/local/bin/docker-compose
@@ -19,4 +23,4 @@ before_install:
   - make -v
 
 script:
-  - make test
+  - make docker/test

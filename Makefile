@@ -133,12 +133,8 @@ isort: $(VENV_TOX)
 docs: clean $(VENV_TOX) $(PARAMS)
 	# @$(TOX) -e docs
 
-# TODO maybe run via uwsgi?
-docker:
-	$(DOCKER_COMPOSE) run --rm app bash
-
-docker/%:
-	$(DOCKER_COMPOSE) run --rm app make $*
+docker/test:
+	$(DOCKER_COMPOSE) build && trap '$(DOCKER_COMPOSE) down' EXIT && $(DOCKER_COMPOSE) up --exit-code-from test --no-build
 
 setup.py: $(VENV_DEPLOY)
 	@$(PIP) install pkgversion

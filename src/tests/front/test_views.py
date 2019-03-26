@@ -37,6 +37,7 @@ class AccountDomainsListView(BaseAuthTesterMixin, TestCase):
 
 
 class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
+
     def test_index_page_successful(self):
         with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:
             mock_user_profile_complete.return_value = True
@@ -51,16 +52,19 @@ class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
 
 
 class TestIndexViewForUnknownUser(TestCase):
+
     def test_index_page_successful(self):
         response = self.client.get('')
         assert response.status_code == 200
 
 
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') == '0':
             return True
+
         response = self.client.post('/contacts/create/', data=contact_person, follow=True)
         assert response.status_code == 200
         c = contact.Contact.contacts.filter(person_name='TesterA').first()
@@ -70,6 +74,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
     def test_create_db_successful(self):
         if os.environ.get('E2E', '0') == '1':
             return True
+
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             response = self.client.post('/contacts/create/', data=contact_person, follow=True)
@@ -81,6 +86,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
     def test_contact_create_update_error(self):
         if os.environ.get('E2E', '0') == '1':
             return True
+
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = False
             response = self.client.post('/contacts/create/', data=contact_person, follow=True)
@@ -89,6 +95,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
 
 class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') == '0':
@@ -120,7 +127,7 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
         updated_contact_person['person_name'] = 'TesterB'
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
-            response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
+            response = self.client.post('/contacts/edit/%d/' % c.id, data=updated_contact_person)
 
         assert response.status_code == 302
         assert response.url == '/contacts/'
@@ -136,35 +143,43 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
 
 
 class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_contact_delete_successful(self):
         if os.environ.get('E2E', '0') == '1':
             return True
+
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             # First create contact person
             self.client.post('/contacts/create/', data=contact_person)
-        # Check if contact is created on DB
-        assert len(contact.Contact.contacts.all()) == 1
-        response = self.client.delete('/contacts/delete/1/')
+
+        # Check if contact person is created successfully with given data
+        c = contact.Contact.contacts.filter(person_name='TesterA').first()
+        assert c.person_name == 'TesterA'
+
+        # Check if contact list is empty after deletion
+        response = self.client.delete('/contacts/delete/%d/' % c.id)
         assert response.status_code == 302
         assert response.url == '/contacts/'
-        # Check if contact list is empty after deletion
         assert len(contact.Contact.contacts.all()) == 0
 
     def test_contact_delete_returns_404(self):
         if os.environ.get('E2E', '0') == '1':
             return True
+
         response = self.client.delete('/contacts/delete/1/')
         # User has not this contact, so can't delete
         assert response.status_code == 404
 
 
 class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_contact_list_successful(self):
         if os.environ.get('E2E', '0') == '1':
             return True
+
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             # First create contact_person
@@ -178,6 +193,7 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
     def test_contact_list_empty(self):
         if os.environ.get('E2E', '0') == '1':
             return True
+
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
 
@@ -187,9 +203,11 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
 
 
 class TestDomainLookupView(TestCase):
+
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') == '0':
             return True
+
         response = self.client.get('/lookup/?domain_name=bitdust.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'not exist'
@@ -224,6 +242,7 @@ class TestDomainLookupView(TestCase):
 
 
 class TestFAQViews(TestCase):
+
     def test_faq_successful(self):
         response = self.client.get('/faq/')
         assert response.status_code == 200
@@ -250,6 +269,7 @@ class TestFAQViews(TestCase):
 
 
 class TemplateContactUsTemplateView(TestCase):
+
     def test_contact_us_successful(self):
         response = self.client.get('/contact-us/')
         assert response.status_code == 200

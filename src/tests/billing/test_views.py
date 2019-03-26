@@ -25,6 +25,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert response.context['transaction_id']
 
+    @override_settings(BILLING_BYPASS_PAYMENT_TIME_CHECK=False)
     @mock.patch('billing.payments.latest_payment')
     @mock.patch('django.utils.timezone.now')
     def test_last_payment_was_done_before_3_minutes(self, mock_timezone_now, mock_latest_payment):
@@ -87,17 +88,17 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_order_detail_successful(self):
-        Order.orders.create(
+        new_order = Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
             status='processed'
         )
-
-        response = self.client.get('/billing/orders/1/')
+        response = self.client.get('/billing/orders/%d/' % new_order.id)
         assert response.status_code == 200
-        assert response.context['object'].id == 1
+        assert response.context['object'].id == new_order.id
         assert response.context['object'].status == 'processed'
 
     @pytest.mark.django_db

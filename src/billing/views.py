@@ -187,22 +187,24 @@ class OrderDetailsView(DetailView, BaseLoginRequiredMixin):
         )
 
 
-@login_required
-def order_execute(request, order_id):
-    """
-    """
-    existing_order = billing_orders.get_order_by_id_and_owner(
-        order_id=order_id, owner=request.user, log_action='execute'
-    )
-    if existing_order.total_price > existing_order.owner.balance:
-        messages.error(request, 'Not enough funds on your balance to complete order. Please buy more credits to be able to register/renew domains.')
+class OrderExecuteView(View, BaseLoginRequiredMixin):
+    error_message_balance = 'Not enough funds on your balance to complete order. ' \
+                            'Please buy more credits to be able to register/renew domains.'
+    error_message_technical = 'There were technical problems with order processing. ' \
+                              'Please try again later or contact customer support.'
+    success_message = 'Order processed successfully.'
+
+    def get(self, request, *args, **kwargs):
+        existing_order = billing_orders.get_order_by_id_and_owner(
+            order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
+        )
+        if existing_order.total_price > existing_order.owner.balance:
+            messages.error(request, self.error_message_balance)
+        elif billing_orders.execute_single_order(existing_order):
+            messages.success(request, self.success_message)
+        else:
+            messages.error(request, self.error_message_technical)
         return shortcuts.redirect('billing_orders')
-    if billing_orders.execute_single_order(existing_order):
-        messages.success(request, 'Order processed successfully.')
-    else:
-        messages.error(request, 'There were technical problems with order processing. '
-                                                      'Please try again later or contact customer support.')
-    return shortcuts.redirect('billing_orders')
 
 
 class OrderCancelView(View, BaseLoginRequiredMixin):

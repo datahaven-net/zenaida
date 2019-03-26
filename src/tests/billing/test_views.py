@@ -4,9 +4,9 @@ from unittest import mock
 import pytest
 from django.test import TestCase, override_settings
 
-from billing.models.order import Order
 from back.models.domain import Domain
 from back.models.zone import Zone
+from billing.models.order import Order
 from billing.models.payment import Payment
 from billing.payments import finish_payment
 from zen import zusers
@@ -240,19 +240,17 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/domains/'
 
 
-class TestOrderCancel(BaseAuthTesterMixin, TestCase):
+class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
     def test_order_cancel_successful(self):
         # First create an order then cancel it.
-        Domain.domains.create(
+        order = Order.orders.create(
             owner=self.account,
-            name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
-            zone=Zone.zones.create(name='ai')
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
         )
-        self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
 
-        response = self.client.get('/billing/order/cancel/1/')
+        response = self.client.get(f'/billing/order/cancel/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
 
@@ -267,11 +265,68 @@ class TestOrderCancel(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_order_cancel_suspicious(self):
         owner = zusers.create_account('other_user@zenaida.ai', account_password='123', is_active=True)
-        Order.orders.create(
+        order = Order.orders.create(
+            owner=owner,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+        response = self.client.get(f'/billing/order/cancel/{order.id}/')
+        assert response.status_code == 400
+
+
+class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_order_execute_successful(self):
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+
+        response = self.client.get(f'/billing/order/process/{order.id}/')
+        assert response.status_code == 302
+
+    @pytest.mark.django_db
+    def test_order_execute_returns_technical_error(self):
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+        with mock.patch('billing.orders.execute_single_order') as mock_execute_single_order:
+            mock_execute_single_order.return_value = False
+            response = self.client.get(f'/billing/order/process/{order.id}/')
+        assert response.status_code == 302
+
+    @pytest.mark.django_db
+    def test_order_execute_suspicious(self):
+        owner = zusers.create_account('other_user@zenaida.ai', account_password='123', is_active=True)
+        order = Order.orders.create(
             owner=owner,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
             status='processed'
         )
 
-        response = self.client.get('/billing/order/cancel/1/')
+        response = self.client.get(f'/billing/order/process/{order.id}/')
+        assert response.status_code == 400
+
+    def test_unknown_order_returns_bad_request(self):
+        """
+        User tries to reach a domain which is not existing.
+        Test if user will get 400 bad request error.
+        """
+        response = self.client.get('/billing/order/process/1/')
+        assert response.status_code == 400
+
+    def test_order_execute_error_not_enough_balance(self):
+        with mock.patch('billing.models.order.Order') as order_mock:
+            order_mock.return_value = mock.MagicMock(
+                owner=self.account,
+                started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+                status='processed',
+                total_price=100.00,
+                id=1
+            )
+            order_id = order_mock().id
+            response = self.client.get(f'/billing/order/process/{order_id}/')
         assert response.status_code == 400

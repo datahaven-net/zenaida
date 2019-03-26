@@ -1,5 +1,16 @@
-app:
-  build: .
-  volumes:
-    - .:/app
-  command: make build
+version: '3.1'
+
+services:
+  test:
+    build: .
+    volumes:
+      - .:/app
+    command: make test
+
+  postgres:
+    restart: always
+    image: postgres
+    environment:
+      POSTGRES_USER: zenaida_db_user
+      POSTGRES_PASSWORD: zenaida_db_user
+      POSTGRES_DB: zenaida_db_01

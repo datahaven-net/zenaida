@@ -5,6 +5,8 @@ import pytest
 from django.test import TestCase, override_settings
 
 from billing.models.order import Order
+from back.models.domain import Domain
+from back.models.zone import Zone
 from billing.payments import finish_payment
 from zen import zusers
 
@@ -124,3 +126,83 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
         """
         response = self.client.get('/billing/orders/1/')
         assert response.status_code == 400
+
+
+class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    def test_domain_register_order(self):
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai')
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 200
+        assert response.context['order'].status == 'started'
+        assert response.context['order'].description == 'domain register'
+        assert response.context['order'].owner == self.account
+
+    @pytest.mark.django_db
+    def test_domain_restore_order(self):
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            epp_status='inactive'
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 200
+        assert response.context['order'].status == 'started'
+        assert response.context['order'].description == 'domain restore'
+        assert response.context['order'].owner == self.account
+
+    @pytest.mark.django_db
+    def test_domain_renew_order(self):
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            epp_status='active'
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 200
+        assert response.context['order'].status == 'started'
+        assert response.context['order'].description == 'domain renew'
+        assert response.context['order'].owner == self.account
+
+    def test_domain_not_available_to_order(self):
+        """
+        Domain is not in database at all, so user can't do any action with it.
+        """
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 404
+
+    @pytest.mark.django_db
+    @mock.patch('logging.critical')
+    def test_domain_is_not_owned_by_other_user(self, mock_logging_critical):
+        zone = Zone.zones.create(name='ai')
+        account = zusers.create_account('other_user@zenaida.ai', account_password='123', is_active=True)
+        Domain.domains.create(
+            owner=account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=zone
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 400
+        mock_logging_critical.assert_called_once()
+
+    def test_no_domain_selected_to_order(self):
+        response = self.client.post('/billing/order/create/', data={'order_items': []})
+        assert response.status_code == 302
+        assert response.url == '/domains/'

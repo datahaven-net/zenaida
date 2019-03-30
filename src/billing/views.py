@@ -10,8 +10,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import TemplateView, FormView, DetailView, CreateView
-
+from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
 from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
 from billing import orders as billing_orders
@@ -85,22 +84,12 @@ def orders_list(request):
     })
 
 
-@login_required
-def payments_list(request):
-    """
-    """
-    payment_objects = payments.list_payments(owner=request.user, statuses=['processed', ])
-    page = request.GET.get('page', 1)
-    paginator = Paginator(payment_objects, 10)
-    try:
-        payment_objects = paginator.page(page)
-    except PageNotAnInteger:
-        payment_objects = paginator.page(1)
-    except EmptyPage:
-        payment_objects = paginator.page(paginator.num_pages)
-    return shortcuts.render(request, 'billing/account_payments.html', {
-        'objects': payment_objects,
-    })
+class PaymentsListView(ListView, BaseLoginRequiredMixin):
+    template_name = 'billing/account_payments.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return payments.list_payments(owner=self.request.user, statuses=['paid', ])
 
 
 class OrderDomainRegisterView(TemplateView, BaseLoginRequiredMixin):

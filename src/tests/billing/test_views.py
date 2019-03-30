@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 from billing.models.order import Order
 from back.models.domain import Domain
 from back.models.zone import Zone
+from billing.models.payment import Payment
 from billing.payments import finish_payment
 from zen import zusers
 
@@ -47,6 +48,37 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         # When payment method is invalid, it returns back to the same page.
         assert response.status_code == 200
         assert response.template_name == ['billing/new_payment.html']
+
+
+class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_show_paid_payments(self):
+        # Create new payment with status paid
+        Payment.payments.create(
+            owner=self.account,
+            amount=100,
+            method='pay_4csonline',
+            transaction_id='12345',
+            started_at=datetime.datetime(2019, 3, 23),
+            status='paid'
+        )
+        response = self.client.get('/billing/payments/')
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 1
+
+    @pytest.mark.django_db
+    def test_do_not_show_different_statuses(self):
+        # Create new payment with default status which is 'started'
+        Payment.payments.create(
+            owner=self.account,
+            amount=100,
+            method='pay_4csonline',
+            transaction_id='12345',
+            started_at=datetime.datetime(2019, 3, 23)
+        )
+        response = self.client.get('/billing/payments/')
+        assert response.status_code == 200
+        assert response.context['object_list'] == []
 
 
 class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):

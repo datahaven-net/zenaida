@@ -20,9 +20,10 @@ def start_payment(request, transaction_id):
 
 
 @login_required
-def process_payment(request, transaction_id):
+def process_payment(request):
     """
     """
+    transaction_id = request.GET.get('transaction_id', '')
     payment_object = payments.by_transaction_id(transaction_id=transaction_id)
 
     if not payment_object:
@@ -49,6 +50,7 @@ def process_payment(request, transaction_id):
     })
 
 
+# @login_required
 def verify_payment(request):
     """
     """
@@ -97,6 +99,7 @@ def verify_payment(request):
         settings.BILLING_4CSONLINE_MERCHANT_ID,
         payment_object.transaction_id,
     ))
+
     if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
         if verified.text != 'YES':
             if not payments.finish_payment(transaction_id=transaction_id, status='unconfirmed'):

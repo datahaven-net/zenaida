@@ -138,7 +138,7 @@ class OrderDomainRenewView(TemplateView, BaseLoginRequiredMixin):
 
 
 @login_required
-def order_domain_restore(request):
+def order_domain_restore(request, domain_name):
     """
     """
     # TODO: this needs to be done

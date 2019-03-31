@@ -40,7 +40,7 @@
                         {% if not domain.is_registered %}
                             <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' domain.name %}" role="button">Register</a>
                         {% elif domain.can_be_restored  %}
-                            <a class="btn btn-sm btn-warning" href="{% url 'billing_order_register' %}?domain_name={{ domain.name }}" role="button">Restore</a>
+                            <a class="btn btn-sm btn-warning" href="{% url 'billing_order_restore' domain.name %}" role="button">Restore</a>
                         {% else %}
                             <a class="btn btn-sm btn-primary" href="{% url 'billing_order_renew' domain.name %}" role="button">Renew</a>
                             <a class="btn btn-sm btn-info" href="{% url 'account_domain_transfer' %}?domain_name={{ domain.name }}" role="button">Transfer</a>

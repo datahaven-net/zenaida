@@ -3,12 +3,13 @@ import datetime
 from django import shortcuts
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView, FormView
 
-from auth.views import BaseLoginRequiredMixin
 from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
@@ -37,10 +38,11 @@ class IndexPageView(TemplateView):
         return context
 
 
-class AccountDomainsListView(ListView, BaseLoginRequiredMixin):
+class AccountDomainsListView(ListView):
     template_name = 'front/account_domains.html'
     paginate_by = 10
 
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not request.user.profile.is_complete():
             messages.info(request, 'Please provide your contact information to be able to register new domains.')
@@ -55,13 +57,14 @@ class AccountDomainsListView(ListView, BaseLoginRequiredMixin):
         return zdomains.list_domains(self.request.user.email)
 
 
-class AccountDomainCreateView(FormView, BaseLoginRequiredMixin):
+class AccountDomainCreateView(FormView):
     template_name = 'front/account_domain_details.html'
     form_class = forms.DomainDetailsForm
     pk_url_kwarg = 'domain_name'
     success_message = 'New domain is added to your account, now click "Register" to confirm the order and activate it.'
     success_url = reverse_lazy('account_domains')
 
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not request.user.profile.is_complete():
             messages.info(request, 'Please provide your contact information to be able to register new domains.')
@@ -180,7 +183,7 @@ def account_domain_transfer(request):
     })
 
 
-class AccountProfileView(UpdateView, BaseLoginRequiredMixin):
+class AccountProfileView(LoginRequiredMixin, UpdateView):
     template_name = 'front/account_profile.html'
     model = Profile
     form_class = forms.AccountProfileForm
@@ -221,7 +224,7 @@ class AccountProfileView(UpdateView, BaseLoginRequiredMixin):
         return super().form_valid(form)
 
 
-class AccountContactCreateView(CreateView, BaseLoginRequiredMixin):
+class AccountContactCreateView(LoginRequiredMixin, CreateView):
     template_name = 'front/account_contact_create.html'
     form_class = forms.ContactPersonForm
     error_message = 'There were technical problems with contact details processing. ' \
@@ -241,7 +244,7 @@ class AccountContactCreateView(CreateView, BaseLoginRequiredMixin):
         return super().form_valid(form)
 
 
-class AccountContactUpdateView(UpdateView, BaseLoginRequiredMixin):
+class AccountContactUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'front/account_contact_edit.html'
     model = Contact
     form_class = forms.ContactPersonForm
@@ -262,7 +265,7 @@ class AccountContactUpdateView(UpdateView, BaseLoginRequiredMixin):
         return super().form_valid(form)
 
 
-class AccountContactDeleteView(DeleteView, BaseLoginRequiredMixin):
+class AccountContactDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'front/account_contact_delete.html'
     model = Contact
     pk_url_kwarg = 'contact_id'
@@ -277,7 +280,7 @@ class AccountContactDeleteView(DeleteView, BaseLoginRequiredMixin):
         return super().delete(request, *args, **kwargs)
 
 
-class AccountContactsListView(ListView, BaseLoginRequiredMixin):
+class AccountContactsListView(LoginRequiredMixin, ListView):
     template_name = 'front/account_contacts.html'
     model = Contact
     paginate_by = 10

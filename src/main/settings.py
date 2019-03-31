@@ -340,3 +340,6 @@ GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
 #------------------------------------------------------------------------------
 #--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded
 LOADED_OK = 'OK'
+
+# DJANGO SETTINGS
+LOGIN_URL = '/accounts/login/'

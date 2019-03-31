@@ -2,6 +2,7 @@ import string
 import random
 
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 from billing.models.payment import Payment
 
@@ -15,7 +16,10 @@ def generate_transaction_id(size=16, chars=string.ascii_uppercase + string.digit
 def latest_payment(owner):
     """
     """
-    return Payment.payments.filter(owner=owner).latest('started_at')
+    try:
+        return Payment.payments.filter(owner=owner).latest('started_at')
+    except ObjectDoesNotExist:
+        return None
 
 
 def list_payments(owner, statuses=None):

@@ -80,7 +80,7 @@ $(PARAMS): | src/main/params_example.py
 	# PARAMS
 	@cp $| $@
 
-venv: $(VENV_BASE) $(PARAMS)
+venv: $(VENV_DEV) $(PARAMS)
 	# venv
 
 

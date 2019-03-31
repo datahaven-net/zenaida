@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
 from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
@@ -204,16 +205,14 @@ def order_execute(request, order_id):
     return shortcuts.redirect('billing_orders')
 
 
-@login_required
-def order_cancel(request, order_id):
-    """
-    """
-    existing_order = billing_orders.get_order_by_id_and_owner(
-        order_id=order_id, owner=request.user, log_action='cancel'
-    )
-    billing_orders.cancel_single_order(existing_order)
-    messages.success(request, 'Order of %s cancelled.' % existing_order.description)
-    return shortcuts.redirect('billing_orders')
+class OrderCancelView(View, BaseLoginRequiredMixin):
+    def get(self, request, *args, **kwargs):
+        existing_order = billing_orders.get_order_by_id_and_owner(
+            order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
+        )
+        billing_orders.cancel_single_order(existing_order)
+        messages.success(request, f'Order of {existing_order.description} is cancelled.')
+        return shortcuts.redirect('billing_orders')
 
 
 @login_required

@@ -49,7 +49,6 @@ def process_payment(request, transaction_id):
     })
 
 
-@login_required
 def verify_payment(request):
     """
     """

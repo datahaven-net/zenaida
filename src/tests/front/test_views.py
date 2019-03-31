@@ -1,4 +1,5 @@
 import copy
+import datetime
 import os
 import mock
 import pytest
@@ -6,6 +7,8 @@ import pytest
 from django.test import TestCase
 
 from back.models import contact
+from back.models.contact import Contact, Registrant
+from back.models.domain import Domain
 
 from zen import zusers
 
@@ -56,6 +59,152 @@ class TestIndexViewForUnknownUser(TestCase):
     def test_index_page_successful(self):
         response = self.client.get('')
         assert response.status_code == 200
+
+
+class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_create_domain_successful(self, mock_user_profile_complete):
+        if os.environ.get('E2E', '0') == '1':
+            return True
+
+        mock_user_profile_complete.return_value = True
+
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person, follow=True)
+
+            registrant_info = copy.deepcopy(contact_person)
+            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            Registrant.registrants.create(**registrant_info)
+            response = self.client.post('/domains/create/test.ai/', data=dict(
+                nameserver1='ns1.google.com',
+                contact_admin=Contact.contacts.all()[0].id
+            ))
+
+            assert response.status_code == 302
+            assert len(Domain.domains.all()) == 1
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_domain_is_already_registered(self, mock_user_profile_complete, mock_domain_find):
+        if os.environ.get('E2E', '0') == '1':
+            return True
+
+        mock_user_profile_complete.return_value = True
+        mock_domain_find.return_value = mock.MagicMock(
+            epp_id='12345'
+        )
+
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person, follow=True)
+
+            registrant_info = copy.deepcopy(contact_person)
+            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            Registrant.registrants.create(**registrant_info)
+
+            response = self.client.post('/domains/create/test.ai/', data=dict(
+                nameserver1='ns1.google.com',
+                contact_admin=Contact.contacts.all()[0].id
+            ))
+
+            assert response.status_code == 302
+            assert len(Domain.domains.all()) == 0
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_domain_is_in_another_users_basket(self, mock_user_profile_complete, mock_domain_find):
+        """
+        Test when domain is someone's basket and if it's hold for an hour. So user can't register that domain.
+        """
+        if os.environ.get('E2E', '0') == '1':
+            return True
+
+        mock_user_profile_complete.return_value = True
+        mock_domain_find.return_value = mock.MagicMock(
+            epp_id=None,
+            create_date=datetime.datetime.utcnow()
+        )
+
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person, follow=True)
+
+            registrant_info = copy.deepcopy(contact_person)
+            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            Registrant.registrants.create(**registrant_info)
+
+            response = self.client.post('/domains/create/test.ai/', data=dict(
+                nameserver1='ns1.google.com',
+                contact_admin=Contact.contacts.all()[0].id
+            ))
+
+            assert response.status_code == 302
+            assert len(Domain.domains.all()) == 0
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_domain_is_available_after_1_hour(self, mock_user_profile_complete, mock_domain_find):
+        """
+        Test after domain was someone's basket for an hour, user can still register it.
+        """
+        if os.environ.get('E2E', '0') == '1':
+            return True
+
+        mock_user_profile_complete.return_value = True
+        mock_domain_find.return_value = mock.MagicMock(
+            epp_id=None,
+            create_date=datetime.datetime.utcnow() - datetime.timedelta(hours=1),
+            id=1
+        )
+
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person, follow=True)
+
+            registrant_info = copy.deepcopy(contact_person)
+            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            Registrant.registrants.create(**registrant_info)
+
+            response = self.client.post('/domains/create/test.ai/', data=dict(
+                nameserver1='ns1.google.com',
+                contact_admin=Contact.contacts.all()[0].id
+            ))
+
+            assert response.status_code == 302
+            assert len(Domain.domains.all()) == 1
+
+    def test_profile_is_not_complete(self):
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='https://ns1.google.com'
+        ))
+
+        assert response.status_code == 302
+        assert response.url == '/profile/'
+
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_contact_info__not_complete(self, mock_user_profile_complete):
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='https://ns1.google.com'
+        ))
+
+        assert response.status_code == 302
+        assert response.url == '/contacts/'
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_zone_is_not_supported(self, mock_user_profile_complete, mock_list_contacts):
+        mock_list_contacts.return_value = list('1')
+        response = self.client.post('/domains/create/test.ax/', data=dict(
+            nameserver1='https://ns1.google.com'
+        ))
+
+        assert response.status_code == 302
+        assert response.url == '/domains/'
 
 
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):

@@ -283,7 +283,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
 
-        response = self.client.get(f'/billing/order/process/{order.id}/')
+        response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
 
     @pytest.mark.django_db
@@ -295,7 +295,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         )
         with mock.patch('billing.orders.execute_single_order') as mock_execute_single_order:
             mock_execute_single_order.return_value = False
-            response = self.client.get(f'/billing/order/process/{order.id}/')
+            response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
 
     @pytest.mark.django_db
@@ -307,7 +307,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
 
-        response = self.client.get(f'/billing/order/process/{order.id}/')
+        response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 400
 
     def test_unknown_order_returns_bad_request(self):
@@ -315,7 +315,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         User tries to reach a domain which is not existing.
         Test if user will get 400 bad request error.
         """
-        response = self.client.get('/billing/order/process/1/')
+        response = self.client.post('/billing/order/process/1/')
         assert response.status_code == 400
 
     def test_order_execute_error_not_enough_balance(self):
@@ -328,5 +328,5 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
                 id=1
             )
             order_id = order_mock().id
-            response = self.client.get(f'/billing/order/process/{order_id}/')
+            response = self.client.post(f'/billing/order/process/{order_id}/')
         assert response.status_code == 400

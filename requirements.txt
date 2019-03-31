@@ -1,4 +1,4 @@
-certifi==2018.11.29
+certifi
 chardet==3.0.4
 Django==2.1.7
 django-bootstrap4==0.0.7

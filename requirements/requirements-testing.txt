@@ -1,11 +1,12 @@
-# tox
+tox
 isort
 flake8
 mock
-# pkgversion
+django-debug-toolbar
 
 # PyTest for running the tests.
 pytest
+pytest-mock
 pytest-cov
 pytest-django
 

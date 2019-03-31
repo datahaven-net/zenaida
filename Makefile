@@ -51,12 +51,13 @@ PARAMS=src/main/params.py
 
 tox: $(VENV_TOX) setup.py
 	# tox
-	$(TOX)
+	PYTHONPATH=./src/ $(TOX)
 
 # Used by the deploy pipeline to prepare for deploy
 build: clean artifact
 
 pyclean:
+	# pyclean
 	@find . -name *.pyc -delete
 	@rm -rf *.egg-info build
 	@rm -rf coverage.xml .coverage
@@ -66,6 +67,7 @@ docsclean:
 	@rm -fr docs/_build/
 
 clean: pyclean docsclean
+	# clean
 	@rm -rf venv
 	@rm -rf .tox
 
@@ -75,12 +77,15 @@ properties:
 	@echo "{\"artifact\": \"$(ARTIFACT)\", \"version\": \"$(VSN)\"}"
 
 $(PARAMS): | src/main/params_example.py
+	# PARAMS
 	@cp $| $@
 
 venv: $(VENV_BASE) $(PARAMS)
+	# venv
 
 
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
+	# check_forgotten_migrations
 	$(eval MAKE_MIGRATIONS_OUTPUT:="$(shell echo $(MAKE_MIGRATIONS))")
 	@echo $(MAKE_MIGRATIONS_OUTPUT)
 	@if [ $(MIGRATIONS_CHECK) -gt 0 ]; then \
@@ -92,6 +97,7 @@ check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
 
 
 check_requirements_txt:
+	# check_requirements_txt
 	@if [ ! -f "$(REQUIREMENTS_TXT)" ]; then \
 		echo "ERROR: Missing $(REQUIREMENTS_TXT), it should be committed to the repository"; \
 		exit 1; \
@@ -110,11 +116,14 @@ sanity_checks: check_requirements_txt check_forgotten_migrations
 # or 'tox -e py35' to run test for only python35. Of course it's still
 # possible to run 'pytest path/to/test'.
 test: clean sanity_checks tox
+	# test
 
 test_latest: sanity_checks pyclean venv
+	# test_latest
 	$(TOX) -e $(TOX_LATEST_LIST) -- $*
 
 test_dev: sanity_checks pyclean venv
+	# test_dev
 	$(TOX) -e dev -- $*
 
 test/%: sanity_checks pyclean venv
@@ -134,13 +143,16 @@ docs: clean $(VENV_TOX) $(PARAMS)
 	# @$(TOX) -e docs
 
 docker/test:
+	# docker/test
 	$(DOCKER_COMPOSE) build && trap '$(DOCKER_COMPOSE) down' EXIT && $(DOCKER_COMPOSE) up --exit-code-from test --no-build
 
 setup.py: $(VENV_DEPLOY)
+	# setup.py
 	@$(PIP) install pkgversion
 	$(PYTHON) setup_gen.py
 
 artifact: $(VENV_NO_SYSTEM_SITE_PACKAGES)
+	# artifact
 	@rm -rf .pip_download
 	@echo "$(BRANCH) $(VSN)" > REVISION
 	@tar -czf $(ARTIFACT) --exclude-from=.artifact_exclude * $(PIP_DOWNLOAD)
@@ -244,6 +256,7 @@ rabbitmq_server_dev:
 ################################################
 
 $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
+	# REQUIREMENTS_TXT
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_BASE)
 	@rm -vf $(REQUIREMENTS_TXT)
@@ -252,35 +265,45 @@ $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 
 # these two are the main venvs
 $(VENV_SYSTEM_SITE_PACKAGES):
+	# VENV_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
-	@$(PYTHON_VERSION) -m venv venv
+	@$(PYTHON_VERSION) -m venv --system-site-packages venv
+	@echo "[easy_install]" > venv/.pydistutils.cfg
+	@echo "find_links = file://$(PWD)/$(PIP_DOWNLOAD)/" >> venv/.pydistutils.cfg
 	@touch $@
 
 $(VENV_NO_SYSTEM_SITE_PACKAGES):
+	# VENV_NO_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
 	@$(PYTHON_VERSION) -m venv venv
 	@touch $@
 
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	# VENV_DEPLOY
 	@$(PIP) install -q --upgrade pip
 	@$(PIP) install -q -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
+	# VENV_BASE
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
+	# VENV_TEST
 	@$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TEST)
 	@touch $@
 
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
+	# VENV_TOX
 	@$(PIP) install --upgrade pip
 	@$(PIP) install tox
 	@touch $@
 
 $(VENV_DEV): $(VENV_TOX) $(VENV_BASE) $(VENV_TEST)
+	# VENV_DEV
+	@$(PIP) install pytest
 	@touch $@

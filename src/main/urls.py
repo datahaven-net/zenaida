@@ -68,8 +68,8 @@ patterns = [
     path('billing/order/modify/', billing_views.orders_modify, name='billing_orders_modify'),
     path('billing/payments/', billing_views.PaymentsListView.as_view(), name='billing_payments'),
     path('billing/pay/', billing_views.NewPaymentView.as_view(), name='billing_new_payment'),
-    path('billing/4csonline/pay/<str:transaction_id>/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),
-    path('billing/4csonline/process/<str:transaction_id>/', pay_4csonline_views.process_payment, name='billing_4csonline_process_payment'),
+    # path('billing/4csonline/pay/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),
+    path('billing/4csonline/process/', pay_4csonline_views.process_payment, name='billing_4csonline_process_payment'),
     path('billing/4csonline/verify/', pay_4csonline_views.verify_payment, name='billing_4csonline_verify_payment'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),

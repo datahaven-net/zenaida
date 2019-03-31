@@ -130,7 +130,7 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
             status='processed'
         )
-        response = self.client.get('/billing/orders/%d/' % new_order.id)
+        response = self.client.get('/billing/order/%d/' % new_order.id)
         assert response.status_code == 200
         assert response.context['object'].id == new_order.id
         assert response.context['object'].status == 'processed'
@@ -148,7 +148,7 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
 
-        response = self.client.get('/billing/orders/1/')
+        response = self.client.get('/billing/order/1/')
         assert response.status_code == 400
 
     def test_unknown_order_returns_bad_request(self):
@@ -156,7 +156,7 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
         User tries to reach a domain which is not existing.
         Test if user will get 400 bad request error.
         """
-        response = self.client.get('/billing/orders/1/')
+        response = self.client.get('/billing/order/1/')
         assert response.status_code == 400
 
 
@@ -238,3 +238,40 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/billing/order/create/', data={'order_items': []})
         assert response.status_code == 302
         assert response.url == '/domains/'
+
+
+class TestOrderCancel(BaseAuthTesterMixin, TestCase):
+    def test_order_cancel_successful(self):
+        # First create an order then cancel it.
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai')
+        )
+        self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+
+        response = self.client.get('/billing/order/cancel/1/')
+        assert response.status_code == 302
+        assert response.url == '/billing/orders/'
+
+    def test_unknown_order_returns_bad_request(self):
+        """
+        User tries to cancel a domain which is not existing.
+        Test if user will get 400 bad request error.
+        """
+        response = self.client.get('/billing/order/cancel/1/')
+        assert response.status_code == 400
+
+    @pytest.mark.django_db
+    def test_order_cancel_suspicious(self):
+        owner = zusers.create_account('other_user@zenaida.ai', account_password='123', is_active=True)
+        Order.orders.create(
+            owner=owner,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+
+        response = self.client.get('/billing/order/cancel/1/')
+        assert response.status_code == 400

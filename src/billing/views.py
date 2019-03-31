@@ -194,7 +194,7 @@ class OrderExecuteView(View, BaseLoginRequiredMixin):
                               'Please try again later or contact customer support.'
     success_message = 'Order processed successfully.'
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         existing_order = billing_orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
         )

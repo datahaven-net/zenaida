@@ -3,11 +3,10 @@ import datetime
 from django import shortcuts
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView
+from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView, FormView
 
 from auth.views import BaseLoginRequiredMixin
 from back.models.domain import Domain
@@ -56,67 +55,73 @@ class AccountDomainsListView(ListView, BaseLoginRequiredMixin):
         return zdomains.list_domains(self.request.user.email)
 
 
-@login_required
-def account_domain_create(request):
-    if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new domains.')
-        # return account_profile(request)
-        return shortcuts.redirect('account_profile')
-    if len(zcontacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
-        # return account_contacts(request)
-        return shortcuts.redirect('account_contacts')
-    if request.method != 'POST':
-        form = forms.DomainDetailsForm(current_user=request.user)
-        return shortcuts.render(request, 'front/account_domain_details.html', {
-            'form': form,
-        })
-    form = forms.DomainDetailsForm(current_user=request.user, data=request.POST)
-    domain_name = request.GET['domain_name']
-    domain_tld = domain_name.split('.')[-1].lower()
-    if not zzones.is_supported(domain_tld):
-        messages.error(request, 'Domain zone ".%s" is not supported by that server.' % domain_tld)
-        return shortcuts.render(request, 'front/account_domain_details.html', {
-            'form': form,
-        })
-    if not form.is_valid():
-        return shortcuts.render(request, 'front/account_domain_details.html', {
-            'form': form,
-        })
-    domain_obj = form.save(commit=False)
-    existing_domain = zdomains.domain_find(domain_name=domain_name)
-    if existing_domain:
-        if existing_domain.epp_id:
-            messages.error(request, 'This domain is already registered.')
-            return shortcuts.render(request, 'front/account_domain_details.html', {
-                'form': form,
-            })
-        if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
-            zdomains.domain_delete(domain_id=existing_domain.id)
-        else:
-            messages.warning(request, 'This domain is not available now.')
-            return shortcuts.render(request, 'front/account_domain_details.html', {
-                'form': form,
-            })
-    zdomains.domain_create(
-        domain_name=domain_name,
-        owner=request.user,
-        create_date=timezone.now(),
-        expiry_date=timezone.now() + datetime.timedelta(days=365),
-        registrant=zcontacts.get_registrant(request.user),
-        contact_admin=domain_obj.contact_admin,
-        contact_tech=domain_obj.contact_tech,
-        contact_billing=domain_obj.contact_billing,
-        nameservers=[
-            domain_obj.nameserver1,
-            domain_obj.nameserver2,
-            domain_obj.nameserver3,
-            domain_obj.nameserver4,
-        ],
-        save=True,
-    )
-    messages.success(request, 'New domain was added to your account, now click "Register" to confirm the order and activate it.')
-    return shortcuts.redirect('account_domains')
+class AccountDomainCreateView(FormView, BaseLoginRequiredMixin):
+    template_name = 'front/account_domain_details.html'
+    form_class = forms.DomainDetailsForm
+    pk_url_kwarg = 'domain_name'
+    success_message = 'New domain is added to your account, now click "Register" to confirm the order and activate it.'
+    success_url = reverse_lazy('account_domains')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        form_kwargs = super().get_form_kwargs()
+        form_kwargs['current_user'] = self.request.user
+        return form_kwargs
+
+    def post(self, request, *args, **kwargs):
+        domain_name = kwargs.get('domain_name')
+        domain_tld = domain_name.split('.')[-1].lower()
+
+        if not zzones.is_supported(domain_tld):
+            messages.error(request, f'Domain zone "{domain_tld}" is not supported.')
+            return shortcuts.redirect('account_domains')
+
+        form = self.get_form()
+        domain_obj = form.save(commit=False)
+        existing_domain = zdomains.domain_find(domain_name=domain_name)
+        if existing_domain:
+            if existing_domain.epp_id:
+                # If domain has EPP id, it means that domain is already owned someone.
+                messages.error(request, 'This domain is already registered.')
+                return super().post(request, *args, **kwargs)
+            if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
+                # If domain was on someone's basket more than an hour, remove that from database in order to make it
+                # available for current user.
+                zdomains.domain_delete(domain_id=existing_domain.id)
+            else:
+                # If domain is on someone's basket, domain becomes unavailable.
+                messages.warning(request, 'This domain is not available now.')
+                return super().post(request, *args, **kwargs)
+
+        zdomains.domain_create(
+            domain_name=domain_name,
+            owner=request.user,
+            create_date=timezone.now(),
+            expiry_date=timezone.now() + datetime.timedelta(days=365),
+            registrant=zcontacts.get_registrant(request.user),
+            contact_admin=domain_obj.contact_admin,
+            contact_tech=domain_obj.contact_tech,
+            contact_billing=domain_obj.contact_billing,
+            nameservers=[
+                domain_obj.nameserver1,
+                domain_obj.nameserver2,
+                domain_obj.nameserver3,
+                domain_obj.nameserver4,
+            ],
+            save=True,
+        )
+
+        messages.success(request, self.success_message)
+        return super().post(request, *args, **kwargs)
 
 
 @login_required

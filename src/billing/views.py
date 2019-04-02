@@ -4,15 +4,16 @@ import datetime
 from django import shortcuts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, Http404
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
-from auth.views import BaseLoginRequiredMixin
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
@@ -29,7 +30,7 @@ def billing_overview(request):
     pass
 
 
-class NewPaymentView(FormView, BaseLoginRequiredMixin):
+class NewPaymentView(LoginRequiredMixin, FormView):
     template_name = 'billing/new_payment.html'
     form_class = billing_forms.NewPaymentForm
     error_message = 'Payment method is invalid'
@@ -86,7 +87,7 @@ def orders_list(request):
     })
 
 
-class PaymentsListView(ListView, BaseLoginRequiredMixin):
+class PaymentsListView(LoginRequiredMixin, ListView):
     template_name = 'billing/account_payments.html'
     paginate_by = 10
 
@@ -94,10 +95,11 @@ class PaymentsListView(ListView, BaseLoginRequiredMixin):
         return payments.list_payments(owner=self.request.user, statuses=['paid', ])
 
 
-class OrderDomainRegisterView(TemplateView, BaseLoginRequiredMixin):
+class OrderDomainRegisterView(TemplateView):
     template_name = 'billing/order_details.html'
     error_message = 'You don\'t have enough credits to register a domain.'
 
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if request.user.balance < 100:
             messages.error(request, self.error_message)
@@ -116,10 +118,11 @@ class OrderDomainRegisterView(TemplateView, BaseLoginRequiredMixin):
         return context
 
 
-class OrderDomainRenewView(TemplateView, BaseLoginRequiredMixin):
+class OrderDomainRenewView(TemplateView):
     template_name = 'billing/order_details.html'
     error_message = 'You don\'t have enough credits to renew a domain.'
 
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if request.user.balance < 100:
             messages.error(request, self.error_message)
@@ -146,7 +149,7 @@ def order_domain_restore(request, domain_name):
     pass
 
 
-class OrderCreateView(CreateView, BaseLoginRequiredMixin):
+class OrderCreateView(LoginRequiredMixin, CreateView):
     error_message = 'No domains were selected.'
 
     def post(self, request, *args, **kwargs):
@@ -179,7 +182,7 @@ class OrderCreateView(CreateView, BaseLoginRequiredMixin):
         return shortcuts.render(request, 'billing/order_details.html', {'order': new_order})
 
 
-class OrderDetailsView(DetailView, BaseLoginRequiredMixin):
+class OrderDetailsView(LoginRequiredMixin, DetailView):
     template_name = 'billing/order_details.html'
 
     def get_object(self, queryset=None):
@@ -188,7 +191,7 @@ class OrderDetailsView(DetailView, BaseLoginRequiredMixin):
         )
 
 
-class OrderExecuteView(View, BaseLoginRequiredMixin):
+class OrderExecuteView(LoginRequiredMixin, View):
     error_message_balance = 'Not enough funds on your balance to complete order. ' \
                             'Please buy more credits to be able to register/renew domains.'
     error_message_technical = 'There were technical problems with order processing. ' \
@@ -208,7 +211,7 @@ class OrderExecuteView(View, BaseLoginRequiredMixin):
         return shortcuts.redirect('billing_orders')
 
 
-class OrderCancelView(View, BaseLoginRequiredMixin):
+class OrderCancelView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         existing_order = billing_orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'

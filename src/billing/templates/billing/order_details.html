@@ -26,7 +26,6 @@
             <th>&nbsp;</th>
             <th><b>{{ order.total_price }} $ US</b></th>
         </tr>
-
     </table>
 
 </div>
@@ -49,7 +48,11 @@
             </div>
         </div>
     </div>
-
+{% else %}
+    <div class="text-center">
+        <a class="btn btn-danger" role="button" href="{% url 'billing_orders' %}">Go Back</a>
+        <a class="btn btn-info" role="button" href="{% url 'billing_receipt_download' order.id %}">Download Receipt</a>
+    </div>
 {% endif %}
 
 

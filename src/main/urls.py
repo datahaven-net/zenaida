@@ -56,8 +56,8 @@ patterns = [
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),
     path('billing/orders/', billing_views.OrdersListView.as_view(), name='billing_orders'),
-    path('billing/orders/receipt/', billing_views.order_receipt_download, name='billing_receipt_download'),
-    path('billing/orders/receipt/<int:order_id>', billing_views.order_receipt_download, name='billing_receipt_download'),
+    path('billing/orders/receipts/download/', billing_views.OrderReceiptsDownloadView.as_view(), name='billing_receipts_download'),
+    path('billing/orders/receipts/download/<int:order_id>/', billing_views.OrderSingleReceiptDownloadView.as_view(), name='billing_receipt_download'),
     path('billing/order/<int:order_id>/', billing_views.OrderDetailsView.as_view(), name='billing_order_details'),
     path('billing/order/process/<int:order_id>/', billing_views.OrderExecuteView.as_view(), name='billing_order_process'),
     path('billing/order/cancel/<int:order_id>/', billing_views.OrderCancelView.as_view(), name='billing_order_cancel'),

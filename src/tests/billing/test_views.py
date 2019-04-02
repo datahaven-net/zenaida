@@ -84,6 +84,44 @@ class TestOrdersListView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert len(response.context['object_list']) == 0
 
+class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_download_receipts(self):
+        Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+        with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
+            self.client.post('/billing/orders/receipt/download/', data=dict(year=2019, month=3))
+            mock_build_receipt.assert_called_once()
+
+    def test_download_receipts_return_warning(self):
+        response = self.client.post('/billing/orders/receipt/download/', data=dict(year=2019, month=2))
+        assert response.url == '/billing/orders/receipt/download/'
+
+    def test_get_billing_receipt_page(self):
+        response = self.client.post('/billing/orders/receipt/download/')
+        assert response.status_code == 200
+
+
+class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_download_single_receipt(self):
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+        with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
+            self.client.get(f'/billing/orders/receipt/download/{order.id}/')
+            mock_build_receipt.assert_called_once()
+
+    def test_download_single_receipt_returns_error(self):
+        response = self.client.get(f'/billing/orders/receipt/download/1/')
+        assert response.status_code == 302
+        assert response.url == '/billing/orders/'
+
 
 class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db

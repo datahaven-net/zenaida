@@ -59,6 +59,16 @@ def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
     return list(orders.all())
 
 
+def list_processed_orders_by_date(owner, year, month=None):
+    if year and month:
+        orders = Order.orders.filter(owner=owner, started_at__year=year, started_at__month=month, status='processed').order_by('finished_at')
+    elif year:
+        orders = Order.orders.filter(owner=owner, started_at__year=year, status='processed').order_by('finished_at')
+    else:
+        orders = Order.orders.filter(owner=owner, status='processed').order_by('finished_at')
+    return list(orders.all())
+
+
 def order_single_item(owner, item_type, item_price, item_name):
     """
     """
@@ -223,7 +233,7 @@ def cancel_single_order(order_object):
 def build_receipt(owner, year=None, month=None, order_id=None):
     """
     """
-    order_objects = [] 
+    order_objects = []
     receipt_period = ''
     if order_id:
         order_object = by_id(order_id)
@@ -232,7 +242,7 @@ def build_receipt(owner, year=None, month=None, order_id=None):
         order_objects.append(order_object)
         receipt_period = order_object.finished_at.strftime('%B %Y')
     else:
-        order_objects = list_orders_by_date(owner=owner, year=year, month=month, exclude_cancelled=True)
+        order_objects = list_processed_orders_by_date(owner=owner, year=year, month=month)
         if not order_objects:
             return None
         if year and month:

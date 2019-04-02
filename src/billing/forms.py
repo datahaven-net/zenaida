@@ -29,6 +29,7 @@ class NewPaymentForm(forms.Form):
 class FilterOrdersByDateForm(forms.Form):
     year = forms.fields.ChoiceField(
         choices=(
+            (None, '-'),
             ('2019', '2019',),
             ('2018', '2018',),
             ('2017', '2017',),

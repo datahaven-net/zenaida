@@ -127,49 +127,50 @@ class AccountDomainCreateView(FormView):
         return super().post(request, *args, **kwargs)
 
 
-@login_required
-def account_domain_edit(request, domain_id):
-    if not request.user.profile.is_complete():
-        messages.info(request, 'Please provide your contact information to be able to register new domains.')
-        # return account_profile(request)
-        return shortcuts.redirect('account_profile')
-    if len(zcontacts.list_contacts(request.user)) == 0:
-        messages.info(request, 'Please create your first contact person and provide your contact information to be able to register new domains.')
-        # return account_contacts(request)
-        return shortcuts.redirect('account_contacts')
-    domain_info = shortcuts.get_object_or_404(Domain, pk=domain_id, owner=request.user)
-    if request.method != 'POST':
-        form = forms.DomainDetailsForm(current_user=request.user, instance=domain_info)
-        return shortcuts.render(request, 'front/account_domain_details.html', {
-            'form': form,
-        })
-    form = forms.DomainDetailsForm(current_user=request.user, data=request.POST, instance=domain_info)
-    if not form.is_valid():
-        return shortcuts.render(request, 'front/account_domain_details.html', {
-            'form': form,
-        })
-    if form.instance.epp_id:
-        if not zmaster.domain_check_create_update_renew(
-            domain_object=form.instance,
-            sync_contacts=True,
-            sync_nameservers=True,
-            renew_years=None,
-            save_to_db=False,
-            raise_errors=False,
-            log_events=True,
-            log_transitions=True,
-        ):
-            messages.error(request, 'There were technical problems with domain info processing. '
-                                    'Please try again later or contact customer support.')
-            return shortcuts.render(request, 'front/account_domain_details.html', {
-                'form': form,
-            })
-    form.save()
-    messages.success(request, 'Domain details successfully updated.')
-    # return shortcuts.redirect('account_domains')
-    return shortcuts.render(request, 'front/account_domain_details.html', {
-        'form': form,
-    })
+class AccountDomainUpdateView(UpdateView):
+    template_name = 'front/account_domain_details.html'
+    form_class = forms.DomainDetailsForm
+    pk_url_kwarg = 'domain_id'
+    success_message = 'Domain details successfully updated.'
+    success_url = reverse_lazy('account_domains')
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        form_kwargs = super().get_form_kwargs()
+        form_kwargs['current_user'] = self.request.user
+        return form_kwargs
+
+    def get_object(self, queryset=None):
+        return shortcuts.get_object_or_404(Domain, pk=self.kwargs.get('domain_id'), owner=self.request.user)
+
+    def form_valid(self, form):
+        if form.instance.epp_id:
+            domain_update = zmaster.domain_check_create_update_renew(
+                domain_object=form.instance,
+                sync_contacts=True,
+                sync_nameservers=True,
+                renew_years=None,
+                save_to_db=False,
+                raise_errors=False,
+                log_events=True,
+                log_transitions=True,
+            )
+            if not domain_update:
+                messages.error(self.request, 'There were technical problems with domain info processing. '
+                                             'Please try again later or contact customer support.')
+                return super().form_valid(form)
+        messages.success(self.request, self.success_message)
+        return super().form_valid(form)
 
 
 @login_required

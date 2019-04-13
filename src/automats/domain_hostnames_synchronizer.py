@@ -122,12 +122,16 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 self.doDestroyMe(*args, **kwargs)
         #---HOSTS_CREATE---
         elif self.state == 'HOSTS_CREATE':
-            if event == 'all-hosts-created':
-                self.state = 'DOMAIN_UPDATE!'
-                self.doEppDomainUpdate(*args, **kwargs)
-            elif event == 'error':
+            if event == 'error':
                 self.state = 'FAILED'
                 self.doReportFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'all-hosts-created' and self.isDomainUpdateNow(*args, **kwargs):
+                self.state = 'DOMAIN_UPDATE!'
+                self.doEppDomainUpdate(*args, **kwargs)
+            elif event == 'all-hosts-created' and not self.isDomainUpdateNow(*args, **kwargs):
+                self.state = 'DONE'
+                self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
         #---DONE---
         elif self.state == 'DONE':
@@ -169,6 +173,12 @@ class DomainHostnamesSynchronizer(automat.Automat):
             domain_object=(kwargs.get('target_domain', None) or self.target_domain),
             domain_info_response=(kwargs.get('known_domain_info', None) or self.known_domain_info),
         )
+
+    def isDomainUpdateNow(self, *args, **kwargs):
+        """
+        Condition method.
+        """
+        return self.update_domain
 
     def doInit(self, *args, **kwargs):
         """

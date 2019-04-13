@@ -44,12 +44,31 @@
             <td>{{ order.started_at }}</td>
             <td>{{ order.status }}</td>
             <td>
-                {% if order.is_processable %}
-                    <a class="btn btn-sm btn-success" role="button" href="{% url 'billing_order_process' order.id %}">Confirm</a>
-                    <a class="btn btn-sm btn-warning" role="button" href="{% url 'billing_order_cancel' order.id %}">Cancel</a>
-                {% elif order.is_processed %}
-                    <a  class="btn btn-sm btn-info" role="button" href="{% url 'billing_receipt_download' order.id %}">Receipt</a>
-                {% endif %}
+                <div class="container">
+                    <div class="row">
+                        {% if order.is_processable %}
+                            <div>
+                                <form action="{% url 'billing_order_process' order.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success" name="action_pay">Confirm</button>
+                                </form>
+                            </div>
+                            <div class="col-sm-1">
+                                <form action="{% url 'billing_order_cancel' order.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-warning" name="action_cancel">Cancel</button>
+                                </form>
+                            </div>
+                        {% elif order.is_processed %}
+                            <div>
+                                <form action="{% url 'billing_receipt_download' order.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-info" name="action_receipt_download">Receipt</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </td>
         </tr>
 

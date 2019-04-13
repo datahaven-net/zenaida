@@ -57,7 +57,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     logger.debug('domains_checker(%r) outputs: %r', domain_names, outputs)
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        if isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
             logger.error(outputs[-1])
         return None
 

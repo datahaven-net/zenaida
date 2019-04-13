@@ -14,10 +14,11 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
+from django.views.generic.edit import FormMixin
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
-from billing.pay_4csonline  import views as pay_4csonline_views
+from billing.pay_4csonline import views as pay_4csonline_views
 
 from zen import zdomains
 
@@ -58,33 +59,26 @@ class NewPaymentView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-@login_required
-def orders_list(request):
-    """
-    """
-    if request.method == 'POST':
-        form = billing_forms.FilterOrdersByDateForm(request.POST)
-        order_objects = billing_orders.list_orders_by_date(
-            owner=request.user,
-            year=form.data.get('year'),
-            month=form.data.get('month'),
-            exclude_cancelled=True,
-        )
-    else:
-        form = billing_forms.FilterOrdersByDateForm()
-        order_objects = billing_orders.list_orders(owner=request.user, exclude_cancelled=True)
-    page = request.GET.get('page', 1)
-    paginator = Paginator(order_objects, 10)
-    try:
-        order_objects = paginator.page(page)
-    except PageNotAnInteger:
-        order_objects = paginator.page(1)
-    except EmptyPage:
-        order_objects = paginator.page(paginator.num_pages)
-    return shortcuts.render(request, 'billing/account_orders.html', {
-        'objects': order_objects,
-        'form': form,
-    })
+class OrdersListView(LoginRequiredMixin, ListView, FormMixin):
+    template_name = 'billing/account_orders.html'
+    paginate_by = 10
+    form_class = billing_forms.FilterOrdersByDateForm
+    success_url = reverse_lazy('billing_orders')
+
+    def get_queryset(self):
+        if self.request.method == 'POST':
+            form = self.form_class(self.request.POST)
+            if form.is_valid():
+                return billing_orders.list_orders_by_date(
+                    owner=self.request.user,
+                    year=form.data.get('year'),
+                    month=form.data.get('month'),
+                    exclude_cancelled=True,
+                )
+        return billing_orders.list_orders(owner=self.request.user, exclude_cancelled=True)
+
+    def post(self, request, *args, **kwargs):
+        return shortcuts.render(request, self.template_name, {'form': self.form_class, 'object_list': self.get_queryset()})
 
 
 class PaymentsListView(LoginRequiredMixin, ListView):

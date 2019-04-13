@@ -50,6 +50,41 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.template_name == ['billing/new_payment.html']
 
 
+class TestOrdersListView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def create_order(self):
+        # Create an order
+        Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed'
+        )
+
+    def test_orders_list_successful(self):
+        self.create_order()
+        response = self.client.post('/billing/orders/')
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 1
+
+    def test_orders_list_by_year(self):
+        self.create_order()
+        response = self.client.post('/billing/orders/', data=dict(year=2019))
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 1
+
+    def test_orders_list_by_year_and_month(self):
+        self.create_order()
+        response = self.client.post('/billing/orders/', data=dict(year=2019, month=3))
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 1
+
+    def test_orders_list_by_year_and_month_returns_empty_list(self):
+        self.create_order()
+        response = self.client.post('/billing/orders/', data=dict(year=2018, month=3))
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 0
+
+
 class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_show_paid_payments(self):

@@ -55,7 +55,7 @@ patterns = [
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),
-    path('billing/orders/', billing_views.orders_list, name='billing_orders'),
+    path('billing/orders/', billing_views.OrdersListView.as_view(), name='billing_orders'),
     path('billing/orders/receipt/', billing_views.order_receipt_download, name='billing_receipt_download'),
     path('billing/orders/receipt/<int:order_id>', billing_views.order_receipt_download, name='billing_receipt_download'),
     path('billing/order/<int:order_id>/', billing_views.OrderDetailsView.as_view(), name='billing_order_details'),

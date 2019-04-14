@@ -81,6 +81,45 @@ class OrdersListView(LoginRequiredMixin, ListView, FormMixin):
         return shortcuts.render(request, self.template_name, {'form': self.form_class, 'object_list': self.get_queryset()})
 
 
+class OrderReceiptsDownloadView(LoginRequiredMixin, FormView):
+    template_name = 'billing/account_invoices.html'
+    form_class = billing_forms.FilterOrdersByDateForm
+    success_url = reverse_lazy('billing_receipts_download')
+
+    def post(self, request, *args, **kwargs):
+        form = billing_forms.FilterOrdersByDateForm(request.POST)
+        if form.data.get('year') or (form.data.get('year') and form.data.get('month')):
+            pdf_info = billing_orders.build_receipt(
+                owner=request.user,
+                year=form.data.get('year'),
+                month=form.data.get('month'),
+            )
+            if not pdf_info:
+                messages.warning(request, 'You don\'t have any order for this period.')
+                return super().post(request, *args, **kwargs)
+            response = HttpResponse(pdf_info['body'], content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
+            return response
+        return super().post(request, *args, **kwargs)
+
+
+class OrderSingleReceiptDownloadView(View):
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        pdf_info = None
+        if kwargs.get('order_id'):
+            pdf_info = billing_orders.build_receipt(
+                owner=request.user,
+                order_id=kwargs.get('order_id'),
+            )
+        if not pdf_info:
+            messages.warning(request, 'You can\'t do this action')
+            return shortcuts.redirect('billing_orders')
+        response = HttpResponse(pdf_info['body'], content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
+        return response
+
+
 class PaymentsListView(LoginRequiredMixin, ListView):
     template_name = 'billing/account_payments.html'
     paginate_by = 10
@@ -223,30 +262,6 @@ def orders_modify(request):
     return shortcuts.render(request, 'billing/account_orders.html', {
         'objects': order_objects,
     }, )
-
-
-@login_required
-def order_receipt_download(request, order_id=None):
-    """
-    """
-    if not request.user.is_authenticated:
-        return shortcuts.redirect('index')
-    if order_id:
-        pdf_info = billing_orders.build_receipt(
-            owner=request.user,
-            order_id=order_id,
-        )
-    else:
-        pdf_info = billing_orders.build_receipt(
-            owner=request.user,
-            year=request.GET.get('year'),
-            month=request.GET.get('month'),
-        )
-    if not pdf_info:
-        return shortcuts.redirect('billing_orders')
-    response = HttpResponse(pdf_info['body'], content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
-    return response
 
 
 @login_required

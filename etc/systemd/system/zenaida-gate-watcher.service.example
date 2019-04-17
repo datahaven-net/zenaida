@@ -1,0 +1,34 @@
+# Zenaida Gate wather service configuration.
+#
+# Watcher service suppose to be looking at `/home/zenaida/health` file and be triggered every time that file modified.
+# Then it must restart the main "zenaida-gate" service right away.
+#
+# Copy and modify `zenaida-gate-watcher.service` file to your local systemd folder to enable the service:
+#
+#         mkdir -p /home/zenaida/.config/systemd/user/
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-gate-watcher.service.example /home/zenaida/.config/systemd/user/zenaida-gate-watcher.service
+#         systemctl --user enable zenaida-gate-watcher.service
+#
+#
+# To start Zenaida Gate watcher service run such command:
+# 
+#         systemctl --user start zenaida-gate-watcher.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl --user status zenaida-gate-watcher.service
+#
+
+
+[Unit]
+Description=ZenaidaGateWatcher
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl --user restart zenaida-gate.service
+
+[Install]
+WantedBy=multi-user.target

@@ -321,6 +321,9 @@ GRAPH_MODELS = {
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
+
+ZENAIDA_GATE_HEALTH_FILE_PATH = getattr(params, 'ZENAIDA_GATE_HEALTH_FILE_PATH', '/home/zenaida/health')
+
 DEFAULT_REGISTRAR_ID = getattr(params, 'DEFAULT_REGISTRAR_ID', 'zenaida_registrar')
 SUPPORTED_ZONES = getattr(params, 'SUPPORTED_ZONES', ['com', 'net', ])
 

@@ -1,0 +1,32 @@
+# Zenaida Gate health file configuration.
+#
+# This file to be used as a single point of true about current EPP Gate connection status.
+# When Python code detects error/failure in response from CoCCA server and recognize "dropped" connection
+# it will append a new line to the /home/zenaida/health file and this way report about the issue.
+# Another service "zenaida-gate-watcher" suppose to be triggered and will restart the main "zenaida-gate" service.
+#
+# First make link in your global systemd folder to activate the service:
+#
+#         mkdir -p /home/zenaida/.config/systemd/user/
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-gate-health.path.example /home/zenaida/.config/systemd/user/zenaida-gate-health.path
+#         systemctl --user enable zenaida-gate-health.path
+#
+#
+# Start Zenaida Gate health file monitoring by executing this command:
+# 
+#         systemctl --user start zenaida-gate-health.path
+#
+#
+# You can always check current situation with:
+#
+#         systemctl --user status zenaida-gate-health.path
+#
+
+
+[Path]
+PathModified=/home/zenaida/health
+Unit=zenaida-gate-watcher.service 
+
+[Install]
+WantedBy=multi-user.target

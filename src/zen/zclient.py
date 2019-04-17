@@ -109,8 +109,39 @@ class RPCClient(object):
 #------------------------------------------------------------------------------
 
 def do_rpc_request(json_request):
-    client = RPCClient()
-    reply = client.request(json.dumps(json_request))
+    """
+    Sends EPP message in JSON format towards COCCA back-end via RabbitMQ.
+    RabbitMQ is connecting Django application with Perl script in `bin/epp_gate.pl` - this called Zenaida Gate.
+    Method returns response message received back from Perl script via RabbitMQ.
+
+    Here is Zenaida Gate auto-healing mechanism also implemented.
+    When COCCA back-end drops connection on server-side Zenaida Gate needs to be "restarted".
+    We must re-login to be able to send EPP messages again - this is done inside Perl script.
+
+    Zenaida Gate is running via "systemd" service manager and consist of 3 units:
+
+        1. `zenaida-gate.service` : service which execute Perl script and keep it running all the time
+        2. `zenaida-gate-watcher.service` : background service which is able to "restart" `zenaida-gate.service` when needed
+        3. `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications 
+
+    To indicate that connection is currently down we can print a new line in the local file `/home/zenaida/health`.
+    Perl script then will be restarted automatically and Zenaida Gate suppose to become healthy again.
+
+    We also must "retry" one time the last failed message - RabbitMQ will deliver response automatically back to us.
+    """
+    try:
+        client = RPCClient()
+        reply = client.request(json.dumps(json_request))
+    except Exception as exc:
+        logger.exception('ERROR from RPCClient')
+        with open(settings.ZENAIDA_GATE_HEALTH_FILE_PATH, 'a') as fout:
+            fout.write('{} at {}\n'.format(exc, time.asctime()))
+        # retry after 3 seconds, Zenaida Gate suppose to be restarted already
+        time.sleep(3)
+        # if the issue is still here it will raise EPPBadResponse() in run() method anyway
+        client_retry3sec = RPCClient()
+        reply = client_retry3sec.request(json.dumps(json_request))
+
     return reply
 
 #------------------------------------------------------------------------------

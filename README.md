@@ -234,7 +234,7 @@ You can verify permissions of RabbitMQ users - must be 3 users existing:
 * zenaida_epp
 
 
-Lets remove "guest" user :-)
+We advise you to remove "guest" user because of security concerns.
 
 More details about RabbutMQ installation you can find here: https://www.rabbitmq.com/install-debian.html
 
@@ -270,7 +270,7 @@ Before continue further make sure you decreased access permissions to your secre
         chmod go-rwx -R /home/zenaida/keys/
 
 
-Now we need to be sure that "EPP Gate" process is configured correctly, lets execute Perl script directly:
+Now we need to be sure that EPP connection is configured correctly, lets execute Perl script directly:
 
         perl bin/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt
         ...
@@ -283,26 +283,53 @@ Keep it running in the current terminal and open another console window to be ab
         venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.zclient; print(zepp.zclient.cmd_domain_check(["testdomain.com", ]))'
 
 
-If RabbitMQ and Zenaida EPP Gate process was configured correctly you should see a json response from EPP Gate like that:
+If RabbitMQ and Zenaida Gate process was configured correctly you should see a json response from EPP Gate like that:
 
         {'epp': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd', 'response': {'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'resData': {'chkData': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd', 'cd': {'name': {'@avail': '1', '#text': 'testdomain.com'}}}}, 'trID': {'clTRID': '103513f75a176e56038b2244258357f7', 'svTRID': '1526756418267'}}}}
-      
-
-To be able to easily manage Zenaida EPP Gate process on your host system you can add it to your system-wide systemd scripts:
-
-        cp etc/systemd/system/zenaida-gate.service.example etc/systemd/system/zenaida-gate.service
-        sudo ln -s etc/systemd/system/zenaida-gate.service /etc/systemd/system/
 
 
-Then you can stop/start the service in a such way:
 
-        sudo systemctl start zenaida-gate.service
+## Configure Zenaida Gate as a systemd service
+
+To be able to easily manage Zenaida Gate process on your host system you can add it to your systemd scripts.
+
+Zenaida Gate service consist of 3 units:
+
+* `zenaida-gate.service` : service which executes Perl script and keep it running non-stop
+* `zenaida-gate-watcher.service` : background service which is able to "restart" `zenaida-gate.service` when required
+* `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications and notify `zenaida-gate-watcher.service`
+
+Those three units are required to have Zenaida Gate auto-healing mechanism running all the time. When CoCCA back-end drops connection on server-side Zenaida Gate needs to be "restarted". We must re-login to be able to send EPP messages again - this is done inside Perl script and login flow will be initiated automatically.
+
+You can configure systemd Zenaida Gate service this way:
+
+        mkdir -p /home/zenaida/.config/systemd/user/
+        cp etc/systemd/system/zenaida-gate.service.example /home/zenaida/.config/systemd/user/zenaida-gate.service
+        cp etc/systemd/system/zenaida-gate-watcher.service.example /home/zenaida/.config/systemd/user/zenaida-gate-watcher.service
+        cp etc/systemd/system/zenaida-gate-health.path.example /home/zenaida/.config/systemd/user/zenaida-gate-health.path
+        systemctl --user enable zenaida-gate.service
+        systemctl --user enable zenaida-gate-watcher.service
+        systemctl --user enable zenaida-gate-health.path
+
+
+Then you just need to start all services in a such way:
+
+        systemctl --user start zenaida-gate.service
+        systemctl --user start zenaida-gate-watcher.service
+        systemctl --user start zenaida-gate-health.path
 
 
 You can always check current situation with:
 
         systemctl status zenaida-gate.service
 
+Now if you have access to CoCCA backend you can test auto-healing mechanism by simply dropping EPP session on server side and keep monitoring `/home/zenaida/logs/gate.log` output file.
+
+Also you can perform manual test locally - just modify `/home/zenaida/health` file and Zenaida Gate suppose to be restarted automatically.
+
+
+
+## Connect Django with CoCCA via Zenaida Gate
 
 Now it is time to configure access to EPP Gate from Django side - it will use RabbitMQ server as a client to send/receive EPP XML messages.
 

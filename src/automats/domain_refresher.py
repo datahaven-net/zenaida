@@ -417,8 +417,8 @@ class DomainRefresher(automat.Automat):
                 zdomains.domain_join_contact(self.target_domain, role, new_contact)
                 continue
             if received_contact_id != known_contact_id:
-                logger.info('domain %r going to switch contact %s from %r to %r',
-                            self.target_domain, role, self.known_registrant.owner)
+                logger.info('domain %r going to switch contact %s : from %r to %r',
+                            self.target_domain, role, known_contact, new_contact)
                 zdomains.domain_join_contact(self.target_domain, role, new_contact)
                 continue
             logger.info('domain %r current %s contact in sync', self.target_domain, role)

@@ -1,20 +1,21 @@
 # Zenaida Gate systemd service configuration.
 #
-# Make link in your global systemd folder to activate the service:
+# Copy and modify `zenaida-gate.service` file to your local systemd folder to enable the service:
 #
+#         mkdir -p /home/zenaida/.config/systemd/user/
 #         cd /home/zenaida/zenaida/
-#         cp etc/systemd/system/zenaida-gate.service.example etc/systemd/system/zenaida-gate.service
-#         sudo ln -s etc/systemd/system/zenaida-gate.service /etc/systemd/system/
+#         cp etc/systemd/system/zenaida-gate.service.example /home/zenaida/.config/systemd/user/zenaida-gate.service
+#         systemctl --user enable zenaida-gate.service
 #
 #
-# Start Zenaida gate service run this command:
+# To start Zenaida Gate service run this command:
 # 
-#         sudo systemctl start zenaida-gate.service
+#         systemctl --user start zenaida-gate.service
 #
 #
 # You can always check current situation with:
 #
-#         systemctl status zenaida-gate.service 
+#         systemctl --user status zenaida-gate.service 
 #
 
 [Unit]

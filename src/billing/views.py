@@ -10,7 +10,6 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView

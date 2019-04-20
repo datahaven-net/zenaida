@@ -37,7 +37,36 @@ class BaseAuthTesterMixin(object):
 
 
 class AccountDomainsListView(BaseAuthTesterMixin, TestCase):
-    pass
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_domain_list_successful(self, mock_user_profile_complete, mock_list_contacts):
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        # Create a domain first.
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345'
+        )
+        response = self.client.get('/domains/')
+
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 1
+
+    def test_profile_is_not_complete(self):
+        response = self.client.get('/domains/')
+
+        assert response.status_code == 302
+        assert response.url == '/profile/'
+
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_contact_info_is_not_complete(self, mock_user_profile_complete):
+        response = self.client.get('/domains/')
+
+        assert response.status_code == 302
+        assert response.url == '/contacts/'
 
 
 class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):

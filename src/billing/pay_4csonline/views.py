@@ -4,8 +4,10 @@ import requests
 from django import urls
 from django import shortcuts
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core import exceptions
 from django.conf import settings
+from django.views import View
 
 from billing import payments
 
@@ -19,35 +21,35 @@ def start_payment(request, transaction_id):
     })
 
 
-@login_required
-def process_payment(request):
-    """
-    """
-    transaction_id = request.GET.get('transaction_id', '')
-    payment_object = payments.by_transaction_id(transaction_id=transaction_id)
+class ProcessPaymentView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        transaction_id = kwargs.get('transaction_id', '')
+        payment_object = payments.by_transaction_id(transaction_id=transaction_id)
 
-    if not payment_object:
-        logging.critical('Payment not found, transaction_id=%s' % transaction_id)
-        raise exceptions.SuspiciousOperation()
+        if not payment_object:
+            logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+            raise exceptions.SuspiciousOperation()
 
-    if payment_object.owner != request.user:
-        logging.critical('Invalid request, payment processing will raise SuspiciousOperation: payment owner is not matching to request')
-        raise exceptions.SuspiciousOperation()
+        if not payment_object.owner == request.user:
+            logging.critical('Invalid request, payment process raises SuspiciousOperation: '
+                             'payment owner is not matching to request')
+            raise exceptions.SuspiciousOperation()
 
-    if payment_object.finished_at:
-        logging.critical('Invalid request, payment processing will raise SuspiciousOperation: payment transaction already finished')
-        raise exceptions.SuspiciousOperation()
+        if payment_object.finished_at:
+            logging.critical('Invalid request, payment process raises SuspiciousOperation: '
+                             'payment transaction is already finished')
+            raise exceptions.SuspiciousOperation()
 
-    return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
-        'company_name': 'DATAHAVEN NET',
-        'price': '{}.00'.format(int(payment_object.amount)),
-        'merch_id': settings.BILLING_4CSONLINE_MERCHANT_ID,
-        'merch_link': settings.BILLING_4CSONLINE_MERCHANT_LINK,
-        'invoice': payment_object.transaction_id,
-        'tran_id': payment_object.transaction_id,
-        'url_approved': '{}{}'.format(settings.SITE_BASE_URL, urls.reverse('billing_4csonline_verify_payment')),
-        'url_other': '{}{}'.format(settings.SITE_BASE_URL, urls.reverse('billing_4csonline_verify_payment')),
-    })
+        return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
+            'company_name': 'DATAHAVEN NET',
+            'price': '{}.00'.format(int(payment_object.amount)),
+            'merch_id': settings.BILLING_4CSONLINE_MERCHANT_ID,
+            'merch_link': settings.BILLING_4CSONLINE_MERCHANT_LINK,
+            'invoice': payment_object.transaction_id,
+            'tran_id': payment_object.transaction_id,
+            'url_approved': '{}{}'.format(settings.SITE_BASE_URL, urls.reverse('billing_4csonline_verify_payment')),
+            'url_other': '{}{}'.format(settings.SITE_BASE_URL, urls.reverse('billing_4csonline_verify_payment')),
+        })
 
 
 # @login_required

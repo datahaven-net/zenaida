@@ -25,7 +25,7 @@
     <div class="container">
         <div class="row mt-3">
             <div class="col-sm-12 text-center">
-                In your Bank statement the charge of <b>{{price}}$ US</b> will show up as <b>{{company_name}}</b>.
+                In your Bank statement the charge of <b>${{price}} US</b> will show up as <b>{{company_name}}</b>.
                 <form action="{{merch_link}}" method="post" class="mt-3">
                     {% csrf_token %}
                     <input type="hidden" name="MERCHKEY" value="{{merch_id}}" />

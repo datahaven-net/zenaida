@@ -11,7 +11,12 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 from __future__ import unicode_literals
 
+#------------------------------------------------------------------------------
+
 import os
+import sys
+
+#------------------------------------------------------------------------------
 
 from main import params
 
@@ -24,7 +29,10 @@ SRC_PATH = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 REPO_ROOT = os.path.dirname(SRC_PATH)
 CONTENT_DIR = BASE_DIR
 
-# Quick-start development settings - unsuitable for production
+
+#------------------------------------------------------------------------------ 
+#--- Quick-start development settings
+# Unsuitable for production!
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 DEBUG = getattr(params, 'DEBUG', False)
 DEBUGTOOLBAR_ENABLED = False
@@ -73,17 +81,28 @@ LOGGING = {
             'formatter': 'simple',
             'filters': [],
         },
+        'zenaida_poll': {
+            'level': 'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple',
+            'stream': sys.stdout,
+        },
     },
     'loggers': {
         'django.request': {
             'level': 'DEBUG',
             'propagate': False,
-            'handlers': ['console', ]
+            'handlers': ['console', ],
         },
         'back.csv_import': {
             'level': 'DEBUG',
             'propagate': False,
-            'handlers': ['console', ]
+            'handlers': ['console', ],
+        },
+        'zen.zpoll': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['console', ],
         },
         'pika': {
             'propagate': False,

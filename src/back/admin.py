@@ -42,7 +42,7 @@ class DomainAdmin(NestedModelAdmin):
                     report.append('"%s": %r' % (domain_object.name, output, ))
                     ok = False
             if ok:
-                report.append('"%s": OK with %d responses' % (domain_object.name, len(outputs), ))
+                report.append('"%s": %d calls OK' % (domain_object.name, len(outputs), ))
         self.message_user(request, ', '.join(report))
     domain_synchronize_from_backend.short_description = "Synchronize from back-end"
 

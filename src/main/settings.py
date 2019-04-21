@@ -102,7 +102,7 @@ LOGGING = {
         'zen.zpoll': {
             'level': 'DEBUG',
             'propagate': False,
-            'handlers': ['console', ],
+            'handlers': ['zenaida_poll', ],
         },
         'pika': {
             'propagate': False,

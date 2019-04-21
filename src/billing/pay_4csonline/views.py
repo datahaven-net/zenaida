@@ -52,69 +52,94 @@ class ProcessPaymentView(LoginRequiredMixin, View):
         })
 
 
-# @login_required
-def verify_payment(request):
-    """
-    """
-    if request.GET.get('result') != 'pass' and request.GET.get('rc') == 'USERCAN' and request.GET.get('fc') == 'INCOMPLETE':
-        if not payments.finish_payment(transaction_id=request.GET.get('tid'), status='cancelled'):
-            logging.critical('Payment not found, transaction_id=%s' % request.GET.get('tid'))
-            raise exceptions.SuspiciousOperation()
-        return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
-            'message': 'transaction was cancelled',
-        })
+class VerifyPaymentView(View):
+    def _check_rc_usercan_is_incomplete(self, result, rc, fc, transaction_id):
+        if result != 'pass' and rc == 'USERCAN' and fc == 'INCOMPLETE':
+            self.message = 'Transaction was cancelled'
+            if not payments.finish_payment(transaction_id=transaction_id, status='cancelled'):
+                logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+                raise exceptions.SuspiciousOperation()
+            return True
+        return False
 
-    transaction_id = request.GET['invoice']
-    payment_object = payments.by_transaction_id(transaction_id=transaction_id)
-    if not payment_object:
-        logging.critical('Payment not found, transaction_id=%s' % transaction_id)
-        raise exceptions.SuspiciousOperation()
-
-    if payment_object.finished_at:
-        logging.critical('Invalid request, payment processing will raise SuspiciousOperation: payment transaction already finished')
-        raise exceptions.SuspiciousOperation()
-
-    if payment_object.amount != float(request.GET['amt'].replace(',', '')):
-        logging.critical('Invalid request, payment processing will raise SuspiciousOperation: transaction amount not matching with existing record')
-        raise exceptions.SuspiciousOperation()
-
-    if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
-        if request.GET.get('result') != 'pass' or request.GET.get('rc') != 'OK' or request.GET.get('fc') != 'APPROVED':
-            if request.GET.get('fc') == 'INCOMPLETE':
-                message = 'transaction was cancelled'
+    def _check_rc_ok_is_incomplete(self, result, rc, fc, transaction_id, reference):
+        if result != 'pass' or rc != 'OK' or fc != 'APPROVED':
+            if fc == 'INCOMPLETE':
+                self.message = 'Transaction was cancelled'
                 if not payments.finish_payment(transaction_id=transaction_id, status='cancelled'):
-                    logging.critical('Payment not found, transaction_id=%s' % transaction_id)
+                    logging.critical(f'Payment not found, transaction_id is {transaction_id}')
                     raise exceptions.SuspiciousOperation()
             else:
-                message = 'transaction was declined'
-                if not payments.finish_payment(transaction_id=transaction_id, status='declined', merchant_reference=request.GET.get('ref')):
-                    logging.critical('Payment not found, transaction_id=%s' % transaction_id)
+                self.message = 'Transaction was declined'
+                if not payments.finish_payment(transaction_id=transaction_id, status='declined',
+                                               merchant_reference=reference):
+                    logging.critical(f'Payment not found, transaction_id is {transaction_id}')
                     raise exceptions.SuspiciousOperation()
-            return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
-                'message': message,
-            })
+            return True
+        return False
 
-    payments.update_payment(payment_object, status='paid', merchant_reference=request.GET.get('ref'))
+    @staticmethod
+    def _check_payment(payment_obj, transaction_id, amount):
+        if not payment_obj:
+            logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+            raise exceptions.SuspiciousOperation()
 
-    verified = requests.get('{}?m={}&t={}'.format(
-        settings.BILLING_4CSONLINE_MERCHANT_VERIFY_LINK,
-        settings.BILLING_4CSONLINE_MERCHANT_ID,
-        payment_object.transaction_id,
-    ))
+        if payment_obj.finished_at:
+            logging.critical('Invalid request, payment process raises SuspiciousOperation: '
+                             'payment transaction is already finished')
+            raise exceptions.SuspiciousOperation()
 
-    if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
+        if payment_obj.amount != float(amount.replace(',', '')):
+            logging.critical('Invalid request, payment processing will raise SuspiciousOperation: '
+                             'transaction amount is not matching with existing record')
+            raise exceptions.SuspiciousOperation()
+
+    def _is_payment_verified(self, transaction_id):
+        verified = requests.get(f'{settings.BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
+                                f'{settings.BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
+
         if verified.text != 'YES':
             if not payments.finish_payment(transaction_id=transaction_id, status='unconfirmed'):
-                logging.critical('Payment not found, transaction_id=%s' % transaction_id)
-                raise exceptions.SuspiciousOperation()                
-            message = 'transaction verification failed, please contact site administrator'
-            logging.critical('Payment confirmation failed, transaction_id=%s' % payment_object.transaction_id)
+                logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+                raise exceptions.SuspiciousOperation()
+            self.message = 'Transaction verification failed, please contact site administrator'
+            logging.critical(f'Payment confirmation failed, transaction_id is {transaction_id}')
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        request_data = request.GET
+        result = request_data.get('result')
+        rc = request_data.get('rc')
+        fc = request_data.get('fc')
+        reference = request_data.get('ref')
+        transaction_id = request_data.get('tid')
+        amount = request_data.get('amt')
+
+        if self._check_rc_usercan_is_incomplete(result, rc, fc, transaction_id):
             return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
-                'message': message,
+                'message': self.message,  # TODO Use Django messages
             })
 
-    if not payments.finish_payment(transaction_id=transaction_id, status='processed'):
-        logging.critical('Payment not found, transaction_id=%s' % transaction_id)
-        raise exceptions.SuspiciousOperation()                
-    
-    return shortcuts.render(request, 'billing/4csonline/success_payment.html')
+        payment_object = payments.by_transaction_id(transaction_id=transaction_id)
+        self._check_payment(payment_object, transaction_id, amount)
+
+        if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
+            if self._check_rc_ok_is_incomplete(result, rc, fc, transaction_id, reference):
+                return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
+                    'message': self.message,
+                })
+
+        payments.update_payment(payment_object, status='paid', merchant_reference=reference)
+
+        if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
+            if not self._is_payment_verified(transaction_id):
+                return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
+                    'message': self.message,
+                })
+
+        if not payments.finish_payment(transaction_id=transaction_id, status='processed'):
+            logging.critical(f'Payment not found, transaction_id is {transaction_id}')  # TODO Use Django messages
+            raise exceptions.SuspiciousOperation()
+
+        return shortcuts.render(request, 'billing/4csonline/success_payment.html')

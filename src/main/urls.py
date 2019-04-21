@@ -70,7 +70,7 @@ patterns = [
     path('billing/pay/', billing_views.NewPaymentView.as_view(), name='billing_new_payment'),
     # path('billing/4csonline/pay/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),
     path('billing/4csonline/process/<str:transaction_id>/', pay_4csonline_views.ProcessPaymentView.as_view(), name='billing_4csonline_process_payment'),
-    path('billing/4csonline/verify/', pay_4csonline_views.verify_payment, name='billing_4csonline_verify_payment'),
+    path('billing/4csonline/verify/', pay_4csonline_views.VerifyPaymentView.as_view(), name='billing_4csonline_verify_payment'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 

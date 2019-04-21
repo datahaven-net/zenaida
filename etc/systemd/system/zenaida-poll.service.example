@@ -1,0 +1,31 @@
+# Zenaida Poll systemd service configuration.
+#
+# Copy and modify `zenaida-poll.service` file to your local systemd folder to enable the service:
+#
+#         mkdir -p /home/zenaida/.config/systemd/user/
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-poll.service.example /home/zenaida/.config/systemd/user/zenaida-poll.service
+#         systemctl --user enable zenaida-poll.service
+#
+#
+# To start Zenaida Poll service run this command:
+# 
+#         systemctl --user start zenaida-poll.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl --user status zenaida-poll.service
+#
+
+[Unit]
+Description=ZenaidaPoll
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/zenaida/zenaida/
+ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py epp_poll 1>>/home/zenaida/logs/poll 2>>/home/zenaida/logs/poll.err"
+
+[Install]
+WantedBy=multi-user.target

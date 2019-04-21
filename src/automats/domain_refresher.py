@@ -111,11 +111,7 @@ class DomainRefresher(automat.Automat):
                 self.doDestroyMe(*args, **kwargs)
         #---INFO?---
         elif self.state == 'INFO?':
-            if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
-                self.state = 'FAILED'
-                self.doReportInfoFailed(event, *args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000, *args, **kwargs) and self.isContactsNeeded(*args, **kwargs):
+            if event == 'response' and self.isCode(1000, *args, **kwargs) and self.isContactsNeeded(*args, **kwargs):
                 self.state = 'CONTACTS?'
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doEPPContactsInfoMany(*args, **kwargs)
@@ -126,6 +122,15 @@ class DomainRefresher(automat.Automat):
                 self.doDBCheckUpdateNameservers(*args, **kwargs)
                 self.doDBCheckUpdateDomainInfo(*args, **kwargs)
                 self.doReportDomainInfo(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2201, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportInfoFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'response' and self.isCode(2201, *args, **kwargs):
+                self.state = 'DONE'
+                self.doDBDeleteDomain(*args, **kwargs)
+                self.doReportAnotherRegistrar(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
         #---CONTACTS?---
         elif self.state == 'CONTACTS?':
@@ -207,6 +212,13 @@ class DomainRefresher(automat.Automat):
             self.event('error', exc)
             return
 
+        # catch "2201 Authorization error" result, that means domain exists, but have another owner
+        code = response['epp']['response']['result']['@code']
+        if str(code) == '2201':
+            self.domain_info_response = response
+            self.event('response', response)
+            return
+
         # read current contacts
         try:
             datetime.datetime.strptime(
@@ -266,7 +278,7 @@ class DomainRefresher(automat.Automat):
         self.known_registrant = zcontacts.registrant_find(self.received_registrant)
         # fail if registrant is not exist in local DB
         if not self.known_registrant:
-            self.log(self.debug_level, 'Error in doEppDomainInfo: registrant not exist in local DB')
+            logger.error('registrant not exist in local DB')
             self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
             return
 
@@ -328,7 +340,7 @@ class DomainRefresher(automat.Automat):
             existing_contact = zcontacts.by_epp_id(epp_id=received_contact_id)
             if existing_contact:
                 if existing_contact.owner != self.known_registrant.owner:
-                    self.log(self.debug_level, 'Error in doDBCheckCreateUpdateContacts: existing contact have another owner in local DB')
+                    logger.error('existing contact have another owner in local DB')
                     self.event('error', zerrors.EPPRegistrantAuthFailed('existing contact have another owner in local DB'))
                     return
                 zcontacts.contact_refresh(
@@ -441,11 +453,18 @@ class DomainRefresher(automat.Automat):
         if not self.target_domain:
             return
         zdomains.domain_update(
+            domain_name=self.target_domain.name,
             expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),
             create_date=zdomains.response_to_datetime('crDate', self.domain_info_response),
         )
 
     def doReportNotExist(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.outputs.append(None)
+
+    def doReportAnotherRegistrar(self, *args, **kwargs):
         """
         Action method.
         """
@@ -504,5 +523,4 @@ class DomainRefresher(automat.Automat):
         self.received_contact_roles = {}
         self.received_nameservers = []
         self.destroy()
-
 

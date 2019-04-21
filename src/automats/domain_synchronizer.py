@@ -18,6 +18,7 @@ EVENTS:
 
 #------------------------------------------------------------------------------
 
+import logging
 import datetime
 
 from django.conf import settings
@@ -31,6 +32,10 @@ from automats import domain_hostnames_synchronizer
 from zen import zclient
 from zen import zerrors
 from zen import zdomains
+
+#------------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
@@ -258,7 +263,7 @@ class DomainSynchronizer(automat.Automat):
         else:
             days_difference = 365 * self.renew_years
         if days_difference > 365 * 10 - 1:
-            self.log(self.debug_level, 'extension period must be no more than 10 years: %s' % self.target_domain)
+            logger.error('extension period must be no more than 10 years: %s' % self.target_domain)
             self.event('error', Exception('extension period must be no more than 10 years'))
             return
         if days_difference % 365 == 0:
@@ -330,7 +335,7 @@ class DomainSynchronizer(automat.Automat):
         else:
             days_difference = 365 * self.renew_years
         if days_difference > 365 * 10 - 1:
-            self.log(self.debug_level, 'extension period must be no more than 10 years: %s' % self.target_domain)
+            logger.error('extension period must be no more than 10 years: %s' % self.target_domain)
             self.event('error', Exception('extension period must be no more than 10 years'))
             return
         if days_difference % 365 == 0:
@@ -372,18 +377,18 @@ class DomainSynchronizer(automat.Automat):
         outputs = list(dcs.outputs)
         del dcs
         if not outputs:
-            self.log(self.debug_level, 'empty result from DomainContactsSynchronizer: %s' % exc)
+            logger.error('empty result from DomainContactsSynchronizer: %s' % exc)
             self.event('error', Exception('Empty result from DomainContactsSynchronizer'))
             return
         if isinstance(outputs[-1], Exception):
-            self.log(self.debug_level, 'Found exception in DomainContactsSynchronizer outputs: %s' % outputs[-1])
+            logger.error('found exception in DomainContactsSynchronizer outputs: %s' % outputs[-1])
             self.event('error', outputs[-1])
             return
         for out in outputs:
             if not isinstance(out, tuple):
                 continue
             if not out[0] in ['admin', 'billing', 'tech', ]:
-                self.log(self.debug_level, 'Unexpected output from DomainContactsSynchronizer: %r' % out[0])
+                logger.warn('unexpected output from DomainContactsSynchronizer: %r' % out[0])
                 continue
         self.outputs.extend(outputs)
         self.event('contacts-ok')

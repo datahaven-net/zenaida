@@ -17,6 +17,8 @@ EVENTS:
 
 #------------------------------------------------------------------------------
 
+import logging
+
 from django.conf import settings
 
 #------------------------------------------------------------------------------
@@ -26,6 +28,10 @@ from automats import automat
 from zen import zclient
 from zen import zerrors
 from zen import zdomains
+
+#------------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
@@ -176,7 +182,7 @@ class DomainsChecker(automat.Automat):
         for result in results:
             name = result.get('name', {}).get('#text')
             if not name:
-                self.log(self.debug_level, 'Invalid EPP response, unknown domain name: %s' % args[0])
+                logger.error('invalid EPP response, unknown domain name: %s' % args[0])
                 continue
             if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('the domain exists'):
                 self.available_domain_names.append(name)
@@ -234,7 +240,8 @@ class DomainsChecker(automat.Automat):
                 known_registrant_epp_id = None if not known_domain else known_domain.registrant.epp_id
                 real_registrant_epp_id = response['epp']['response']['resData']['infData'].get('registrant', None)
                 if real_registrant_epp_id and known_registrant_epp_id and known_registrant_epp_id != real_registrant_epp_id:
-                    self.log(self.debug_level, 'Domain known to belong to another registrant: %s' % self.current_domain_name)
+                    logger.warn('domain %s suppose to belong to another registrant: %r, but received another id: %r', 
+                                 self.current_domain_name, known_registrant_epp_id, real_registrant_epp_id)
                     self.event('error', zerrors.EPPRegistrantAuthFailed(response=response))
                     return
             self.check_results[self.current_domain_name] = True
@@ -256,7 +263,7 @@ class DomainsChecker(automat.Automat):
         for result in results:
             name = result.get('name', {}).get('#text')
             if not name:
-                self.log(self.debug_level, 'Invalid EPP response, unknown domain name: %s' % args[0])
+                logger.error('unexpected EPP response, unknown domain name: %s' % args[0])
                 continue
             if result.get('name', {}).get('@avail') == '0':
                 if result.get('reason').lower().count('the domain exists'):
@@ -305,13 +312,13 @@ class DomainsChecker(automat.Automat):
     def _do_find_errors_in_response(self, response):
         results = response['epp']['response']['resData']['chkData']['cd']
         if not results:
-            self.log(self.debug_level, 'Invalid EPP response, no results')
+            logger.error('unexpected EPP response, no results')
             return [zerrors.EPPResponseFailed(), ]
         if not isinstance(results, list):
             results = [results, ]
         for result in results:
             if not result.get('name', {}).get('#text'):
-                self.log(self.debug_level, 'Invalid EPP response, unknown domain name: %s' % response)
+                logger.error('unexpected EPP response, unknown domain name: %s' % response)
                 return [zerrors.EPPResponseFailed(), ]
             if result.get('name', {}).get('@avail') == '0':
                 if not result.get('reason').lower().count('the domain exists'):

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Ready-to-use script to deploy latest changes to Zenaida Live machine
+
+# fetch latest changes from repo
+cd /home/zenaida/zenaida/
+git pull
+
+# rebuild virtual environment, in case requirements.txt changed
+make venv
+
+# apply Django migrations
+make migrate
+
+# update FAQ pages on the web-site
+cp -r /home/zenaida/static_html/*.html /home/zenaida/zenaida/src/front/templates/faq/
+
+# restart Zenaida UWSGI application
+touch /home/zenaida/zenaida/etc/uwsgi/vassals/zenaida.ini
+
+# restart Zenaida Gate service
+systemctl --user restart zenaida-gate.service
+
+# DONE!
+exit 0

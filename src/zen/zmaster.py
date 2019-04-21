@@ -120,7 +120,7 @@ def domain_synchronize_from_backend(domain_name,
     outputs = list(dr.outputs)
     del dr
     logger.debug('domain_refresher(%r) outputs: %r', domain_name, outputs)
-    return None
+    return outputs
 
 
 def domain_set_auth_info(domain, auth_info=None):

@@ -16,6 +16,7 @@ EVENTS:
 
 #------------------------------------------------------------------------------
 
+import logging
 import time
 import datetime
 
@@ -30,6 +31,10 @@ from automats import automat
 from zen import zclient
 from zen import zerrors
 from zen import zdomains
+
+#------------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
@@ -144,7 +149,7 @@ class DomainReader(automat.Automat):
             return
         self.registrant_epp_id = args[0]['epp']['response']['resData']['infData'].get('registrant', None)
         if not self.registrant_epp_id:
-            self.log(self.debug_level, 'Domain registrant unknown from response: %s' % self.target_domain.name)
+            logger.error('domain registrant unknown from response: %s' % self.target_domain.name)
             self.event('error', zerrors.EPPRegistrantUnknown(response=args[0]))
             return
         known_domain = zdomains.domain_find(domain_name=self.target_domain.name)
@@ -152,7 +157,7 @@ class DomainReader(automat.Automat):
             return
         if known_domain.registrant.epp_id == self.registrant_epp_id:
             return
-        self.log(self.debug_level, 'Domain known to belong to another registrant: %s' % self.current_domain_name)
+        logger.error('domain known to belong to another registrant: %s' % self.current_domain_name)
         self.event('error', zerrors.EPPRegistrantAuthFailed(response=args[0]))
 
     def doPrepareContactsList(self, *args, **kwargs):

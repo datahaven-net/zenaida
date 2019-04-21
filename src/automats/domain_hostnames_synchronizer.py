@@ -20,6 +20,8 @@ EVENTS:
 
 #------------------------------------------------------------------------------
 
+import logging
+
 from django.conf import settings
 
 #------------------------------------------------------------------------------
@@ -29,6 +31,10 @@ from automats import automat
 from zen import zdomains
 from zen import zclient
 from zen import zerrors
+
+#------------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
@@ -248,7 +254,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 # if create_host['epp']['response']['result']['@code'] == '2303':
                 #     return False
                 if create_host['epp']['response']['result']['@code'] != '1000':
-                    self.log(self.debug_level, 'Bad result code from host_create in doEppHostCreateMany: %s' % create_host['epp']['response']['result']['@code'])
+                    logger.error('bad result code from host_create: %s' % create_host['epp']['response']['result']['@code'])
                     self.event('error')
                     return
                 self.outputs.append(create_host)

@@ -21,7 +21,30 @@ class ProfileAdmin(NestedModelAdmin):
 
 
 class DomainAdmin(NestedModelAdmin):
-    pass
+
+    actions = ['domain_synchronize_from_backend', ]
+
+    def domain_synchronize_from_backend(self, request, queryset):
+        from zen import zmaster
+        report = []
+        for domain_object in queryset:
+            outputs = zmaster.domain_synchronize_from_backend(
+                domain_name=domain_object.name,
+                refresh_contacts=True,
+                change_owner_allowed=True,
+                raise_errors=True,
+                log_events=True,
+                log_transitions=True,
+            )
+            ok = True
+            for output in outputs:
+                if isinstance(output, Exception):
+                    report.append('"%s": %r' % (domain_object.name, output, ))
+                    ok = False
+            if ok:
+                report.append('"%s": OK with %d responses' % (domain_object.name, len(outputs), ))
+        self.message_user(request, ', '.join(report))
+    domain_synchronize_from_backend.short_description = "Synchronize from back-end"
 
 
 class ContactAdmin(NestedModelAdmin):

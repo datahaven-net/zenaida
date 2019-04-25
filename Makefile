@@ -242,7 +242,7 @@ epp_gate_dev: $(VENV_DEPLOY)
 	@perl bin/epp_gate.pl ./keys.local/epp_credentials.txt ./keys.local/rabbitmq_gate_credentials.txt
 
 
-epp_poll: $(VENV_DEPLOY)
+epp_poll_dev: $(VENV_DEPLOY)
 	@$(PYTHON) src/manage.py epp_poll
 
 

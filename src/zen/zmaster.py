@@ -24,7 +24,7 @@ def contact_create_update(contact_object, raise_errors=False, log_events=True, l
     cs.event('run', contact_object)
     outputs = list(cs.outputs)
     del cs
-    logger.debug('contact_synchronizer(%r) outputs: %r', contact_object, outputs)
+    logger.debug('contact_synchronizer(%r) finished with %d outputs', contact_object, len(outputs))
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if isinstance(outputs[-1], Exception):
@@ -54,7 +54,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     dc.event('run', domain_names)
     outputs = list(dc.outputs)
     del dc
-    logger.debug('domains_checker(%r) outputs: %r', domain_names, outputs)
+    logger.debug('domains_checker(%r) finished with %d outputs', domain_names, len(outputs))
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):
@@ -86,7 +86,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     )
     outputs = list(ds.outputs)
     del ds
-    logger.debug('domain_synchronizer(%r) outputs: %r', domain_object, outputs)
+    logger.debug('domain_synchronizer(%r) finished with %d outputs', domain_object, len(outputs))
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if isinstance(outputs[-1], Exception):
@@ -119,7 +119,7 @@ def domain_synchronize_from_backend(domain_name,
     )
     outputs = list(dr.outputs)
     del dr
-    logger.debug('domain_refresher(%r) outputs: %r', domain_name, outputs)
+    logger.debug('domain_refresher(%r) finished with %d outputs', domain_name, len(outputs))
     return outputs
 
 

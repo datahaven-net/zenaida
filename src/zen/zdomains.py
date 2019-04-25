@@ -377,3 +377,5 @@ def response_to_datetime(field_name, domain_info_response):
         domain_info_response['epp']['response']['resData']['infData'][field_name],
         '%Y-%m-%dT%H:%M:%S.%fZ',
     )
+
+#------------------------------------------------------------------------------

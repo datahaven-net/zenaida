@@ -208,4 +208,4 @@ class Domain(models.Model):
 
     @property
     def can_be_restored(self):
-        return bool(self.epp_id) and self.epp_status != 'active'
+        return bool(self.epp_id) and self.status != 'active'

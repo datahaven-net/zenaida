@@ -213,8 +213,14 @@ class DomainRefresher(automat.Automat):
             return
 
         # catch "2201 Authorization error" result, that means domain exists, but have another owner
-        code = response['epp']['response']['result']['@code']
-        if str(code) == '2201':
+        try:
+            code = int(response['epp']['response']['result']['@code'])
+        except (ValueError, IndexError, TypeError, ) as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            self.event('error', exc)
+            return
+
+        if code == 2201:
             self.domain_info_response = response
             self.event('response', response)
             return
@@ -276,7 +282,8 @@ class DomainRefresher(automat.Automat):
 
         # find registrant in local DB
         self.known_registrant = zcontacts.registrant_find(self.received_registrant)
-        # fail if registrant is not exist in local DB
+        # fail if registrant not exist in local DB
+        # that means owner of the domain changed, or his contact is not in sync with back-end
         if not self.known_registrant:
             logger.error('registrant not exist in local DB')
             self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
@@ -457,6 +464,7 @@ class DomainRefresher(automat.Automat):
             expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),
             create_date=zdomains.response_to_datetime('crDate', self.domain_info_response),
         )
+        zdomains.domain_update_statuses(self.target_domain, self.domain_info_response)
 
     def doReportNotExist(self, *args, **kwargs):
         """

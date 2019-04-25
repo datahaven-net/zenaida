@@ -423,7 +423,7 @@ class DomainSynchronizer(automat.Automat):
             args[0]['epp']['response']['resData']['creData']['crDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.target_domain.expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        self.target_domain.epp_status = 'active'
+        self.target_domain.status = 'active'
         if self.save_to_db:
             self.target_domain.save()
 

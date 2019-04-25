@@ -1,5 +1,7 @@
 import logging
 
+from django.contrib.postgres.fields import JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
 from accounts.models.account import Account
@@ -43,6 +45,7 @@ class Domain(models.Model):
         ),
         default='inactive',
     )
+    epp_statuses = JSONField(null=True, encoder=DjangoJSONEncoder)
 
     auth_key = models.CharField(max_length=64, blank=True, default='')
 

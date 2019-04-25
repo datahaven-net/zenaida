@@ -16,7 +16,7 @@ def test_update_hostnames():
         return pytest.skip('skip E2E')  # @UndefinedVariable
     tester = testsupport.prepare_tester_account()
     tester_domain = testsupport.prepare_tester_domain(
-        domain_name='test.%s' % settings.SUPPORTED_ZONES[0],
+        domain_name='test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
         tester=tester,
         domain_epp_id=zclient.make_epp_id(tester.email),
         add_contacts=['registrant', 'admin', ],

@@ -128,7 +128,7 @@ def domain_create(
         registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
     if not registrar or not isinstance(registrar, Registrar):
         registrar = Registrar.registrars.get_or_create(
-            epp_id=(registrar or settings.DEFAULT_REGISTRAR_ID),
+            epp_id=(registrar or settings.ZENAIDA_REGISTRAR_ID),
         )[0]
     zone = zzones.make('.'.join(domain_name.split('.')[1:]))
     new_domain = Domain(

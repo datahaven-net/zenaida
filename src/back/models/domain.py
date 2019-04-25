@@ -31,13 +31,12 @@ class Domain(models.Model):
     create_date = models.DateTimeField()
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
-    epp_status = models.CharField(
+    epp_statuses = JSONField(null=True, encoder=DjangoJSONEncoder)
+
+    status = models.CharField(
         max_length=32,
         choices=(
             ('inactive', 'INACTIVE', ),
-            ('deactivated', 'DEACTIVATED', ),
-            ('client_hold', 'CLIENT HOLD', ),
-            ('server_hold', 'SERVER HOLD', ),
             ('to_be_deleted', 'TO BE DELETED', ),
             ('to_be_restored', 'TO BE RESTORED', ),
             ('unknown', 'UNKNOWN', ),
@@ -45,7 +44,6 @@ class Domain(models.Model):
         ),
         default='inactive',
     )
-    epp_statuses = JSONField(null=True, encoder=DjangoJSONEncoder)
 
     auth_key = models.CharField(max_length=64, blank=True, default='')
 

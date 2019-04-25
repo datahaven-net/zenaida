@@ -110,12 +110,12 @@ LOGGING = {
     }
 }
 
-EPP_LOG_FILENAME = getattr(params, 'EPP_LOG_FILENAME', None)
-if EPP_LOG_FILENAME:
+ZENAIDA_EPP_LOG_FILENAME = getattr(params, 'ZENAIDA_EPP_LOG_FILENAME', None)
+if ZENAIDA_EPP_LOG_FILENAME:
     LOGGING['handlers']['epp'] = {
         'level': 'DEBUG',
         'class' : 'logging.handlers.RotatingFileHandler',
-        'filename': EPP_LOG_FILENAME,
+        'filename': ZENAIDA_EPP_LOG_FILENAME,
         'maxBytes' : 1024*1024*10,  # 10MB
         'backupCount' : 10,
         'formatter': 'timestamped',
@@ -126,12 +126,12 @@ if EPP_LOG_FILENAME:
         'handlers': ['epp', ]
     }
 
-AUTOMATS_LOG_FILENAME = getattr(params, 'AUTOMATS_LOG_FILENAME', None)
-if AUTOMATS_LOG_FILENAME:
+ZENAIDA_AUTOMATS_LOG_FILENAME = getattr(params, 'ZENAIDA_AUTOMATS_LOG_FILENAME', None)
+if ZENAIDA_AUTOMATS_LOG_FILENAME:
     LOGGING['handlers']['automats'] = {
         'level': 'DEBUG',
         'class' : 'logging.handlers.RotatingFileHandler',
-        'filename': AUTOMATS_LOG_FILENAME,
+        'filename': ZENAIDA_AUTOMATS_LOG_FILENAME,
         'maxBytes' : 1024*1024*10,  # 10MB
         'backupCount' : 10,
         'formatter': 'timestamped',
@@ -341,19 +341,20 @@ GRAPH_MODELS = {
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
 
-ZENAIDA_GATE_HEALTH_FILE_PATH = getattr(params, 'ZENAIDA_GATE_HEALTH_FILE_PATH', '/home/zenaida/health')
+ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '/home/zenaida/health')
 
 ZENAIDA_REGISTRAR_ID = getattr(params, 'ZENAIDA_REGISTRAR_ID', 'zenaida_registrar')
 ZENAIDA_SUPPORTED_ZONES = getattr(params, 'ZENAIDA_SUPPORTED_ZONES', ['com', 'net', ])
 
-RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
+ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
 
-BILLING_BYPASS_PAYMENT_TIME_CHECK = getattr(params, 'BILLING_BYPASS_PAYMENT_TIME_CHECK', False)
-BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION = getattr(params, 'BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION', False)
-BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION = getattr(params, 'BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION', False)
+ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK = getattr(params, 'ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK', False)
+
+ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION = getattr(params, 'ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION', False)
+ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION = getattr(params, 'ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION', False)
 ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID = getattr(params, 'ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID', '')
 ZENAIDA_BILLING_4CSONLINE_MERCHANT_LINK = getattr(params, 'ZENAIDA_BILLING_4CSONLINE_MERCHANT_LINK', '')
-BILLING_4CSONLINE_MERCHANT_VERIFY_LINK = getattr(params, 'BILLING_4CSONLINE_MERCHANT_VERIFY_LINK', '')
+ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK = getattr(params, 'ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK', '')
 
 GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
 GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')

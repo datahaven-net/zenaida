@@ -19,7 +19,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
     """
     Tests successful scenario for processing the payment.
     """
-    @override_settings(BILLING_BYPASS_PAYMENT_TIME_CHECK=True)
+    @override_settings(ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK=True)
     @pytest.mark.django_db
     def test_successful_process_payment(self):
         # Call payment endpoint to create payment first

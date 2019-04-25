@@ -95,7 +95,7 @@ class VerifyPaymentView(View):
             raise exceptions.SuspiciousOperation()
 
     def _is_payment_verified(self, transaction_id):
-        verified = requests.get(f'{settings.BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
+        verified = requests.get(f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
                                 f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
 
         if verified.text != 'YES':
@@ -124,7 +124,7 @@ class VerifyPaymentView(View):
         payment_object = payments.by_transaction_id(transaction_id=transaction_id)
         self._check_payment(payment_object, transaction_id, amount)
 
-        if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
+        if not settings.ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
             if self._check_rc_ok_is_incomplete(result, rc, fc, transaction_id, reference):
                 return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
                     'message': self.message,
@@ -132,7 +132,7 @@ class VerifyPaymentView(View):
 
         payments.update_payment(payment_object, status='paid', merchant_reference=reference)
 
-        if not settings.BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
+        if not settings.ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
             if not self._is_payment_verified(transaction_id):
                 return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
                     'message': self.message,

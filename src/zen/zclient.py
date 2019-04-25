@@ -52,7 +52,7 @@ class XML2JsonOptions(object):
 class RPCClient(object):
 
     def __init__(self):
-        secret = open(settings.RABBITMQ_CLIENT_CREDENTIALS_FILENAME, 'r').read()
+        secret = open(settings.ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME, 'r').read()
         _host, _port, _username, _password = secret.strip().split(' ')
 
         try:
@@ -137,9 +137,9 @@ def do_rpc_request(json_request):
             raise ValueError('empty response from RPCClient')
     except Exception as exc:
         logger.exception('ERROR from RPCClient')
-        with open(settings.ZENAIDA_GATE_HEALTH_FILE_PATH, 'a') as fout:
+        with open(settings.ZENAIDA_GATE_HEALTH_FILENAME, 'a') as fout:
             fout.write('{} at {}\n'.format(exc, time.asctime()))
-        # retry after 3 seconds, Zenaida Gate suppose to be restarted already
+        # retry after 2 seconds, Zenaida Gate suppose to be restarted already
         time.sleep(2)
         # if the issue is still here it will raise EPPBadResponse() in run() method anyway
         client_retry3sec = RPCClient()

@@ -37,7 +37,7 @@ class NewPaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('billing_new_payment')
 
     def form_valid(self, form):
-        if not settings.BILLING_BYPASS_PAYMENT_TIME_CHECK:
+        if not settings.ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK:
             my_latest_payment = payments.latest_payment(self.request.user)
             if my_latest_payment:
                 if timezone.now() - my_latest_payment.started_at < datetime.timedelta(minutes=3):

@@ -23,6 +23,10 @@ class ProfileAdmin(NestedModelAdmin):
 class DomainAdmin(NestedModelAdmin):
 
     actions = ['domain_synchronize_from_backend', ]
+    list_display = ('name', 'owner_email', 'epp_id', 'epp_status', 'create_date', 'expiry_date', )
+
+    def owner_email(self, domain_instance):
+        return domain_instance.owner.email
 
     def domain_synchronize_from_backend(self, request, queryset):
         from zen import zmaster

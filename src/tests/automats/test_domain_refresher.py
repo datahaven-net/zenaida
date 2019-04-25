@@ -22,7 +22,7 @@ def test_domain_not_exist():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'this-domain-not-exist.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'this-domain-not-exist.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dr.event(
         'run',
         domain_name=test_domain_name,
@@ -54,7 +54,7 @@ def test_domain_refreshed():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'test.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dr.event(
         'run',
         domain_name=test_domain_name,

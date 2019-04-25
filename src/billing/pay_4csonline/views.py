@@ -43,8 +43,8 @@ class ProcessPaymentView(LoginRequiredMixin, View):
         return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
             'company_name': 'DATAHAVEN NET',
             'price': '{}.00'.format(int(payment_object.amount)),
-            'merch_id': settings.BILLING_4CSONLINE_MERCHANT_ID,
-            'merch_link': settings.BILLING_4CSONLINE_MERCHANT_LINK,
+            'merch_id': settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID,
+            'merch_link': settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_LINK,
             'invoice': payment_object.transaction_id,
             'tran_id': payment_object.transaction_id,
             'url_approved': '{}{}'.format(settings.SITE_BASE_URL, urls.reverse('billing_4csonline_verify_payment')),
@@ -96,7 +96,7 @@ class VerifyPaymentView(View):
 
     def _is_payment_verified(self, transaction_id):
         verified = requests.get(f'{settings.BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
-                                f'{settings.BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
+                                f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
 
         if verified.text != 'YES':
             if not payments.finish_payment(transaction_id=transaction_id, status='unconfirmed'):

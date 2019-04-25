@@ -24,7 +24,7 @@ def test_single_domain_exist():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'test.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dc.event('run', [test_domain_name, ])
     outputs = list(dc.outputs)
     del dc
@@ -54,7 +54,7 @@ def test_single_domain_not_exist():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'this-domain-not-exist.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'this-domain-not-exist.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dc.event('run', [test_domain_name, ])
     outputs = list(dc.outputs)
     del dc
@@ -82,8 +82,8 @@ def test_two_domains_exist():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name1 = 'test.%s' % settings.SUPPORTED_ZONES[0]
-    test_domain_name2 = 'test-readonly.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name1 = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
+    test_domain_name2 = 'test-readonly.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dc.event('run', [test_domain_name1, test_domain_name2, ])
     outputs = list(dc.outputs)
     del dc
@@ -116,7 +116,7 @@ def test_single_domain_another_registrar():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'owned-by-another-registar.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'owned-by-another-registar.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dc.event('run', [test_domain_name, ])
     outputs = list(dc.outputs)
     del dc
@@ -136,7 +136,7 @@ def test_single_domain_another_registrant():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_domain = testsupport.prepare_tester_domain(
-        domain_name='test-readonly.%s' % settings.SUPPORTED_ZONES[0],
+        domain_name='test-readonly.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
         add_contacts=['registrant', 'admin', ],
         epp_id_dict={
             'registrant': 'ThisIDNotExist1',
@@ -208,7 +208,7 @@ def test_skip_check():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'test.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dc.event('run', [test_domain_name, ])
     outputs = list(dc.outputs)
     del dc
@@ -237,7 +237,7 @@ def test_skip_info():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'test.%s' % settings.SUPPORTED_ZONES[0]
+    test_domain_name = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dc.event('run', [test_domain_name, ])
     outputs = list(dc.outputs)
     del dc

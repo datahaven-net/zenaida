@@ -254,16 +254,6 @@ class OrderCancelView(LoginRequiredMixin, View):
 
 
 @login_required
-def orders_modify(request):
-    order_objects = billing_orders.list_orders(owner=request.user)
-    name = request.POST.get('name')
-
-    return shortcuts.render(request, 'billing/account_orders.html', {
-        'objects': order_objects,
-    }, )
-
-
-@login_required
 def domain_get_auth_code(request):
     """
     """

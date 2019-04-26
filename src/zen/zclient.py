@@ -1,4 +1,3 @@
-import six
 import time
 import json
 import copy
@@ -24,7 +23,7 @@ from zen import zerrors
 #------------------------------------------------------------------------------
 
 def _enc(s):
-    if not isinstance(s, six.text_type):
+    if not isinstance(s, str):
         try:
             s = s.decode('utf-8')
         except:
@@ -52,6 +51,7 @@ class XML2JsonOptions(object):
 class RPCClient(object):
 
     def __init__(self):
+        # TODO: move this to apps.py - read only one time when Django starts
         secret = open(settings.ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME, 'r').read()
         _host, _port, _username, _password = secret.strip().split(' ')
 
@@ -69,20 +69,21 @@ class RPCClient(object):
         except pika.exceptions.ConnectionClosed as exc:
             raise zerrors.EPPConnectionFailed(str(exc))
 
-        self.connection.add_timeout(5, self.on_timeout)
+        self.connection.call_later(5, self.on_timeout)
 
         self.channel = self.connection.channel()
 
-        result = self.channel.queue_declare(exclusive=True)
+        result = self.channel.queue_declare(queue='', exclusive=True)
         self.reply_queue = result.method.queue
 
         self.channel.basic_consume(
-            self.on_response,
-            no_ack=True,
-            queue=self.reply_queue
+            queue=self.reply_queue,
+            on_message_callback=self.on_response,
+            auto_ack=True,
         )
 
     def on_timeout(self):
+        logger.info('RPCClient on_timeout !!!!!!!!!!!!!!')
         self.connection.close()
 
     def on_response(self, ch, method, props, body):
@@ -92,7 +93,7 @@ class RPCClient(object):
     def request(self, query):
         self.reply = None
         self.corr_id = str(uuid.uuid4())
-        if not self.channel.basic_publish(
+        self.channel.basic_publish(
             exchange='',
             routing_key='epp_messages',
             properties=pika.BasicProperties(
@@ -100,8 +101,7 @@ class RPCClient(object):
                 correlation_id=self.corr_id,
             ),
             body=str(query)
-        ):
-            raise zerrors.EPPConnectionFailed('failed publishing epp request')
+        )
         while self.reply is None:
             self.connection.process_data_events()
         return self.reply

@@ -259,7 +259,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            epp_status='inactive'
+            status='inactive'
         )
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
@@ -276,7 +276,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            epp_status='active'
+            status='active'
         )
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200

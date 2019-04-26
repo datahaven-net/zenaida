@@ -2,6 +2,8 @@ import logging
 import re
 import datetime
 
+from collections import OrderedDict
+
 from django.utils import timezone
 from django.conf import settings
 from django.core import exceptions
@@ -10,7 +12,6 @@ from back.models.registrar import Registrar
 
 from zen import zzones
 from zen import zusers
-from zen import zcontacts
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +157,7 @@ def domain_create(
         host_position += 1
     if save:
         new_domain.save()
-        logger.debug('domain created: %r', new_domain)
+    logger.debug('domain created: %r', new_domain)
     return new_domain
 
 
@@ -190,7 +191,7 @@ def domain_change_registrant(domain_object, new_registrant_object, save=True):
     domain_object.owner = new_owner
     if save:
         domain_object.save()
-        logger.debug('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
+    logger.debug('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
     return domain_object
 
 def domain_change_owner(domain_object, new_owner, save=True):
@@ -209,7 +210,7 @@ def domain_change_owner(domain_object, new_owner, save=True):
     domain_object.owner = new_owner
     if save:
         domain_object.save()
-        logger.debug('domain %s owner changed (and all %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
+    logger.debug('domain %s owner changed (and all %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
     return domain_object
 
 
@@ -379,3 +380,26 @@ def response_to_datetime(field_name, domain_info_response):
     )
 
 #------------------------------------------------------------------------------
+
+def domain_update_statuses(domain_object, domain_info_response, save=True):
+    """
+    Update given Domain object from epp domain_info response. 
+    """
+    current_domain_statuses = domain_object.epp_statuses or {}
+    new_domain_statuses = {}
+    try:
+        epp_statuses = domain_info_response['epp']['response']['resData']['infData']['status']
+    except:
+        logger.exception('Failed to read domain statuses from domain_info response')
+        return False
+    if not isinstance(epp_statuses, list):
+        epp_statuses = [epp_statuses, ]
+    for st in epp_statuses:
+        new_domain_statuses[str(st['@s'])] = True
+    modified = OrderedDict(current_domain_statuses) != OrderedDict(new_domain_statuses)
+    domain_object.epp_statuses = new_domain_statuses
+    if save:
+        domain_object.save()
+    if modified:
+        logger.info('domain %r statuses modified:  %r -> %r', domain_object, current_domain_statuses, new_domain_statuses)
+    return True

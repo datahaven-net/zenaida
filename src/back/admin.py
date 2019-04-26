@@ -23,7 +23,7 @@ class ProfileAdmin(NestedModelAdmin):
 class DomainAdmin(NestedModelAdmin):
 
     actions = ['domain_synchronize_from_backend', ]
-    list_display = ('name', 'owner_email', 'epp_id', 'epp_status', 'create_date', 'expiry_date', )
+    list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses', )
 
     def owner_email(self, domain_instance):
         return domain_instance.owner.email

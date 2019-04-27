@@ -84,6 +84,7 @@ class TestOrdersListView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert len(response.context['object_list']) == 0
 
+
 class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_download_receipts(self):
@@ -93,15 +94,15 @@ class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
         with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
-            self.client.post('/billing/orders/receipt/download/', data=dict(year=2019, month=3))
+            self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=3))
             mock_build_receipt.assert_called_once()
 
     def test_download_receipts_return_warning(self):
-        response = self.client.post('/billing/orders/receipt/download/', data=dict(year=2019, month=2))
-        assert response.url == '/billing/orders/receipt/download/'
+        response = self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=2))
+        assert response.url == '/billing/orders/receipts/download/'
 
     def test_get_billing_receipt_page(self):
-        response = self.client.post('/billing/orders/receipt/download/')
+        response = self.client.post('/billing/orders/receipts/download/')
         assert response.status_code == 200
 
 
@@ -114,11 +115,11 @@ class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
         with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
-            self.client.get(f'/billing/orders/receipt/download/{order.id}/')
+            self.client.get(f'/billing/orders/receipts/download/{order.id}/')
             mock_build_receipt.assert_called_once()
 
     def test_download_single_receipt_returns_error(self):
-        response = self.client.get(f'/billing/orders/receipt/download/1/')
+        response = self.client.get(f'/billing/orders/receipts/download/1/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
 
@@ -323,7 +324,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
 
-        response = self.client.get(f'/billing/order/cancel/{order.id}/')
+        response = self.client.post(f'/billing/order/cancel/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
 
@@ -332,7 +333,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
         User tries to cancel a domain which is not existing.
         Test if user will get 400 bad request error.
         """
-        response = self.client.get('/billing/order/cancel/1/')
+        response = self.client.post('/billing/order/cancel/1/')
         assert response.status_code == 400
 
     @pytest.mark.django_db
@@ -343,7 +344,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
             status='processed'
         )
-        response = self.client.get(f'/billing/order/cancel/{order.id}/')
+        response = self.client.post(f'/billing/order/cancel/{order.id}/')
         assert response.status_code == 400
 
 

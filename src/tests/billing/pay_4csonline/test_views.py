@@ -179,6 +179,8 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         mock_logging.assert_called_once_with('Invalid request, payment processing will raise SuspiciousOperation: '
                                              'transaction amount is not matching with existing record')
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
     @mock.patch('logging.critical')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
@@ -194,6 +196,8 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 400
         mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
     @mock.patch('logging.critical')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
@@ -209,6 +213,8 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 400
         mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
     @mock.patch('billing.payments.finish_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
@@ -223,6 +229,8 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert response.context['message'] == 'Transaction was cancelled'
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
     @mock.patch('billing.payments.finish_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
@@ -258,6 +266,8 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 400
         mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
     @mock.patch('logging.critical')
     @mock.patch('requests.get')
     @mock.patch('billing.payments.finish_payment')

@@ -169,11 +169,6 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         response = self.client.get('/billing/order/create/renew/test.ai/')
         assert response.status_code == 200
 
-    def test_domain_renew_error_not_enough_balance(self):
-        response = self.client.get('/billing/order/create/renew/test.ai/')
-        assert response.status_code == 302
-        assert response.url == '/billing/pay/'
-
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
@@ -188,11 +183,6 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
             finish_payment('12345', status='processed')
         response = self.client.get('/billing/order/create/register/test.ai/')
         assert response.status_code == 200
-
-    def test_domain_register_error_not_enough_balance(self):
-        response = self.client.get('/billing/order/create/register/test.ai/')
-        assert response.status_code == 302
-        assert response.url == '/billing/pay/'
 
 
 class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):

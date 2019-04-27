@@ -344,7 +344,7 @@ GRAPH_MODELS = {
 ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '/home/zenaida/health')
 
 ZENAIDA_REGISTRAR_ID = getattr(params, 'ZENAIDA_REGISTRAR_ID', 'zenaida_registrar')
-ZENAIDA_SUPPORTED_ZONES = getattr(params, 'ZENAIDA_SUPPORTED_ZONES', ['com', 'net', ])
+ZENAIDA_SUPPORTED_ZONES = getattr(params, 'ZENAIDA_SUPPORTED_ZONES', ['com', 'net', 'ai'])
 
 ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
 

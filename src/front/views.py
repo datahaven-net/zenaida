@@ -58,7 +58,7 @@ class AccountDomainsListView(ListView):
 
 
 class AccountDomainCreateView(FormView):
-    template_name = 'front/account_domain_details.html'
+    template_name = 'front/account_domain_create.html'
     form_class = forms.DomainDetailsForm
     pk_url_kwarg = 'domain_name'
     success_message = 'New domain is added to your account, now click "Register" to confirm the order and activate it.'

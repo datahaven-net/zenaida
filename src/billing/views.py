@@ -220,6 +220,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
         )
         if existing_order.total_price > existing_order.owner.balance:
             messages.error(request, self.error_message_balance)
+            return shortcuts.redirect('billing_new_payment')
         elif billing_orders.execute_single_order(existing_order):
             messages.success(request, self.success_message)
         else:

@@ -5,7 +5,7 @@
 {% include 'base/container_sm_10_offset_1.html' %}
 
 
-<h1>{{ form.instance.name }}</h1>
+<h1>{{ domain_name }}</h1>
 <form method="post">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
@@ -30,7 +30,7 @@
     </div>
 
     <br>
-    <h3>Register <b>domain</b> now?</h3>
+    <h3>Register <b>{{ domain_name }}</b> now?</h3>
     <br>
 
     <div class="row">

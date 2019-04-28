@@ -75,6 +75,11 @@ class AccountDomainCreateView(FormView):
             return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'domain_name': self.kwargs.get('domain_name')})
+        return context
+
     def get_form_kwargs(self):
         form_kwargs = super().get_form_kwargs()
         form_kwargs['current_user'] = self.request.user

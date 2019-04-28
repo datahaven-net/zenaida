@@ -174,6 +174,10 @@ def execute_domain_renew(order_item, target_domain):
     return True
 
 
+def execute_domain_restore(order_item, target_domain):
+    return True
+
+
 def execute_one_item(order_item):
     target_domain = zdomains.domain_find(order_item.name)
     if not target_domain:

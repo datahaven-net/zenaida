@@ -2,8 +2,6 @@ import logging
 import re
 import datetime
 
-from collections import OrderedDict
-
 from django.utils import timezone
 from django.conf import settings
 from django.core import exceptions
@@ -395,9 +393,15 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     if not isinstance(epp_statuses, list):
         epp_statuses = [epp_statuses, ]
     for st in epp_statuses:
-        new_domain_statuses[str(st['@s'])] = True
-    modified = OrderedDict(current_domain_statuses) != OrderedDict(new_domain_statuses)
+        new_domain_statuses[str(st['@s'])] = st['#text']
+    modified = (sorted(current_domain_statuses.keys()) != sorted(new_domain_statuses.keys()))
     domain_object.epp_statuses = new_domain_statuses
+    if 'ok' in new_domain_statuses:
+        domain_object.status = 'active'
+    else:
+        domain_object.status = 'inactive'
+        if 'pendingDelete' in new_domain_statuses:
+            domain_object.status = 'to_be_deleted'
     if save:
         domain_object.save()
     if modified:

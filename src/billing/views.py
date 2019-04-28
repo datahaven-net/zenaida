@@ -127,16 +127,8 @@ class PaymentsListView(LoginRequiredMixin, ListView):
         return payments.list_payments(owner=self.request.user, statuses=['paid', ])
 
 
-class OrderDomainRegisterView(TemplateView):
+class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
-    error_message = 'You don\'t have enough credits to register a domain.'
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.balance < 100:
-            messages.error(request, self.error_message)
-            return shortcuts.redirect('billing_new_payment')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -150,16 +142,8 @@ class OrderDomainRegisterView(TemplateView):
         return context
 
 
-class OrderDomainRenewView(TemplateView):
+class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
-    error_message = 'You don\'t have enough credits to renew a domain.'
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.balance < 100:
-            messages.error(request, self.error_message)
-            return shortcuts.redirect('billing_new_payment')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -236,6 +220,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
         )
         if existing_order.total_price > existing_order.owner.balance:
             messages.error(request, self.error_message_balance)
+            return shortcuts.redirect('billing_new_payment')
         elif billing_orders.execute_single_order(existing_order):
             messages.success(request, self.success_message)
         else:
@@ -251,16 +236,6 @@ class OrderCancelView(LoginRequiredMixin, View):
         billing_orders.cancel_single_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')
-
-
-@login_required
-def orders_modify(request):
-    order_objects = billing_orders.list_orders(owner=request.user)
-    name = request.POST.get('name')
-
-    return shortcuts.render(request, 'billing/account_orders.html', {
-        'objects': order_objects,
-    }, )
 
 
 @login_required

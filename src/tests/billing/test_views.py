@@ -84,6 +84,7 @@ class TestOrdersListView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert len(response.context['object_list']) == 0
 
+
 class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_download_receipts(self):
@@ -93,15 +94,15 @@ class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
         with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
-            self.client.post('/billing/orders/receipt/download/', data=dict(year=2019, month=3))
+            self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=3))
             mock_build_receipt.assert_called_once()
 
     def test_download_receipts_return_warning(self):
-        response = self.client.post('/billing/orders/receipt/download/', data=dict(year=2019, month=2))
-        assert response.url == '/billing/orders/receipt/download/'
+        response = self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=2))
+        assert response.url == '/billing/orders/receipts/download/'
 
     def test_get_billing_receipt_page(self):
-        response = self.client.post('/billing/orders/receipt/download/')
+        response = self.client.post('/billing/orders/receipts/download/')
         assert response.status_code == 200
 
 
@@ -114,11 +115,11 @@ class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
         with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
-            self.client.get(f'/billing/orders/receipt/download/{order.id}/')
+            self.client.get(f'/billing/orders/receipts/download/{order.id}/')
             mock_build_receipt.assert_called_once()
 
     def test_download_single_receipt_returns_error(self):
-        response = self.client.get(f'/billing/orders/receipt/download/1/')
+        response = self.client.get(f'/billing/orders/receipts/download/1/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
 
@@ -168,11 +169,6 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         response = self.client.get('/billing/order/create/renew/test.ai/')
         assert response.status_code == 200
 
-    def test_domain_renew_error_not_enough_balance(self):
-        response = self.client.get('/billing/order/create/renew/test.ai/')
-        assert response.status_code == 302
-        assert response.url == '/billing/pay/'
-
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
@@ -187,11 +183,6 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
             finish_payment('12345', status='processed')
         response = self.client.get('/billing/order/create/register/test.ai/')
         assert response.status_code == 200
-
-    def test_domain_register_error_not_enough_balance(self):
-        response = self.client.get('/billing/order/create/register/test.ai/')
-        assert response.status_code == 302
-        assert response.url == '/billing/pay/'
 
 
 class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
@@ -323,7 +314,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
             status='processed'
         )
 
-        response = self.client.get(f'/billing/order/cancel/{order.id}/')
+        response = self.client.post(f'/billing/order/cancel/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
 
@@ -332,7 +323,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
         User tries to cancel a domain which is not existing.
         Test if user will get 400 bad request error.
         """
-        response = self.client.get('/billing/order/cancel/1/')
+        response = self.client.post('/billing/order/cancel/1/')
         assert response.status_code == 400
 
     @pytest.mark.django_db
@@ -343,7 +334,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
             status='processed'
         )
-        response = self.client.get(f'/billing/order/cancel/{order.id}/')
+        response = self.client.post(f'/billing/order/cancel/{order.id}/')
         assert response.status_code == 400
 
 
@@ -358,6 +349,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
 
         response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
+        assert response.url == '/billing/orders/'
 
     @pytest.mark.django_db
     def test_order_execute_returns_technical_error(self):
@@ -370,6 +362,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             mock_execute_single_order.return_value = False
             response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
+        assert response.url == '/billing/orders/'
 
     @pytest.mark.django_db
     def test_order_execute_suspicious(self):
@@ -392,7 +385,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 400
 
     def test_order_execute_error_not_enough_balance(self):
-        with mock.patch('billing.models.order.Order') as order_mock:
+        with mock.patch('billing.orders.get_order_by_id_and_owner') as order_mock:
             order_mock.return_value = mock.MagicMock(
                 owner=self.account,
                 started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
@@ -402,4 +395,5 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             )
             order_id = order_mock().id
             response = self.client.post(f'/billing/order/process/{order_id}/')
-        assert response.status_code == 400
+        assert response.status_code == 302
+        assert response.url == '/billing/pay/'

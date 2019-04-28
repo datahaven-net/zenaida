@@ -94,9 +94,10 @@ class TestIndexViewForUnknownUser(TestCase):
 class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     @mock.patch('back.models.profile.Profile.is_complete')
-    def test_create_domain_successful(self, mock_user_profile_complete):
+    @mock.patch('zen.zzones.is_supported')
+    def test_create_domain_successful(self, mock_zone_is_supported, mock_user_profile_complete):
+        mock_zone_is_supported.return_value = True
         mock_user_profile_complete.return_value = True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person, follow=True)
@@ -169,10 +170,14 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
     @mock.patch('back.models.profile.Profile.is_complete')
-    def test_domain_is_available_after_1_hour(self, mock_user_profile_complete, mock_domain_find):
+    @mock.patch('zen.zzones.is_supported')
+    def test_domain_is_available_after_1_hour(
+        self, mock_zone_is_supported, mock_user_profile_complete, mock_domain_find
+    ):
         """
         Test after domain was someone's basket for an hour, user can still register it.
         """
+        mock_zone_is_supported.return_value = True
         mock_user_profile_complete.return_value = True
         mock_domain_find.return_value = mock.MagicMock(
             epp_id=None,
@@ -215,7 +220,8 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
 
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
-    def test_zone_is_not_supported(self, mock_user_profile_complete, mock_list_contacts):
+    @mock.patch('django.contrib.messages.api.error')
+    def test_zone_is_not_supported(self, mock_message_error, mock_user_profile_complete, mock_list_contacts):
         mock_list_contacts.return_value = list('1')
         response = self.client.post('/domains/create/test.ax/', data=dict(
             nameserver1='https://ns1.google.com'

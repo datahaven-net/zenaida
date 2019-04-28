@@ -175,6 +175,7 @@ def execute_domain_renew(order_item, target_domain):
 
 
 def execute_domain_restore(order_item, target_domain):
+    
     return True
 
 

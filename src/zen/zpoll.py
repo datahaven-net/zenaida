@@ -65,8 +65,16 @@ def do_domain_deleted(domain, notify=False):
 
 def do_domain_status_changed(domain, notify=False):
     logger.info('domain %s status changed', domain)
-    # TODO: to be continue
-    return False
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
 
 
 def do_domain_expiry_date_updated(domain):
@@ -163,7 +171,7 @@ def on_queue_message(msgQ):
                 return do_domain_status_changed(domain)
 
         if change == 'RESTORED':
-            if details.lower() == 'domain restored':
+            if details.lower() in ['domain restored', 'domain restored via ui', ]:
                 return do_domain_status_changed(domain)
             # TODO: domain to be sync, check other scenarios ?
 

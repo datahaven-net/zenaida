@@ -127,16 +127,8 @@ class PaymentsListView(LoginRequiredMixin, ListView):
         return payments.list_payments(owner=self.request.user, statuses=['paid', ])
 
 
-class OrderDomainRegisterView(TemplateView):
+class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
-    error_message = 'You don\'t have enough credits to register a domain.'
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.balance < 100:
-            messages.error(request, self.error_message)
-            return shortcuts.redirect('billing_new_payment')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -150,16 +142,8 @@ class OrderDomainRegisterView(TemplateView):
         return context
 
 
-class OrderDomainRenewView(TemplateView):
+class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
-    error_message = 'You don\'t have enough credits to renew a domain.'
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.balance < 100:
-            messages.error(request, self.error_message)
-            return shortcuts.redirect('billing_new_payment')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

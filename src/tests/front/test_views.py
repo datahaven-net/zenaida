@@ -474,10 +474,22 @@ class TestDomainLookupView(TestCase):
         assert response.status_code == 200
         assert response.context['result'] == 'exist'
 
-    def test_domain_lookup_page(self):
+    def test_domain_lookup_page_without_domain_name(self):
         response = self.client.get('/lookup/')
         assert response.status_code == 200
         assert response.context['result'] is None
+
+    @mock.patch('django.contrib.messages.error')
+    def test_domain_lookup_with_invalid_domain_name(self, mock_messages_error):
+        response = self.client.get('/lookup/?domain_name=example')
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @mock.patch('django.contrib.messages.error')
+    def test_domain_lookup_with_invalid_domain_extension(self, mock_messages_error):
+        response = self.client.get('/lookup/?domain_name=example.xyz')
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
 
 
 class TestFAQViews(TestCase):

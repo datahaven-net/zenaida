@@ -1,6 +1,8 @@
 import datetime
+import re
 
 from django import shortcuts
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -298,12 +300,57 @@ class AccountContactsListView(LoginRequiredMixin, ListView):
 class DomainLookupView(TemplateView):
     template_name = 'front/domain_lookup.html'
 
+    @staticmethod
+    def _validate_domain(domain_name):
+        regexp = '^[\w\-\.]*$'
+        regexp_ip = '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
+
+        if '.' not in domain_name:
+            return False
+        if re.match(regexp, domain_name) is None:
+            return False
+        if domain_name.startswith('-'):
+            # -abcd.ai is not a valid name
+            return False
+        if domain_name.count('--'):
+            # IDN domains are not allowed
+            return False
+        if len(domain_name) > 4 and domain_name.find('.') == 2 and domain_name[1] == '-':
+            # x-.ai is not valid name
+            return False
+        if domain_name.count('-.'):
+            # abcd-.ai is not a valid name
+            return False
+        if domain_name.startswith('.'):
+            return False
+        if domain_name.endswith('.'):
+            return False
+        if domain_name.count('_.'):
+            return False
+        if domain_name.startswith('_'):
+            return False
+        if re.match(regexp_ip, domain_name.strip()) is not None:
+            return False
+        return True
+
+    @staticmethod
+    def _is_domain_extension_valid(domain_name):
+        if domain_name.split('.', 1)[1] not in settings.ZENAIDA_SUPPORTED_ZONES:
+            return False
+        return True
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['result'] = None
         domain_name = self.request.GET.get('domain_name')
         context['domain_name'] = domain_name
         if domain_name:
+            if not self._validate_domain(domain_name):
+                messages.error(self.request, 'Domain name is not valid')
+                return context
+            if not self._is_domain_extension_valid(domain_name):
+                messages.error(self.request, 'This top-level domain zone is not supported')
+                return context
             domain_available = zdomains.is_domain_available(domain_name)
             if domain_available:
                 check_result = zmaster.domains_check(domain_names=[domain_name, ], )

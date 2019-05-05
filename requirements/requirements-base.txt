@@ -16,3 +16,4 @@ django-nested-admin
 django-grappelli
 django-extensions
 pdfkit
+btcpay

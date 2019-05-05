@@ -12,7 +12,6 @@ class Payment(models.Model):
         base_manager_name = 'payments'
         default_manager_name = 'payments'
 
-
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='payments')
 
     transaction_id = models.CharField(max_length=16, unique=True, null=False, blank=False)
@@ -23,6 +22,7 @@ class Payment(models.Model):
         choices=(
             ('pay_4csonline', 'Credit Card', ),
             ('pay_bank_transfer_anguilla', 'Bank Transfer', ),
+            ('pay_btcpay', 'BitCoin'),
         ),
         max_length=32,
         null=False,

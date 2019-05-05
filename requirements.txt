@@ -1,3 +1,4 @@
+btcpay==1.0.3
 certifi==2019.3.9
 chardet==3.0.4
 Django==2.2
@@ -7,6 +8,7 @@ django-grappelli==2.12.2
 django-nested-admin==3.2.2
 django-redis-cache==2.0.0
 djangorestframework==3.9.2
+ecdsa==0.13.2
 elasticsearch==6.3.1
 fqn-decorators==1.2.3
 idna==2.8

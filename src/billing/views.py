@@ -53,6 +53,9 @@ class NewPaymentView(LoginRequiredMixin, FormView):
 
         if new_payment.method == 'pay_4csonline':
             return pay_4csonline_views.start_payment(self.request, transaction_id=new_payment.transaction_id)
+        elif new_payment.method == 'pay_btcpay':
+            # TODO Call BTCPay methods
+            return super().form_valid(form)
 
         messages.error(self.request, self.error_message)
         return super().form_valid(form)

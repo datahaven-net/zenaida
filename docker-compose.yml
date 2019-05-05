@@ -2,10 +2,14 @@ version: '3.1'
 
 services:
   test:
+    environment:
+      - DOCKER_ENV=1
     build: .
     volumes:
       - .:/app
     command: make test
+    links:
+      - "postgres:postgres_host"
 
   postgres:
     restart: always

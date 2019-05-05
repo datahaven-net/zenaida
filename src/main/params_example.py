@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 #--- Django
 ENV = 'development'
 # ENV = 'production'
+# ENV = 'docker'
 # DEBUG = True
 # RAISE_EXCEPTIONS = True
 # SECRET_KEY = 'must be declared here !!!'

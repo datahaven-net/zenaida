@@ -18,7 +18,11 @@ import sys
 
 #------------------------------------------------------------------------------
 
-from main import params
+if os.environ.get('DOCKER_ENV'):
+    from main import params_docker as params
+
+else:
+    from main import params
 
 #------------------------------------------------------------------------------ 
 #--- Basic Django settings
@@ -46,7 +50,7 @@ CACHE_PREFIX = 'zenaida'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-SECRET_KEY
 SECRET_KEY = getattr(params, 'SECRET_KEY', 'must be declared in src/main/params.py directly  !')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', ]
 
 SITE_ID = 1
 SITE_BASE_URL = getattr(params, 'SITE_BASE_URL', 'http://localhost:8000')

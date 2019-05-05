@@ -1,8 +1,6 @@
 import datetime
-import re
 
 from django import shortcuts
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -80,44 +78,54 @@ class AccountDomainCreateView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({'domain_name': self.kwargs.get('domain_name')})
+        context.update({'person_name': self.request.user.registrants.all()[0].person_name})
         return context
 
     def get_form_kwargs(self):
         form_kwargs = super().get_form_kwargs()
+        last_registered_domain = zdomains.get_last_registered_domain(self.request.user.email)
+        if last_registered_domain:
+            form_kwargs['initial']['contact_admin'] = last_registered_domain.contact_admin
+            form_kwargs['initial']['contact_billing'] = last_registered_domain.contact_admin
+            form_kwargs['initial']['contact_tech'] = last_registered_domain.contact_admin
+        else:
+            form_kwargs['initial']['contact_admin'] = self.request.user.contacts.all()[0]
+            form_kwargs['initial']['contact_billing'] = self.request.user.contacts.all()[0]
+            form_kwargs['initial']['contact_tech'] = self.request.user.contacts.all()[0]
         form_kwargs['current_user'] = self.request.user
         return form_kwargs
 
-    def post(self, request, *args, **kwargs):
-        domain_name = kwargs.get('domain_name')
+    def form_valid(self, form):
+        domain_name = self.kwargs.get('domain_name')
         domain_tld = domain_name.split('.')[-1].lower()
 
         if not zzones.is_supported(domain_tld):
-            messages.error(request, f'Domain zone "{domain_tld}" is not supported.')
+            messages.error(self.request, f'Domain zone "{domain_tld}" is not supported.')
             return shortcuts.redirect('account_domains')
 
-        form = self.get_form()
-        domain_obj = form.save(commit=False)
         existing_domain = zdomains.domain_find(domain_name=domain_name)
         if existing_domain:
             if existing_domain.epp_id:
                 # If domain has EPP id, it means that domain is already owned someone.
-                messages.error(request, 'This domain is already registered.')
-                return super().post(request, *args, **kwargs)
+                messages.error(self.request, 'This domain is already registered.')
+                return super().form_valid(form)
             if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
                 # If domain was on someone's basket more than an hour, remove that from database in order to make it
                 # available for current user.
                 zdomains.domain_delete(domain_id=existing_domain.id)
             else:
                 # If domain is on someone's basket, domain becomes unavailable.
-                messages.warning(request, 'This domain is not available now.')
-                return super().post(request, *args, **kwargs)
+                messages.warning(self.request, 'This domain is not available now.')
+                return super().form_valid(form)
+
+        domain_obj = form.save(commit=False)
 
         zdomains.domain_create(
             domain_name=domain_name,
-            owner=request.user,
+            owner=self.request.user,
             create_date=timezone.now(),
             expiry_date=timezone.now() + datetime.timedelta(days=365),
-            registrant=zcontacts.get_registrant(request.user),
+            registrant=zcontacts.get_registrant(self.request.user),
             contact_admin=domain_obj.contact_admin,
             contact_tech=domain_obj.contact_tech,
             contact_billing=domain_obj.contact_billing,
@@ -125,13 +133,12 @@ class AccountDomainCreateView(FormView):
                 domain_obj.nameserver1,
                 domain_obj.nameserver2,
                 domain_obj.nameserver3,
-                domain_obj.nameserver4,
             ],
             save=True,
         )
 
-        messages.success(request, self.success_message)
-        return super().post(request, *args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return super().form_valid(form)
 
 
 class AccountDomainUpdateView(UpdateView):
@@ -300,56 +307,18 @@ class AccountContactsListView(LoginRequiredMixin, ListView):
 class DomainLookupView(TemplateView):
     template_name = 'front/domain_lookup.html'
 
-    @staticmethod
-    def _validate_domain(domain_name):
-        regexp = '^[\w\-\.]*$'
-        regexp_ip = '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
-
-        if '.' not in domain_name:
-            return False
-        if re.match(regexp, domain_name) is None:
-            return False
-        if domain_name.startswith('-'):
-            # -abcd.ai is not a valid name
-            return False
-        if domain_name.count('--'):
-            # IDN domains are not allowed
-            return False
-        if len(domain_name) > 4 and domain_name.find('.') == 2 and domain_name[1] == '-':
-            # x-.ai is not valid name
-            return False
-        if domain_name.count('-.'):
-            # abcd-.ai is not a valid name
-            return False
-        if domain_name.startswith('.'):
-            return False
-        if domain_name.endswith('.'):
-            return False
-        if domain_name.count('_.'):
-            return False
-        if domain_name.startswith('_'):
-            return False
-        if re.match(regexp_ip, domain_name.strip()) is not None:
-            return False
-        return True
-
-    @staticmethod
-    def _is_domain_extension_valid(domain_name):
-        if domain_name.split('.', 1)[1] not in settings.ZENAIDA_SUPPORTED_ZONES:
-            return False
-        return True
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['result'] = None
         domain_name = self.request.GET.get('domain_name')
         context['domain_name'] = domain_name
         if domain_name:
-            if not self._validate_domain(domain_name):
+            if not zdomains.is_valid(domain_name):
                 messages.error(self.request, 'Domain name is not valid')
                 return context
-            if not self._is_domain_extension_valid(domain_name):
-                messages.error(self.request, 'This top-level domain zone is not supported')
+            domain_tld = domain_name.split('.')[-1].lower()
+            if not zzones.is_supported(domain_tld):
+                messages.error(self.request, f'Domain zone "{domain_tld}" is not supported.')
                 return context
             domain_available = zdomains.is_domain_available(domain_name)
             if domain_available:

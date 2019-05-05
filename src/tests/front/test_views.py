@@ -218,17 +218,27 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/contacts/'
 
-    @mock.patch('zen.zcontacts.list_contacts')
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.error')
     @mock.patch('back.models.profile.Profile.is_complete')
-    @mock.patch('django.contrib.messages.api.error')
-    def test_zone_is_not_supported(self, mock_message_error, mock_user_profile_complete, mock_list_contacts):
-        mock_list_contacts.return_value = list('1')
-        response = self.client.post('/domains/create/test.ax/', data=dict(
-            nameserver1='https://ns1.google.com'
-        ))
+    def test_zone_is_not_supported(self, mock_user_profile_complete, mock_messages_error):
+        mock_user_profile_complete.return_value = True
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person)
+
+            registrant_info = copy.deepcopy(contact_person)
+            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            Registrant.registrants.create(**registrant_info)
+
+            response = self.client.post('/domains/create/test.ax/', data=dict(
+                nameserver1='ns1.google.com',
+                contact_admin=Contact.contacts.all()[0].id
+            ))
 
         assert response.status_code == 302
         assert response.url == '/domains/'
+        mock_messages_error.assert_called_once()
 
 
 class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):

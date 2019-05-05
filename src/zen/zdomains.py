@@ -20,6 +20,8 @@ def is_valid(domain_name, idn=False):
     """
     regexp = '^[\w\-\.]*$'
     regexp_IP = '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
+    if '.' not in domain_name:
+        return False
     if re.match(regexp, domain_name) is None:
         return False
     if domain_name.startswith('-'):
@@ -192,6 +194,7 @@ def domain_change_registrant(domain_object, new_registrant_object, save=True):
     logger.debug('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
     return domain_object
 
+
 def domain_change_owner(domain_object, new_owner, save=True):
     """
     Change owner of the domain.
@@ -234,6 +237,18 @@ def domain_detach_contact(domain_object, role):
     domain_object.save()
     logger.debug('domain %s contact "%s" disconnected, previous was : %r', domain_object.name, role, current_contact)
     return domain_object
+
+
+def get_last_registered_domain(registrant_email):
+    """
+    If user has any domain, return latest registered domain of the user by email else empty list.
+    """
+    existing_account = zusers.find_account(registrant_email)
+    if existing_account:
+        domains = existing_account.domains.all()
+        if domains:
+            return domains.order_by('-create_date')[0]
+    return []
 
 
 def list_domains(registrant_email):

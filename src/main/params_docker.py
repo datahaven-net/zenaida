@@ -1,0 +1,15 @@
+ENV = 'docker'
+
+SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+
+DEBUG = True
+
+DATABASES_ENGINE = 'django.db.backends.postgresql'
+DATABASES_NAME = 'zenaida_db_01'
+DATABASES_USER = 'zenaida_db_user'
+DATABASES_PASSWORD = 'zenaida_db_user'
+DATABASES_HOST = 'postgres_host'
+DATABASES_PORT = 5432
+
+ZENAIDA_REGISTRAR_ID = 'whois_ai'
+ZENAIDA_SUPPORTED_ZONES = ['ai', ]

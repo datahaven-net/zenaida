@@ -91,6 +91,20 @@ def do_domain_expiry_date_updated(domain):
     return True
 
 
+def do_domain_create_date_updated(domain):
+    logger.info('domain %s create date updated', domain)
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
+
+
 def do_domain_nameservers_changed(domain):
     logger.info('domain %s nameservers changed', domain)
     try:
@@ -195,6 +209,8 @@ def on_queue_message(msgQ):
         if change == 'DETAILS_CHANGED':
             if details.lower() == 'domain expiry date updated':
                 return do_domain_expiry_date_updated(domain)
+            if details.lower() == 'domain create date modified':
+                return do_domain_create_date_updated(domain)
             # TODO: domain to be sync, check other scenarios ?
 
         if change == 'CONTACTS_CHANGED':
@@ -279,7 +295,7 @@ def main():
             logger.debug('NEXT?')
 
         if not result:
-            time.sleep(30)
+            time.sleep(10)
 
 
 if __name__ == '__main__':

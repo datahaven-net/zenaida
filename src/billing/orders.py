@@ -175,7 +175,17 @@ def execute_domain_renew(order_item, target_domain):
 
 
 def execute_domain_restore(order_item, target_domain):
-    
+    if not zmaster.domain_restore(
+        domain_object=target_domain,
+        res_reason='Customer %s requested to restore %s domain' % (order_item.order.owner.email, target_domain.name, ),
+        log_events=True,
+        log_transitions=True,
+        raise_errors=False,
+    ):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return False
+
+    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
     return True
 
 
@@ -196,9 +206,7 @@ def execute_one_item(order_item):
         return execute_domain_renew(order_item, target_domain)
 
     if order_item.type == 'domain_restore':
-        # TODO: execute_domain_restore() to be implemented later
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
-        return False
+        return execute_domain_restore(order_item, target_domain)
 
     logging.critical('Order item %s have a wrong type' % order_item)
     return False

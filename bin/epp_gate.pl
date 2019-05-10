@@ -13,6 +13,8 @@ use TryCatch;
 
 use base qw(Net::Server::PreFork);
 
+# no warnings;
+
 use File::Basename;
 use lib dirname (__FILE__);
 
@@ -214,6 +216,67 @@ sub cmd_domain_update {
 	if (exists $args->{auth_info}) {
 		$update->chgAuthInfo($args->{auth_info});
 	}
+    if (exists $args->{rgp_restore}) {
+        my $RGP_URN = 'urn:ietf:params:xml:ns:rgp-1.0';
+        my $extension = $update->getNode('extension');
+        $extension = $update->getNode('command')->addNewChild(undef, 'extension') if not defined $extension;
+        my $rgp_update = $extension->addNewChild($RGP_URN, 'rgp:update');
+        my $rgp_restore = $update->createElement('rgp:restore');
+        $rgp_restore->setAttribute('op', 'request');
+        $rgp_update->appendChild($rgp_restore);
+    }
+    if (exists $args->{rgp_restore_report}) {
+        my $RGP_URN = 'urn:ietf:params:xml:ns:rgp-1.0';
+        my $extension = $update->getNode('extension');
+        $extension = $update->getNode('command')->addNewChild(undef, 'extension') if not defined $extension;
+        my $rgp_update = $extension->addNewChild($RGP_URN, 'rgp:update');
+        my $rgp_restore = $update->createElement('rgp:restore');
+        $rgp_restore->setAttribute('op', 'report');
+        my $rgp_report = $update->createElement('rgp:report');
+        $rgp_restore->appendChild($rgp_report);
+        my $report_data = $args->{rgp_restore_report};
+        if (exists $report_data->{pre_data}) {
+            my $report_item = $update->createElement('rgp:preData');
+            $report_item->appendText($report_data->{pre_data});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{post_data}) {
+            my $report_item = $update->createElement('rgp:postData');
+            $report_item->appendText($report_data->{post_data});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{del_time}) {
+            my $report_item = $update->createElement('rgp:delTime');
+            $report_item->appendText($report_data->{del_time});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{res_time}) {
+            my $report_item = $update->createElement('rgp:resTime');
+            $report_item->appendText($report_data->{res_time});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{res_reason}) {
+            my $report_item = $update->createElement('rgp:resReason');
+            $report_item->appendText($report_data->{res_reason});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{statement1}) {
+            my $report_item = $update->createElement('rgp:statement');
+            $report_item->appendText($report_data->{statement1});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{statement2}) {
+            my $report_item = $update->createElement('rgp:statement');
+            $report_item->appendText($report_data->{statement2});
+            $rgp_report->appendChild($report_item);
+        }
+        if (exists $report_data->{other}) {
+            my $report_item = $update->createElement('rgp:other');
+            $report_item->appendText($report_data->{other});
+            $rgp_report->appendChild($report_item);
+        }
+        $rgp_update->appendChild($rgp_restore);
+    }
 	return $update;
 }
 
@@ -370,6 +433,7 @@ sub cmd_host_create {
 
 sub process_request {
 	my $err;
+	my $resp;
 
 	try {
 	    my $jsrc = shift;
@@ -392,7 +456,19 @@ sub process_request {
 		}
 		# else { lll('Request: ' . Dumper($req->toString(2))); }
 		
-		my $resp = $epp->request($req);
+        try {
+            $resp = $epp->request($req);
+        } catch ($err) {
+            lll('REQUEST ERROR: ' . $err);
+            if (index($err, 'Got a bad frame length from peer') != -1) {
+                lll("Found connection closed state! Creating new connection and RELOGIN!");
+                make_client();
+                hello();
+                login();
+                lll('Sending same Request again: ' . Dumper($req->toString(2)));
+                $resp = $epp->request($req);
+            }
+        }
 
 		try {
 			my $result = ($resp->getElementsByTagName('result'))[0];

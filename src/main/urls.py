@@ -63,11 +63,11 @@ patterns = [
     path('billing/order/cancel/<int:order_id>/', billing_views.OrderCancelView.as_view(), name='billing_order_cancel'),
     path('billing/order/create/register/<str:domain_name>/', billing_views.OrderDomainRegisterView.as_view(), name='billing_order_register'),
     path('billing/order/create/renew/<str:domain_name>/', billing_views.OrderDomainRenewView.as_view(), name='billing_order_renew'),
-    path('billing/order/create/restore/<str:domain_name>/', billing_views.order_domain_restore, name='billing_order_restore'),
+    path('billing/order/create/restore/<str:domain_name>/', billing_views.OrderDomainRestoreView.as_view(), name='billing_order_restore'),
     path('billing/order/create/', billing_views.OrderCreateView.as_view(), name='billing_order_create'),
     path('billing/payments/', billing_views.PaymentsListView.as_view(), name='billing_payments'),
     path('billing/pay/', billing_views.NewPaymentView.as_view(), name='billing_new_payment'),
-    # path('billing/4csonline/pay/', pay_4csonline_views.start_payment, name='billing_4csonline_start_payment'),
+
     path('billing/4csonline/process/<str:transaction_id>/', pay_4csonline_views.ProcessPaymentView.as_view(), name='billing_4csonline_process_payment'),
     path('billing/4csonline/verify/', pay_4csonline_views.VerifyPaymentView.as_view(), name='billing_4csonline_verify_payment'),
 

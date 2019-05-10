@@ -162,12 +162,19 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
         return context
 
 
-@login_required
-def order_domain_restore(request, domain_name):
-    """
-    """
-    # TODO: this needs to be done
-    pass
+class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
+    template_name = 'billing/order_details.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        restore_order = billing_orders.order_single_item(
+            owner=self.request.user,
+            item_type='domain_restore',
+            item_price=200.0,
+            item_name=kwargs.get('domain_name'),
+        )
+        context.update({'order': restore_order})
+        return context
 
 
 class OrderCreateView(LoginRequiredMixin, CreateView):
@@ -184,13 +191,15 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
                 logging.critical('User %s tried to make an order with domain from another owner' % request.user)
                 raise exceptions.SuspiciousOperation()
             item_type = 'domain_register'
+            item_price = 100.0
             if domain_object.can_be_restored:
                 item_type = 'domain_restore'
+                item_price = 200.0
             elif domain_object.is_registered:
                 item_type = 'domain_renew'
             to_be_ordered.append(dict(
                 item_type=item_type,
-                item_price=100.0,
+                item_price=item_price,
                 item_name=domain_object.name,
             ))
         if not to_be_ordered:
@@ -226,7 +235,8 @@ class OrderExecuteView(LoginRequiredMixin, View):
         if existing_order.total_price > existing_order.owner.balance:
             messages.error(request, self.error_message_balance)
             return shortcuts.redirect('billing_new_payment')
-        elif billing_orders.execute_single_order(existing_order):
+
+        if billing_orders.execute_single_order(existing_order):
             messages.success(request, self.success_message)
         else:
             messages.error(request, self.error_message_technical)

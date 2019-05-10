@@ -295,7 +295,9 @@ def cmd_domain_renew(domain, cur_exp_date, period, period_units='y', **args):
 def cmd_domain_update(domain,
                       add_nameservers_list=[], remove_nameservers_list=[],
                       add_contacts_list=[], remove_contacts_list=[],
-                      change_registrant=None, auth_info=None, **args):
+                      change_registrant=None, auth_info=None,
+                      rgp_restore=None, rgp_restore_report={},
+                      **args):
     """
     add_contacts_list and remove_contacts_list item:
     {
@@ -317,6 +319,10 @@ def cmd_domain_update(domain,
         cmd['args']['change_registrant'] = change_registrant
     if auth_info is not None:
         cmd['args']['auth_info'] = auth_info
+    if rgp_restore:
+        cmd['args']['rgp_restore'] = '1'
+    if rgp_restore_report:
+        cmd['args']['rgp_restore_report'] = rgp_restore_report
     return run(cmd, **args)
 
 def cmd_domain_transfer(domain, op, auth_info=None, period_years=None, **args):

@@ -88,6 +88,9 @@ class AccountDomainCreateView(FormView):
             form_kwargs['initial']['contact_admin'] = last_registered_domain.contact_admin
             form_kwargs['initial']['contact_billing'] = last_registered_domain.contact_admin
             form_kwargs['initial']['contact_tech'] = last_registered_domain.contact_admin
+            form_kwargs['initial']['nameserver1'] = last_registered_domain.nameserver1
+            form_kwargs['initial']['nameserver2'] = last_registered_domain.nameserver2
+            form_kwargs['initial']['nameserver3'] = last_registered_domain.nameserver3
         else:
             form_kwargs['initial']['contact_admin'] = self.request.user.contacts.all()[0]
             form_kwargs['initial']['contact_billing'] = self.request.user.contacts.all()[0]

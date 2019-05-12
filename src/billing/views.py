@@ -18,6 +18,7 @@ from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
 from billing.pay_4csonline import views as pay_4csonline_views
+from billing.pay_btcpay import views as pay_btcpay_views
 
 from zen import zdomains
 
@@ -48,14 +49,15 @@ class NewPaymentView(LoginRequiredMixin, FormView):
             owner=self.request.user,
             amount=form.cleaned_data['amount'],
             payment_method=form.cleaned_data['payment_method'],
-
         )
 
         if new_payment.method == 'pay_4csonline':
             return pay_4csonline_views.start_payment(self.request, transaction_id=new_payment.transaction_id)
         elif new_payment.method == 'pay_btcpay':
-            # TODO Call BTCPay methods
-            return super().form_valid(form)
+            return pay_btcpay_views.start_payment(
+                transaction_id=new_payment.transaction_id,
+                amount=new_payment.amount
+            )
 
         messages.error(self.request, self.error_message)
         return super().form_valid(form)

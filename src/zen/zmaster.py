@@ -127,6 +127,7 @@ def domain_synchronize_from_backend(domain_name,
 
 def domain_restore(domain_object, raise_errors=False, log_events=True, log_transitions=True, **kwargs):
     """
+    Restores domain from "pendingDelete" state.
     """
     dr = domain_resurrector.DomainResurrector(
         log_events=log_events,

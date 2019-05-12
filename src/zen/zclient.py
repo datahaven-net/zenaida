@@ -192,10 +192,10 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                 if logs:
                     logger.error('bad formatted response: ' + json_output)
                 raise zerrors.EPPBadResponse('bad formatted response, response code not found')
-            skip_logger_for_response_codes = ['1000', ]
+            good_response_codes = ['1000', ]
             if True:  # just to be able to debug poll script packets
-                skip_logger_for_response_codes.extend([ '1300', '1301', ])
-            if code not in skip_logger_for_response_codes:
+                good_response_codes.extend([ '1300', '1301', ])
+            if code not in good_response_codes:
                 if logs:
                     logger.error('response code failed: ' + json.dumps(json_output, indent=2))
                 raise zerrors.EPPResponseFailed(message=msg, code=code)

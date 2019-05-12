@@ -407,7 +407,7 @@ class DomainSynchronizer(automat.Automat):
         try:
             dhs.event('run', target_domain=self.target_domain, known_domain_info=self.latest_domain_info, )
         except Exception as exc:
-            self.log(self.debug_level, 'Exception in DomainHostnamesSynchronizer: %s' % exc)
+            self.log(self.debug_level, 'Exception in doRunDomainNameserversSync: %s' % exc)
             self.event('error', exc)
             return
         self.outputs.extend(list(dhs.outputs))

@@ -417,6 +417,9 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         domain_object.status = 'inactive'
         if 'pendingDelete' in new_domain_statuses:
             domain_object.status = 'to_be_deleted'
+        if 'pendingRestore' in new_domain_statuses:
+            # TODO: check that flow
+            domain_object.status = 'to_be_restored'
         if 'serverHold' in new_domain_statuses:
             domain_object.status = 'blocked'
         # TODO: continue with other statuses: https://www.icann.org/resources/pages/epp-status-codes-2014-06-16-en

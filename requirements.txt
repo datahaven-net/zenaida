@@ -1,4 +1,4 @@
-btcpay==1.0.3
+btcpay-python==1.1.0
 certifi==2019.3.9
 chardet==3.0.4
 Django==2.2

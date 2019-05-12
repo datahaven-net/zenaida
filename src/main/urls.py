@@ -10,6 +10,7 @@ from django.views.generic import TemplateView
 from front import views as front_views
 from billing import views as billing_views
 from billing.pay_4csonline import views as pay_4csonline_views
+from billing.pay_btcpay import views as pay_btcpay_views
 from accounts import views as accounts_views
 
 

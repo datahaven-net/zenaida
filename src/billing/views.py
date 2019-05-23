@@ -17,6 +17,7 @@ from django.views.generic.edit import FormMixin
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
+from billing import billing_errors
 from billing.pay_4csonline import views as pay_4csonline_views
 from billing.pay_btcpay import views as pay_btcpay_views
 
@@ -190,17 +191,15 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
             if domain_object.owner != request.user:
                 logging.critical('User %s tried to make an order with domain from another owner' % request.user)
                 raise exceptions.SuspiciousOperation()
-            item_type = 'domain_register'
-            item_price = 100.0
-            if domain_object.can_be_restored:
-                item_type = 'domain_restore'
-                item_price = 200.0
-            elif domain_object.is_registered:
-                item_type = 'domain_renew'
+            try:
+                item_type, item_price, item_name = billing_orders.prepare_register_renew_restore_item(domain_object)
+            except billing_errors.DomainBlockedError as err:
+                messages.error(request, str(err))
+                return shortcuts.redirect('account_domains')
             to_be_ordered.append(dict(
                 item_type=item_type,
                 item_price=item_price,
-                item_name=domain_object.name,
+                item_name=item_name,
             ))
         if not to_be_ordered:
             messages.error(request, self.error_message)

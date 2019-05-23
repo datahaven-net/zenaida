@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.core import exceptions
 from django.template.loader import get_template
 
+from billing import billing_errors
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
@@ -67,6 +68,20 @@ def list_processed_orders_by_date(owner, year, month=None):
     else:
         orders = Order.orders.filter(owner=owner, status='processed').order_by('finished_at')
     return list(orders.all())
+
+
+def prepare_register_renew_restore_item(domain_object):
+    if domain_object.is_blocked:
+        raise billing_errors.DomainBlockedError()
+    item_type = 'domain_register'
+    item_price = 100.0
+    item_name = domain_object.name
+    if domain_object.can_be_restored:
+        item_type = 'domain_restore'
+        item_price = 200.0
+    elif domain_object.is_registered:
+        item_type = 'domain_renew'
+    return item_type, item_price, item_name
 
 
 def order_single_item(owner, item_type, item_price, item_name):

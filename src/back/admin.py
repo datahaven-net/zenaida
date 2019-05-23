@@ -22,13 +22,13 @@ class ProfileAdmin(NestedModelAdmin):
 
 class DomainAdmin(NestedModelAdmin):
 
-    actions = ['domain_synchronize_from_backend', ]
+    actions = ['domain_synchronize_from_backend', 'domain_synchronize_from_backend_hard', ]
     list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses', )
 
     def owner_email(self, domain_instance):
         return domain_instance.owner.email
 
-    def domain_synchronize_from_backend(self, request, queryset):
+    def _do_domain_synchronize_from_backend(self, queryset, soft_delete=False):
         from zen import zmaster
         report = []
         for domain_object in queryset:
@@ -36,6 +36,7 @@ class DomainAdmin(NestedModelAdmin):
                 domain_name=domain_object.name,
                 refresh_contacts=True,
                 change_owner_allowed=True,
+                soft_delete=soft_delete,
                 raise_errors=True,
                 log_events=True,
                 log_transitions=True,
@@ -47,8 +48,14 @@ class DomainAdmin(NestedModelAdmin):
                     ok = False
             if ok:
                 report.append('"%s": %d calls OK' % (domain_object.name, len(outputs), ))
-        self.message_user(request, ', '.join(report))
+
+    def domain_synchronize_from_backend(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
     domain_synchronize_from_backend.short_description = "Synchronize from back-end"
+
+    def domain_synchronize_from_backend_hard(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=False)))
+    domain_synchronize_from_backend_hard.short_description = "Synchronize from back-end (hard delete)"
 
 
 class ContactAdmin(NestedModelAdmin):

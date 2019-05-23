@@ -100,7 +100,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
 
 
 def domain_synchronize_from_backend(domain_name,
-                                    refresh_contacts=False, change_owner_allowed=False,
+                                    refresh_contacts=False, change_owner_allowed=False, soft_delete=False,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from backend and take required actions to update local DB
@@ -118,6 +118,7 @@ def domain_synchronize_from_backend(domain_name,
         domain_name=domain_name,
         change_owner_allowed=change_owner_allowed,
         refresh_contacts=refresh_contacts,
+        soft_delete=soft_delete,
     )
     outputs = list(dr.outputs)
     del dr

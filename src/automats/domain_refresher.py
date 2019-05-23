@@ -182,6 +182,7 @@ class DomainRefresher(automat.Automat):
         self.target_domain = zdomains.domain_find(domain_name=self.domain_name)
         self.change_owner_allowed = kwargs.get('change_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
+        self.soft_delete = kwargs.get('soft_delete', False)
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
@@ -332,7 +333,10 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
-        zdomains.domain_delete(domain_name=self.domain_name)
+        if self.soft_delete:
+            zdomains.domain_unregister(domain_name=self.domain_name)
+        else:
+            zdomains.domain_delete(domain_name=self.domain_name)
 
     def doDBCheckCreateUpdateContacts(self, *args, **kwargs):
         """

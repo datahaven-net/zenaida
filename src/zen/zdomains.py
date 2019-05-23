@@ -90,11 +90,13 @@ def is_domain_available(domain_name):
     return False
 
 
-def domain_find(domain_name='', epp_id=None):
+def domain_find(domain_name='', epp_id=None, domain_id=None):
     """
     Return `Domain` object if found in Domain table, else None.
     """
     from back.models.domain import Domain
+    if domain_id:
+        return Domain.domains.filter(id=domain_id).first()
     if epp_id:
         return Domain.domains.filter(epp_id=epp_id).first()
     return Domain.domains.filter(name=domain_name).first()
@@ -170,13 +172,33 @@ def domain_update(domain_name, **kwargs):
     return None
 
 
+def domain_unregister(domain_id=None, domain_name=None):
+    """
+    Marks domain as being not registered on the back-end.
+    Clean up its epp_id field and few other fields.
+    Domain will have no connection with back-end anymore. 
+    """
+    domain_object = domain_find(domain_id=domain_id, domain_name=domain_name)
+    if not domain_object:
+        return False
+    domain_object.expiry_date=None
+    domain_object.create_date=None
+    domain_object.epp_id=None
+    domain_object.auth_key=''
+    domain_object.save()
+    logger.debug('domain %r is unregistered', domain_object)
+    return True
+
+
 def domain_delete(domain_id=None, domain_name=None):
     """
     Removes domain with given primary ID from DB.
     """
     from back.models.domain import Domain
     if domain_name is not None:
+        logger.debug('domain domain_name=%r will be removed', domain_name)
         return Domain.domains.filter(name=domain_name).delete()
+    logger.debug('domain domain_id=%r will be removed', domain_id)
     return Domain.domains.filter(id=domain_id).delete()
 
 

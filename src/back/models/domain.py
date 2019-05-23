@@ -27,8 +27,8 @@ class Domain(models.Model):
 
     name = models.CharField(max_length=255, unique=True, validators=[validate_domain_name, ])
 
-    expiry_date = models.DateTimeField()
-    create_date = models.DateTimeField()
+    expiry_date = models.DateTimeField(null=True, blank=True, default=None)
+    create_date = models.DateTimeField(null=True, blank=True, default=None)
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
     epp_statuses = JSONField(null=True, encoder=DjangoJSONEncoder)

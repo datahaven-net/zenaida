@@ -49,13 +49,14 @@ def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=Fal
     return True
 
 
-def do_domain_deleted(domain, notify=False):
+def do_domain_deleted(domain, soft_delete=True, notify=False):
     logger.info('domain %s deleted', domain)
     try:
         zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=True,
+            soft_delete=soft_delete,
         )
     except zerrors.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
@@ -218,6 +219,10 @@ def on_queue_message(msgQ):
 
         if change == 'NAMESERVERS_CHANGED':
             return do_domain_nameservers_changed(domain)
+
+        if change == 'STATE_CHANGE':
+            if details.lower() == 'domain deleted':
+                return do_domain_deleted(domain)
 
         if change == 'UNKNOWN':
             if details.lower().count('domain epp statuses updated'):

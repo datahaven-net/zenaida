@@ -48,6 +48,7 @@ class DomainAdmin(NestedModelAdmin):
                     ok = False
             if ok:
                 report.append('"%s": %d calls OK' % (domain_object.name, len(outputs), ))
+        return report
 
     def domain_synchronize_from_backend(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))

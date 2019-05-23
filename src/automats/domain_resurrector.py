@@ -165,7 +165,9 @@ class DomainResurrector(automat.Automat):
         """
         Action method.
         """
-        pending_delete_status = self.target_domain.epp_statuses.get('pendingDelete')
+        pending_delete_status = None
+        if self.target_domain.epp_statuses:
+            pending_delete_status = self.target_domain.epp_statuses.get('pendingDelete')
         if not pending_delete_status:
             logger.error('failed to restore domain, pendingDelete status is not set')
             self.event('error', Exception('failed to restore domain, pendingDelete status is not set'))

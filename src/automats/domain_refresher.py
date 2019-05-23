@@ -502,6 +502,10 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
+        zdomains.domain_update_statuses(
+            domain_object=self.target_domain,
+            domain_info_response=args[0],
+        )
         self.outputs.append(args[0])
 
     def doReportContactsFailed(self, event, *args, **kwargs):

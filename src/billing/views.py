@@ -54,6 +54,7 @@ class NewPaymentView(LoginRequiredMixin, FormView):
 
         if new_payment.method == 'pay_4csonline':
             return pay_4csonline_views.start_payment(self.request, transaction_id=new_payment.transaction_id)
+
         elif new_payment.method == 'pay_btcpay':
             return pay_btcpay_views.start_payment(
                 transaction_id=new_payment.transaction_id,

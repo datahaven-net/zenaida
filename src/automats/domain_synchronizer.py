@@ -444,6 +444,11 @@ class DomainSynchronizer(automat.Automat):
         self.target_domain.epp_id = args[0]['epp']['response']['resData']['infData']['roid']
         if self.save_to_db:
             self.target_domain.save()
+        zdomains.domain_update_statuses(
+            domain_object=self.target_domain,
+            domain_info_response=args[0],
+            save=self.save_to_db,
+        )
 
     def doReportDone(self, event, *args, **kwargs):
         """

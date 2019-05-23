@@ -90,11 +90,13 @@ def is_domain_available(domain_name):
     return False
 
 
-def domain_find(domain_name='', epp_id=None):
+def domain_find(domain_name='', epp_id=None, domain_id=None):
     """
     Return `Domain` object if found in Domain table, else None.
     """
     from back.models.domain import Domain
+    if domain_id:
+        return Domain.domains.filter(id=domain_id).first()
     if epp_id:
         return Domain.domains.filter(epp_id=epp_id).first()
     return Domain.domains.filter(name=domain_name).first()
@@ -157,7 +159,7 @@ def domain_create(
         host_position += 1
     if save:
         new_domain.save()
-    logger.debug('domain created: %r', new_domain)
+    logger.info('domain created: %r', new_domain)
     return new_domain
 
 
@@ -170,13 +172,33 @@ def domain_update(domain_name, **kwargs):
     return None
 
 
+def domain_unregister(domain_id=None, domain_name=None):
+    """
+    Marks domain as being not registered on the back-end.
+    Clean up its epp_id field and few other fields.
+    Domain will have no connection with back-end anymore. 
+    """
+    domain_object = domain_find(domain_id=domain_id, domain_name=domain_name)
+    if not domain_object:
+        return False
+    domain_object.expiry_date=None
+    domain_object.create_date=None
+    domain_object.epp_id=None
+    domain_object.auth_key=''
+    domain_object.save()
+    logger.info('domain %r is unregistered', domain_object)
+    return True
+
+
 def domain_delete(domain_id=None, domain_name=None):
     """
     Removes domain with given primary ID from DB.
     """
     from back.models.domain import Domain
     if domain_name is not None:
+        logger.debug('domain domain_name=%r will be removed', domain_name)
         return Domain.domains.filter(name=domain_name).delete()
+    logger.info('domain domain_id=%r will be removed', domain_id)
     return Domain.domains.filter(id=domain_id).delete()
 
 
@@ -191,7 +213,7 @@ def domain_change_registrant(domain_object, new_registrant_object, save=True):
     domain_object.owner = new_owner
     if save:
         domain_object.save()
-    logger.debug('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
+    logger.info('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
     return domain_object
 
 
@@ -211,7 +233,7 @@ def domain_change_owner(domain_object, new_owner, save=True):
     domain_object.owner = new_owner
     if save:
         domain_object.save()
-    logger.debug('domain %s owner changed (and all %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
+    logger.info('domain %s owner changed (and all %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
     return domain_object
 
 
@@ -223,7 +245,7 @@ def domain_join_contact(domain_object, role, new_contact_object):
     current_contact = domain_object.get_contact(role)
     domain_object.set_contact(role, new_contact_object)
     domain_object.save()
-    logger.debug('domain %s contact "%s" modified : %r -> %r', domain_object.name, role, current_contact, new_contact_object)
+    logger.info('domain %s contact "%s" modified : %r -> %r', domain_object.name, role, current_contact, new_contact_object)
     return domain_object
 
 
@@ -235,7 +257,7 @@ def domain_detach_contact(domain_object, role):
     current_contact = domain_object.get_contact(role)
     domain_object.set_contact(role, None)
     domain_object.save()
-    logger.debug('domain %s contact "%s" disconnected, previous was : %r', domain_object.name, role, current_contact)
+    logger.info('domain %s contact "%s" disconnected, previous was : %r', domain_object.name, role, current_contact)
     return domain_object
 
 

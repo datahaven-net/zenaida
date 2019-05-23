@@ -50,7 +50,7 @@
     </div>
 {% else %}
     <div class="text-center">
-        <a class="btn btn-danger" role="button" href="{% url 'billing_orders' %}">Go Back</a>
+        <a class="btn btn-secondary" role="button" href="{% url 'billing_orders' %}">Go Back</a>
         <a class="btn btn-info" role="button" href="{% url 'billing_receipt_download' order.id %}">Download Receipt</a>
     </div>
 {% endif %}

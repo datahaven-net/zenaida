@@ -3,13 +3,15 @@ class EPPError(Exception):
     code = -1
     message = 'Unknown error'
 
-    def __init__(self, message='', code=-1, response=None):
+    def __init__(self, message='', code=-1, response=None, *args, **kwargs):
         self.code = code
-        self.message = message
+        if message:
+            self.message = message
         if response:
             self.code = response['epp']['response']['result']['@code']
             if not self.message:
                 self.message = response['epp']['response']['result']['msg']
+        super(EPPError).__init__(*args, **kwargs)
 
     def __str__(self):
         return '[%s] %s' % (self.code, self.message)

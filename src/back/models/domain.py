@@ -39,6 +39,7 @@ class Domain(models.Model):
             ('inactive', 'INACTIVE', ),
             ('to_be_deleted', 'TO BE DELETED', ),
             ('to_be_restored', 'TO BE RESTORED', ),
+            ('blocked', 'BLOCKED', ),
             ('unknown', 'UNKNOWN', ),
             ('active', 'ACTIVE', ),
         ),
@@ -207,5 +208,14 @@ class Domain(models.Model):
         return bool(self.epp_id)
 
     @property
+    def is_blocked(self):
+        return bool(self.epp_id) and self.status == 'blocked'
+
+    @property
     def can_be_restored(self):
-        return bool(self.epp_id) and self.status != 'active'
+        return bool(self.epp_id) and self.status == 'to_be_deleted'
+
+    @property
+    def can_be_renewed(self):
+        # TODO: check expire date, back-end not allow to extend registration period more than 10 years
+        return bool(self.epp_id) and self.status == 'active'

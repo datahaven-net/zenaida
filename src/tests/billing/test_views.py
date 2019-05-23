@@ -34,7 +34,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
     def test_last_payment_was_done_before_3_minutes(self, mock_timezone_now, mock_latest_payment):
         mock_timezone_now.return_value = datetime.datetime(2019, 3, 23, 13, 35, 0)
         mock_latest_payment.return_value = mock.MagicMock(
-            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0)
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
         )
         response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
         # There was a payment a minute ago, so that redirect back to the payment page with an error message.
@@ -57,7 +57,7 @@ class TestOrdersListView(BaseAuthTesterMixin, TestCase):
         Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
 
     def test_orders_list_successful(self):
@@ -91,7 +91,7 @@ class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
         Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
         with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
             self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=3))
@@ -112,7 +112,7 @@ class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
         order = Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
         with mock.patch('billing.orders.build_receipt') as mock_build_receipt:
             self.client.get(f'/billing/orders/receipts/download/{order.id}/')
@@ -134,7 +134,7 @@ class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
             method='pay_4csonline',
             transaction_id='12345',
             started_at=datetime.datetime(2019, 3, 23),
-            status='paid'
+            status='paid',
         )
         response = self.client.get('/billing/payments/')
         assert response.status_code == 200
@@ -148,7 +148,7 @@ class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
             amount=100,
             method='pay_4csonline',
             transaction_id='12345',
-            started_at=datetime.datetime(2019, 3, 23)
+            started_at=datetime.datetime(2019, 3, 23),
         )
         response = self.client.get('/billing/payments/')
         assert response.status_code == 200
@@ -163,7 +163,7 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
             mock_payment_by_transaction_id.return_value = mock.MagicMock(
                 status='started',
                 amount=100.0,
-                owner=self.account
+                owner=self.account,
             )
             finish_payment('12345', status='processed')
         response = self.client.get('/billing/order/create/renew/test.ai/')
@@ -178,7 +178,7 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
             mock_payment_by_transaction_id.return_value = mock.MagicMock(
                 status='started',
                 amount=100.0,
-                owner=self.account
+                owner=self.account,
             )
             finish_payment('12345', status='processed')
         response = self.client.get('/billing/order/create/register/test.ai/')
@@ -192,7 +192,7 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
         new_order = Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
         response = self.client.get('/billing/order/%d/' % new_order.id)
         assert response.status_code == 200
@@ -209,7 +209,7 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
         Order.orders.create(
             owner=owner,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
 
         response = self.client.get('/billing/order/1/')
@@ -227,13 +227,52 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
 class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
+    def test_multiple_domains_order(self):
+        aizone = Zone.zones.create(name='ai')
+        Domain.domains.create(
+            owner=self.account,
+            name='test_not_registered.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=aizone,
+        )
+        Domain.domains.create(
+            owner=self.account,
+            name='test_to_be_deleted.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=aizone,
+            epp_id='epp1',
+            status='to_be_deleted',
+        )
+        Domain.domains.create(
+            owner=self.account,
+            name='test_active.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=aizone,
+            epp_id='epp2',
+            status='active',
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': [
+            'test_not_registered.ai',
+            'test_to_be_deleted.ai',
+            'test_active.ai',
+        ]})
+        assert response.status_code == 200
+        assert response.context['order'].status == 'started'
+        assert response.context['order'].description == 'register 1 domain, restore 1 domain, renew 1 domain'
+        assert response.context['order'].owner == self.account
+        assert len(response.context['order'].items.all()) == 3
+
+    @pytest.mark.django_db
     def test_domain_register_order(self):
         Domain.domains.create(
             owner=self.account,
             name='test.ai',
             expiry_date=datetime.datetime(2099, 1, 1),
             create_date=datetime.datetime(1970, 1, 1),
-            zone=Zone.zones.create(name='ai')
+            zone=Zone.zones.create(name='ai'),
         )
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
@@ -250,7 +289,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            status='inactive'
+            status='to_be_deleted',
         )
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
@@ -267,7 +306,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            status='active'
+            status='active',
         )
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
@@ -283,6 +322,21 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 404
 
     @pytest.mark.django_db
+    def test_domain_blocked_order_failed(self):
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            status='blocked',
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 302
+        assert response.url == '/domains/'
+
+    @pytest.mark.django_db
     @mock.patch('logging.critical')
     def test_domain_is_not_owned_by_other_user(self, mock_logging_critical):
         zone = Zone.zones.create(name='ai')
@@ -292,7 +346,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
             name='test.ai',
             expiry_date=datetime.datetime(2099, 1, 1),
             create_date=datetime.datetime(1970, 1, 1),
-            zone=zone
+            zone=zone,
         )
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 400
@@ -311,7 +365,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
         order = Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
 
         response = self.client.post(f'/billing/order/cancel/{order.id}/')
@@ -332,7 +386,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
         order = Order.orders.create(
             owner=owner,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
         response = self.client.post(f'/billing/order/cancel/{order.id}/')
         assert response.status_code == 400
@@ -344,7 +398,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         order = Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
 
         response = self.client.post(f'/billing/order/process/{order.id}/')
@@ -356,7 +410,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         order = Order.orders.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
         with mock.patch('billing.orders.execute_single_order') as mock_execute_single_order:
             mock_execute_single_order.return_value = False
@@ -370,7 +424,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         order = Order.orders.create(
             owner=owner,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
-            status='processed'
+            status='processed',
         )
 
         response = self.client.post(f'/billing/order/process/{order.id}/')
@@ -391,7 +445,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
                 started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
                 status='processed',
                 total_price=100.00,
-                id=1
+                id=1,
             )
             order_id = order_mock().id
             response = self.client.post(f'/billing/order/process/{order_id}/')

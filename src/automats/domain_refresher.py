@@ -225,7 +225,7 @@ class DomainRefresher(automat.Automat):
             self.event('response', response)
             return
 
-        # read current contacts
+        # read create/expire date
         try:
             datetime.datetime.strptime(
                 response['epp']['response']['resData']['infData']['exDate'],
@@ -459,11 +459,9 @@ class DomainRefresher(automat.Automat):
         """
         if not self.target_domain:
             return
-        zdomains.domain_update(
-            domain_name=self.target_domain.name,
-            expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),
-            create_date=zdomains.response_to_datetime('crDate', self.domain_info_response),
-        )
+        self.target_domain.expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response)
+        self.target_domain.create_date=zdomains.response_to_datetime('crDate', self.domain_info_response)
+        self.target_domain.save()
         zdomains.domain_update_statuses(self.target_domain, self.domain_info_response)
 
     def doReportNotExist(self, *args, **kwargs):

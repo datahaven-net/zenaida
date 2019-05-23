@@ -27,7 +27,7 @@ class Payment(models.Model):
         max_length=32,
         null=False,
         blank=False,
-    ) 
+    )
 
     started_at = models.DateTimeField(null=False)
 

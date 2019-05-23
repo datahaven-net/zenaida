@@ -192,10 +192,10 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                 if logs:
                     logger.error('bad formatted response: ' + json_output)
                 raise zerrors.EPPBadResponse('bad formatted response, response code not found')
-            skip_logger_for_response_codes = ['1000', ]
+            good_response_codes = ['1000', ]
             if True:  # just to be able to debug poll script packets
-                skip_logger_for_response_codes.extend([ '1300', '1301', ])
-            if code not in skip_logger_for_response_codes:
+                good_response_codes.extend([ '1300', '1301', ])
+            if code not in good_response_codes:
                 if logs:
                     logger.error('response code failed: ' + json.dumps(json_output, indent=2))
                 raise zerrors.EPPResponseFailed(message=msg, code=code)
@@ -295,7 +295,9 @@ def cmd_domain_renew(domain, cur_exp_date, period, period_units='y', **args):
 def cmd_domain_update(domain,
                       add_nameservers_list=[], remove_nameservers_list=[],
                       add_contacts_list=[], remove_contacts_list=[],
-                      change_registrant=None, auth_info=None, **args):
+                      change_registrant=None, auth_info=None,
+                      rgp_restore=None, rgp_restore_report={},
+                      **args):
     """
     add_contacts_list and remove_contacts_list item:
     {
@@ -317,6 +319,10 @@ def cmd_domain_update(domain,
         cmd['args']['change_registrant'] = change_registrant
     if auth_info is not None:
         cmd['args']['auth_info'] = auth_info
+    if rgp_restore:
+        cmd['args']['rgp_restore'] = '1'
+    if rgp_restore_report:
+        cmd['args']['rgp_restore_report'] = rgp_restore_report
     return run(cmd, **args)
 
 def cmd_domain_transfer(domain, op, auth_info=None, period_years=None, **args):

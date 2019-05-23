@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.core import exceptions
 from django.template.loader import get_template
 
+from billing import billing_errors
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
@@ -67,6 +68,20 @@ def list_processed_orders_by_date(owner, year, month=None):
     else:
         orders = Order.orders.filter(owner=owner, status='processed').order_by('finished_at')
     return list(orders.all())
+
+
+def prepare_register_renew_restore_item(domain_object):
+    if domain_object.is_blocked:
+        raise billing_errors.DomainBlockedError()
+    item_type = 'domain_register'
+    item_price = 100.0
+    item_name = domain_object.name
+    if domain_object.can_be_restored:
+        item_type = 'domain_restore'
+        item_price = 200.0
+    elif domain_object.is_registered:
+        item_type = 'domain_renew'
+    return item_type, item_price, item_name
 
 
 def order_single_item(owner, item_type, item_price, item_name):
@@ -175,7 +190,17 @@ def execute_domain_renew(order_item, target_domain):
 
 
 def execute_domain_restore(order_item, target_domain):
-    
+    if not zmaster.domain_restore(
+        domain_object=target_domain,
+        res_reason='Customer %s requested to restore %s domain' % (order_item.order.owner.email, target_domain.name, ),
+        log_events=True,
+        log_transitions=True,
+        raise_errors=False,
+    ):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return False
+
+    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
     return True
 
 
@@ -196,9 +221,7 @@ def execute_one_item(order_item):
         return execute_domain_renew(order_item, target_domain)
 
     if order_item.type == 'domain_restore':
-        # TODO: execute_domain_restore() to be implemented later
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
-        return False
+        return execute_domain_restore(order_item, target_domain)
 
     logging.critical('Order item %s have a wrong type' % order_item)
     return False

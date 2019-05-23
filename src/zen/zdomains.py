@@ -409,10 +409,12 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
 #------------------------------------------------------------------------------
 
 def response_to_datetime(field_name, domain_info_response):
-    return datetime.datetime.strptime(
+    datetime_obj_naive = datetime.datetime.strptime(
         domain_info_response['epp']['response']['resData']['infData'][field_name],
         '%Y-%m-%dT%H:%M:%S.%fZ',
     )
+    datetime_obj_local = timezone.get_current_timezone().localize(datetime_obj_naive)
+    return datetime_obj_local
 
 #------------------------------------------------------------------------------
 
@@ -437,13 +439,13 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         domain_object.status = 'active'
     else:
         domain_object.status = 'inactive'
+        if 'serverHold' in new_domain_statuses:
+            domain_object.status = 'blocked'
         if 'pendingDelete' in new_domain_statuses:
             domain_object.status = 'to_be_deleted'
         if 'pendingRestore' in new_domain_statuses:
             # TODO: check that flow
             domain_object.status = 'to_be_restored'
-        if 'serverHold' in new_domain_statuses:
-            domain_object.status = 'blocked'
         # TODO: continue with other statuses: https://www.icann.org/resources/pages/epp-status-codes-2014-06-16-en
     if save:
         domain_object.save()

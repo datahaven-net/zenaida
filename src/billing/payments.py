@@ -26,8 +26,8 @@ def list_payments(owner, statuses=None):
     """
     """
     if statuses is None:
-        return list(Payment.payments.filter(owner=owner).all())
-    return list(Payment.payments.filter(owner=owner, status__in=statuses).all())
+        return list(Payment.payments.filter(owner=owner).all().order_by('-started_at'))
+    return list(Payment.payments.filter(owner=owner, status__in=statuses).all().order_by('-started_at'))
 
 
 def by_transaction_id(transaction_id):

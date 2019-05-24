@@ -57,6 +57,7 @@ class NewPaymentView(LoginRequiredMixin, FormView):
 
         elif new_payment.method == 'pay_btcpay':
             return pay_btcpay_views.start_payment(
+                request=self.request,
                 transaction_id=new_payment.transaction_id,
                 amount=new_payment.amount
             )

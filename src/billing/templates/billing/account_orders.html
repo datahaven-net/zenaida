@@ -38,7 +38,7 @@
 
         <tr>
             <td><a href="{% url 'billing_order_details' order.id %}">{{ order.description }}</a></td>
-            <td>{{ order.started_at }}</td>
+            <td>{{ order.started_at|date:'d N Y' }}</td>
             <td>{{ order.status }}</td>
             <td>
                 <div class="container">

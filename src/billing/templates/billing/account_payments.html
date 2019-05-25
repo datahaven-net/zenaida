@@ -10,7 +10,7 @@
             <tr>
                 <th>Amount</th>
                 <th>Payment method</th>
-                <th>Payment time</th>
+                <th>Payment date</th>
                 <th>Status</th>
             </tr>
 
@@ -19,7 +19,7 @@
                 <tr>
                     <td>{{ payment.amount }}</td>
                     <td>{{ payment.get_method_display }}</td>
-                    <td>{{ payment.started_at }}</td>
+                    <td>{{ payment.started_at|date:'d N Y' }}</td>
                     <td>{{ payment.status }}</td>
                 </tr>
 

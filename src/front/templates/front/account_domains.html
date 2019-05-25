@@ -32,14 +32,14 @@
                     <td>{{ domain.get_status_display }}</td>
                     <td>
                         {% if domain.expiry_datetime_as_date <= 0|add_days %}
-                            <div class="text-danger">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                            <div class="text-danger">{{ domain.expiry_date|date:'d N Y' }}</div>
                         {% elif 90|add_days > domain.expiry_datetime_as_date %}
-                            <div class="text-warning">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                            <div class="text-warning">{{ domain.expiry_date|date:'d N Y' }}</div>
                         {% else %}
-                            <div class="text-success">{{ domain.expiry_date|date:'d-m-Y' }}</div>
+                            <div class="text-success">{{ domain.expiry_date|date:'d N Y' }}</div>
                         {% endif %}
                     </td>
-                    <td>{{ domain.create_date|date:'d-m-Y' }}</td>
+                    <td>{{ domain.create_date|date:'d N Y' }}</td>
                     <td>
                         {% if domain.is_blocked %}
                             <p>contact site administrator</p>

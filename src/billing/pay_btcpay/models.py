@@ -34,3 +34,6 @@ class BTCPayInvoice(models.Model):
         null=False,
         blank=False,
     )
+
+    def __str__(self):
+        return 'BTCPayInvoice({} {} {} {})'.format(self.transaction_id, self.invoice_id, self.amount, self.status)

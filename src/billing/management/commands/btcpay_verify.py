@@ -1,10 +1,17 @@
+import logging
+import time
 import datetime
 
 from btcpay import BTCPayClient
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from billing import payments
 
 from billing.pay_btcpay.models import BTCPayInvoice
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -19,14 +26,40 @@ class Command(BaseCommand):
         )
 
         while True:
-            time_threshold = datetime.datetime.now() - datetime.timedelta(hours=1)
-            btcpay_invoices = BTCPayInvoice.invoices.filter(started_at__gte=time_threshold)
+            time_threshold = timezone.now() - datetime.timedelta(hours=1)
 
-            for invoice in btcpay_invoices:
+            btcpay_expired_invoices = BTCPayInvoice.invoices.filter(started_at__lt=time_threshold, finished_at=None)
+            for expired_invoice in btcpay_expired_invoices:
+                logger.debug('expired: %r' % expired_invoice)
+                expired_payment_object = payments.by_transaction_id(expired_invoice.transaction_id)
+                if not expired_payment_object:
+                    continue
+                if not payments.finish_payment(
+                    transaction_id=expired_invoice.transaction_id,
+                    status='declined',
+                ):
+                    logger.critical(f'Payment failed to be declined, transaction_id={expired_invoice.transaction_id}')
+                    continue
+                expired_invoice.status = 'expired'
+                expired_invoice.finished_at = timezone.now()
+                expired_invoice.save()
+                logger.info(f'Payment declined because of expiration, transaction_id={expired_invoice.transaction_id}')
+                
+            btcpay_active_invoices = BTCPayInvoice.invoices.filter(started_at__gte=time_threshold)
+            for invoice in btcpay_active_invoices:
+                logger.debug('active: %r' % invoice)
                 if invoice.status != 'paid':
                     btcpay_resp = client.get_invoice(invoice.invoice_id)
                     if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
+                        if not payments.finish_payment(
+                            transaction_id=invoice.transaction_id,
+                            status='processed',
+                        ):
+                            logger.critical(f'Payment failed to be completed, transaction_id={invoice.transaction_id}')
+                            continue
                         invoice.status = 'paid'
+                        invoice.finished_at = timezone.now()
                         invoice.save()
-                # TODO: Update main payment table
-                # TODO: Add balance to the user.
+                        logger.info(f'Payment succeed, transaction_id={invoice.transaction_id}')
+
+            time.sleep(60)

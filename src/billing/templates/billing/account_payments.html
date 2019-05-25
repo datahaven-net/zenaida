@@ -11,6 +11,7 @@
                 <th>Amount</th>
                 <th>Payment method</th>
                 <th>Payment time</th>
+                <th>Status</th>
             </tr>
 
             {% for payment in object_list %}
@@ -19,6 +20,7 @@
                     <td>{{ payment.amount }}</td>
                     <td>{{ payment.get_method_display }}</td>
                     <td>{{ payment.started_at }}</td>
+                    <td>{{ payment.status }}</td>
                 </tr>
 
             {% endfor %}

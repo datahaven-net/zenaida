@@ -140,20 +140,6 @@ class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert len(response.context['object_list']) == 1
 
-    @pytest.mark.django_db
-    def test_do_not_show_different_statuses(self):
-        # Create new payment with default status which is 'started'
-        Payment.payments.create(
-            owner=self.account,
-            amount=100,
-            method='pay_4csonline',
-            transaction_id='12345',
-            started_at=datetime.datetime(2019, 3, 23),
-        )
-        response = self.client.get('/billing/payments/')
-        assert response.status_code == 200
-        assert response.context['object_list'] == []
-
 
 class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db

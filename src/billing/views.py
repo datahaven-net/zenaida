@@ -132,7 +132,7 @@ class PaymentsListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return payments.list_payments(owner=self.request.user, statuses=['paid', ])
+        return payments.list_payments(owner=self.request.user)
 
 
 class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):

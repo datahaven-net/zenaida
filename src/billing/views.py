@@ -18,8 +18,6 @@ from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
 from billing import billing_errors
-from billing.pay_4csonline import views as pay_4csonline_views
-from billing.pay_btcpay import views as pay_btcpay_views
 
 from zen import zdomains
 
@@ -53,13 +51,22 @@ class NewPaymentView(LoginRequiredMixin, FormView):
         )
 
         if new_payment.method == 'pay_4csonline':
-            return pay_4csonline_views.start_payment(self.request, transaction_id=new_payment.transaction_id)
+            return shortcuts.render(
+                self.request,
+                'billing/4csonline/start_payment.html',
+                {
+                    'transaction_id': new_payment.transaction_id,
+                }
+            )
 
         elif new_payment.method == 'pay_btcpay':
-            return pay_btcpay_views.start_payment(
-                request=self.request,
-                transaction_id=new_payment.transaction_id,
-                amount=new_payment.amount
+            return shortcuts.render(
+                self.request,
+                'billing/btcpay/start_payment.html',
+                {
+                    'transaction_id': new_payment.transaction_id,
+                    'amount': new_payment.amount
+                }
             )
 
         messages.error(self.request, self.error_message)

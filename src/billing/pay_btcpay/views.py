@@ -1,25 +1,10 @@
 import btcpay
-from django import shortcuts
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.views import View
 
 from billing.pay_btcpay.models import BTCPayInvoice
-
-
-@login_required
-def start_payment(request, transaction_id, amount):
-
-    return shortcuts.render(
-        request,
-        'billing/btcpay/start_payment.html',
-        {
-            'transaction_id': transaction_id,
-            'amount': amount
-        }
-    )
 
 
 class ProcessPaymentView(LoginRequiredMixin, View):

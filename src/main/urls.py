@@ -72,6 +72,8 @@ patterns = [
     path('billing/4csonline/process/<str:transaction_id>/', pay_4csonline_views.ProcessPaymentView.as_view(), name='billing_4csonline_process_payment'),
     path('billing/4csonline/verify/', pay_4csonline_views.VerifyPaymentView.as_view(), name='billing_4csonline_verify_payment'),
 
+    path('billing/btcpay/process/<str:transaction_id>/', pay_btcpay_views.ProcessPaymentView.as_view(), name='billing_btcpay_process_payment'),
+
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 
     path('faq/', TemplateView.as_view(template_name='front/faq.html'), name='faq'),

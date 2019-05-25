@@ -1,0 +1,31 @@
+# Zenaida BTCPay verification systemd service configuration.
+#
+# Copy and modify `zenaida-btcpay.service` file to your local systemd folder to enable the service:
+#
+#         mkdir -p /home/zenaida/.config/systemd/user/
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-btcpay.service.example /home/zenaida/.config/systemd/user/zenaida-btcpay.service
+#         systemctl --user enable zenaida-btcpay.service
+#
+#
+# To start Zenaida Poll service run this command:
+# 
+#         systemctl --user start zenaida-btcpay.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl --user status zenaida-btcpay.service
+#
+
+[Unit]
+Description=ZenaidaBTCPayVerify
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/zenaida/zenaida/
+ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py btcpay_verify 1>>/home/zenaida/logs/btcpay 2>>/home/zenaida/logs/btcpay.err"
+
+[Install]
+WantedBy=multi-user.target

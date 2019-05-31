@@ -44,6 +44,11 @@ ENV = 'development'
 # EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = False
 
+#--- Brute force protection settings
+# BRUTE_FORCE_PROTECTION_ENABLED = False
+# BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX = 'domain_lookup_brute_force'
+# BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS = 15
+# BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT = 60*15
 
 #--- Google reCaptcha Keys
 # GOOGLE_RECAPTCHA_SECRET_KEY = 'dummy_secret_key'

@@ -1,6 +1,7 @@
 import datetime
 
 from django import shortcuts
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,6 +14,8 @@ from django.views.generic import UpdateView, CreateView, DeleteView, ListView, T
 from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
+from bruteforceprotection.exceptions import ExceededMaxAttemptsException
+from bruteforceprotection.impl import BruteForceProtection
 
 from front import forms, helpers
 
@@ -310,9 +313,35 @@ class AccountContactsListView(LoginRequiredMixin, ListView):
 class DomainLookupView(TemplateView):
     template_name = 'front/domain_lookup.html'
 
+    def _get_client_ip(self):
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = self.request.META.get('REMOTE_ADDR')
+        return ip
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['result'] = None
+
+        if settings.BRUTE_FORCE_PROTECTION_ENABLED:
+            client_ip = self._get_client_ip()
+            brute_force = BruteForceProtection(
+                hashkey_prefix=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX,
+                key=client_ip,
+                max_attempts=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS,
+                timeout=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT
+            )
+            try:
+                brute_force.register_attempt()
+            except ExceededMaxAttemptsException:
+                messages.error(
+                    self.request,
+                    'You searched too many domains in very short time. Try to search again in couple of minutes.'
+                )
+                return context
+
         domain_name = self.request.GET.get('domain_name')
         context['domain_name'] = domain_name
         if domain_name:

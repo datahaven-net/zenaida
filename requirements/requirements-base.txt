@@ -10,7 +10,7 @@ psycopg2-binary
 uwsgi
 Django
 djangorestframework
-django-redis-cache
+python-memcached
 django-bootstrap4
 django-nested-admin
 django-grappelli

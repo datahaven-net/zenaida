@@ -41,8 +41,8 @@ CONTENT_DIR = BASE_DIR
 DEBUG = getattr(params, 'DEBUG', False)
 DEBUGTOOLBAR_ENABLED = False
 METRICS_ENABLED = False
-CACHE_BACKEND = 'redis_cache.RedisCache'
-CACHE_LOCATION = '127.0.0.1:6379'
+CACHE_BACKEND = 'django.core.cache.backends.memcached.MemcachedCache'
+CACHE_LOCATION = '127.0.0.1:11211'
 
 CACHE_PREFIX = 'zenaida'
 
@@ -341,6 +341,13 @@ GRAPH_MODELS = {
   'group_models': True,
 }
 
+
+#------------------------------------------------------------------------------
+#--- BRUTE FORCE PROTECTION SETTINGS
+BRUTE_FORCE_PROTECTION_ENABLED = getattr(params, 'BRUTE_FORCE_PROTECTION_ENABLED', False)
+BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX = getattr(params, 'BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX', 'domain_lookup_brute_force')
+BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS = getattr(params, 'BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS', 15)
+BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT = getattr(params, 'BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT', 60*15)
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS

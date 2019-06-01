@@ -366,6 +366,8 @@ class DomainSynchronizer(automat.Automat):
             return
         dcs = domain_contacts_synchronizer.DomainContactsSynchronizer(
             update_domain=False,
+            skip_roles=[],
+            skip_contact_details=(not self.DomainToBeCreated),
             raise_errors=True,
         )
         try:
@@ -388,7 +390,7 @@ class DomainSynchronizer(automat.Automat):
         for out in outputs:
             if not isinstance(out, tuple):
                 continue
-            if not out[0] in ['admin', 'billing', 'tech', ]:
+            if not out[0] in ['admin', 'billing', 'tech', 'registrant', ]:
                 logger.warn('unexpected output from DomainContactsSynchronizer: %r' % out[0])
                 continue
         self.outputs.extend(outputs)
@@ -402,7 +404,7 @@ class DomainSynchronizer(automat.Automat):
             self.event('nameservers-ok')
             return
         dhs = domain_hostnames_synchronizer.DomainHostnamesSynchronizer(
-            update_domain=False,
+            update_domain=False,  # (not self.DomainToBeCreated),
             raise_errors=True,
         )
         try:

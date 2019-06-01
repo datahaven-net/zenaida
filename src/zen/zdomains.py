@@ -360,7 +360,7 @@ def update_nameservers(domain_object, hosts=[], domain_info_response=None):
 
 #------------------------------------------------------------------------------
 
-def compare_contacts(domain_object, domain_info_response=None, target_contacts=None):
+def compare_contacts(domain_object, domain_info_response, target_contacts=None):
     """
     Based on known EPP domain info and local info from database identify which contacts needs to be added or removed.
     Also checks if registrant needs to be changed.
@@ -389,13 +389,23 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
             if contact_object.epp_id:
                 new_contacts.append({'type': role, 'id': contact_object.epp_id, })
     current_contacts_ids = [old_contact['id'] for old_contact in current_contacts]
+    current_contacts_roles = [old_contact['type'] for old_contact in current_contacts]
     for new_cont in new_contacts:
         if new_cont['id'] not in current_contacts_ids:
-            add_contacts.append(new_cont)
+            if new_cont['id'] not in [c['id'] for c in add_contacts]:
+                add_contacts.append(new_cont)
+        if new_cont['type'] not in current_contacts_roles:
+            if new_cont['type'] not in [c['type'] for c in add_contacts]:
+                add_contacts.append(new_cont)
     new_contacts_ids = [new_cont['id'] for new_cont in new_contacts]
+    new_contacts_roles = [new_cont['type'] for new_cont in new_contacts]
     for old_cont in current_contacts:
         if old_cont['id'] not in new_contacts_ids:
-            remove_contacts.append(old_cont)
+            if old_cont['id'] not in [c['id'] for c in remove_contacts]:
+                remove_contacts.append(old_cont)
+        if old_cont['type'] not in new_contacts_roles:
+            if old_cont['type'] not in [c['type'] for c in remove_contacts]:
+                remove_contacts.append(old_cont)
     #--- registrant
     current_registrant = None
     try:
@@ -404,6 +414,8 @@ def compare_contacts(domain_object, domain_info_response=None, target_contacts=N
         pass
     if domain_object.registrant and current_registrant and current_registrant != domain_object.registrant.epp_id:
         change_registrant = domain_object.registrant.epp_id
+    logger.debug('for %r found such changes: add_contacts=%r remove_contacts=%r change_registrant=%r',
+                 domain_object, add_contacts, remove_contacts, change_registrant)
     return add_contacts, remove_contacts, change_registrant
 
 #------------------------------------------------------------------------------

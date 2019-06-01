@@ -62,4 +62,4 @@ class Command(BaseCommand):
                         invoice.save()
                         logger.info(f'Payment succeed, transaction_id={invoice.transaction_id}')
 
-            time.sleep(60)
+            time.sleep(5 * 60)

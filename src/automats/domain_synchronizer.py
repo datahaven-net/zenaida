@@ -372,6 +372,7 @@ class DomainSynchronizer(automat.Automat):
             dcs.event('run', target_domain=self.target_domain, )
         except Exception as exc:
             self.log(self.debug_level, 'Exception in DomainContactsSynchronizer: %s' % exc)
+            del dcs
             self.event('error', exc)
             return
         outputs = list(dcs.outputs)
@@ -408,6 +409,7 @@ class DomainSynchronizer(automat.Automat):
             dhs.event('run', target_domain=self.target_domain, known_domain_info=self.latest_domain_info, )
         except Exception as exc:
             self.log(self.debug_level, 'Exception in DomainHostnamesSynchronizer: %s' % exc)
+            del dhs
             self.event('error', exc)
             return
         self.outputs.extend(list(dhs.outputs))

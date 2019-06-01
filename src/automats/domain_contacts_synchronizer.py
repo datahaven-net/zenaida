@@ -174,6 +174,7 @@ class DomainContactsSynchronizer(automat.Automat):
                 cs.event('run', contact_object)
             except Exception as exc:
                 self.log(self.debug_level, 'Exception in ContactSynchronizer: %s' % exc)
+                del cs
                 self.event('error', exc)
                 break
             outputs = list(cs.outputs)

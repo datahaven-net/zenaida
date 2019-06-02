@@ -92,6 +92,7 @@ class TestIndexViewForUnknownUser(TestCase):
 
 
 class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zzones.is_supported')
@@ -242,10 +243,11 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
 
 
 class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
+
     @mock.patch('back.models.profile.Profile.is_complete')
     def test_update_successful_e2e(self, mock_user_profile_complete):
-        if os.environ.get('E2E', '0') == '0':
-            return True
+        if os.environ.get('E2E', '0') != '1':
+            return pytest.skip('skip E2E')  # @UndefinedVariable
         mock_user_profile_complete.return_value = True
 
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
@@ -310,20 +312,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
-    def test_e2e_successful(self):
-        if os.environ.get('E2E', '0') == '0':
-            return True
-
-        response = self.client.post('/contacts/create/', data=contact_person, follow=True)
-        assert response.status_code == 200
-        c = contact.Contact.contacts.filter(person_name='TesterA').first()
-        assert c.person_name == 'TesterA'
-
-    @pytest.mark.django_db
     def test_create_db_successful(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             response = self.client.post('/contacts/create/', data=contact_person, follow=True)
@@ -333,9 +322,6 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
     def test_contact_create_update_error(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = False
             response = self.client.post('/contacts/create/', data=contact_person, follow=True)
@@ -346,22 +332,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
-    def test_e2e_successful(self):
-        if os.environ.get('E2E', '0') == '0':
-            return True
-        # First create a contact person
-        self.client.post('/contacts/create/', data=contact_person, follow=True)
-        updated_contact_person = copy.deepcopy(contact_person)
-        updated_contact_person['person_name'] = 'TesterB'
-        # Update existing contact
-        response = self.client.post('/contacts/edit/1/', data=updated_contact_person)
-        assert response.status_code == 302
-        assert response.url == '/contacts/'
-
-    @pytest.mark.django_db
     def test_update_db_successful(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             # First create contact person
@@ -385,8 +356,6 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
         assert c.person_name == 'TesterB'
 
     def test_contact_update_returns_404(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
         response = self.client.put('/contacts/edit/1/')
         assert response.status_code == 404
 
@@ -395,9 +364,6 @@ class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
     def test_contact_delete_successful(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             # First create contact person
@@ -414,9 +380,6 @@ class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
         assert len(contact.Contact.contacts.all()) == 0
 
     def test_contact_delete_returns_404(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
-
         response = self.client.delete('/contacts/delete/1/')
         # User has not this contact, so can't delete
         assert response.status_code == 404
@@ -426,9 +389,6 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
     def test_contact_list_successful(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             # First create contact_person
@@ -440,9 +400,6 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
     def test_contact_list_empty(self):
-        if os.environ.get('E2E', '0') == '1':
-            return True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
 
@@ -454,19 +411,16 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
 class TestDomainLookupView(TestCase):
 
     def test_e2e_successful(self):
-        if os.environ.get('E2E', '0') == '0':
-            return True
-
+        if os.environ.get('E2E', '0') != '1':
+            return pytest.skip('skip E2E')  # @UndefinedVariable
         response = self.client.get('/lookup/?domain_name=bitdust.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'not exist'
 
     def test_e2e_domain_exists(self):
-        # Even though this test is e2e, as there is already test above which is testing EPP connection,
-        # in this test domain check on EPP is mocked.
-        with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
-            mock_domain_check.get.return_value = True
-            response = self.client.get('/lookup/?domain_name=bitdust.ai')
+        if os.environ.get('E2E', '0') != '1':
+            return pytest.skip('skip E2E')  # @UndefinedVariable
+        response = self.client.get('/lookup/?domain_name=test.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'exist'
 

@@ -43,7 +43,7 @@ def test_domain_not_exist():
 def test_domain_refreshed():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')  # @UndefinedVariable
-    testsupport.prepare_tester_registrant(epp_id='tester480126cf6j', create_new=True)
+    testsupport.prepare_tester_registrant(epp_id='tester087401xo2c', create_new=True)
     scenario = []
     dr = domain_refresher.DomainRefresher(
         log_events=True,
@@ -54,7 +54,7 @@ def test_domain_refreshed():
             (oldstate, newstate, event, )
         ),
     )
-    test_domain_name = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
+    test_domain_name = 'test-domain-refreshed.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     dr.event(
         'run',
         domain_name=test_domain_name,

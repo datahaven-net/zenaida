@@ -17,8 +17,8 @@ def test_domain_pending_delete_status_not_set():
         return pytest.skip('skip E2E')  # @UndefinedVariable
 
     # first need to read existing domain from back-end and create it in local DB
-    testsupport.prepare_tester_registrant(epp_id='tester480126cf6j', create_new=True)
-    test_domain_name = 'test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
+    testsupport.prepare_tester_registrant(epp_id='tester065480yp60', create_new=True)
+    test_domain_name = 'test-pending-delete-status-not-set.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0]
     zmaster.domain_synchronize_from_backend(
         domain_name=test_domain_name,
         refresh_contacts=True,

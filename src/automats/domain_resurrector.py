@@ -35,6 +35,7 @@ from automats import domain_refresher
 from automats import domain_synchronizer
 
 from zen import zclient
+from zen import zdomains
 from zen import zerrors
 
 #------------------------------------------------------------------------------
@@ -169,10 +170,22 @@ class DomainResurrector(automat.Automat):
             self.log(self.debug_level, 'Exception in DomainsChecker: %s' % exc)
             del dc
             self.event('verify-failed', exc)
-        else:
-            self.outputs.extend(list(dc.outputs))
-            del dc
-            self.event('verify-ok')
+            return
+        self.outputs.extend(list(dc.outputs))
+        del dc
+        domain_check_result = self.outputs[-1].get(self.target_domain.name)
+        if isinstance(domain_check_result, Exception):
+            self.event('verify-failed', domain_check_result)
+            return
+        if not domain_check_result:
+            self.event('verify-failed', Exception('domain %r not exist' % self.target_domain.name))
+            return
+        if self.target_domain:
+            zdomains.domain_update_statuses(
+                domain_object=self.target_domain,
+                domain_info_response=self.outputs[-2],
+            )
+        self.event('verify-ok')
 
     def doEppDomainUpdate(self, *args, **kwargs):
         """

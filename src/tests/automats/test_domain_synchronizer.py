@@ -46,6 +46,8 @@ def test_domain_another_registrar():
 def test_domain_create():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')  # @UndefinedVariable
+    if os.environ.get('MANUAL', '0') != '1':
+        return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_domain = testsupport.prepare_tester_domain(
         domain_name='test-%s.%s' % (now().strftime('%Y%m%d%H%M%S'), settings.ZENAIDA_SUPPORTED_ZONES[0]),
     )

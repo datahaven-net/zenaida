@@ -121,12 +121,6 @@ class DomainResurrector(automat.Automat):
             elif event == 'refresh-ok':
                 self.state = 'RENEW'
                 self.doRunDomainSynchronizer(*args, **kwargs)
-        #---DONE---
-        elif self.state == 'DONE':
-            pass
-        #---FAILED---
-        elif self.state == 'FAILED':
-            pass
         #---RENEW---
         elif self.state == 'RENEW':
             if event == 'renew-failed':
@@ -137,6 +131,12 @@ class DomainResurrector(automat.Automat):
                 self.state = 'DONE'
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+        #---DONE---
+        elif self.state == 'DONE':
+            pass
+        #---FAILED---
+        elif self.state == 'FAILED':
+            pass
         return None
 
     def isCode(self, *args, **kwargs):

@@ -181,10 +181,12 @@ def domain_unregister(domain_id=None, domain_name=None):
     domain_object = domain_find(domain_id=domain_id, domain_name=domain_name)
     if not domain_object:
         return False
-    domain_object.expiry_date=None
-    domain_object.create_date=None
-    domain_object.epp_id=None
-    domain_object.auth_key=''
+    domain_object.status = 'inactive'
+    domain_object.expiry_date = None
+    domain_object.create_date = None
+    domain_object.epp_id = None
+    domain_object.epp_statuses = None
+    domain_object.auth_key = ''
     domain_object.save()
     logger.info('domain %r is unregistered', domain_object)
     return True

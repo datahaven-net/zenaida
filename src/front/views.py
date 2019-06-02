@@ -14,8 +14,8 @@ from django.views.generic import UpdateView, CreateView, DeleteView, ListView, T
 from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
-from bruteforceprotection.exceptions import ExceededMaxAttemptsException
-from bruteforceprotection.impl import BruteForceProtection
+from front.exceptions import ExceededMaxAttemptsException
+from front.bruteforceprotection import BruteForceProtection
 
 from front import forms, helpers
 
@@ -328,7 +328,7 @@ class DomainLookupView(TemplateView):
         if settings.BRUTE_FORCE_PROTECTION_ENABLED:
             client_ip = self._get_client_ip()
             brute_force = BruteForceProtection(
-                hashkey_prefix=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX,
+                cache_key_prefix=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX,
                 key=client_ip,
                 max_attempts=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS,
                 timeout=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT
@@ -336,10 +336,7 @@ class DomainLookupView(TemplateView):
             try:
                 brute_force.register_attempt()
             except ExceededMaxAttemptsException:
-                messages.error(
-                    self.request,
-                    'You searched too many domains in very short time. Try to search again in couple of minutes.'
-                )
+                messages.error(self.request, 'Too many attempts, please try again later.')
                 return context
 
         domain_name = self.request.GET.get('domain_name')

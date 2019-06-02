@@ -1,6 +1,6 @@
 from django.core.cache import cache
 
-from bruteforceprotection.exceptions import ExceededMaxAttemptsException
+from front.exceptions import ExceededMaxAttemptsException
 
 
 class BruteForceProtection(object):
@@ -16,7 +16,7 @@ class BruteForceProtection(object):
         return self._local_value if self._local_value else 0
 
     def increase_total_attempts(self):
-        self._local_value = cache.get(self.cache_key)
+        self.read_total_attempts()
 
         if not self._local_value:
             self._local_value = 0

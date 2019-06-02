@@ -57,11 +57,11 @@ class Domain(models.Model):
         Registrant, on_delete=models.CASCADE, related_name='registrant_domains', null=True, blank=True)
 
     contact_admin = models.ForeignKey(
-        Contact, on_delete=models.PROTECT, related_name='admin_domains', null=True, blank=True, verbose_name='Administrative')
+        Contact, on_delete=models.PROTECT, related_name='admin_domains', null=True, blank=True, verbose_name='Administrative contact')
     contact_billing = models.ForeignKey(
-        Contact, on_delete=models.PROTECT, related_name='billing_domains', null=True, blank=True, verbose_name='Billing')
+        Contact, on_delete=models.PROTECT, related_name='billing_domains', null=True, blank=True, verbose_name='Billing contact')
     contact_tech = models.ForeignKey(
-        Contact, on_delete=models.PROTECT, related_name='tech_domains', null=True, blank=True, verbose_name='Technical')
+        Contact, on_delete=models.PROTECT, related_name='tech_domains', null=True, blank=True, verbose_name='Technical contact')
 
     nameserver1 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 1')
     nameserver2 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 2')

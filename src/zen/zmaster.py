@@ -144,7 +144,7 @@ def domain_restore(domain_object, raise_errors=False, log_events=True, log_trans
             logger.error(outputs[-1])
         return False
 
-    logger.info('domain_resurrector(%r) OK', domain_object)
+    logger.debug('domain_resurrector(%r) finished with %d outputs', domain_object.name, len(outputs))
     return True
 
 

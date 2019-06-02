@@ -11,6 +11,8 @@ EVENTS:
     * :red:`error`
     * :red:`refresh-failed`
     * :red:`refresh-ok`
+    * :red:`renew-failed`
+    * :red:`renew-ok`
     * :red:`response`
     * :red:`run`
     * :red:`verify-failed`
@@ -30,8 +32,10 @@ from django.conf import settings
 from automats import automat
 from automats import domains_checker
 from automats import domain_refresher
+from automats import domain_synchronizer
 
 from zen import zclient
+from zen import zdomains
 from zen import zerrors
 
 #------------------------------------------------------------------------------
@@ -116,6 +120,15 @@ class DomainResurrector(automat.Automat):
                 self.doReportFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'refresh-ok':
+                self.state = 'RENEW'
+                self.doRunDomainSynchronizer(*args, **kwargs)
+        #---RENEW---
+        elif self.state == 'RENEW':
+            if event == 'renew-failed':
+                self.state = 'FAILED'
+                self.doReportFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'renew-ok':
                 self.state = 'DONE'
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
@@ -155,11 +168,24 @@ class DomainResurrector(automat.Automat):
             dc.event('run', [self.target_domain.name, ])
         except Exception as exc:
             self.log(self.debug_level, 'Exception in DomainsChecker: %s' % exc)
-            self.event('verify-failed', exc)
-        else:
-            self.outputs.extend(list(dc.outputs))
             del dc
-            self.event('verify-ok')
+            self.event('verify-failed', exc)
+            return
+        self.outputs.extend(list(dc.outputs))
+        del dc
+        domain_check_result = self.outputs[-1].get(self.target_domain.name)
+        if isinstance(domain_check_result, Exception):
+            self.event('verify-failed', domain_check_result)
+            return
+        if not domain_check_result:
+            self.event('verify-failed', Exception('domain %r not exist' % self.target_domain.name))
+            return
+        if self.target_domain:
+            zdomains.domain_update_statuses(
+                domain_object=self.target_domain,
+                domain_info_response=self.outputs[-2],
+            )
+        self.event('verify-ok')
 
     def doEppDomainUpdate(self, *args, **kwargs):
         """
@@ -224,10 +250,36 @@ class DomainResurrector(automat.Automat):
             )
         except Exception as exc:
             self.log(self.debug_level, 'Exception in DomainRefresher: %s' % exc)
+            del dr
             self.event('refresh-failed', exc)
         else:
             self.outputs.extend(list(dr.outputs))
             del dr
+            self.event('refresh-ok')
+
+    def doRunDomainSynchronizer(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        ds = domain_synchronizer.DomainSynchronizer(
+            log_events=self.log_events,
+            log_transitions=self.log_transitions,
+            raise_errors=self.raise_errors,
+        )
+        try:
+            ds.event('run', self.target_domain,
+                sync_contacts=False,
+                sync_nameservers=False,
+                renew_years=2,
+                save_to_db=True,
+            )
+        except Exception as exc:
+            self.log(self.debug_level, 'Exception in DomainRefresher: %s' % exc)
+            del ds
+            self.event('refresh-failed', exc)
+        else:
+            self.outputs.extend(list(ds.outputs))
+            del ds
             self.event('refresh-ok')
 
     def doReportDone(self, *args, **kwargs):

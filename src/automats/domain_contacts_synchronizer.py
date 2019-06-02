@@ -34,7 +34,7 @@ class DomainContactsSynchronizer(automat.Automat):
     This class implements all the functionality of ``domain_contacts_synchronizer()`` state machine.
     """
 
-    def __init__(self, update_domain=False, skip_roles=[],
+    def __init__(self, update_domain=False, skip_roles=[], skip_contact_details=False,
                  debug_level=0, log_events=None, log_transitions=None,
                  raise_errors=False,
                  **kwargs):
@@ -43,6 +43,7 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         self.domain_to_be_updated = update_domain
         self.skip_roles = skip_roles
+        self.skip_contact_details = skip_contact_details
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -169,11 +170,17 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         for role in sorted(self.target_contacts.keys()):
             contact_object = self.target_contacts[role]
+            if contact_object.epp_id and self.skip_contact_details:
+                self.outputs.extend([
+                    (role, None, ),
+                ])
+                continue
             cs = contact_synchronizer.ContactSynchronizer(raise_errors=True)
             try:
                 cs.event('run', contact_object)
             except Exception as exc:
                 self.log(self.debug_level, 'Exception in ContactSynchronizer: %s' % exc)
+                del cs
                 self.event('error', exc)
                 break
             outputs = list(cs.outputs)

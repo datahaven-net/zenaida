@@ -1,13 +1,13 @@
 /home/zenaida/logs/epp.log
 /home/zenaida/logs/automats.log
-/home/zenaida/logs/gate
-/home/zenaida/logs/gate.err
 /home/zenaida/logs/btcpay
 /home/zenaida/logs/btcpay.err
 /home/zenaida/logs/poll
 /home/zenaida/logs/poll.err
 /home/zenaida/logs/nginx
 /home/zenaida/logs/nginx.err
+/home/zenaida/logs/gate
+/home/zenaida/logs/gate.err
 /home/zenaida/logs/uwsgi-emperor
 /home/zenaida/logs/uwsgi-zenaida
 {

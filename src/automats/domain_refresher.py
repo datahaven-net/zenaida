@@ -115,7 +115,6 @@ class DomainRefresher(automat.Automat):
                 self.state = 'CONTACTS?'
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doEPPContactsInfoMany(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
             elif event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isContactsNeeded(*args, **kwargs):
                 self.state = 'DONE'
                 self.doDBCheckCreateDomain(*args, **kwargs)
@@ -502,10 +501,11 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
-        zdomains.domain_update_statuses(
-            domain_object=self.target_domain,
-            domain_info_response=args[0],
-        )
+        if self.target_domain:
+            zdomains.domain_update_statuses(
+                domain_object=self.target_domain,
+                domain_info_response=args[0],
+            )
         self.outputs.append(args[0])
 
     def doReportContactsFailed(self, event, *args, **kwargs):

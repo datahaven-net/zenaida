@@ -4,7 +4,7 @@ import os
 import mock
 import pytest
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from back.models import contact
 from back.models.contact import Contact, Registrant
@@ -452,6 +452,15 @@ class TestDomainLookupView(TestCase):
     @mock.patch('django.contrib.messages.error')
     def test_domain_lookup_with_invalid_domain_extension(self, mock_messages_error):
         response = self.client.get('/lookup/?domain_name=example.xyz')
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS=2, BRUTE_FORCE_PROTECTION_ENABLED=True)
+    @mock.patch('django.contrib.messages.error')
+    @mock.patch('django.core.cache.cache.get')
+    def test_domain_lookup_too_many_attempts(self, mock_cache_get, mock_messages_error):
+        mock_cache_get.return_value = 2
+        response = self.client.get('/lookup/?domain_name=bitdust.ai')
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
 

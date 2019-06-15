@@ -20,7 +20,7 @@ Clone project files locally. If you are running on production server please use 
 
 Install postgress and few other packages:
 
-        sudo apt-get install make python3-pip python3-dev python3-venv libpq-dev postgresql postgresql-contrib
+        sudo apt-get install make python3-pip python3-dev python3-venv libpq-dev postgresql postgresql-contrib memcached
 
  
 Create DB and user:
@@ -53,7 +53,7 @@ Create DB and user:
         exit
 
 
-To be abe to run same code on production machine as well as locally on your laptop you can use isolated development settings, configure this by setting `src/main/params.py` file:
+To be able to run same code on production machine as well as locally on your laptop you can use isolated development settings, configure this by setting `src/main/params.py` file:
 
         cp src/main/params_example.py src/main/params.py
         nano src/main/params.py
@@ -133,7 +133,7 @@ Install nginx if you do not have it yet installed:
 Activate nginx site configuration by creating a sym-link:
 
         cp etc/nginx/zenaida.example etc/nginx/zenaida
-        sudo ln -s etc/nginx/zenaida /etc/nginx/sites-enabled/
+        sudo ln -s /home/zenaida/zenaida/etc/nginx/zenaida /etc/nginx/sites-enabled/
         sudo unlink /etc/nginx/sites-enabled/default
 
 
@@ -142,7 +142,7 @@ We will need one vassal to be running and serving Zenaida traffic.
 The main uwsgi emperor process will be starting as systemd service:
 
         cp etc/systemd/system/uwsgi-emperor.service.example etc/systemd/system/uwsgi-emperor.service
-        sudo ln -s etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
+        sudo ln -s /home/zenaida/zenaida/etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
         
 
 Now start uwsgi emperor service:
@@ -183,7 +183,7 @@ To establish connection between Zenaida and EPP registry system we use couple mo
 Lets start from installing Perl and required modules on Zenaida machine.
 Few binary dependencies are required to running Perl modules:
 
-        sudo apt-get install build-essential libxml2-dev libnet-ssleay-perl libssl-dev libdigest-sha1-perl 
+        sudo apt-get install build-essential libxml2-dev libnet-ssleay-perl libssl-dev libdigest-sha1-perl
 
 
 Then we need to check if CPAN Perl package manager is installed and configured on your OS - it should be

@@ -3,8 +3,6 @@ pkgversion
 pika
 transliterate
 fqn-decorators
-raven
-timeexecution
 requests
 psycopg2-binary
 uwsgi

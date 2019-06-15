@@ -248,7 +248,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
             messages.success(request, self.success_message)
         else:
             messages.error(request, self.error_message_technical)
-        return shortcuts.redirect('billing_orders')
+        return shortcuts.redirect('account_domains')
 
 
 class OrderCancelView(LoginRequiredMixin, View):

@@ -386,6 +386,24 @@ Also you have to configure outgoing email channel to deliver messages. Different
 
 
 
+## Configure Memcache
+
+TODO:
+
+
+
+## Configure Googla Captcha
+
+TODO:
+
+
+
+### Configure BTCPayServer
+
+TODO:
+
+
+
 ## Importing domains from CSV file
 
 It is possible to export multiple domains details from CoCCA server dashboard into single .csv file. Zenaida can read such format and load those domains easily. This way you can run initial import before GoLive with new Zenaida web-site:

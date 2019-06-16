@@ -389,7 +389,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
 
         response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
-        assert response.url == '/billing/orders/'
+        assert response.url == '/domains/'
 
     @pytest.mark.django_db
     def test_order_execute_returns_technical_error(self):
@@ -402,7 +402,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             mock_execute_single_order.return_value = False
             response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
-        assert response.url == '/billing/orders/'
+        assert response.url == '/domains/'
 
     @pytest.mark.django_db
     def test_order_execute_suspicious(self):

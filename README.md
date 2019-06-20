@@ -171,6 +171,21 @@ But you will need a to do a bit more configurations on Production server later o
 
 
 
+## Django settings
+
+In the file `src/main/params.py` you will have to set few important variables. Those settings are specific for your host machine and can not be stored in the source code. Also this file is a place to store keys, passwords, etc.
+
+Other settings in `params.py` file also described in that document, but here is a list of most important settings:
+
+* `ENV = 'production'` : this will identify your production machine
+* `DEBUG = False` : must be always `False` on your production machine
+* `SITE_BASE_URL = 'https://yourdomain.com'` : domain name of your host
+* `SECRET_KEY = 'xxxx'` : django key to be used to encrypt user sessions, must be 50 bytes long
+* `ZENAIDA_REGISTRAR_ID = 'registrar_abc'` : name of your registrar to be used to connect to CoCCA back-end
+* `ZENAIDA_SUPPORTED_ZONES = ['net', 'com', 'org', ]` : list of supported domain zones
+
+
+
 ## Install Perl and required modules
 
 To establish connection between Zenaida and EPP registry system we use couple more components:
@@ -195,6 +210,12 @@ present on most Linux systems by default after installing `build-essential` pack
 Installing Perl modules is easy, but takes some time:
 
         sudo cpan install AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
+
+
+If that fails you can also try to use `cpanminus` to do the same:
+
+        sudo apt-get install cpanminus
+        sudo cpanm -i AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
 
 
 
@@ -270,7 +291,9 @@ Before continue further make sure you decreased access permissions to your secre
         chmod go-rwx -R /home/zenaida/keys/
 
 
-Now we need to be sure that EPP connection is configured correctly, lets execute Perl script directly:
+Now we need to be sure that EPP connection is configured correctly. First read bellow about how to configure `ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME` setting in your `src/main/params.py` file. This is necessary to be able to connect Django with RabbitMQ.
+
+Now lets execute Perl script directly:
 
         perl bin/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt
         ...
@@ -280,7 +303,7 @@ Now we need to be sure that EPP connection is configured correctly, lets execute
 
 Keep it running in the current terminal and open another console window to be able to fire real-time EPP requests towards given EPP server:
 
-        venv/bin/python -c 'import sys; sys.path.append("src/"); import zepp.zclient; print(zepp.zclient.cmd_domain_check(["testdomain.com", ]))'
+        venv/bin/python -c 'import sys, os, django; sys.path.append("src/"); os.environ.setdefault("DJANGO_SETTINGS_MODULE", "main.settings"); django.setup(); import zen.zclient; print(zen.zclient.cmd_domain_check(["testdomain.com", ]))'
 
 
 If RabbitMQ and Zenaida Gate process was configured correctly you should see a json response from EPP Gate like that:
@@ -321,7 +344,7 @@ Then you just need to start all services in a such way:
 
 You can always check current situation with:
 
-        systemctl status zenaida-gate.service
+        systemctl --user status zenaida-gate.service
 
 Now if you have access to CoCCA backend you can test auto-healing mechanism by simply dropping EPP session on server side and keep monitoring `/home/zenaida/logs/gate.log` output file.
 
@@ -333,26 +356,26 @@ Also you can perform manual test locally - just modify `/home/zenaida/health` fi
 
 Now it is time to configure access to EPP Gate from Django side - it will use RabbitMQ server as a client to send/receive EPP XML messages.
 
-First place your RabbitMQ client credentials in another file in your `~/keys-www-data` folder.
+First place your RabbitMQ client credentials in another file in your `/home/zenaida/keys-www-data` folder.
 
 Here is a small exception, because those credentials must be accessable from django software running on behalf of www-data user and nginx+uwsgi process ... 
-In a previous step credentials for `zenaida-gate` service must be only accessable by `zenaida` user.
+In a previous step credentials for `zenaida-gate` service must be only accessable by `zenaida` user so we store them in `/home/zenaida/keys` folder with more restrictive permissions.
 
-To try to mitigate risks you can put those credentials in a separate folder with dedicated access from your Django application :
+To mitigate risks you can put those credentials in a separate folder with dedicated access from your Django application :
 
         mkdir /home/zenaida/keys-www-data/
         echo "localhost 5672 zenaida <password 1>" > /home/zenaida/keys-www-data/rabbitmq_client_credentials.txt
-        sudo sudo chown www-data -R keys-www-data/
+        sudo chown www-data -R /home/zenaida/keys-www-data/
 
 
 Edit file `src/main/params.py` and add such line:
 
-        RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys-www-data/rabbitmq_client_credentials.txt'
+        ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys-www-data/rabbitmq_client_credentials.txt'
 
 
 Also if you would like to store EPP traffic comming thru Zenaida Django application you can just set a file name to log it :
 
-        EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'
+        ZENAIDA_EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'
 
 
 You know, you can try to play with multiple console terminals running in parallel to see all stuff connected and run smoothly.
@@ -370,7 +393,7 @@ in your web browser and use Domain Search form to test it.
 
 ## Configure Email settings
 
-You can configure if you wish to enable user account activations via email, edit file `src/main/params.py` and add such line:
+If it is required you cat enable user account activations via email. To do that edit file `src/main/params.py` and add such line:
 
         ENABLE_USER_ACTIVATION = True
 
@@ -398,7 +421,7 @@ TODO:
 
 
 
-### Configure BTCPayServer
+## Configure BTCPayServer
 
 TODO:
 

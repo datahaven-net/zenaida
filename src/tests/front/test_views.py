@@ -446,6 +446,7 @@ class TestDomainLookupView(TestCase):
         response = self.client.get('/lookup/')
         assert response.status_code == 200
         assert response.context['result'] is None
+        assert response.context['domain_name'] == ''
 
     @mock.patch('django.contrib.messages.error')
     def test_domain_lookup_with_invalid_domain_name(self, mock_messages_error):

@@ -416,6 +416,7 @@ class TestDomainLookupView(TestCase):
         response = self.client.get('/lookup/?domain_name=bitdust.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'not exist'
+        assert response.context['domain_name'] == 'bitdust.ai'
 
     def test_e2e_domain_exists(self):
         if os.environ.get('E2E', '0') != '1':
@@ -423,6 +424,7 @@ class TestDomainLookupView(TestCase):
         response = self.client.get('/lookup/?domain_name=test.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'exist'
+        assert response.context['domain_name'] == 'test.ai'
 
     def test_domain_lookup_returns_error(self):
         with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
@@ -430,6 +432,7 @@ class TestDomainLookupView(TestCase):
             response = self.client.get('/lookup/?domain_name=bitdust.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'error'
+        assert response.context['domain_name'] == 'bitdust.ai'
 
     def test_domain_is_already_in_db(self):
         with mock.patch('zen.zdomains.is_domain_available') as mock_is_domain_available:
@@ -437,6 +440,7 @@ class TestDomainLookupView(TestCase):
             response = self.client.get('/lookup/?domain_name=bitdust.ai')
         assert response.status_code == 200
         assert response.context['result'] == 'exist'
+        assert response.context['domain_name'] == 'bitdust.ai'
 
     def test_domain_lookup_page_without_domain_name(self):
         response = self.client.get('/lookup/')

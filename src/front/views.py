@@ -339,7 +339,7 @@ class DomainLookupView(TemplateView):
                 messages.error(self.request, 'Too many attempts, please try again later.')
                 return context
 
-        domain_name = self.request.GET.get('domain_name')
+        domain_name = self.request.GET.get('domain_name', '')
         context['domain_name'] = domain_name
         if domain_name:
             if not zdomains.is_valid(domain_name):

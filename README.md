@@ -346,9 +346,29 @@ You can always check current situation with:
 
         systemctl --user status zenaida-gate.service
 
+
+Also you can check services logs to see full history:
+
+        journalctl -f -u user@`id -u`.service
+
+
 Now if you have access to CoCCA backend you can test auto-healing mechanism by simply dropping EPP session on server side and keep monitoring `/home/zenaida/logs/gate.log` output file.
 
 Also you can perform manual test locally - just modify `/home/zenaida/health` file and Zenaida Gate suppose to be restarted automatically.
+
+
+
+## Configure Zenaida Poll systemd service
+
+In order to receive notifications back from CoCCA backend another script was developed and wrapped into systemd service called `zenaida-poll.service`.
+
+This job runs in background and sends EPP `poll_req` and `poll_ack` commands periodically towards CoCCA and this way receives notifications about domains, contacts or nameservers modifications done directly on backend.
+
+You can configure and start systemd Zenaida Poll service this way:
+
+        cp etc/systemd/system/zenaida-poll.service.example /home/zenaida/.config/systemd/user/zenaida-poll.service
+        systemctl --user enable zenaida-poll.service
+        systemctl --user start zenaida-poll.service
 
 
 

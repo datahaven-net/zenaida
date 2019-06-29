@@ -431,7 +431,7 @@ Also you have to configure outgoing email channel to deliver messages. Different
 
 ## Configure Memcache
 
-TODO:
+TODO: memcached...
 
 
 

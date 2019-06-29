@@ -258,7 +258,7 @@ class DomainContactsSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+            self.outputs.append(zerrors.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """
@@ -269,6 +269,8 @@ class DomainContactsSynchronizer(automat.Automat):
         self.change_registrant = None
         self.domain_to_be_updated = None
         self.skip_roles = None
+        self.target_domain = None
+        self.target_contacts = None
         self.destroy()
 
 

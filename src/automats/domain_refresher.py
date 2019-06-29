@@ -486,7 +486,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+            self.outputs.append(zerrors.exception_from_response(response=args[0]))
 
     def doReportInfoFailed(self, event, *args, **kwargs):
         """
@@ -495,7 +495,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+            self.outputs.append(zerrors.exception_from_response(response=args[0]))
 
     def doReportDomainInfo(self, *args, **kwargs):
         """
@@ -515,7 +515,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+            self.outputs.append(zerrors.exception_from_response(response=args[0]))
 
     def doReportContactsInfo(self, *args, **kwargs):
         """

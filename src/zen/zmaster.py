@@ -1,6 +1,4 @@
 import logging
-import re
-import datetime
 
 from automats import contact_synchronizer
 from automats import domains_checker
@@ -30,7 +28,7 @@ def contact_create_update(contact_object, raise_errors=False, log_events=True, l
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if isinstance(outputs[-1], Exception):
-            logger.error(outputs[-1])
+            logger.error('contact_synchronizer(%r) failed with: %r', contact_object, outputs[-1])
         return False
 
     logger.info('contact_synchronizer(%r) OK', contact_object)
@@ -60,7 +58,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):
-            logger.error(outputs[-1])
+            logger.error('domains_checker(%r) failed with: %r', domain_names, outputs[-1])
         return None
 
     logger.info('domains_checker(%r) OK', domain_names)
@@ -88,14 +86,14 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     )
     outputs = list(ds.outputs)
     del ds
-    logger.debug('domain_synchronizer(%r) finished with %d outputs', domain_object, len(outputs))
+    logger.debug('domain_synchronizer(%r) finished with %d outputs', domain_object.name, len(outputs))
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if isinstance(outputs[-1], Exception):
-            logger.error(outputs[-1])
+            logger.error('domain_synchronizer(%r) failed with: %r', domain_object.name, outputs[-1])
         return False
 
-    logger.info('domain_synchronizer(%r) OK', domain_object)
+    logger.info('domain_synchronizer(%r) OK', domain_object.name)
     return True
 
 
@@ -141,27 +139,31 @@ def domain_restore(domain_object, raise_errors=False, log_events=True, log_trans
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if isinstance(outputs[-1], Exception):
-            logger.error(outputs[-1])
+            logger.error('domain_resurrector(%r) failed with: %r', domain_object.name, outputs[-1])
         return False
 
     logger.debug('domain_resurrector(%r) finished with %d outputs', domain_object.name, len(outputs))
     return True
 
 
-def domain_set_auth_info(domain, auth_info=None):
-    # TODO: finish it
-#     if not auth_info:
-#         auth_info = users.generatePassword()
-#     #--- UPDATE DOMAIN AUTH INFO
-#     update = epp_client.cmd_domain_update(
-#         domain,
-#         auth_info=auth_info,
-#     )
-#     if update['epp']['response']['result']['@code'] != '1000':
-#         if update['epp']['response']['result']['@code'] == '2304':
-#             raise epp_client.EPPObjectStatusProhibitsOperation(
-#                 message='EPP domain_update failed because %s' % (
-#                     update['epp']['response']['result']['msg'], ))
-#         raise epp_client.EPPCommandFailed(message='EPP request domain update failed with error code: %s' % (
-#             update['epp']['response']['result']['@code'], ))
-    return auth_info
+def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_events=True, log_transitions=True, **kwargs):
+    """
+    Updates auth_info field for given domain on back-end side and also store it in the local DB. 
+    """
+    from automats import domain_auth_changer
+    dac = domain_auth_changer.DomainAuthChanger(
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dac.event('run', target_domain=domain_object, new_auth_info=auth_info)
+    outputs = list(dac.outputs)
+    del dac
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if isinstance(outputs[-1], Exception):
+            logger.error('domain_auth_changer(%r) failed with: %r', domain_object.name, outputs[-1])
+        return False
+
+    logger.debug('domain_auth_changer(%r) finished with %d outputs', domain_object.name, len(outputs))
+    return True

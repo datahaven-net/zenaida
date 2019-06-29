@@ -198,7 +198,8 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             if code not in good_response_codes:
                 if logs:
                     logger.error('response code failed: ' + json.dumps(json_output, indent=2))
-                raise zerrors.EPPResponseFailed(message=msg, code=code)
+                epp_exc = zerrors.exception_from_response(response=json_output, message=msg, code=code)
+                raise epp_exc
         else:
             if out.count('Command completed successfully') == 0:
                 if logs:

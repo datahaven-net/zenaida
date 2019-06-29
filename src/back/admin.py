@@ -7,6 +7,8 @@ from back.models.profile import Profile
 from back.models.domain import Domain
 from back.models.contact import Contact, Registrant
 
+from zen import zmaster
+
 
 class ZoneAdmin(NestedModelAdmin):
     pass
@@ -22,14 +24,17 @@ class ProfileAdmin(NestedModelAdmin):
 
 class DomainAdmin(NestedModelAdmin):
 
-    actions = ['domain_synchronize_from_backend', 'domain_synchronize_from_backend_hard', ]
+    actions = [
+        'domain_synchronize_from_backend',
+        'domain_synchronize_from_backend_hard',
+        'domain_generate_and_set_new_auth_info_key',
+    ]
     list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses', )
 
     def owner_email(self, domain_instance):
         return domain_instance.owner.email
 
     def _do_domain_synchronize_from_backend(self, queryset, soft_delete=False):
-        from zen import zmaster
         report = []
         for domain_object in queryset:
             outputs = zmaster.domain_synchronize_from_backend(
@@ -50,6 +55,13 @@ class DomainAdmin(NestedModelAdmin):
                 report.append('"%s": %d calls OK' % (domain_object.name, len(outputs), ))
         return report
 
+    def _do_generate_and_set_new_auth_info_key(self, queryset):
+        report = []
+        for domain_object in queryset:
+            result = zmaster.domain_set_auth_info(domain_object)
+            report.append('"%s": %s' % (domain_object.name, 'OK' if result else 'ERROR', ))
+        return report
+
     def domain_synchronize_from_backend(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
     domain_synchronize_from_backend.short_description = "Synchronize from back-end"
@@ -57,6 +69,10 @@ class DomainAdmin(NestedModelAdmin):
     def domain_synchronize_from_backend_hard(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=False)))
     domain_synchronize_from_backend_hard.short_description = "Synchronize from back-end (hard delete)"
+
+    def domain_generate_and_set_new_auth_info_key(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_generate_and_set_new_auth_info_key(queryset)))
+    domain_generate_and_set_new_auth_info_key.short_description = "Generate new auth info"
 
 
 class ContactAdmin(NestedModelAdmin):

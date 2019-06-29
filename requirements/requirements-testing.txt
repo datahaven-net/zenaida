@@ -1,11 +1,11 @@
-tox
+# tox
 isort
 flake8
 mock
 django-debug-toolbar
 
 # PyTest for running the tests.
-pytest
+pytest<5.0.0
 pytest-mock
 pytest-cov
 pytest-django

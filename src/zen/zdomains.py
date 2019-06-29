@@ -1,6 +1,8 @@
 import logging
 import re
 import datetime
+import random
+import string
 
 from django.utils import timezone
 from django.conf import settings
@@ -263,6 +265,16 @@ def domain_detach_contact(domain_object, role):
     return domain_object
 
 
+def domain_set_auth_key(domain_object, new_auth_key):
+    """
+    Set mew aith_key for given domain
+    """
+    domain_object.auth_key = new_auth_key
+    domain_object.save()
+    logger.info('domain %s auth_key changed', domain_object.name)
+    return domain_object
+
+
 def get_last_registered_domain(registrant_email):
     """
     If user has any domain, return latest registered domain of the user by email else empty list.
@@ -466,3 +478,22 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     if modified:
         logger.info('domain %r statuses modified:  %r -> %r', domain_object, current_domain_statuses, new_domain_statuses)
     return True
+
+#------------------------------------------------------------------------------
+
+def generate_random_auth_info(length=12):
+    """
+    Generates a new random auth info code with lowercase / uppercase letters and digits.
+    """
+    random.seed()
+    lower_length = int(length / 3)
+    upper_length = int(length / 3)
+    digits_lendth = length - upper_length - lower_length
+    lower_pwd = [random.choice(string.ascii_lowercase) for _ in range(lower_length)]
+    upper_pwd = [random.choice(string.ascii_uppercase) for _ in range(upper_length)]
+    digits_pwd = [random.choice(string.digits) for _ in range(digits_lendth)]
+    pwd = lower_pwd + upper_pwd + digits_pwd
+    random.shuffle(pwd)
+    return ''.join(pwd)
+
+#------------------------------------------------------------------------------

@@ -128,7 +128,7 @@ def test_single_domain_another_registrar():
     assert len(outputs) == 3
     assert outputs[0] == [test_domain_name, ]
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
-    assert isinstance(outputs[2], zerrors.EPPResponseFailed)
+    assert isinstance(outputs[2], zerrors.EPPResponseEmpty)
 
 
 @pytest.mark.django_db

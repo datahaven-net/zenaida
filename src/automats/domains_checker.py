@@ -256,7 +256,7 @@ class DomainsChecker(automat.Automat):
         existing_domains = []
         results = args[0]['epp']['response']['resData']['chkData']['cd']
         if not results:
-            self.outputs.append(zerrors.EPPResponseFailed())
+            self.outputs.append(zerrors.EPPResponseEmpty())
             return
         if not isinstance(results, list):
             results = [results, ]
@@ -270,7 +270,7 @@ class DomainsChecker(automat.Automat):
                     existing_domains.append(name)
                     self.check_results[name] = True
                 else:
-                    self.check_results[name] = zerrors.EPPUnexpectedResponse(response=args[0])
+                    self.check_results[name] = zerrors.exception_from_response(response=args[0])
             else:
                 self.check_results[name] = False
         self.outputs.append(existing_domains)
@@ -296,7 +296,7 @@ class DomainsChecker(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+            self.outputs.append(zerrors.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """
@@ -313,14 +313,14 @@ class DomainsChecker(automat.Automat):
         results = response['epp']['response']['resData']['chkData']['cd']
         if not results:
             logger.error('unexpected EPP response, no results')
-            return [zerrors.EPPResponseFailed(), ]
+            return [zerrors.EPPResponseEmpty(), ]
         if not isinstance(results, list):
             results = [results, ]
         for result in results:
             if not result.get('name', {}).get('#text'):
                 logger.error('unexpected EPP response, unknown domain name: %s' % response)
-                return [zerrors.EPPResponseFailed(), ]
+                return [zerrors.EPPResponseEmpty(), ]
             if result.get('name', {}).get('@avail') == '0':
                 if not result.get('reason').lower().count('the domain exists'):
-                    return [zerrors.EPPUnexpectedResponse(response=response), ]
+                    return [zerrors.exception_from_response(response=response), ]
         return []

@@ -296,7 +296,7 @@ class DomainResurrector(automat.Automat):
         if event in ['error', 'verify-failed', ]:
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.EPPUnexpectedResponse(response=args[0]))
+            self.outputs.append(zerrors.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

@@ -9,6 +9,7 @@ services:
 
 language: python
 
+cache: pip
 
 matrix:
   include:

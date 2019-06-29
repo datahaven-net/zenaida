@@ -17,7 +17,6 @@ def test_success():
         return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_domain = testsupport.prepare_tester_domain(
         domain_name='test-write-0.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
-        # TODO: take this from CoCCA server, need to prepare test data on the server
         domain_epp_id='86_zenaida',
         epp_id_dict={
             'registrant': 'TestWrite_0',

@@ -91,6 +91,12 @@ LOGGING = {
             'formatter': 'simple',
             'stream': sys.stdout,
         },
+        'btcpay_verify': {
+            'level': 'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple',
+            'stream': sys.stdout,
+        },
     },
     'loggers': {
         'django.request': {
@@ -107,6 +113,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
             'handlers': ['zenaida_poll', ],
+        },
+        'billing.management.commands.btcpay_verify': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['btcpay_verify', ],
         },
         'pika': {
             'propagate': False,

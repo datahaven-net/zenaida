@@ -70,7 +70,7 @@ class Command(BaseCommand):
                                     text_content='There is a problem with BTCPay Server. Please check the server status.',
                                     from_email='admin@zenaida.cate.ai',
                                     to_email=one_email,
-                                ).send_sms()
+                                )
                             cache.set("bruteforce_protection_email", True, 60 * 60)
                         break
                     if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:

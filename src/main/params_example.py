@@ -80,3 +80,9 @@ ENV = 'development'
 
 #--- Zenaida BTCPayServer payments
 # ZENAIDA_BILLING_BTCPAY_MERCHANT_LINK = 'https://node.bitcoin.ai'
+
+
+#--- SMS Gateway configuration
+# SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = 'bearer'
+# SMS_GATEWAY_SEND_URL = 'https://api.clickatell.com/rest/message'
+# SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS = []

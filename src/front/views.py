@@ -196,10 +196,12 @@ class AccountDomainUpdateView(UpdateView):
 @login_required
 def account_domain_transfer(request):
     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
-    transfer_code = zmaster.domain_set_auth_info(domain)
-    # TODO Send this code to the Cocca.
+    if not zmaster.domain_set_auth_info(domain):
+        messages.error(request, 'There were technical problems with domain transfer code processing. '
+                                'Please try again later or contact customer support.')
+        return shortcuts.redirect('account_domains')
     return shortcuts.render(request, 'front/account_domain_transfer.html', {
-        'transfer_code': transfer_code,
+        'transfer_code': domain.auth_key,
         'domain_name': domain.name,
     })
 

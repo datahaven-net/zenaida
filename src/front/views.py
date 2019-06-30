@@ -17,7 +17,7 @@ from back.models.profile import Profile
 from base.exceptions import ExceededMaxAttemptsException
 from base.bruteforceprotection import BruteForceProtection
 
-from front import forms, helpers
+from front import forms
 
 from zen import zdomains
 from zen import zcontacts
@@ -196,7 +196,7 @@ class AccountDomainUpdateView(UpdateView):
 @login_required
 def account_domain_transfer(request):
     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
-    transfer_code = helpers.get_transfer_code()
+    transfer_code = zmaster.domain_set_auth_info(domain)
     # TODO Send this code to the Cocca.
     return shortcuts.render(request, 'front/account_domain_transfer.html', {
         'transfer_code': transfer_code,

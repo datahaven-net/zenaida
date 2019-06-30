@@ -4,6 +4,7 @@ import datetime
 
 from btcpay import BTCPayClient
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -25,9 +26,6 @@ class Command(BaseCommand):
             pem=settings.ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY,
             tokens={"merchant": settings.ZENAIDA_BTCPAY_MERCHANT}
         )
-
-        if not client:
-            SMSSender(text_message="There is a problem with BTCPay Server. Please check the server status.").send_sms()
 
         while True:
             logger.info('Check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -54,7 +52,15 @@ class Command(BaseCommand):
             for invoice in btcpay_active_invoices:
                 logger.debug('active: %r' % invoice)
                 if invoice.status != 'paid':
-                    btcpay_resp = client.get_invoice(invoice.invoice_id)
+                    try:
+                        btcpay_resp = client.get_invoice(invoice.invoice_id)
+                    except:
+                        if not cache.get("bruteforce_protection_sms"):
+                            SMSSender(
+                                text_message="There is a problem with BTCPay Server. Please check the server status."
+                            ).send_sms()
+                            cache.set("bruteforce_protection_sms", True, 60 * 60)
+                        break
                     if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
                         if not payments.finish_payment(
                             transaction_id=invoice.transaction_id,

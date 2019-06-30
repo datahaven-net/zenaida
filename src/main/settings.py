@@ -374,6 +374,9 @@ ZENAIDA_BTCPAY_HOST = getattr(params, 'ZENAIDA_BTCPAY_HOST', '')
 GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
 GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
 
+SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = getattr(params, 'SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN', '')
+SMS_GATEWAY_SEND_URL = getattr(params, 'SMS_GATEWAY_SEND_URL', '')
+SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS = getattr(params, 'SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS', [])
 
 #------------------------------------------------------------------------------
 #--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded

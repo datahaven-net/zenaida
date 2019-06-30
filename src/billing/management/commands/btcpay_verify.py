@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from base.sms import SMSSender
 from billing import payments
 
 from billing.pay_btcpay.models import BTCPayInvoice
@@ -24,6 +25,9 @@ class Command(BaseCommand):
             pem=settings.ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY,
             tokens={"merchant": settings.ZENAIDA_BTCPAY_MERCHANT}
         )
+
+        if not client:
+            SMSSender(text_message="There is a problem with BTCPay Server. Please check the server status.").send_sms()
 
         while True:
             time_threshold = timezone.now() - datetime.timedelta(hours=1)

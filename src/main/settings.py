@@ -387,7 +387,9 @@ GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
 
 SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = getattr(params, 'SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN', '')
 SMS_GATEWAY_SEND_URL = getattr(params, 'SMS_GATEWAY_SEND_URL', '')
-SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS = getattr(params, 'SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS', [])
+
+ALERT_SMS_PHONE_NUMBERS = getattr(params, 'ALERT_SMS_PHONE_NUMBERS', [])
+ALERT_EMAIL_RECIPIENTS = getattr(params, 'ALERT_EMAIL_RECIPIENTS', [])
 
 #------------------------------------------------------------------------------
 #--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded

@@ -85,4 +85,7 @@ ENV = 'development'
 #--- SMS Gateway configuration
 # SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = 'bearer'
 # SMS_GATEWAY_SEND_URL = 'https://api.clickatell.com/rest/message'
-# SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS = []
+
+#--- Alerts
+# ALERT_SMS_PHONE_NUMBERS = []
+# ALERT_EMAIL_RECIPIENTS = []

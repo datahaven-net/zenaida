@@ -3,14 +3,17 @@ import time
 import datetime
 
 from btcpay import BTCPayClient
+
 from django.conf import settings
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
+
 from django.utils import timezone
 
 from base.sms import SMSSender
-from billing import payments
+from base.email import send_email
 
+from billing import payments
 from billing.pay_btcpay.models import BTCPayInvoice
 
 logger = logging.getLogger(__name__)
@@ -60,6 +63,15 @@ class Command(BaseCommand):
                                 text_message="There is a problem with BTCPay Server. Please check the server status."
                             ).send_sms()
                             cache.set("bruteforce_protection_sms", True, 60 * 60)
+                        if not cache.get("bruteforce_protection_email"):
+                            for one_email in settings.ALERT_EMAIL_RECIPIENTS:
+                                send_email(
+                                    subject='BTCPay Server connectivity issue',
+                                    text_content='There is a problem with BTCPay Server. Please check the server status.',
+                                    from_email='admin@zenaida.cate.ai',
+                                    to_email=one_email,
+                                ).send_sms()
+                            cache.set("bruteforce_protection_email", True, 60 * 60)
                         break
                     if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
                         if not payments.finish_payment(

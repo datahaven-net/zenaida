@@ -21,7 +21,7 @@ class SMSSender(BaseSMSGateway):
         super().__init__()
         self.phone_numbers = phone_numbers
         if not self.phone_numbers:
-            self.phone_numbers = settings.SMS_GATEWAY_DEFAULT_RECEIVER_PHONE_NUMBERS
+            self.phone_numbers = settings.ALERT_SMS_PHONE_NUMBERS
         self.text_message = text_message
 
     def send_sms(self):

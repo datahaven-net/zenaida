@@ -72,12 +72,6 @@ class DomainAuthChanger(automat.Automat):
                 self.state = 'INFO?'
                 self.doInit(*args, **kwargs)
                 self.doEppDomainInfo(*args, **kwargs)
-        #---DONE---
-        elif self.state == 'DONE':
-            pass
-        #---FAILED---
-        elif self.state == 'FAILED':
-            pass
         #---INFO?---
         elif self.state == 'INFO?':
             if event == 'response' and self.isCode(1000, *args, **kwargs):
@@ -98,6 +92,12 @@ class DomainAuthChanger(automat.Automat):
                 self.doDBUpdateDomain(*args, **kwargs)
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+        #---DONE---
+        elif self.state == 'DONE':
+            pass
+        #---FAILED---
+        elif self.state == 'FAILED':
+            pass
         return None
 
     def isCode(self, *args, **kwargs):

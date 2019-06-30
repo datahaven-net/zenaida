@@ -2,8 +2,8 @@ import mock
 import pytest
 from django.test import TestCase
 
-from front.exceptions import ExceededMaxAttemptsException
-from front.bruteforceprotection import BruteForceProtection
+from base.exceptions import ExceededMaxAttemptsException
+from base.bruteforceprotection import BruteForceProtection
 
 
 class TestBruteForceProtection(TestCase):

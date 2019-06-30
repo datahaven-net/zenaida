@@ -2,7 +2,7 @@ import logging
 
 from django.core.cache import cache
 
-from front.exceptions import ExceededMaxAttemptsException
+from base.exceptions import ExceededMaxAttemptsException
 
 
 logger = logging.getLogger(__name__)

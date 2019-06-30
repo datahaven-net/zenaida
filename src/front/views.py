@@ -14,8 +14,8 @@ from django.views.generic import UpdateView, CreateView, DeleteView, ListView, T
 from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
-from front.exceptions import ExceededMaxAttemptsException
-from front.bruteforceprotection import BruteForceProtection
+from base.exceptions import ExceededMaxAttemptsException
+from base.bruteforceprotection import BruteForceProtection
 
 from front import forms, helpers
 

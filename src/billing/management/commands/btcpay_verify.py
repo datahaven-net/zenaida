@@ -30,6 +30,7 @@ class Command(BaseCommand):
             SMSSender(text_message="There is a problem with BTCPay Server. Please check the server status.").send_sms()
 
         while True:
+            logger.info('Check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
             time_threshold = timezone.now() - datetime.timedelta(hours=1)
 
             btcpay_expired_invoices = BTCPayInvoice.invoices.filter(started_at__lt=time_threshold, finished_at=None)

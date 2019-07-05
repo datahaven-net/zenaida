@@ -21,7 +21,6 @@ class Payment(models.Model):
     method = models.CharField(
         choices=(
             ('pay_4csonline', 'Credit Card', ),
-            ('pay_bank_transfer_anguilla', 'Bank Transfer', ),
             ('pay_btcpay', 'BitCoin'),
         ),
         max_length=32,

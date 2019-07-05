@@ -21,7 +21,6 @@ class NewPaymentForm(forms.Form):
         required=True,
         choices=(
             ('pay_4csonline', 'Credit Card', ),
-            ('pay_bank_transfer_anguilla', 'Bank Transfer', ),
             ('pay_btcpay', 'BitCoin'),
         ),
     )

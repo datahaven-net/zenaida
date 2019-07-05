@@ -31,6 +31,14 @@ class Command(BaseCommand):
         )
 
         while True:
+            try:
+                client.get_rate("USD")
+            except:
+                logger.exception("BTCPay server connection problem while getting rates.")
+                self._send_sms_and_email_alert()
+                time.sleep(60)
+                continue
+
             logger.info('Check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
             time_threshold = timezone.now() - datetime.timedelta(hours=1)
 
@@ -58,20 +66,8 @@ class Command(BaseCommand):
                     try:
                         btcpay_resp = client.get_invoice(invoice.invoice_id)
                     except:
-                        if not cache.get("bruteforce_protection_sms"):
-                            SMSSender(
-                                text_message="There is a problem with BTCPay Server. Please check the server status."
-                            ).send_sms()
-                            cache.set("bruteforce_protection_sms", True, 60 * 60)
-                        if not cache.get("bruteforce_protection_email"):
-                            for one_email in settings.ALERT_EMAIL_RECIPIENTS:
-                                send_email(
-                                    subject='BTCPay Server connectivity issue',
-                                    text_content='There is a problem with BTCPay Server. Please check the server status.',
-                                    from_email='admin@zenaida.cate.ai',
-                                    to_email=one_email,
-                                )
-                            cache.set("bruteforce_protection_email", True, 60 * 60)
+                        logger.exception("BTCPay server connection problem while checking invoice payment status.")
+                        self._send_sms_and_email_alert()
                         break
                     if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
                         if not payments.finish_payment(
@@ -86,3 +82,20 @@ class Command(BaseCommand):
                         logger.info(f'Payment succeed, transaction_id={invoice.transaction_id}')
 
             time.sleep(5 * 60)
+
+    @staticmethod
+    def _send_sms_and_email_alert():
+        if not cache.get("bruteforce_protection_sms"):
+            SMSSender(
+                text_message="There is a problem with BTCPay Server. Please check the server status."
+            ).send_sms()
+            cache.set("bruteforce_protection_sms", True, 60 * 60)
+        if not cache.get("bruteforce_protection_email"):
+            for email_address in settings.ALERT_EMAIL_RECIPIENTS:
+                send_email(
+                    subject='BTCPay Server connectivity issue',
+                    text_content='There is a problem with BTCPay Server. Please check the server status.',
+                    from_email=settings.EMAIL_ADMIN,
+                    to_email=email_address,
+                )
+            cache.set("bruteforce_protection_email", True, 60 * 60)

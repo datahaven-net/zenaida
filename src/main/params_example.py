@@ -7,6 +7,7 @@ ENV = 'development'
 # DEBUG = True
 # RAISE_EXCEPTIONS = True
 # SECRET_KEY = 'must be declared here !!!'
+# SITE_BASE_URL = ''
 
 
 #--- SQlite3
@@ -43,6 +44,7 @@ ENV = 'development'
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = False
+# EMAIL_ADMIN = f'admin@{SITE_BASE_URL}'
 
 #--- Brute force protection settings
 # BRUTE_FORCE_PROTECTION_ENABLED = False

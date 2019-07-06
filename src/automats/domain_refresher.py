@@ -28,6 +28,7 @@ from automats import automat
 from zen import zclient
 from zen import zerrors
 from zen import zdomains
+from zen import zusers
 from zen import zcontacts
 
 #------------------------------------------------------------------------------
@@ -180,6 +181,7 @@ class DomainRefresher(automat.Automat):
         self.domain_name = kwargs['domain_name']
         self.target_domain = zdomains.domain_find(domain_name=self.domain_name)
         self.change_owner_allowed = kwargs.get('change_owner_allowed', False)
+        self.create_new_owner_allowed = kwargs.get('create_new_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
         self.soft_delete = kwargs.get('soft_delete', False)
 
@@ -284,10 +286,14 @@ class DomainRefresher(automat.Automat):
         self.known_registrant = zcontacts.registrant_find(self.received_registrant)
         # fail if registrant not exist in local DB
         # that means owner of the domain changed, or his contact is not in sync with back-end
+        # this also happens when domain is transferred to Zenaida, but user account not exist yet
         if not self.known_registrant:
-            logger.error('registrant not exist in local DB')
-            self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
-            return
+            if not self.create_new_owner_allowed:
+                logger.error('registrant not exist in local DB')
+                self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
+                return
+            raise NotImplementedError('currently registrant not exist in local DB, user account needs to be created first')
+            # zusers.create_account(email, account_password, also_profile, is_active)
 
         self.domain_info_response = response
         self.event('response', response)
@@ -529,6 +535,9 @@ class DomainRefresher(automat.Automat):
         """
         Remove all references to the state machine object to destroy it.
         """
+        self.soft_delete = None
+        self.change_owner_allowed = None
+        self.create_new_owner_allowed = None
         self.domain_name = None
         self.target_domain = None
         self.contacts_changed = False

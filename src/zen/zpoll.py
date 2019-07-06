@@ -307,7 +307,7 @@ def main():
             logger.debug('NEXT?')
 
         if not result:
-            time.sleep(10)
+            time.sleep(settings.ZENAIDA_EPP_POLL_INTERVAL_SECONDS)
 
 
 if __name__ == '__main__':

@@ -260,6 +260,7 @@ EMAIL_HOST_PASSWORD = getattr(params, 'EMAIL_HOST_PASSWORD', '')
 EMAIL_PORT = getattr(params, 'EMAIL_PORT', 465)
 EMAIL_USE_TLS = getattr(params, 'EMAIL_USE_TLS', False)
 EMAIL_USE_SSL = getattr(params, 'EMAIL_USE_SSL', True)
+EMAIL_ADMIN = getattr(params, 'EMAIL_ADMIN', '')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 

@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
+from django.conf import settings
+
+#------------------------------------------------------------------------------
+
 class XML2JsonOptions(object):
     pretty = True
 
@@ -149,6 +153,9 @@ def on_queue_response(resData):
         if trStatus.lower() != 'serverapproved':
             logger.info('domain %s transfer status is: %s' % (domain, trStatus, ))
             return True
+
+        if to_client == settings.ZENAIDA_REGISTRAR_ID:
+            return do_domain_transfer_to_us(domain)
 
         return do_domain_transfer_away(domain, from_client=from_client, to_client=to_client)
 
@@ -300,7 +307,7 @@ def main():
             logger.debug('NEXT?')
 
         if not result:
-            time.sleep(10)
+            time.sleep(settings.ZENAIDA_EPP_POLL_INTERVAL_SECONDS)
 
 
 if __name__ == '__main__':

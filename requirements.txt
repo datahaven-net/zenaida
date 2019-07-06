@@ -1,10 +1,10 @@
 btcpay-python==1.1.0
-certifi==2019.3.9
+certifi==2019.6.16
 chardet==3.0.4
-Django==2.2.2
+Django==2.2.3
 django-bootstrap4==0.0.8
 django-extensions==2.1.9
-django-grappelli==2.12.3
+django-grappelli==2.13.1
 django-nested-admin==3.2.3
 djangorestframework==3.9.4
 ecdsa==0.13.2

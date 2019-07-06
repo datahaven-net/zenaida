@@ -30,6 +30,14 @@ def billing_overview(request):
     pass
 
 
+class PaymentsListView(LoginRequiredMixin, ListView):
+    template_name = 'billing/account_payments.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return payments.list_payments(owner=self.request.user)
+
+
 class NewPaymentView(LoginRequiredMixin, FormView):
     template_name = 'billing/new_payment.html'
     form_class = billing_forms.NewPaymentForm
@@ -132,14 +140,6 @@ class OrderSingleReceiptDownloadView(View):
         response = HttpResponse(pdf_info['body'], content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
         return response
-
-
-class PaymentsListView(LoginRequiredMixin, ListView):
-    template_name = 'billing/account_payments.html'
-    paginate_by = 10
-
-    def get_queryset(self):
-        return payments.list_payments(owner=self.request.user)
 
 
 class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):

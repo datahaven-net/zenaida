@@ -23,7 +23,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_successful_process_payment(self):
         # Call payment endpoint to create payment first
-        payment = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
+        payment = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
         transaction_id = payment.context['transaction_id']
         response = self.client.get(f'/billing/4csonline/process/{transaction_id}/')
         assert response.status_code == 200

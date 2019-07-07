@@ -23,7 +23,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
     @override_settings(ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK=True)
     @pytest.mark.django_db
     def test_create_new_payment_in_db(self):
-        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
+        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
         # Payment is started, so that redirect to the starting 4csonline page.
         assert response.status_code == 200
         assert response.context['transaction_id']
@@ -36,7 +36,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         mock_latest_payment.return_value = mock.MagicMock(
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
         )
-        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
+        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
         # There was a payment a minute ago, so that redirect back to the payment page with an error message.
         assert response.status_code == 302
         assert response.url == '/billing/pay/'

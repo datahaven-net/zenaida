@@ -6,7 +6,19 @@
 
 
 {% if object_list %}
-
+    <div class="text-center">
+        <form class="justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+            <div class="form-row">
+                <div class="col-lg-11">
+                    <input class="form-control form-control-lg" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                </div>
+                <div class="col-lg-1">
+                    <button class="btn btn-success btn-lg" type="submit">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <br />
     <form action="{% url 'billing_order_create' %}" method="post">
     {% csrf_token %}
     <div class="table-responsive">
@@ -65,8 +77,20 @@
 
 {% else %}
 
-    <div class="alert alert-warning text-center" role="alert">
-        You don't have any domain yet.
+    <div class="alert alert-success text-center" role="alert">
+        Register your first domain!
+    </div>
+    <div class="text-center">
+        <form class="justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+            <div class="form-row">
+                <div class="col-lg-11">
+                    <input class="form-control form-control-lg" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                </div>
+                <div class="col-lg-1">
+                    <button class="btn btn-success btn-lg" type="submit">Search</button>
+                </div>
+            </div>
+        </form>
     </div>
 
 {% endif %}

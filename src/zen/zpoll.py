@@ -25,7 +25,7 @@ class XML2JsonOptions(object):
 
 #------------------------------------------------------------------------------
 
-def do_domain_transfer_to_us(domain):
+def do_domain_transfer_in(domain):
     logger.info('domain %s transferred to Zenaida', domain)
     try:
         zmaster.domain_synchronize_from_backend(
@@ -155,7 +155,7 @@ def on_queue_response(resData):
             return True
 
         if to_client == settings.ZENAIDA_REGISTRAR_ID:
-            return do_domain_transfer_to_us(domain)
+            return do_domain_transfer_in(domain)
 
         return do_domain_transfer_away(domain, from_client=from_client, to_client=to_client)
 
@@ -184,7 +184,7 @@ def on_queue_message(msgQ):
                 return do_domain_transfer_away(domain)
 
             if details.lower() == 'domain transferred':
-                return do_domain_transfer_to_us(domain)
+                return do_domain_transfer_in(domain)
 
         if change == 'DELETION':
             if details.lower() == 'domain deleted':

@@ -218,7 +218,10 @@ class DomainRefresher(automat.Automat):
         """
         Condition method.
         """
-        return bool(zusers.find_account(args[0]['epp']['response']['resData']['infData']['email']))
+        existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'])
+        if not existing_account:
+            return False
+        return existing_account.registrants.first()
 
     def doInit(self, *args, **kwargs):
         """

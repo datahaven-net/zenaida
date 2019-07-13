@@ -5,7 +5,11 @@
 {% block main_content %}
 
 
-{% if object_list %}
+{% if not object_list %}
+
+    <div class="alert alert-success text-center" role="alert">
+        Register your first domain!
+    </div>
     <div class="text-center">
         <form action="{% url 'domain_lookup' %}" method="get">
             <div class="form-row justify-content-center">
@@ -18,8 +22,9 @@
             </div>
         </form>
     </div>
-    <br />
-    <br />
+
+{% else %}
+
     <form action="{% url 'billing_order_create' %}" method="post">
     {% csrf_token %}
     <div class="table-responsive">
@@ -75,24 +80,6 @@
     </div>
     <button type="submit" class="btn btn-success">Register/Renew/Restore</button>
     </form>
-
-{% else %}
-
-    <div class="alert alert-success text-center" role="alert">
-        Register your first domain!
-    </div>
-    <div class="text-center">
-        <form action="{% url 'domain_lookup' %}" method="get">
-            <div class="form-row justify-content-center">
-                <div class="col-lg-3">
-                    <input class="form-control form-control-lg" type="text" placeholder="Your domain name" aria-label="Search" name="domain_name">
-                </div>
-                <div class="col-lg-1">
-                    <button class="btn btn-success btn-lg btn-block" type="submit">Register</button>
-                </div>
-            </div>
-        </form>
-    </div>
 
 {% endif %}
 

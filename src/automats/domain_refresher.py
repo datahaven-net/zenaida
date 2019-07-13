@@ -452,7 +452,7 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'])
-        self.new_registrant_epp_id = existing_account.registrants.epp_id
+        self.new_registrant_epp_id = existing_account.registrants.first().epp_id
 
     def doDBCheckCreateUserAccount(self, *args, **kwargs):
         """

@@ -155,8 +155,6 @@ def on_queue_response(resData):
             logger.info('domain %s transfer status is: %s' % (domain, trStatus, ))
             return True
 
-        logger.debug(resData)
-
         if to_client == settings.ZENAIDA_REGISTRAR_ID:
             return do_domain_transfer_in(domain)
 
@@ -172,8 +170,6 @@ def on_queue_message(msgQ):
     except:
         logger.exception('can not process queue message: %s' % msgQ)
         return False
-
-    logger.debug(json_input)
 
     if 'offlineUpdate' in json_input:
         try:
@@ -239,8 +235,11 @@ def on_queue_message(msgQ):
         if change == 'UNKNOWN':
             if details.lower().count('domain epp statuses updated'):
                 return do_domain_status_changed(domain)
+            # TODO: found that when you change domain auth code directly on backend epp messages coming to Zenaida like that:
+            # {'offlineUpdate': {'domain': {'name': 'lala.ai', 'change': 'UNKNOWN', 'details': None}}}
+            # need to ask guys from COCCA about that...
             # if details.lower() == 'none':
-            #     return do_domain_transfer_away(domain)
+            #     ...
 
     logger.error('UNKNOWN message: %s' % json_input)
     return False

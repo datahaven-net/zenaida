@@ -25,13 +25,14 @@ class XML2JsonOptions(object):
 
 #------------------------------------------------------------------------------
 
-def do_domain_transfer_to_us(domain):
+def do_domain_transfer_in(domain):
     logger.info('domain %s transferred to Zenaida', domain)
     try:
         zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             change_owner_allowed=True,
+            create_new_owner_allowed=True,
         )
     except zerrors.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
@@ -155,7 +156,7 @@ def on_queue_response(resData):
             return True
 
         if to_client == settings.ZENAIDA_REGISTRAR_ID:
-            return do_domain_transfer_to_us(domain)
+            return do_domain_transfer_in(domain)
 
         return do_domain_transfer_away(domain, from_client=from_client, to_client=to_client)
 
@@ -184,7 +185,7 @@ def on_queue_message(msgQ):
                 return do_domain_transfer_away(domain)
 
             if details.lower() == 'domain transferred':
-                return do_domain_transfer_to_us(domain)
+                return do_domain_transfer_in(domain)
 
         if change == 'DELETION':
             if details.lower() == 'domain deleted':
@@ -234,8 +235,11 @@ def on_queue_message(msgQ):
         if change == 'UNKNOWN':
             if details.lower().count('domain epp statuses updated'):
                 return do_domain_status_changed(domain)
-            if details.lower() == 'none':
-                return do_domain_transfer_away(domain)
+            # TODO: found that when you change domain auth code directly on backend epp messages coming to Zenaida like that:
+            # {'offlineUpdate': {'domain': {'name': 'lala.ai', 'change': 'UNKNOWN', 'details': None}}}
+            # need to ask guys from COCCA about that...
+            # if details.lower() == 'none':
+            #     ...
 
     logger.error('UNKNOWN message: %s' % json_input)
     return False

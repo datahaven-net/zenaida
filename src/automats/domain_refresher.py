@@ -479,6 +479,20 @@ class DomainRefresher(automat.Automat):
                 contact_fax=self.current_registrant_info.get('fax', ''),
                 contact_email=self.current_registrant_info['email'],
             )
+        if not hasattr(known_owner, 'profile'):
+            zusers.create_profile(
+                known_owner,
+                person_name=self.current_registrant_address_info.get('name', 'unknown'),
+                organization_name=self.current_registrant_address_info.get('org', 'unknown'),
+                address_street=self.current_registrant_address_info.get('street', 'unknown'),
+                address_city=self.current_registrant_address_info.get('city', 'unknown'),
+                address_province=self.current_registrant_address_info.get('sp', 'unknown'),
+                address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
+                address_country=self.current_registrant_address_info.get('cc', 'AF'),
+                contact_voice=self.current_registrant_info.get('voice', ''),
+                contact_fax=self.current_registrant_info.get('fax', ''),
+                contact_email=self.current_registrant_info['email'],
+            )
         self.received_registrant_epp_id = self.new_registrant_epp_id
         self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
         if not self.known_registrant:

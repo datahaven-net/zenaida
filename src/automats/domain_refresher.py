@@ -70,7 +70,7 @@ class DomainRefresher(automat.Automat):
         self.contacts_changed = False
         self.refresh_contacts = False 
         self.domain_info_response = None
-        self.received_registrant = None
+        self.received_registrant_epp_id = None
         self.received_contacts = []
         self.received_contact_roles = {}
         self.received_nameservers = []
@@ -218,7 +218,7 @@ class DomainRefresher(automat.Automat):
         """
         Condition method.
         """
-        return bool(zusers.find_account(self.current_registrant_info['email']))
+        return bool(zusers.find_account(args[0]['epp']['response']['resData']['infData']['email']))
 
     def doInit(self, *args, **kwargs):
         """
@@ -322,7 +322,7 @@ class DomainRefresher(automat.Automat):
 
         # detect current registrant
         try:
-            self.received_registrant = response['epp']['response']['resData']['infData']['registrant']
+            self.received_registrant_epp_id = response['epp']['response']['resData']['infData']['registrant']
         except Exception as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', zerrors.EPPRegistrantUnknown(response=response))
@@ -331,7 +331,7 @@ class DomainRefresher(automat.Automat):
         self.domain_info_response = response
 
         # find registrant in local DB
-        self.known_registrant = zcontacts.registrant_find(self.received_registrant)
+        self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
         if self.known_registrant:
             self.event('response', response)
             return
@@ -370,7 +370,7 @@ class DomainRefresher(automat.Automat):
         # request registrant info
         try:
             response = zclient.cmd_contact_info(
-                contact_id=self.received_registrant,
+                contact_id=self.received_registrant_epp_id,
                 raise_for_result=True,
             )
         except zerrors.EPPError as exc:
@@ -378,7 +378,7 @@ class DomainRefresher(automat.Automat):
             self.event('error', exc)
         else:
             received_contacts_info['registrant'] = {
-                'id': self.received_registrant,
+                'id': self.received_registrant_epp_id,
                 'response': response,
             }
             self.event('all-contacts-received', received_contacts_info)
@@ -390,7 +390,7 @@ class DomainRefresher(automat.Automat):
         # request current registrant info
         try:
             response = zclient.cmd_contact_info(
-                contact_id=self.received_registrant,
+                contact_id=self.received_registrant_epp_id,
                 raise_for_result=True,
             )
         except zerrors.EPPError as exc:
@@ -411,9 +411,19 @@ class DomainRefresher(automat.Automat):
             response = zclient.cmd_contact_create(
                 contact_id=self.new_registrant_epp_id,
                 email=self.current_registrant_info['email'],
-                voice=self.current_registrant_info['voice'],
-                fax=self.current_registrant_info['fax'],
-                contacts_list=[self.current_registrant_address_info, ],
+                voice=self.current_registrant_info.get('voice'),
+                fax=self.current_registrant_info.get('fax'),
+                contacts_list=[{
+                    'name': self.current_registrant_address_info.get('name', 'unknown'),
+                    'org': self.current_registrant_address_info.get('org', 'unknown'),
+                    'address': {
+                        'street': [self.current_registrant_address_info.get('street', 'unknown'), ],
+                        'city': self.current_registrant_address_info.get('city', 'unknown'),
+                        'sp': self.current_registrant_address_info.get('sp', 'unknown'),
+                        'pc': self.current_registrant_address_info.get('pc', 'unknown'),
+                        'cc': self.current_registrant_address_info.get('cc', 'AF'),
+                    },
+                }],
                 raise_for_result=False,
             )
         except zerrors.EPPError as exc:
@@ -441,29 +451,38 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
-        existing_account = zusers.find_account(self.current_registrant_info['email'])
+        existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'])
         self.new_registrant_epp_id = existing_account.registrants.epp_id
 
     def doDBCheckCreateUserAccount(self, *args, **kwargs):
         """
         Action method.
         """
-        if not zusers.find_account(self.current_registrant_info['email']):
-            zusers.create_account(
+        known_owner = zusers.find_account(self.current_registrant_info['email'])
+        if not known_owner:
+            known_owner = zusers.create_account(
                 email=self.current_registrant_info['email'],
                 account_password=zusers.generate_password(length=10),
                 also_profile=True,
                 is_active=True,
-                person_name=self.current_registrant_address_info.get('name', ''),
-                organization_name=self.current_registrant_address_info.get('org', ''),
-                address_street=self.current_registrant_address_info.get('street', ''),
-                address_city=self.current_registrant_address_info.get('city', ''),
-                address_province=self.current_registrant_address_info.get('sp', ''),
-                address_postal_code=self.current_registrant_address_info.get('pc', ''),
-                address_country=self.current_registrant_address_info.get('cc', ''),
+                person_name=self.current_registrant_address_info.get('name', 'unknown'),
+                organization_name=self.current_registrant_address_info.get('org', 'unknown'),
+                address_street=self.current_registrant_address_info.get('street', 'unknown'),
+                address_city=self.current_registrant_address_info.get('city', 'unknown'),
+                address_province=self.current_registrant_address_info.get('sp', 'unknown'),
+                address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
+                address_country=self.current_registrant_address_info.get('cc', 'AF'),
                 contact_voice=self.current_registrant_info.get('voice', ''),
                 contact_fax=self.current_registrant_info.get('fax', ''),
                 contact_email=self.current_registrant_info['email'],
+            )
+        self.received_registrant_epp_id = self.new_registrant_epp_id
+        self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+        if not self.known_registrant:
+            self.known_registrant = zcontacts.registrant_create_from_profile(
+                owner=known_owner,
+                profile_object=known_owner.profile,
+                epp_id=self.received_registrant_epp_id,
             )
 
     def doDBDeleteDomain(self, *args, **kwargs):
@@ -508,7 +527,7 @@ class DomainRefresher(automat.Automat):
         """
         if self.target_domain:
             return
-        zdomains.domain_create(
+        self.target_domain = zdomains.domain_create(
             self.domain_name,
             owner=self.known_registrant.owner,
             expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),

@@ -7,8 +7,20 @@
     {% block main_content %}
 
     <div class="text-center">
+        <form class="justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+              <div class="form-row">
+                  <div class="col-lg-11">
+                    <input class="form-control form-control-lg" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                  </div>
+                  <div class="col-lg-1">
+                    <button class="btn btn-success btn-lg" type="submit">Search</button>
+                  </div>
+
+            </div>
+        </form>
+        <br />
         {% if request.user.is_authenticated %}
-            <h4>Welcome <b>{{ user.email }}</b></h4>
+            <h4>Welcome to AI Domain Registry, <b>{{ user.profile.person_name }}</b>!</h4>
             Your current balance: <b>${{ user.balance }} US</b>
             <br />
             {% if total_domains > 0 %}
@@ -20,7 +32,7 @@
             {% endif %}
             <br />
         {% else %}
-            <h1>Welcome to Zenaida!</h1>
+            <h1>Welcome to AI Domain Registry!</h1>
         {% endif %}
     </div>
 

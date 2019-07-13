@@ -3,11 +3,7 @@
 {% block main_content %}
 
 
-{% if not result %}
-    <div class="alert alert-warning text-center" role="alert">
-        Please search a valid domain from search bar.
-    </div>
-{% elif result == 'not exist' %}
+{% if result == 'not exist' %}
     <div class="alert alert-success text-center" role="alert">
         <b>{{ domain_name }}</b> is available to register.
         <br />
@@ -17,9 +13,34 @@
     <div class="alert alert-warning text-center" role="alert">
         <b>{{ domain_name }}</b> is already registered. <br />Search for another domain!
     </div>
+    <div class="text-center">
+        <form class="justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+              <div class="form-row">
+                  <div class="col-lg-11">
+                    <input class="form-control form-control-lg" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                  </div>
+                  <div class="col-lg-1">
+                    <button class="btn btn-success btn-lg" type="submit">Search</button>
+                  </div>
+            </div>
+        </form>
+    </div>
 {% elif result == 'error' %}
     <div class="alert alert-danger text-center" role="alert">
         Service is unavailable at this moment<br />Please try it later.
+    </div>
+{% else %}
+    <div class="text-center">
+        <form class="justify-content-center" action="{% url 'domain_lookup' %}" method="get">
+              <div class="form-row">
+                  <div class="col-lg-11">
+                    <input class="form-control form-control-lg" type="text" placeholder="Find your domain" aria-label="Search" name="domain_name">
+                  </div>
+                  <div class="col-lg-1">
+                    <button class="btn btn-success btn-lg" type="submit">Search</button>
+                  </div>
+            </div>
+        </form>
     </div>
 {% endif %}
 

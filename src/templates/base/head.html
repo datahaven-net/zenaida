@@ -64,12 +64,6 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav">
-                        <li>
-                        <form class="form-inline my-2 my-lg-0" action="{% url 'domain_lookup' %}" method="get">
-                          <input class="form-control mr-sm-2" type="text" placeholder="Find your domain" aria-label="Search" value="{{ domain_name }}" name="domain_name">
-                          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                        </form>
-                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}" href="#" id="navbarDropdownMenuProfile" data-role="button" aria-haspopup="true" aria-expanded="false">{{ user.email }}</a>
                             <div class="dropdown-menu m-0 dropdown-menu-right" aria-labelledby="navbarDropdownMenuProfile">
@@ -89,14 +83,6 @@
                         </li>
                         <li class="nav-item {% if url_name == 'register' %}active{% endif %}">
                             <a class="nav-link" href="{% url 'register' %}">Create an account</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        <li>
-                        <form class="form-inline my-2 my-lg-0" action="{% url 'domain_lookup' %}" method="get">
-                            <input class="form-control mr-sm-2" type="search" placeholder="Find your domain" aria-label="Search" value="{{ domain_name }}" name="domain_name">
-                            <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
-                        </form>
                         </li>
                     </ul>
                 {% endif %}

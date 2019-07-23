@@ -232,7 +232,7 @@ class DomainRefresher(automat.Automat):
         self.change_owner_allowed = kwargs.get('change_owner_allowed', False)
         self.create_new_owner_allowed = kwargs.get('create_new_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
-        self.soft_delete = kwargs.get('soft_delete', False)
+        self.soft_delete = kwargs.get('soft_delete', True)
 
     def doEppDomainCheck(self, *args, **kwargs):
         """

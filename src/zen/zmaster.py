@@ -101,7 +101,7 @@ def domain_synchronize_from_backend(domain_name,
                                     refresh_contacts=False,
                                     change_owner_allowed=False,
                                     create_new_owner_allowed=False,
-                                    soft_delete=False,
+                                    soft_delete=True,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from backend and take required actions to update local DB

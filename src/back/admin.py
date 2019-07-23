@@ -34,7 +34,7 @@ class DomainAdmin(NestedModelAdmin):
     def owner_email(self, domain_instance):
         return domain_instance.owner.email
 
-    def _do_domain_synchronize_from_backend(self, queryset, soft_delete=False):
+    def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True):
         report = []
         for domain_object in queryset:
             outputs = zmaster.domain_synchronize_from_backend(

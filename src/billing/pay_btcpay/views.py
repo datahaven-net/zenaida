@@ -22,7 +22,9 @@ class ProcessPaymentView(LoginRequiredMixin, View):
             client = btcpay.BTCPayClient(
                 host=settings.ZENAIDA_BTCPAY_HOST,
                 pem=settings.ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY,
-                tokens={"merchant": settings.ZENAIDA_BTCPAY_MERCHANT}
+                tokens={
+                    "merchant": settings.ZENAIDA_BTCPAY_MERCHANT,
+                },
             )
 
             btcpay_invoice = client.create_invoice(
@@ -36,6 +38,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
                     "buyer": {
                         "name": request.user.profile.person_name,
                         "address1": request.user.profile.address_street,
+                        "address2": "",
                         "locality": request.user.profile.address_city,
                         "region": request.user.profile.address_province,
                         "postalCode": request.user.profile.address_postal_code,
@@ -55,7 +58,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
             )
         except Exception as exc:
             logger.exception(exc)
-            messages.error(self.request, "There is a problem with Bitcoin payment at this moment. "
+            messages.error(self.request, "There is a problem with BitCoin payments at this moment."
                                          "Please try again later.")
             return shortcuts.redirect('billing_new_payment')
 

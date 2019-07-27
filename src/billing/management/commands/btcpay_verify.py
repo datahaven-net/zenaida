@@ -1,6 +1,5 @@
 import logging
 import time
-import datetime
 
 from btcpay import BTCPayClient
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
 
-    help = 'Starts background process to check BTCPay statuses'
+    help = 'Starts background process to check & sync invoices with BTCPay server'
 
     def handle(self, *args, **options):
         client = BTCPayClient(
@@ -31,6 +30,7 @@ class Command(BaseCommand):
         )
 
         while True:
+            # Check if BTCPay server is up and running.
             try:
                 client.get_rate("USD")
             except:
@@ -40,48 +40,45 @@ class Command(BaseCommand):
                 continue
 
             logger.info('Check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
-            time_threshold = timezone.now() - datetime.timedelta(hours=1)
 
-            btcpay_expired_invoices = BTCPayInvoice.invoices.filter(started_at__lt=time_threshold, finished_at=None)
-            for expired_invoice in btcpay_expired_invoices:
-                logger.debug('expired: %r' % expired_invoice)
-                expired_payment_object = payments.by_transaction_id(expired_invoice.transaction_id)
-                if not expired_payment_object:
-                    continue
-                if not payments.finish_payment(
-                    transaction_id=expired_invoice.transaction_id,
-                    status='declined',
-                ):
-                    logger.critical(f'Payment failed to be declined, transaction_id={expired_invoice.transaction_id}')
-                    continue
-                expired_invoice.status = 'expired'
-                expired_invoice.finished_at = timezone.now()
-                expired_invoice.save()
-                logger.info(f'Payment declined because of expiration, transaction_id={expired_invoice.transaction_id}')
-                
-            btcpay_active_invoices = BTCPayInvoice.invoices.filter(started_at__gte=time_threshold)
-            for invoice in btcpay_active_invoices:
-                logger.debug('active: %r' % invoice)
-                if invoice.status != 'paid':
-                    try:
-                        btcpay_resp = client.get_invoice(invoice.invoice_id)
-                    except:
-                        logger.exception("BTCPay server connection problem while checking invoice payment status.")
-                        self._send_sms_and_email_alert()
-                        break
-                    if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
-                        if not payments.finish_payment(
-                            transaction_id=invoice.transaction_id,
-                            status='processed',
-                        ):
-                            logger.critical(f'Payment failed to be completed, transaction_id={invoice.transaction_id}')
-                            continue
-                        invoice.status = 'paid'
-                        invoice.finished_at = timezone.now()
-                        invoice.save()
-                        logger.info(f'Payment succeed, transaction_id={invoice.transaction_id}')
+            # Check status of all incomplete invoices.
+            incomplete_invoices = BTCPayInvoice.invoices.filter(finished_at=None)
 
-            time.sleep(5 * 60)
+            for invoice in incomplete_invoices:
+                try:
+                    btcpay_resp = client.get_invoice(invoice.invoice_id)
+                except:
+                    logger.exception("BTCPay server connection problem while checking invoice payment status.")
+                    self._send_sms_and_email_alert()
+                    break
+
+                # If status is new, there is not any update yet on BTCPay server, so move to the next invoice.
+                if btcpay_resp.get('status') == 'new':
+                    logger.debug(f'active btcpay invoice: {invoice}')
+                    continue
+
+                # If invoice is paid, process the payment in the database as paid.
+                # Else, payment is not done, so decline the payment in the database.
+                if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
+                    logger.debug(f'paid btcpay invoice: {invoice}')
+                    payment_status = 'processed'
+                    btcpay_invoice_status = 'paid'
+                else:
+                    logger.debug(f'expired btcpay invoice: {invoice}')
+                    payment_status = 'declined'
+                    btcpay_invoice_status = 'expired'
+
+                if not payments.finish_payment(transaction_id=invoice.transaction_id, status=payment_status):
+                    logger.critical(f'Payment failed to be completed, transaction_id={invoice.transaction_id}')
+                    continue
+
+                invoice.status = btcpay_invoice_status
+                invoice.finished_at = timezone.now()
+                invoice.save()
+                logger.info(f'Payment is {payment_status} because it is {btcpay_invoice_status}, '
+                            f'transaction_id={invoice.transaction_id}')
+
+            time.sleep(60)
 
     @staticmethod
     def _send_sms_and_email_alert():

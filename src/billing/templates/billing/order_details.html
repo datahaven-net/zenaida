@@ -11,19 +11,27 @@
 <div class="table-responsive">
 
     <table class="table table-hover">
+        <tr>
+            <th>Domain Name</th>
+            <th>Order Type</th>
+            <th>Expiry Date</th>
+            <th>Price</th>
+        </tr>
 
     {% for order_item in order.items.all|dictsort:"name" %}
         <tr>
-            <td><b>{{ order_item.name }}</b></td>
+            <td><i>{{ order_item.name }}</i></td>
             <td>{{ order_item.get_type_display }}</td>
+            <td>{{domain_expiry_date|date:'d N Y'}}</td>
             <td>{{ order_item.price }} $ US</td>
         </tr>
 
     {% endfor %}
 
         <tr>
-            <th>&nbsp;</th>
-            <th>&nbsp;</th>
+            <th></th>
+            <th></th>
+            <th></th>
             <th><b>{{ order.total_price }} $ US</b></th>
         </tr>
     </table>

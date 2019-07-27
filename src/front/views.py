@@ -1,5 +1,6 @@
 import datetime
 
+from dateutil.relativedelta import relativedelta
 from django import shortcuts
 from django.conf import settings
 from django.contrib import messages
@@ -126,11 +127,13 @@ class AccountDomainCreateView(FormView):
 
         domain_obj = form.save(commit=False)
 
+        domain_creation_date = timezone.now()
+
         zdomains.domain_create(
             domain_name=domain_name,
             owner=self.request.user,
-            create_date=timezone.now(),
-            expiry_date=timezone.now() + datetime.timedelta(days=365),
+            create_date=domain_creation_date,
+            expiry_date=domain_creation_date + relativedelta(years=2),
             registrant=zcontacts.get_registrant(self.request.user),
             contact_admin=domain_obj.contact_admin,
             contact_tech=domain_obj.contact_tech,

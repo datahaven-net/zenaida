@@ -1,6 +1,7 @@
 import logging
 import datetime
 
+from dateutil.relativedelta import relativedelta
 from django import shortcuts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -154,6 +155,10 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
             item_name=kwargs.get('domain_name'),
         )
         context.update({'order': new_order})
+        context['domain_expiry_date'] = ''
+        domain = zdomains.domain_find(domain_name=kwargs.get('domain_name'))
+        if domain:
+            context['domain_expiry_date'] = domain.expiry_date
         return context
 
 
@@ -169,6 +174,10 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
             item_name=kwargs.get('domain_name'),
         )
         context.update({'order': renewal_order})
+        context['domain_expiry_date'] = ''
+        domain = zdomains.domain_find(domain_name=kwargs.get('domain_name'))
+        if domain:
+            context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=2)
         return context
 
 
@@ -184,6 +193,7 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
             item_name=kwargs.get('domain_name'),
         )
         context.update({'order': restore_order})
+        context['domain_expiry_date'] = timezone.now() + relativedelta(years=2)
         return context
 
 

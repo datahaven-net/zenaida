@@ -143,7 +143,9 @@ class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
 
 class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
-    def test_domain_renew_order_successful(self):
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_renew_order_successful(self, mock_domain_search):
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 100.0 to the balance of the user to renew a domain
             mock_payment_by_transaction_id.return_value = mock.MagicMock(
@@ -158,7 +160,9 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
-    def test_domain_register_order_successful(self):
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_register_order_successful(self, mock_domain_search):
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 100.0 to the balance of the user to register a domain
             mock_payment_by_transaction_id.return_value = mock.MagicMock(

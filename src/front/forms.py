@@ -82,6 +82,7 @@ class AccountProfileForm(models.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AccountProfileForm, self).__init__(*args, **kwargs)
+        self.fields['contact_email'].disabled = True
         for field_name in self.fields.keys():
             if field_name not in ['contact_fax', 'address_province', ]:
                 self.fields[field_name].required = True

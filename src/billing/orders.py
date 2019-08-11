@@ -84,7 +84,7 @@ def prepare_register_renew_restore_item(domain_object):
     return item_type, item_price, item_name
 
 
-def order_single_item(owner, item_type, item_price, item_name):
+def order_single_item(owner, item_type, item_price, item_name, item_details=None):
     """
     """
     new_order = Order.orders.create(
@@ -98,6 +98,7 @@ def order_single_item(owner, item_type, item_price, item_name):
         type=item_type,
         price=item_price,
         name=item_name,
+        details=item_details,
     )
     return new_order
 
@@ -204,12 +205,28 @@ def execute_domain_restore(order_item, target_domain):
     return True
 
 
+def execute_domain_transfer(order_item):
+    if not zmaster.domain_transfer_request(
+        domain=order_item.name,
+        auth_info=order_item.details.get('transfer_code'),
+    ):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return False
+
+    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+    return True
+
+
 def execute_one_item(order_item):
+    if order_item.type == 'domain_transfer':
+        return execute_domain_transfer(order_item)
+    
     target_domain = zdomains.domain_find(order_item.name)
     if not target_domain:
         logging.critical('Domain not exist', order_item.name)
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
+
     if target_domain.owner != order_item.order.owner:
         logging.critical('User %s tried to execute an order with domain from another owner' % order_item.order.owner)
         raise exceptions.SuspiciousOperation()

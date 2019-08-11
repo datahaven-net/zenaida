@@ -209,6 +209,47 @@ def account_domain_transfer(request):
     })
 
 
+class AccountDomainTransferTakeoverView(FormView):
+
+    template_name = 'front/account_domain_transfer_takeover.html'
+    form_class = forms.DomainTransferTakeoverForm
+    success_message = 'New domain will be added to your account after confirmation.'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        info = zmaster.domain_read_info(form['domain_name'].value())
+        if not info:
+            messages.warning(self.request, 'Domain is not registered.')
+            return super().form_invalid(form)
+        current_registrar = info['epp']['response']['resData']['infData']['clID']
+        if current_registrar == 'auction':
+            price = 0.0
+        else:
+            price = 100.0
+        from billing import orders as billing_orders
+        transfer_order = billing_orders.order_single_item(
+            owner=self.request.user,
+            item_type='domain_transfer',
+            item_price=price,
+            item_name=form['domain_name'].value(),
+            item_details={
+                'transfer_code': form['transfer_code'].value(),
+            },
+        )
+        messages.success(self.request, self.success_message)
+        return shortcuts.redirect('billing_order_details', order_id=transfer_order.id)
+
+
 class AccountProfileView(LoginRequiredMixin, UpdateView):
     template_name = 'front/account_profile.html'
     model = Profile

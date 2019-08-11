@@ -1,11 +1,12 @@
 import os
 
-from django.forms import forms, models, ModelForm, CharField
+from django.forms import forms, models, fields
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
 
 
-class ContactPersonForm(ModelForm):
+class ContactPersonForm(models.ModelForm):
+
     class Meta:
         model = Contact
         fields = ('person_name', 'organization_name', 'address_street', 'address_city', 'address_province',
@@ -18,7 +19,8 @@ class ContactPersonForm(ModelForm):
                 self.fields[field_name].required = True
 
 
-class DomainDetailsForm(ModelForm):
+class DomainDetailsForm(models.ModelForm):
+
     class Meta:
         model = Domain
         fields = ('contact_admin', 'contact_billing', 'contact_tech',
@@ -89,4 +91,12 @@ class AccountProfileForm(models.ModelForm):
 
 
 class DomainLookupForm(forms.Form):
-    domain_name = CharField()
+
+    domain_name = fields.CharField()
+
+
+class DomainTransferTakeoverForm(forms.Form):
+    
+    domain_name = fields.CharField()
+    transfer_code = fields.CharField()
+

@@ -1,5 +1,8 @@
 from django.db import models
 
+from django.contrib.postgres.fields import JSONField
+from django.core.serializers.json import DjangoJSONEncoder
+
 from billing.models.order import Order
 
 from zen.zdomains import validate_domain_name
@@ -14,7 +17,6 @@ class OrderItem(models.Model):
         base_manager_name = 'order_items'
         default_manager_name = 'order_items'
 
-
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
 
     price = models.FloatField(null=False, blank=False)
@@ -23,7 +25,8 @@ class OrderItem(models.Model):
         choices=(
             ('domain_register', 'Domain Register', ),
             ('domain_renew', 'Domain Renew', ),
-            ('domain_restore', 'Domain Restore', )
+            ('domain_restore', 'Domain Restore', ),
+            ('domain_transfer', 'Domain Transfer', ),
         ),
         max_length=32,
         null=False,
@@ -31,6 +34,8 @@ class OrderItem(models.Model):
     )
 
     name = models.CharField(max_length=255, validators=[validate_domain_name, ])
+
+    details = JSONField(null=True, encoder=DjangoJSONEncoder)
 
     status = models.CharField(
         choices=(

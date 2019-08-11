@@ -6,6 +6,8 @@ from automats import domain_synchronizer
 from automats import domain_refresher
 from automats import domain_resurrector
 
+from zen import zerrors
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     Returns None if error happened, or raise Exception if `raise_errors` is True.
     """
     dc = domains_checker.DomainsChecker(
+        skip_check=False,
         skip_info=(not verify_registrant),
         verify_registrant=verify_registrant,
         stop_on_error=True,
@@ -171,3 +174,67 @@ def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_
 
     logger.debug('domain_auth_changer(%r) finished with %d outputs', domain_object.name, len(outputs))
     return True
+
+
+def domain_transfer_request(domain, auth_info, raise_errors=False, log_events=True, log_transitions=True):
+    """
+    SEND DOMAIN TRANSFER REQUEST
+    """
+    from zen import zclient
+    transfer = zclient.cmd_domain_transfer(domain, op='request', auth_info=auth_info)
+    if transfer['epp']['response']['result']['@code'] != '1000':
+        if transfer['epp']['response']['result']['@code'] == '2304':
+            raise zerrors.EPPObjectStatusProhibitsOperation(
+                message='EPP domain_transfer failed because %s' % (
+                    transfer['epp']['response']['result']['msg'], ))
+        raise zerrors.EPPCommandFailed(message='EPP request domain transfer failed with error code: %s' % (
+            transfer['epp']['response']['result']['@code'], ))
+    return True
+
+
+def domain_read_info(domain, raise_errors=False, log_events=True, log_transitions=True):
+    """
+    Request from back-end and returns actual info about the domain.
+    """
+    dc = domains_checker.DomainsChecker(
+        skip_check=True,
+        skip_info=False,
+        verify_registrant=False,
+        stop_on_error=True,
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dc.event('run', [domain, ])
+    outputs = list(dc.outputs)
+    del dc
+    logger.debug('domains_checker(%r) finished with %d outputs', domain, len(outputs))
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
+            logger.error('domains_checker(%r) failed with: %r', domain, outputs[-1])
+        else:
+            logger.error('domains_checker(%r) unexpectedly failed with: %r', domain, outputs)
+        if raise_errors:
+            if not outputs or not outputs[-1]:
+                raise zerrors.EPPResponseEmpty()
+            elif isinstance(outputs[-1], Exception):
+                raise outputs[-1]
+            else:
+                raise zerrors.EPPCommandFailed(outputs[-1])
+        return None
+    
+    if not outputs[-1].get(domain):
+        logger.error('domains_checker(%r) failed because domain not exist', domain)
+        if raise_errors:
+            raise zerrors.EPPDomainNotExist()
+        return None
+
+    if len(outputs) < 2:
+        logger.error('domains_checker(%r) failed with: %r', domain, outputs[-1])
+        if raise_errors:
+            raise zerrors.EPPUnexpectedResponse(outputs)
+        return None
+
+    logger.info('domains_checker(%r) OK', domain)
+    return outputs[-2]

@@ -6,7 +6,7 @@ from accounts.models.activation import Activation
 
 
 class ActivationAdmin(NestedModelAdmin):
-    pass
+    list_display = ('account', 'code', 'created_at', )
 
 
 class AccountAdmin(NestedModelAdmin):

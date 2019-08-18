@@ -91,3 +91,6 @@ ENV = 'development'
 #--- Alerts
 # ALERT_SMS_PHONE_NUMBERS = []
 # ALERT_EMAIL_RECIPIENTS = []
+
+#--- Account & Auth
+# ACTIVATION_CODE_EXPIRING_MINUTE = 15

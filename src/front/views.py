@@ -315,8 +315,10 @@ class AccountContactsListView(LoginRequiredMixin, ListView):
         return zcontacts.list_contacts(self.request.user)
 
 
-class DomainLookupView(TemplateView):
+class DomainLookupView(FormView):
     template_name = 'front/domain_lookup.html'
+    form_class = forms.DomainLookupForm
+    success_url = reverse_lazy('domain_lookup')
 
     def _get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
@@ -326,10 +328,8 @@ class DomainLookupView(TemplateView):
             ip = self.request.META.get('REMOTE_ADDR')
         return ip
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['result'] = None
-
+    def form_valid(self, form):
+        result = None
         if settings.BRUTE_FORCE_PROTECTION_ENABLED:
             client_ip = self._get_client_ip()
             brute_force = BruteForceProtection(
@@ -342,28 +342,28 @@ class DomainLookupView(TemplateView):
                 brute_force.register_attempt()
             except ExceededMaxAttemptsException:
                 messages.error(self.request, 'Too many attempts, please try again later.')
-                return context
+                return super().form_valid(form)
 
-        domain_name = self.request.GET.get('domain_name', '')
-        context['domain_name'] = domain_name
+        domain_name = form.cleaned_data.get('domain_name')
+
         if domain_name:
             if not zdomains.is_valid(domain_name):
                 messages.error(self.request, 'Domain name is not valid')
-                return context
+                return super().form_valid(form)
             domain_tld = domain_name.split('.')[-1].lower()
             if not zzones.is_supported(domain_tld):
                 messages.error(self.request, f'Domain zone "{domain_tld}" is not supported.')
-                return context
+                return super().form_valid(form)
             domain_available = zdomains.is_domain_available(domain_name)
             if domain_available:
                 check_result = zmaster.domains_check(domain_names=[domain_name, ], )
                 if check_result is None:
-                    context['result'] = 'error'
+                    result = 'error'
                 else:
                     if check_result.get(domain_name):
-                        context['result'] = 'exist'
+                        result = 'exist'
                     else:
-                        context['result'] = 'not exist'
+                        result = 'not exist'
             else:
-                context['result'] = 'exist'
-        return context
+                result = 'exist'
+        return self.render_to_response(self.get_context_data(form=form, domain_name=domain_name, result=result))

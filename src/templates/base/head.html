@@ -52,6 +52,7 @@
                             <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuDomains">
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">My Domains ({{user.domains.count}})</a>
                                 <a class="dropdown-item" href="{% url 'account_contacts' %}">Contact details</a>
+                                <a class="dropdown-item" href="{% url 'account_domain_transfer_takeover' %}">Transfer domain</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">

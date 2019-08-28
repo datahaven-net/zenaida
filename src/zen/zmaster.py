@@ -176,23 +176,34 @@ def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_
     return True
 
 
-def domain_transfer_request(domain, auth_info, raise_errors=False, log_events=True, log_transitions=True):
+def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=False, log_events=True, log_transitions=True):
     """
-    SEND DOMAIN TRANSFER REQUEST
+    Sending domain transfer request to the back-end. As soon as back-end process the request and accept transfer
+    new event message suppose to be received via polling script and new domain object will be created in Zenaida DB.
+    This method only initiate the request. You must provide "authentication code" for that domain
+    to be able to transfer it to Zenaida.  
     """
-    from zen import zclient
-    transfer = zclient.cmd_domain_transfer(domain, op='request', auth_info=auth_info)
-    if transfer['epp']['response']['result']['@code'] != '1000':
-        if transfer['epp']['response']['result']['@code'] == '2304':
-            raise zerrors.EPPObjectStatusProhibitsOperation(
-                message='EPP domain_transfer failed because %s' % (
-                    transfer['epp']['response']['result']['msg'], ))
-        raise zerrors.EPPCommandFailed(message='EPP request domain transfer failed with error code: %s' % (
-            transfer['epp']['response']['result']['@code'], ))
+    from automats import domain_transfer_requestor
+    dtr = domain_transfer_requestor.DomainTransferRequestor(
+        skip_info=skip_info,
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dtr.event('run', target_domain_name=domain, auth_info=auth_info)
+    outputs = list(dtr.outputs)
+    del dtr
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if isinstance(outputs[-1], Exception):
+            logger.error('domain_transfer_request(%r) failed with: %r', domain, outputs[-1])
+        return False
+
+    logger.debug('domain_transfer_request(%r) finished with %d outputs', domain, len(outputs))
     return True
 
 
-def domain_read_info(domain, raise_errors=False, log_events=True, log_transitions=True):
+def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True, log_transitions=True):
     """
     Request from back-end and returns actual info about the domain.
     """
@@ -205,7 +216,7 @@ def domain_read_info(domain, raise_errors=False, log_events=True, log_transition
         log_transitions=log_transitions,
         raise_errors=raise_errors,
     )
-    dc.event('run', [domain, ])
+    dc.event('run', [domain, ], auth_info=auth_info, )
     outputs = list(dc.outputs)
     del dc
     logger.debug('domains_checker(%r) finished with %d outputs', domain, len(outputs))

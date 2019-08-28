@@ -24,12 +24,12 @@ class Contact(models.Model):
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
 
     person_name = models.CharField(max_length=255, verbose_name='Full Name')
-    organization_name = models.CharField(max_length=255, verbose_name='Organization')
+    organization_name = models.CharField(max_length=255, blank=True, verbose_name='Organization')
 
     address_street = models.CharField(max_length=255, verbose_name='Street address')
     address_city = models.CharField(max_length=255, verbose_name='City')
-    address_province = models.CharField(max_length=255, verbose_name='Province')
-    address_postal_code = models.CharField(max_length=255, verbose_name='ZIP code')
+    address_province = models.CharField(max_length=255, blank=True, verbose_name='Province')
+    address_postal_code = models.CharField(max_length=255, blank=True, verbose_name='ZIP code')
     address_country = CountryField(verbose_name='Country')
 
     contact_voice = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Mobile')

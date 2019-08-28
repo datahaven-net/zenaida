@@ -32,7 +32,12 @@ class IndexPageView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             if not request.user.profile.is_complete():
+                messages.info(request, 'Please provide your contact information to be able to register new domains.')
                 return shortcuts.redirect('account_profile')
+            if len(zcontacts.list_contacts(request.user)) == 0:
+                messages.info(request, 'Please create your first contact person and provide your contact information '
+                                       'to be able to register new domains.')
+                return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -197,16 +202,45 @@ class AccountDomainUpdateView(UpdateView):
 
 
 @login_required
-def account_domain_transfer(request):
+def account_domain_transfer_code(request):
     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
     if not zmaster.domain_set_auth_info(domain):
         messages.error(request, 'There were technical problems with domain transfer code processing. '
                                 'Please try again later or contact customer support.')
         return shortcuts.redirect('account_domains')
-    return shortcuts.render(request, 'front/account_domain_transfer.html', {
+    return shortcuts.render(request, 'front/account_domain_transfer_code.html', {
         'transfer_code': domain.auth_key,
         'domain_name': domain.name,
     })
+
+
+class AccountDomainTransferCodeView(TemplateView):
+    template_name = 'front/account_domain_transfer_code.html'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        domain_name = request.GET.get('domain_name', '')
+        domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
+        if not zmaster.domain_set_auth_info(domain):
+            messages.error(request, 'There were technical problems with domain transfer code processing. '
+                                    'Please try again later or contact customer support.')
+            return shortcuts.redirect('account_domains')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        domain_name = self.request.GET.get('domain_name', '')
+        domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
+        context = super().get_context_data(**kwargs)
+        context['transfer_code'] = domain.auth_key
+        context['domain_name'] = domain.name
+        return context
 
 
 class AccountDomainTransferTakeoverView(FormView):
@@ -227,7 +261,10 @@ class AccountDomainTransferTakeoverView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        info = zmaster.domain_read_info(form['domain_name'].value())
+        info = zmaster.domain_read_info(
+            domain=form['domain_name'].value(),
+            auth_info=form['transfer_code'].value(),
+        )
         if not info:
             messages.warning(self.request, 'Domain is not registered.')
             return super().form_invalid(form)

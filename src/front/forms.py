@@ -1,6 +1,6 @@
 import os
 
-from django.forms import forms, models, ModelForm
+from django.forms import forms, models, ModelForm, CharField
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
 
@@ -86,3 +86,7 @@ class AccountProfileForm(models.ModelForm):
         for field_name in self.fields.keys():
             if field_name not in ['contact_fax', 'address_province', ]:
                 self.fields[field_name].required = True
+
+
+class DomainLookupForm(forms.Form):
+    domain_name = CharField()

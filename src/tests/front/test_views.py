@@ -413,7 +413,7 @@ class TestDomainLookupView(TestCase):
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') != '1':
             return pytest.skip('skip E2E')  # @UndefinedVariable
-        response = self.client.get('/lookup/?domain_name=bitdust.ai')
+        response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 200
         assert response.context['result'] == 'not exist'
         assert response.context['domain_name'] == 'bitdust.ai'
@@ -421,7 +421,7 @@ class TestDomainLookupView(TestCase):
     def test_e2e_domain_exists(self):
         if os.environ.get('E2E', '0') != '1':
             return pytest.skip('skip E2E')  # @UndefinedVariable
-        response = self.client.get('/lookup/?domain_name=test.ai')
+        response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 200
         assert response.context['result'] == 'exist'
         assert response.context['domain_name'] == 'test.ai'
@@ -429,7 +429,7 @@ class TestDomainLookupView(TestCase):
     def test_domain_lookup_returns_error(self):
         with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
             mock_domain_check.return_value = None
-            response = self.client.get('/lookup/?domain_name=bitdust.ai')
+            response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 200
         assert response.context['result'] == 'error'
         assert response.context['domain_name'] == 'bitdust.ai'
@@ -437,27 +437,27 @@ class TestDomainLookupView(TestCase):
     def test_domain_is_already_in_db(self):
         with mock.patch('zen.zdomains.is_domain_available') as mock_is_domain_available:
             mock_is_domain_available.return_value = False
-            response = self.client.get('/lookup/?domain_name=bitdust.ai')
+            response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 200
         assert response.context['result'] == 'exist'
         assert response.context['domain_name'] == 'bitdust.ai'
 
     def test_domain_lookup_page_without_domain_name(self):
-        response = self.client.get('/lookup/')
+        response = self.client.post('/lookup/')
         assert response.status_code == 200
-        assert response.context['result'] is None
-        assert response.context['domain_name'] == ''
 
     @mock.patch('django.contrib.messages.error')
     def test_domain_lookup_with_invalid_domain_name(self, mock_messages_error):
-        response = self.client.get('/lookup/?domain_name=example')
-        assert response.status_code == 200
+        response = self.client.post('/lookup/', data=dict(domain_name='example'))
+        assert response.status_code == 302
+        assert response.url == '/lookup/'
         mock_messages_error.assert_called_once()
 
     @mock.patch('django.contrib.messages.error')
     def test_domain_lookup_with_invalid_domain_extension(self, mock_messages_error):
-        response = self.client.get('/lookup/?domain_name=example.xyz')
-        assert response.status_code == 200
+        response = self.client.post('/lookup/', data=dict(domain_name='example.xyz'))
+        assert response.status_code == 302
+        assert response.url == '/lookup/'
         mock_messages_error.assert_called_once()
 
     @override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS=2, BRUTE_FORCE_PROTECTION_ENABLED=True)
@@ -465,8 +465,9 @@ class TestDomainLookupView(TestCase):
     @mock.patch('django.core.cache.cache.get')
     def test_domain_lookup_too_many_attempts(self, mock_cache_get, mock_messages_error):
         mock_cache_get.return_value = 2
-        response = self.client.get('/lookup/?domain_name=bitdust.ai')
-        assert response.status_code == 200
+        response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
+        assert response.status_code == 302
+        assert response.url == '/lookup/'
         mock_messages_error.assert_called_once()
 
 

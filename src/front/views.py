@@ -25,6 +25,8 @@ from zen import zcontacts
 from zen import zzones
 from zen import zmaster
 
+from billing import orders
+
 
 class IndexPageView(TemplateView):
     template_name = 'base/index.html'
@@ -201,17 +203,17 @@ class AccountDomainUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-@login_required
-def account_domain_transfer_code(request):
-    domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
-    if not zmaster.domain_set_auth_info(domain):
-        messages.error(request, 'There were technical problems with domain transfer code processing. '
-                                'Please try again later or contact customer support.')
-        return shortcuts.redirect('account_domains')
-    return shortcuts.render(request, 'front/account_domain_transfer_code.html', {
-        'transfer_code': domain.auth_key,
-        'domain_name': domain.name,
-    })
+# @login_required
+# def account_domain_transfer_code(request):
+#     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
+#     if not zmaster.domain_set_auth_info(domain):
+#         messages.error(request, 'There were technical problems with domain transfer code processing. '
+#                                 'Please try again later or contact customer support.')
+#         return shortcuts.redirect('account_domains')
+#     return shortcuts.render(request, 'front/account_domain_transfer_code.html', {
+#         'transfer_code': domain.auth_key,
+#         'domain_name': domain.name,
+#     })
 
 
 class AccountDomainTransferCodeView(TemplateView):
@@ -261,26 +263,41 @@ class AccountDomainTransferTakeoverView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        domain_name = form['domain_name'].value().strip()
+        transfer_code = form['transfer_code'].value().strip()
         info = zmaster.domain_read_info(
-            domain=form['domain_name'].value(),
-            auth_info=form['transfer_code'].value(),
+            domain=domain_name,
+            auth_info=transfer_code,
         )
         if not info:
             messages.warning(self.request, 'Domain is not registered.')
+            return super().form_invalid(form)
+        current_registrar = info['epp']['response']['resData']['infData']['clID']
+        if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
+            messages.warning(self.request, 'Domain transfer is not possible')
+            return super().form_invalid(form)
+        current_statuses = info['epp']['response']['resData']['infData']['status']
+        current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
+        current_statuses = [s['@s'] for s in current_statuses]
+        if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
+            messages.error(self.request, 'Domain transfer is not possible at the moment.' \
+                                         'Please contact customer support.')
+            return super().form_invalid(form)
+        if len(orders.find_pending_domain_transfer_order_items(domain_name)):
+            messages.warning(self.request, 'Domain transfer in progress')
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
         if current_registrar == 'auction':
             price = 0.0
         else:
             price = 100.0
-        from billing import orders as billing_orders
-        transfer_order = billing_orders.order_single_item(
+        transfer_order = orders.order_single_item(
             owner=self.request.user,
             item_type='domain_transfer',
             item_price=price,
-            item_name=form['domain_name'].value(),
+            item_name=form['domain_name'].value().strip(),
             item_details={
-                'transfer_code': form['transfer_code'].value(),
+                'transfer_code': form['transfer_code'].value().strip(),
             },
         )
         messages.success(self.request, self.success_message)

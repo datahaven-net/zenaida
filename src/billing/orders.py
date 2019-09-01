@@ -16,6 +16,11 @@ from billing.models.order_item import OrderItem
 from zen import zdomains
 from zen import zmaster
 
+#------------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
+
+#------------------------------------------------------------------------------
 
 def by_id(order_id):
     """
@@ -34,12 +39,14 @@ def get_order_by_id_and_owner(order_id, owner, log_action=None):
     return order
 
 
-def list_orders(owner, exclude_cancelled=False):
+def list_orders(owner, exclude_cancelled=False, include_statuses=[]):
     """
     """
     qs = Order.orders.filter(owner=owner)
     if exclude_cancelled:
         qs = qs.exclude(status='cancelled')
+    if include_statuses:
+        qs = qs.filter(status__in=include_statuses)
     return list(qs.all())
 
 
@@ -62,12 +69,32 @@ def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
 
 def list_processed_orders_by_date(owner, year, month=None):
     if year and month:
-        orders = Order.orders.filter(owner=owner, started_at__year=year, started_at__month=month, status='processed').order_by('finished_at')
+        orders = Order.orders.filter(
+            owner=owner,
+            started_at__year=year,
+            started_at__month=month,
+            status='processed',
+        ).order_by('finished_at')
     elif year:
-        orders = Order.orders.filter(owner=owner, started_at__year=year, status='processed').order_by('finished_at')
+        orders = Order.orders.filter(
+            owner=owner,
+            started_at__year=year,
+            status='processed',
+        ).order_by('finished_at')
     else:
-        orders = Order.orders.filter(owner=owner, status='processed').order_by('finished_at')
+        orders = Order.orders.filter(
+            owner=owner,
+            status='processed',
+        ).order_by('finished_at')
     return list(orders.all())
+
+
+def find_pending_domain_transfer_order_items(domain_name):
+    return list(OrderItem.order_items.filter(
+        type='domain_transfer',
+        name=domain_name,
+        status='pending',
+    ).all())
 
 
 def prepare_register_renew_restore_item(domain_object):
@@ -213,7 +240,7 @@ def execute_domain_transfer(order_item):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
-    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+    update_order_item(order_item, new_status='pending', charge_user=False, save=True)
     return True
 
 
@@ -244,35 +271,81 @@ def execute_one_item(order_item):
     return False
 
 
-def execute_single_order(order_object):
-    new_status = 'processed'
+def execute_order(order_object):
+    current_status = order_object.status
+    new_status = order_object.status
     total_processed = 0
+    total_executed = 0
+    total_in_progress = 0
+    total_failed = 0
     # TODO: check/verify every item against Back-end before start processing
     for order_item in order_object.items.all():
-        if order_item.status == 'processed':
+        if order_item.status in ['processed', 'pending', ]:
+            # only take actions with items that are not yet started
             continue
+        total_executed += 1
         if execute_one_item(order_item):
-            total_processed += 1
-            continue
-        if total_processed > 0:
+            if order_item.status == 'processed':
+                total_processed += 1
+            elif order_item.status == 'pending':
+                total_in_progress += 1
+            elif order_item.status == 'failed':
+                total_failed += 1
+            else:
+                logging.critical('Order item %s execution finished with unexpected status: %s', order_item, order_item.status)
+    if total_processed == total_executed:
+        new_status = 'processed'
+    else:
+        if total_failed > 0:
+            new_status = 'failed'
+        elif total_in_progress > 0:
+            new_status = 'processing'
+        else:
             new_status = 'incomplete'
-            break
-        new_status = 'failed'
-        break
-    old_status = order_object.status
     order_object.status = new_status
     order_object.save()
-    logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
-    return True if new_status == 'processed' else False
+    logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
+    return new_status
 
 
-def cancel_single_order(order_object):
+def refresh_order(order_object):
+    current_status = order_object.status
+    new_status = order_object.status
+    total_in_progress = 0
+    total_failed = 0
+    total_processed = 0
+    order_items = list(order_object.items.all())
+    for order_item in order_items:
+        if order_item.status in ['processed', ]:
+            # skip changes for already finished items
+            total_processed += 1
+            continue
+        if order_item.status == 'pending':
+            total_in_progress += 1
+        elif order_item.status == 'failed':
+            total_failed += 1
+    if total_failed > 0:
+        new_status = 'failed'
+    elif total_in_progress > 0:
+        new_status = 'processing'
+    else:
+        if total_processed == len(order_items):
+            new_status = 'processed'
+        else:
+            new_status = 'incomplete'
+    order_object.status = new_status
+    order_object.save()
+    logging.debug('Refreshed status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
+    return new_status
+
+
+def cancel_order(order_object):
     new_status = 'cancelled'
     old_status = order_object.status
     order_object.status = new_status
     order_object.save()
     logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
-    return True
+    return new_status
 
 
 def build_receipt(owner, year=None, month=None, order_id=None):

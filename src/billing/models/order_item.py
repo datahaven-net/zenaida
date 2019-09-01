@@ -39,6 +39,7 @@ class OrderItem(models.Model):
 
     status = models.CharField(
         choices=(
+            ('started', 'Started', ),
             ('pending', 'Pending', ),
             ('failed', 'Failed', ),
             ('processed', 'Processed', ),

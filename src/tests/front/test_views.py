@@ -73,8 +73,10 @@ class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
 
     def test_index_page_successful(self):
         with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:
-            mock_user_profile_complete.return_value = True
-            response = self.client.get('')
+            with mock.patch('zen.zcontacts.list_contacts') as mock_list_contacts:
+                mock_user_profile_complete.return_value = True
+                mock_list_contacts.return_value = [True, ]
+                response = self.client.get('')
         assert response.status_code == 200
         assert response.context['total_domains'] == 0
 

@@ -107,8 +107,8 @@ def domain_synchronize_from_backend(domain_name,
                                     soft_delete=True,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
-    Requests domain info from backend and take required actions to update local DB
-    to be fully in sync with  backend.
+    Requests domain info from back-end and take required actions to update local DB
+    to be fully in sync with  back-end.
     If domain not exists in local DB it will be created.
     Returns False if error happened, or raise Exception if `raise_errors` is True,
     if all is okay returns domain object from local DB.

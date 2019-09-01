@@ -32,6 +32,8 @@ from zen import zdomains
 from zen import zusers
 from zen import zcontacts
 
+from billing import orders
+
 #------------------------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
@@ -125,6 +127,7 @@ class DomainRefresher(automat.Automat):
                 self.doDBCheckCreateDomain(*args, **kwargs)
                 self.doDBCheckUpdateNameservers(*args, **kwargs)
                 self.doDBCheckUpdateDomainInfo(*args, **kwargs)
+                self.doCheckProcessPendingOrder(*args, **kwargs)
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2201, *args, **kwargs) ):
@@ -150,6 +153,7 @@ class DomainRefresher(automat.Automat):
                 self.doDBCheckChangeContacts(*args, **kwargs)
                 self.doDBCheckUpdateNameservers(*args, **kwargs)
                 self.doDBCheckUpdateDomainInfo(*args, **kwargs)
+                self.doCheckProcessPendingOrder(*args, **kwargs)
                 self.doReportContactsInfo(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
             elif event == 'error':
@@ -233,6 +237,13 @@ class DomainRefresher(automat.Automat):
         self.create_new_owner_allowed = kwargs.get('create_new_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
         self.soft_delete = kwargs.get('soft_delete', True)
+        self.expected_owner = None
+        pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
+        if len(pending_order_items) > 1:
+            logger.critical('found more than one pending order for domain %s transfer: %r', self.domain_name, pending_order_items)
+        if len(pending_order_items) > 0:
+            related_order_item = pending_order_items[0]
+            self.expected_owner = related_order_item.order.owner
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
@@ -333,8 +344,13 @@ class DomainRefresher(automat.Automat):
 
         self.domain_info_response = response
 
-        # find registrant in local DB
-        self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+        if self.expected_owner:
+            # if pending order exists, select registrant from the owner
+            self.known_registrant = self.expected_owner.registrants.first()
+        else:
+            # find registrant in local DB
+            self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+
         if self.known_registrant:
             self.event('response', response)
             return
@@ -643,6 +659,18 @@ class DomainRefresher(automat.Automat):
         self.target_domain.save()
         zdomains.domain_update_statuses(self.target_domain, self.domain_info_response)
 
+    def doCheckProcessPendingOrder(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name) 
+        if len(pending_order_items) > 1:
+            logger.critical('found more than one pending order for domain %s transfer: %r', self.domain_name, pending_order_items)
+        if len(pending_order_items) > 0:
+            related_order_item = pending_order_items[0]
+            orders.update_order_item(related_order_item, new_status='processed', charge_user=True, save=True)
+            orders.refresh_order(related_order_item.order)
+
     def doReportNotExist(self, *args, **kwargs):
         """
         Action method.
@@ -732,6 +760,7 @@ class DomainRefresher(automat.Automat):
         """
         Remove all references to the state machine object to destroy it.
         """
+        self.expected_owner = None
         self.soft_delete = None
         self.change_owner_allowed = None
         self.create_new_owner_allowed = None
@@ -746,3 +775,4 @@ class DomainRefresher(automat.Automat):
         self.current_registrant_info = None
         self.current_registrant_address_info = None
         self.destroy()
+

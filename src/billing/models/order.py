@@ -25,6 +25,7 @@ class Order(models.Model):
     status = models.CharField(
         choices=(
             ('started', 'Started', ),
+            ('processing', 'Processing'),
             ('cancelled', 'Cancelled', ),
             ('failed', 'Failed', ),
             ('incomplete', 'Incomplete'),

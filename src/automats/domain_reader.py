@@ -191,7 +191,7 @@ class DomainReader(automat.Automat):
         try:
             response = zclient.cmd_domain_info(
                 domain=self.target_domain.name,
-                auth_info=self.target_domain.auth_key,
+                auth_info=self.target_domain.auth_key or None,
                 raise_for_result=False,
             )
         except zerrors.EPPError as exc:

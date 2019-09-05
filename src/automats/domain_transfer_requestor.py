@@ -151,7 +151,7 @@ class DomainTransferRequestor(automat.Automat):
         try:
             response = zclient.cmd_domain_info(
                 domain=self.target_domain_name,
-                auth_info=self.auth_info,
+                auth_info=self.auth_info or None,
                 raise_for_result=False,
             )
         except zerrors.EPPError as exc:

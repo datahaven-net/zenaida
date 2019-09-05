@@ -244,6 +244,9 @@ class DomainRefresher(automat.Automat):
         if len(pending_order_items) > 0:
             related_order_item = pending_order_items[0]
             self.expected_owner = related_order_item.order.owner
+            logger.debug('found expected owner from one pending order %r : %r', related_order_item, self.expected_owner)
+        else:
+            logger.debug('no pending orders for %r', self.domain_name)
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
@@ -663,13 +666,16 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
-        pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name) 
+        pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
         if len(pending_order_items) > 1:
             logger.critical('found more than one pending order for domain %s transfer: %r', self.domain_name, pending_order_items)
         if len(pending_order_items) > 0:
             related_order_item = pending_order_items[0]
             orders.update_order_item(related_order_item, new_status='processed', charge_user=True, save=True)
             orders.refresh_order(related_order_item.order)
+            logger.debug('processed one pending order %r for %r', related_order_item, self.expected_owner)
+        else:
+            logger.critical('no actions taken after domain transfer, no pending orders for %r', self.domain_name)
 
     def doReportNotExist(self, *args, **kwargs):
         """

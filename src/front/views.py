@@ -295,9 +295,9 @@ class AccountDomainTransferTakeoverView(FormView):
             owner=self.request.user,
             item_type='domain_transfer',
             item_price=price,
-            item_name=form['domain_name'].value().strip(),
+            item_name=domain_name,
             item_details={
-                'transfer_code': form['transfer_code'].value().strip(),
+                'transfer_code': transfer_code,
             },
         )
         messages.success(self.request, self.success_message)

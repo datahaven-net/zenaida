@@ -203,19 +203,6 @@ class AccountDomainUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-# @login_required
-# def account_domain_transfer_code(request):
-#     domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
-#     if not zmaster.domain_set_auth_info(domain):
-#         messages.error(request, 'There were technical problems with domain transfer code processing. '
-#                                 'Please try again later or contact customer support.')
-#         return shortcuts.redirect('account_domains')
-#     return shortcuts.render(request, 'front/account_domain_transfer_code.html', {
-#         'transfer_code': domain.auth_key,
-#         'domain_name': domain.name,
-#     })
-
-
 class AccountDomainTransferCodeView(TemplateView):
     template_name = 'front/account_domain_transfer_code.html'
 
@@ -263,8 +250,8 @@ class AccountDomainTransferTakeoverView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        domain_name = form['domain_name'].value().strip()
-        transfer_code = form['transfer_code'].value().strip()
+        domain_name = form.cleaned_data.get('domain_name').strip()
+        transfer_code = form.cleaned_data.get('domain_name').strip()
         info = zmaster.domain_read_info(
             domain=domain_name,
             auth_info=transfer_code,

@@ -166,6 +166,9 @@ def order_multiple_items(owner, order_items):
 
 def update_order_item(order_item, new_status=None, charge_user=False, save=True):
     if charge_user:
+        if order_item.order.owner.balance < order_item.price:
+            logging.critical('Not enough account balance on %r', order_item.order.owner)
+            return False
         order_item.order.owner.balance -= order_item.price
         if save:
             order_item.order.owner.save()
@@ -179,8 +182,7 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
         if save:
             order_item.save()
         logging.debug('Updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
-        return True
-    return False
+    return True
 
 
 def execute_domain_register(order_item, target_domain):
@@ -196,8 +198,7 @@ def execute_domain_register(order_item, target_domain):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
-    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
-    return True
+    return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
 
 
 def execute_domain_renew(order_item, target_domain):
@@ -213,8 +214,7 @@ def execute_domain_renew(order_item, target_domain):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
-    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
-    return True
+    return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
 
 
 def execute_domain_restore(order_item, target_domain):
@@ -228,8 +228,7 @@ def execute_domain_restore(order_item, target_domain):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
-    update_order_item(order_item, new_status='processed', charge_user=True, save=True)
-    return True
+    return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
 
 
 def execute_domain_transfer(order_item):
@@ -240,8 +239,7 @@ def execute_domain_transfer(order_item):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
-    update_order_item(order_item, new_status='pending', charge_user=False, save=True)
-    return True
+    return update_order_item(order_item, new_status='pending', charge_user=False, save=True)
 
 
 def execute_one_item(order_item):

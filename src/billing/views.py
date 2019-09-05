@@ -15,6 +15,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
 from django.views.generic.edit import FormMixin
+
 from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
@@ -245,6 +246,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
     error_message_technical = 'There were technical problems with order processing. ' \
                               'Please try again later or contact customer support.'
     success_message = 'Order processed successfully.'
+    processing_message = 'Order is processing, please wait.'
 
     def post(self, request, *args, **kwargs):
         existing_order = billing_orders.get_order_by_id_and_owner(
@@ -254,8 +256,11 @@ class OrderExecuteView(LoginRequiredMixin, View):
             messages.error(request, self.error_message_balance)
             return shortcuts.redirect('billing_new_payment')
 
-        if billing_orders.execute_single_order(existing_order):
+        new_status = billing_orders.execute_order(existing_order)
+        if new_status == 'processed':
             messages.success(request, self.success_message)
+        elif new_status == 'processing':
+            messages.success(request, self.processing_message)
         else:
             messages.error(request, self.error_message_technical)
         return shortcuts.redirect('account_domains')
@@ -266,14 +271,6 @@ class OrderCancelView(LoginRequiredMixin, View):
         existing_order = billing_orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
         )
-        billing_orders.cancel_single_order(existing_order)
+        billing_orders.cancel_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')
-
-
-@login_required
-def domain_get_auth_code(request):
-    """
-    """
-    # TODO: this needs to be done
-    pass

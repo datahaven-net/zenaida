@@ -25,6 +25,8 @@ from zen import zcontacts
 from zen import zzones
 from zen import zmaster
 
+from billing import orders
+
 
 class IndexPageView(TemplateView):
     template_name = 'base/index.html'
@@ -32,7 +34,12 @@ class IndexPageView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             if not request.user.profile.is_complete():
+                messages.info(request, 'Please provide your contact information to be able to register new domains.')
                 return shortcuts.redirect('account_profile')
+            if len(zcontacts.list_contacts(request.user)) == 0:
+                messages.info(request, 'Please create your first contact person and provide your contact information '
+                                       'to be able to register new domains.')
+                return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -196,17 +203,92 @@ class AccountDomainUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-@login_required
-def account_domain_transfer(request):
-    domain = shortcuts.get_object_or_404(Domain, name=request.GET['domain_name'], owner=request.user)
-    if not zmaster.domain_set_auth_info(domain):
-        messages.error(request, 'There were technical problems with domain transfer code processing. '
-                                'Please try again later or contact customer support.')
-        return shortcuts.redirect('account_domains')
-    return shortcuts.render(request, 'front/account_domain_transfer.html', {
-        'transfer_code': domain.auth_key,
-        'domain_name': domain.name,
-    })
+class AccountDomainTransferCodeView(TemplateView):
+    template_name = 'front/account_domain_transfer_code.html'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        domain_name = request.GET.get('domain_name', '')
+        domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
+        if not zmaster.domain_set_auth_info(domain):
+            messages.error(request, 'There were technical problems with domain transfer code processing. '
+                                    'Please try again later or contact customer support.')
+            return shortcuts.redirect('account_domains')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        domain_name = self.request.GET.get('domain_name', '')
+        domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
+        context = super().get_context_data(**kwargs)
+        context['transfer_code'] = domain.auth_key
+        context['domain_name'] = domain.name
+        return context
+
+
+class AccountDomainTransferTakeoverView(FormView):
+
+    template_name = 'front/account_domain_transfer_takeover.html'
+    form_class = forms.DomainTransferTakeoverForm
+    success_message = 'New domain will be added to your account after confirmation.'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_complete():
+            messages.info(request, 'Please provide your contact information to be able to register new domains.')
+            return shortcuts.redirect('account_profile')
+        if len(zcontacts.list_contacts(request.user)) == 0:
+            messages.info(request, 'Please create your first contact person and provide your contact information '
+                                   'to be able to register new domains.')
+            return shortcuts.redirect('account_contacts')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        domain_name = form.cleaned_data.get('domain_name').strip()
+        transfer_code = form.cleaned_data.get('domain_name').strip()
+        info = zmaster.domain_read_info(
+            domain=domain_name,
+            auth_info=transfer_code,
+        )
+        if not info:
+            messages.warning(self.request, 'Domain is not registered.')
+            return super().form_invalid(form)
+        current_registrar = info['epp']['response']['resData']['infData']['clID']
+        if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
+            messages.warning(self.request, 'Domain transfer is not possible')
+            return super().form_invalid(form)
+        current_statuses = info['epp']['response']['resData']['infData']['status']
+        current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
+        current_statuses = [s['@s'] for s in current_statuses]
+        if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
+            messages.error(self.request, 'Domain transfer is not possible at the moment.' \
+                                         'Please contact customer support.')
+            return super().form_invalid(form)
+        if len(orders.find_pending_domain_transfer_order_items(domain_name)):
+            messages.warning(self.request, 'Domain transfer in progress')
+            return super().form_invalid(form)
+        current_registrar = info['epp']['response']['resData']['infData']['clID']
+        if current_registrar == 'auction':
+            price = 0.0
+        else:
+            price = 100.0
+        transfer_order = orders.order_single_item(
+            owner=self.request.user,
+            item_type='domain_transfer',
+            item_price=price,
+            item_name=domain_name,
+            item_details={
+                'transfer_code': transfer_code,
+            },
+        )
+        messages.success(self.request, self.success_message)
+        return shortcuts.redirect('billing_order_details', order_id=transfer_order.id)
 
 
 class AccountProfileView(LoginRequiredMixin, UpdateView):

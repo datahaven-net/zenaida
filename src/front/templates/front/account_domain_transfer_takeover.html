@@ -1,0 +1,42 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+{% include 'base/container_sm_10_offset_1.html' %}
+
+
+<h1 class="text-center">Transfer domain</h1>
+<br />
+<form method="post">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    <div class="row">
+        <div class="col-12">
+            <fieldset>
+                {% bootstrap_field form.domain_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+                {% bootstrap_field form.transfer_code layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+                <br />
+            </fieldset>
+        </div>
+    </div>
+
+    <p align=center>
+        Domain will be transferred to your account automatically after confirmation from service provider.
+    </p>
+    <br />
+
+    <div class="row">
+        <div class="col-12 text-center">
+            {% buttons %}
+                <a class="btn btn-danger" href="{% url 'domain_lookup' %}" role="button">Cancel</a>
+                <button type="submit" class="form-button btn btn-success" name=yes>Confirm</button>
+            {% endbuttons %}
+        </div>
+    </div>
+    <input type="hidden" name="next_page" value="{{ next_page }}">
+</form>
+
+
+{% include 'base/container_close.html' %}
+
+{% endblock %}

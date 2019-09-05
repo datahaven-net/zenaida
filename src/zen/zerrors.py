@@ -65,6 +65,10 @@ class EPPRegistrantAuthFailed(EPPError):
 class EPPRegistrantUnknown(EPPError):
     pass
 
+
+class EPPDomainNotExist(EPPError):
+    pass
+
 #------------------------------------------------------------------------------
 # those exceptions are based on EPP response code
 

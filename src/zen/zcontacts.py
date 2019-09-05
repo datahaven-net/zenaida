@@ -68,11 +68,11 @@ def extract_address_info(contact_info_response):
             local_address = True
             a.update({
                 'name': pi.get('name', ''),
-                'org': pi.get('org', ''),
+                'org': pi.get('org', '') or '',
                 'cc': pi.get('addr', {}).get('cc'),
                 'city': pi.get('addr', {}).get('city'),
-                'pc': pi.get('addr', {}).get('pc'),
-                'sp': pi.get('addr', {}).get('sp'),
+                'pc': pi.get('addr', {}).get('pc') or '',
+                'sp': pi.get('addr', {}).get('sp') or '',
                 'street': (' '.join(pi.get('addr', {}).get('street'))) if isinstance(
                     pi.get('addr', {}).get('street'), list) else pi.get('addr', {}).get('street'),
             })
@@ -81,11 +81,11 @@ def extract_address_info(contact_info_response):
         for pi in postal_info_list:
             a.update({
                 'name': pi.get('name', ''),
-                'org': pi.get('org', ''),
+                'org': pi.get('org', '') or '',
                 'cc': pi.get('addr', {}).get('cc'),
                 'city': pi.get('addr', {}).get('city'),
-                'pc': pi.get('addr', {}).get('pc'),
-                'sp': pi.get('addr', {}).get('sp'),
+                'pc': pi.get('addr', {}).get('pc') or '',
+                'sp': pi.get('addr', {}).get('sp') or '',
                 'street': (' '.join(pi.get('addr', {}).get('street'))) if isinstance(
                     pi.get('addr', {}).get('street'), list) else pi.get('addr', {}).get('street'),
             })
@@ -134,14 +134,14 @@ def contact_create_from_profile(owner, profile_object):
     new_contact = Contact.contacts.create(
         owner=owner,
         person_name=profile_object.person_name,
-        organization_name=profile_object.organization_name,
+        organization_name=profile_object.organization_name or '',
         address_street=profile_object.address_street,
         address_city=profile_object.address_city,
-        address_province=profile_object.address_province,
-        address_postal_code=profile_object.address_postal_code,
+        address_province=profile_object.address_province or '',
+        address_postal_code=profile_object.address_postal_code or '',
         address_country=profile_object.address_country,
-        contact_voice=profile_object.contact_voice,
-        contact_fax=profile_object.contact_fax,
+        contact_voice=profile_object.contact_voice or '',
+        contact_fax=profile_object.contact_fax or '',
         contact_email=profile_object.contact_email,
     )
     logger.debug('contact created from existing profile: %s', new_contact)
@@ -265,14 +265,14 @@ def registrant_create_from_profile(owner, profile_object, epp_id=None):
         owner=owner,
         epp_id=epp_id,
         person_name=profile_object.person_name,
-        organization_name=profile_object.organization_name,
+        organization_name=profile_object.organization_name or '',
         address_street=profile_object.address_street,
         address_city=profile_object.address_city,
-        address_province=profile_object.address_province,
-        address_postal_code=profile_object.address_postal_code,
+        address_province=profile_object.address_province or '',
+        address_postal_code=profile_object.address_postal_code or '',
         address_country=profile_object.address_country,
-        contact_voice=profile_object.contact_voice,
-        contact_fax=profile_object.contact_fax,
+        contact_voice=profile_object.contact_voice or '',
+        contact_fax=profile_object.contact_fax or '',
         contact_email=profile_object.contact_email,
     )
     logger.debug('registrant created from existing profile: %s', new_contact)
@@ -296,14 +296,14 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
     Populate required fields for given `registrant_object` from existing Profile. 
     """
     registrant_object.person_name = profile_object.person_name
-    registrant_object.organization_name = profile_object.organization_name
+    registrant_object.organization_name = profile_object.organization_name or ''
     registrant_object.address_street = profile_object.address_street
     registrant_object.address_city = profile_object.address_city
-    registrant_object.address_province = profile_object.address_province
-    registrant_object.address_postal_code = profile_object.address_postal_code
+    registrant_object.address_province = profile_object.address_province or ''
+    registrant_object.address_postal_code = profile_object.address_postal_code or ''
     registrant_object.address_country = profile_object.address_country
-    registrant_object.contact_voice = profile_object.contact_voice
-    registrant_object.contact_fax = profile_object.contact_fax
+    registrant_object.contact_voice = profile_object.contact_voice or ''
+    registrant_object.contact_fax = profile_object.contact_fax or ''
     registrant_object.contact_email = profile_object.contact_email
     if save:
         registrant_object.save()

@@ -6,6 +6,8 @@ from automats import domain_synchronizer
 from automats import domain_refresher
 from automats import domain_resurrector
 
+from zen import zerrors
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     Returns None if error happened, or raise Exception if `raise_errors` is True.
     """
     dc = domains_checker.DomainsChecker(
+        skip_check=False,
         skip_info=(not verify_registrant),
         verify_registrant=verify_registrant,
         stop_on_error=True,
@@ -104,8 +107,8 @@ def domain_synchronize_from_backend(domain_name,
                                     soft_delete=True,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
-    Requests domain info from backend and take required actions to update local DB
-    to be fully in sync with  backend.
+    Requests domain info from back-end and take required actions to update local DB
+    to be fully in sync with  back-end.
     If domain not exists in local DB it will be created.
     Returns False if error happened, or raise Exception if `raise_errors` is True,
     if all is okay returns domain object from local DB.
@@ -171,3 +174,78 @@ def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_
 
     logger.debug('domain_auth_changer(%r) finished with %d outputs', domain_object.name, len(outputs))
     return True
+
+
+def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=False, log_events=True, log_transitions=True):
+    """
+    Sending domain transfer request to the back-end. As soon as back-end process the request and accept transfer
+    new event message suppose to be received via polling script and new domain object will be created in Zenaida DB.
+    This method only initiate the request. You must provide "authentication code" for that domain
+    to be able to transfer it to Zenaida.  
+    """
+    from automats import domain_transfer_requestor
+    dtr = domain_transfer_requestor.DomainTransferRequestor(
+        skip_info=skip_info,
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dtr.event('run', target_domain_name=domain, auth_info=auth_info)
+    outputs = list(dtr.outputs)
+    del dtr
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if isinstance(outputs[-1], Exception):
+            logger.error('domain_transfer_request(%r) failed with: %r', domain, outputs[-1])
+        return False
+
+    logger.debug('domain_transfer_request(%r) finished with %d outputs', domain, len(outputs))
+    return True
+
+
+def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True, log_transitions=True):
+    """
+    Request from back-end and returns actual info about the domain.
+    """
+    dc = domains_checker.DomainsChecker(
+        skip_check=True,
+        skip_info=False,
+        verify_registrant=False,
+        stop_on_error=True,
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dc.event('run', [domain, ], auth_info=auth_info, )
+    outputs = list(dc.outputs)
+    del dc
+    logger.debug('domains_checker(%r) finished with %d outputs', domain, len(outputs))
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
+            logger.error('domains_checker(%r) failed with: %r', domain, outputs[-1])
+        else:
+            logger.error('domains_checker(%r) unexpectedly failed with: %r', domain, outputs)
+        if raise_errors:
+            if not outputs or not outputs[-1]:
+                raise zerrors.EPPResponseEmpty()
+            elif isinstance(outputs[-1], Exception):
+                raise outputs[-1]
+            else:
+                raise zerrors.EPPCommandFailed(outputs[-1])
+        return None
+    
+    if not outputs[-1].get(domain):
+        logger.error('domains_checker(%r) failed because domain not exist', domain)
+        if raise_errors:
+            raise zerrors.EPPDomainNotExist()
+        return None
+
+    if len(outputs) < 2:
+        logger.error('domains_checker(%r) failed with: %r', domain, outputs[-1])
+        if raise_errors:
+            raise zerrors.EPPUnexpectedResponse(outputs)
+        return None
+
+    logger.info('domains_checker(%r) OK', domain)
+    return outputs[-2]

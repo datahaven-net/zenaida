@@ -162,6 +162,7 @@ class DomainsChecker(automat.Automat):
         Action method.
         """
         self.target_domain_names = list(args[0])
+        self.auth_info = kwargs.get('auth_info')
         self.check_results = {dn: False for dn in self.target_domain_names}
         self.current_domain_name = None
 
@@ -230,6 +231,7 @@ class DomainsChecker(automat.Automat):
         try:
             response = zclient.cmd_domain_info(
                 domain=self.current_domain_name,
+                auth_info=self.auth_info,
             )
         except zerrors.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)

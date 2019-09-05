@@ -402,8 +402,8 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
             status='processed',
         )
-        with mock.patch('billing.orders.execute_single_order') as mock_execute_single_order:
-            mock_execute_single_order.return_value = False
+        with mock.patch('billing.orders.execute_order') as mock_execute_order:
+            mock_execute_order.return_value = False
             response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/domains/'

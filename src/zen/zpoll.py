@@ -9,6 +9,7 @@ from lib import xml2json
 from zen import zclient
 from zen import zmaster
 from zen import zerrors
+from zen import zdomains
 
 #------------------------------------------------------------------------------
 
@@ -28,14 +29,24 @@ class XML2JsonOptions(object):
 def do_domain_transfer_in(domain):
     logger.info('domain %s transferred to Zenaida', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
     except zerrors.EPPError:
-        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        logger.exception('failed to synchronize domain %s from back-end' % domain)
+        return False
+    if not outputs:
+        logger.critical('synchronize domain %s failed with empty result' % domain)
+        return False
+    if not outputs[-1] or isinstance(outputs[-1], Exception):
+        logger.critical('synchronize domain %s failed with result: %r', domain, outputs[-1])
+        return False
+    domain_object = zdomains.domain_find(domain_name=domain)
+    if not domain_object:
+        logger.critical('synchronize domain %s failed, no domain object found' % domain)
         return False
     return True
 

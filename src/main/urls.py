@@ -51,8 +51,9 @@ patterns = [
 
     path('domains/', front_views.AccountDomainsListView.as_view(), name='account_domains'),
     path('domains/create/<str:domain_name>/', front_views.AccountDomainCreateView.as_view(), name='account_domain_create'),
+    path('domains/transfer/', front_views.AccountDomainTransferTakeoverView.as_view(), name='account_domain_transfer_takeover'),
     path('domains/edit/<int:domain_id>/', front_views.AccountDomainUpdateView.as_view(), name='account_domain_edit'),
-    path('domains/transfer/', front_views.account_domain_transfer, name='account_domain_transfer'),
+    path('domains/transfer_code/', front_views.AccountDomainTransferCodeView.as_view(), name='account_domain_transfer_code'),
     # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),

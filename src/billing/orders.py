@@ -24,11 +24,15 @@ logger = logging.getLogger(__name__)
 
 def by_id(order_id):
     """
+    Return Order object by ID
     """
     return Order.orders.filter(id=order_id).first()
 
 
 def get_order_by_id_and_owner(order_id, owner, log_action=None):
+    """
+    Safe method to find order for given user.
+    """
     order = by_id(order_id)
     if not order:
         logging.critical(f'User {owner} tried to {log_action} non-existing order')
@@ -41,6 +45,7 @@ def get_order_by_id_and_owner(order_id, owner, log_action=None):
 
 def list_orders(owner, exclude_cancelled=False, include_statuses=[]):
     """
+    List orders for given user.
     """
     qs = Order.orders.filter(owner=owner)
     if exclude_cancelled:
@@ -51,10 +56,16 @@ def list_orders(owner, exclude_cancelled=False, include_statuses=[]):
 
 
 def list_processed_orders(owner, order_id_list):
+    """
+    List only processed orders for given user.
+    """
     return shortcuts.get_list_or_404(Order.orders.filter(owner=owner, id__in=order_id_list, status='processed'))
 
 
 def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
+    """
+    List orders for given user by date.
+    """
     if year and month:
         orders = Order.orders.filter(owner=owner, started_at__year=year, started_at__month=month)
     elif year:
@@ -68,6 +79,9 @@ def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
 
 
 def list_processed_orders_by_date(owner, year, month=None):
+    """
+    List only processed orders by date for given user.
+    """
     if year and month:
         orders = Order.orders.filter(
             owner=owner,
@@ -90,6 +104,9 @@ def list_processed_orders_by_date(owner, year, month=None):
 
 
 def find_pending_domain_transfer_order_items(domain_name):
+    """
+    Find OrderItem objects for domain transfer order for given domain.
+    """
     return list(OrderItem.order_items.filter(
         type='domain_transfer',
         name=domain_name,
@@ -98,6 +115,9 @@ def find_pending_domain_transfer_order_items(domain_name):
 
 
 def prepare_register_renew_restore_item(domain_object):
+    """
+    Prepare required info to be able to construct OrderItem object from given Domain object.
+    """
     if domain_object.is_blocked:
         raise billing_errors.DomainBlockedError()
     item_type = 'domain_register'
@@ -113,6 +133,7 @@ def prepare_register_renew_restore_item(domain_object):
 
 def order_single_item(owner, item_type, item_price, item_name, item_details=None):
     """
+    Create an Order with one item with given attributes.
     """
     new_order = Order.orders.create(
         owner=owner,
@@ -132,6 +153,7 @@ def order_single_item(owner, item_type, item_price, item_name, item_details=None
 
 def order_multiple_items(owner, order_items):
     """
+    Create and Order with multiple items.
     """
     items_by_type = {}
     if len(order_items) == 1:
@@ -165,6 +187,11 @@ def order_multiple_items(owner, order_items):
 
 
 def update_order_item(order_item, new_status=None, charge_user=False, save=True):
+    """
+    Update given OrderItem object with new info.
+    Optionally can charge user balance if order fulfillment was successful.
+    We must use that and only that method to confirm/reject orders.
+    """
     if charge_user:
         if order_item.order.owner.balance < order_item.price:
             logging.critical('Not enough account balance on %r', order_item.order.owner)
@@ -186,6 +213,9 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
 
 
 def execute_domain_register(order_item, target_domain):
+    """
+    Execute domain register order fulfillment and update order item.
+    """
     if not zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
         sync_contacts=False,
@@ -202,6 +232,9 @@ def execute_domain_register(order_item, target_domain):
 
 
 def execute_domain_renew(order_item, target_domain):
+    """
+    Execute domain renew order fulfillment and update order item.
+    """
     if not zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
         sync_contacts=False,
@@ -218,6 +251,9 @@ def execute_domain_renew(order_item, target_domain):
 
 
 def execute_domain_restore(order_item, target_domain):
+    """
+    Execute domain restore order fulfillment and update order item.
+    """
     if not zmaster.domain_restore(
         domain_object=target_domain,
         res_reason='Customer %s requested to restore %s domain' % (order_item.order.owner.email, target_domain.name, ),
@@ -232,6 +268,9 @@ def execute_domain_restore(order_item, target_domain):
 
 
 def execute_domain_transfer(order_item):
+    """
+    Execute domain transfer take-over order fulfillment and update order item, status will be "pending".
+    """
     if not zmaster.domain_transfer_request(
         domain=order_item.name,
         auth_info=order_item.details.get('transfer_code'),
@@ -243,6 +282,9 @@ def execute_domain_transfer(order_item):
 
 
 def execute_one_item(order_item):
+    """
+    Based on type of OrderItem executes corresponding fulfillment procedure.
+    """
     if order_item.type == 'domain_transfer':
         return execute_domain_transfer(order_item)
     
@@ -270,6 +312,12 @@ def execute_one_item(order_item):
 
 
 def execute_order(order_object):
+    """
+    High-level method to execute fulfillment from given Order object.
+    Checks every OrderItem in that Order and tries to execute it if possible.
+    Counts "processed", "pending" and "failed" order items and populate final Order status in the end.
+    Returns new Order object status: "processed", "incomplete", "processing", "failed".
+    """
     current_status = order_object.status
     new_status = order_object.status
     total_processed = 0
@@ -307,6 +355,11 @@ def execute_order(order_object):
 
 
 def refresh_order(order_object):
+    """
+    Tries to finish Order object fulfillment if it was started but not finished completely.
+    Normally should be always safe to execute for any order - it just checks and counts statuses of all items. 
+    Returns new Order object status: "processed", "incomplete", "processing", "failed".
+    """
     current_status = order_object.status
     new_status = order_object.status
     total_in_progress = 0
@@ -338,6 +391,9 @@ def refresh_order(order_object):
 
 
 def cancel_order(order_object):
+    """
+    Cancel Order and returns new status: "cancelled".
+    """
     new_status = 'cancelled'
     old_status = order_object.status
     order_object.status = new_status
@@ -348,6 +404,8 @@ def cancel_order(order_object):
 
 def build_receipt(owner, year=None, month=None, order_id=None):
     """
+    Creates detailed report in PDF format about all orders for given user.
+    Optionally selects orders for given period.
     """
     order_objects = []
     receipt_period = ''

@@ -251,7 +251,7 @@ class AccountDomainTransferTakeoverView(FormView):
 
     def form_valid(self, form):
         domain_name = form.cleaned_data.get('domain_name').strip()
-        transfer_code = form.cleaned_data.get('domain_name').strip()
+        transfer_code = form.cleaned_data.get('transfer_code').strip()
         info = zmaster.domain_read_info(
             domain=domain_name,
             auth_info=transfer_code,
@@ -267,7 +267,7 @@ class AccountDomainTransferTakeoverView(FormView):
         current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
         current_statuses = [s['@s'] for s in current_statuses]
         if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
-            messages.error(self.request, 'Domain transfer is not possible at the moment.' \
+            messages.error(self.request, 'Domain transfer is not possible at the moment. ' \
                                          'Please contact customer support.')
             return super().form_invalid(form)
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):

@@ -198,21 +198,15 @@ class AccountDomainTransferCodeView(TemplateView):
     @validate_profile_and_contacts
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        domain_name = request.GET.get('domain_name', '')
-        domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
-        if not zmaster.domain_set_auth_info(domain):
-            messages.error(request, 'There were technical problems with domain transfer code processing. '
-                                    'Please try again later or contact customer support.')
-            return shortcuts.redirect('account_domains')
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        domain_name = self.request.GET.get('domain_name', '')
-        domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
-        context = super().get_context_data(**kwargs)
-        context['transfer_code'] = domain.auth_key
-        context['domain_name'] = domain.name
-        return context
+    def get(self, request, *args, **kwargs):
+        domain = shortcuts.get_object_or_404(Domain, pk=self.kwargs.get('domain_id'), owner=self.request.user)
+        if not zmaster.domain_set_auth_info(domain):
+            messages.error(self.request, 'There were technical problems with domain transfer code processing. '
+                                         'Please try again later or contact customer support.')
+            return shortcuts.redirect('account_domains')
+        return self.render_to_response(self.get_context_data(transfer_code=domain.auth_key, domain_name=domain.name))
 
 
 class AccountDomainTransferTakeoverView(FormView):

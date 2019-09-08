@@ -105,6 +105,7 @@ def domain_synchronize_from_backend(domain_name,
                                     change_owner_allowed=False,
                                     create_new_owner_allowed=False,
                                     soft_delete=True,
+                                    domain_transferred_away=False,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from back-end and take required actions to update local DB
@@ -124,6 +125,7 @@ def domain_synchronize_from_backend(domain_name,
         create_new_owner_allowed=create_new_owner_allowed,
         refresh_contacts=refresh_contacts,
         soft_delete=soft_delete,
+        domain_transferred_away=domain_transferred_away,
     )
     outputs = list(dr.outputs)
     del dr

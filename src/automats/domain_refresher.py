@@ -9,6 +9,7 @@ Zenaida domain_refresher() Automat
 
 EVENTS:
     * :red:`all-contacts-received`
+    * :red:`domain-transferred-away`
     * :red:`error`
     * :red:`registrant-unknown`
     * :red:`response`
@@ -135,11 +136,6 @@ class DomainRefresher(automat.Automat):
                 self.state = 'FAILED'
                 self.doReportInfoFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(2201, *args, **kwargs):
-                self.state = 'DONE'
-                self.doDBDeleteDomain(*args, **kwargs)
-                self.doReportAnotherRegistrar(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
             elif event == 'registrant-unknown':
                 self.state = 'CUR_REG?'
                 self.doReportDomainInfo(*args, **kwargs)
@@ -148,6 +144,11 @@ class DomainRefresher(automat.Automat):
                 self.state = 'SET_REG'
                 self.doUseExistingContacts(*args, **kwargs)
                 self.doEppDomainUpdate(*args, **kwargs)
+            elif event == 'domain-transferred-away' or ( event == 'response' and self.isCode(2201, *args, **kwargs) ):
+                self.state = 'DONE'
+                self.doDBDeleteDomain(*args, **kwargs)
+                self.doReportAnotherRegistrar(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---CONTACTS?---
         elif self.state == 'CONTACTS?':
             if event == 'all-contacts-received':
@@ -244,6 +245,7 @@ class DomainRefresher(automat.Automat):
         self.create_new_owner_allowed = kwargs.get('create_new_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
         self.soft_delete = kwargs.get('soft_delete', True)
+        self.domain_transferred_away = kwargs.get('domain_transferred_away', False)
         self.expected_owner = None
         self.rewrite_contacts = kwargs.get('rewrite_contacts', False)
         pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
@@ -252,7 +254,10 @@ class DomainRefresher(automat.Automat):
         if len(pending_order_items) > 0:
             related_order_item = pending_order_items[0]
             self.expected_owner = related_order_item.order.owner
-            logger.debug('found expected owner from one pending order %r : %r', related_order_item, self.expected_owner)
+            if 'rewrite_contacts' in related_order_item.details:
+                self.rewrite_contacts = related_order_item.details['rewrite_contacts']
+            logger.debug('found expected owner from one pending order %r : %r rewrite_contacts=%r',
+                         related_order_item, self.expected_owner, self.rewrite_contacts)
         else:
             logger.debug('no pending orders for %r', self.domain_name)
 
@@ -376,11 +381,15 @@ class DomainRefresher(automat.Automat):
             return
 
         if not self.create_new_owner_allowed:
-            # fail if registrant not exist in local DB
-            # that means owner of the domain changed, or his contact is not in sync with back-end
-            # this also happens when domain is transferred to Zenaida, but user account not exist yet
-            logger.error('registrant %r not exist in local DB', self.received_registrant_epp_id)
-            self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
+            if self.domain_transferred_away:
+                logger.error('domain %r is marked as transferred away', self.domain_name)
+                self.event('domain-transferred-away')
+            else:
+                # fail if registrant not exist in local DB
+                # that means owner of the domain changed, or his contact is not in sync with back-end
+                # this also happens when domain is transferred to Zenaida, but user account not exist yet
+                logger.error('registrant %r not exist in local DB', self.received_registrant_epp_id)
+                self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
             return
 
         # currently registrant not exist in local DB, user account needs to be checked and created first
@@ -522,6 +531,9 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
+        if self.known_registrant:
+            logger.debug('registrant already known so skip creating user account')
+            return
         known_owner = zusers.find_account(self.current_registrant_info['email'])
         if not known_owner:
             known_owner = zusers.create_account(
@@ -555,9 +567,7 @@ class DomainRefresher(automat.Automat):
                 contact_email=self.current_registrant_info['email'],
             )
         self.received_registrant_epp_id = self.new_registrant_epp_id
-        if not self.known_registrant and self.received_registrant_epp_id:
-            logger.debug('trying to find existing registrant with epp id %r', self.received_registrant_epp_id)
-            self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+        self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
         if not self.known_registrant:
             logger.info('new registrant will be created for %r', known_owner)
             self.known_registrant = zcontacts.registrant_create_from_profile(
@@ -655,6 +665,8 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         if not self.target_domain:
+            return
+        if self.rewrite_contacts:
             return
         received_contacts_info = args[0]
         for role in ['admin', 'billing', 'tech', ]:
@@ -812,6 +824,7 @@ class DomainRefresher(automat.Automat):
         """
         self.expected_owner = None
         self.soft_delete = None
+        self.domain_transferred_away = None
         self.change_owner_allowed = None
         self.create_new_owner_allowed = None
         self.domain_name = None

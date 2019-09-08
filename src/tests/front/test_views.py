@@ -317,6 +317,58 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/contacts/'
 
 
+class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_set_auth_info')
+    def test_get_successful_transfer_code(self, mock_set_auth_info, mock_user_profile_complete, mock_list_contacts):
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+
+        domain = Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            auth_key='transfer_me'
+        )
+
+        response = self.client.get(f'/domains/{domain.id}/transfer-code/')
+
+        assert response.status_code == 200
+        assert response.context_data['transfer_code'] == 'transfer_me'
+        assert response.context_data['domain_name'] == 'test.ai'
+
+    @mock.patch('django.contrib.messages.error')
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_set_auth_info')
+    def test_technical_error(
+        self, mock_set_auth_info, mock_user_profile_complete, mock_list_contacts, mock_messages_error
+    ):
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_set_auth_info.return_value = False
+
+        domain = Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            auth_key='transfer_me'
+        )
+
+        response = self.client.get(f'/domains/{domain.id}/transfer-code/')
+
+        assert response.status_code == 302
+        assert response.url == '/domains/'
+        mock_messages_error.assert_called_once()
+
+
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db

@@ -85,6 +85,12 @@ class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/profile/'
 
+    def test_index_page_redirects_to_contacts_page(self):
+        with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:
+            response = self.client.get('')
+        assert response.status_code == 302
+        assert response.url == '/contacts/'
+
 
 class TestIndexViewForUnknownUser(TestCase):
 

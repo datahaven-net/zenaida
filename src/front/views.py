@@ -28,11 +28,9 @@ from zen import zmaster
 from billing import orders
 
 
-class IndexPageView(TemplateView):
-    template_name = 'base/index.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
+def validate_profile_and_contacts(dispatch_func):
+    def dispatch_wrapper(self, request, *args, **kwargs):
+        if self.request.user.is_authenticated:
             if not request.user.profile.is_complete():
                 messages.info(request, 'Please provide your contact information to be able to register new domains.')
                 return shortcuts.redirect('account_profile')
@@ -40,6 +38,15 @@ class IndexPageView(TemplateView):
                 messages.info(request, 'Please create your first contact person and provide your contact information '
                                        'to be able to register new domains.')
                 return shortcuts.redirect('account_contacts')
+        return dispatch_func(self, request, *args, **kwargs)
+    return dispatch_wrapper
+
+
+class IndexPageView(TemplateView):
+    template_name = 'base/index.html'
+
+    @validate_profile_and_contacts
+    def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -53,15 +60,9 @@ class AccountDomainsListView(ListView):
     template_name = 'front/account_domains.html'
     paginate_by = 10
 
+    @validate_profile_and_contacts
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.profile.is_complete():
-            messages.info(request, 'Please provide your contact information to be able to register new domains.')
-            return shortcuts.redirect('account_profile')
-        if len(zcontacts.list_contacts(request.user)) == 0:
-            messages.info(request, 'Please create your first contact person and provide your contact information '
-                                   'to be able to register new domains.')
-            return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -75,15 +76,9 @@ class AccountDomainCreateView(FormView):
     success_message = 'New domain is added to your account, now click "Register" to confirm the order and activate it.'
     success_url = reverse_lazy('account_domains')
 
+    @validate_profile_and_contacts
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.profile.is_complete():
-            messages.info(request, 'Please provide your contact information to be able to register new domains.')
-            return shortcuts.redirect('account_profile')
-        if len(zcontacts.list_contacts(request.user)) == 0:
-            messages.info(request, 'Please create your first contact person and provide your contact information '
-                                   'to be able to register new domains.')
-            return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -164,15 +159,9 @@ class AccountDomainUpdateView(UpdateView):
     success_message = 'Domain details successfully updated.'
     success_url = reverse_lazy('account_domains')
 
+    @validate_profile_and_contacts
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.profile.is_complete():
-            messages.info(request, 'Please provide your contact information to be able to register new domains.')
-            return shortcuts.redirect('account_profile')
-        if len(zcontacts.list_contacts(request.user)) == 0:
-            messages.info(request, 'Please create your first contact person and provide your contact information '
-                                   'to be able to register new domains.')
-            return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -206,15 +195,9 @@ class AccountDomainUpdateView(UpdateView):
 class AccountDomainTransferCodeView(TemplateView):
     template_name = 'front/account_domain_transfer_code.html'
 
+    @validate_profile_and_contacts
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.profile.is_complete():
-            messages.info(request, 'Please provide your contact information to be able to register new domains.')
-            return shortcuts.redirect('account_profile')
-        if len(zcontacts.list_contacts(request.user)) == 0:
-            messages.info(request, 'Please create your first contact person and provide your contact information '
-                                   'to be able to register new domains.')
-            return shortcuts.redirect('account_contacts')
         domain_name = request.GET.get('domain_name', '')
         domain = shortcuts.get_object_or_404(Domain, name=domain_name, owner=self.request.user)
         if not zmaster.domain_set_auth_info(domain):
@@ -238,15 +221,9 @@ class AccountDomainTransferTakeoverView(FormView):
     form_class = forms.DomainTransferTakeoverForm
     success_message = 'New domain will be added to your account after confirmation.'
 
+    @validate_profile_and_contacts
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.profile.is_complete():
-            messages.info(request, 'Please provide your contact information to be able to register new domains.')
-            return shortcuts.redirect('account_profile')
-        if len(zcontacts.list_contacts(request.user)) == 0:
-            messages.info(request, 'Please create your first contact person and provide your contact information '
-                                   'to be able to register new domains.')
-            return shortcuts.redirect('account_contacts')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

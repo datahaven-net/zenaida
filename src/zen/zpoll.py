@@ -58,6 +58,8 @@ def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=Fal
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=True,
+            soft_delete=True,
+            domain_transferred_away=True,
         )
     except zerrors.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)

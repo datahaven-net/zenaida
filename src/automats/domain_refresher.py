@@ -9,9 +9,11 @@ Zenaida domain_refresher() Automat
 
 EVENTS:
     * :red:`all-contacts-received`
+    * :red:`domain-transferred-away`
     * :red:`error`
     * :red:`registrant-unknown`
     * :red:`response`
+    * :red:`rewrite-contacts`
     * :red:`run`
 """
 
@@ -74,7 +76,7 @@ class DomainRefresher(automat.Automat):
         self.domain_info_response = None
         self.received_registrant_epp_id = None
         self.received_contacts = []
-        self.received_contact_roles = {}
+        self.new_domain_contacts = {}
         self.received_nameservers = []
         self.known_registrant = None
         self.new_registrant_epp_id = None
@@ -134,15 +136,19 @@ class DomainRefresher(automat.Automat):
                 self.state = 'FAILED'
                 self.doReportInfoFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(2201, *args, **kwargs):
-                self.state = 'DONE'
-                self.doDBDeleteDomain(*args, **kwargs)
-                self.doReportAnotherRegistrar(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
             elif event == 'registrant-unknown':
                 self.state = 'CUR_REG?'
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doEppCurrentRegistrantInfo(*args, **kwargs)
+            elif event == 'rewrite-contacts':
+                self.state = 'SET_REG'
+                self.doUseExistingContacts(*args, **kwargs)
+                self.doEppDomainUpdate(*args, **kwargs)
+            elif event == 'domain-transferred-away' or ( event == 'response' and self.isCode(2201, *args, **kwargs) ):
+                self.state = 'DONE'
+                self.doDBDeleteDomain(*args, **kwargs)
+                self.doReportAnotherRegistrar(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---CONTACTS?---
         elif self.state == 'CONTACTS?':
             if event == 'all-contacts-received':
@@ -222,6 +228,8 @@ class DomainRefresher(automat.Automat):
         """
         Condition method.
         """
+        if self.expected_owner:
+            return self.expected_owner.registrants.first()
         existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'])
         if not existing_account:
             return False
@@ -237,14 +245,19 @@ class DomainRefresher(automat.Automat):
         self.create_new_owner_allowed = kwargs.get('create_new_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
         self.soft_delete = kwargs.get('soft_delete', True)
+        self.domain_transferred_away = kwargs.get('domain_transferred_away', False)
         self.expected_owner = None
+        self.rewrite_contacts = kwargs.get('rewrite_contacts', False)
         pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
         if len(pending_order_items) > 1:
             logger.critical('found more than one pending order for domain %s transfer: %r', self.domain_name, pending_order_items)
         if len(pending_order_items) > 0:
             related_order_item = pending_order_items[0]
             self.expected_owner = related_order_item.order.owner
-            logger.debug('found expected owner from one pending order %r : %r', related_order_item, self.expected_owner)
+            if 'rewrite_contacts' in related_order_item.details:
+                self.rewrite_contacts = related_order_item.details['rewrite_contacts']
+            logger.debug('found expected owner from one pending order %r : %r rewrite_contacts=%r',
+                         related_order_item, self.expected_owner, self.rewrite_contacts)
         else:
             logger.debug('no pending orders for %r', self.domain_name)
 
@@ -324,7 +337,7 @@ class DomainRefresher(automat.Automat):
             'type': i['@type'],
             'id': i['#text'],
         } for i in current_contacts]
-        self.received_contact_roles = {i['@type']:i['#text'] for i in current_contacts}
+        self.new_domain_contacts = {i['@type']:i['#text'] for i in current_contacts}
 
         # compare known contacts we have in DB with contacts received from back-end
         if not self.target_domain:
@@ -350,23 +363,37 @@ class DomainRefresher(automat.Automat):
         if self.expected_owner:
             # if pending order exists, select registrant from the owner
             self.known_registrant = self.expected_owner.registrants.first()
+            logger.info('trying to use registrant from existing owner: %r', self.known_registrant)
         else:
             # find registrant in local DB
             self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+            logger.info('trying to find registrant by epp id %r: %r',
+                        self.received_registrant_epp_id, self.known_registrant)
+
+        if self.rewrite_contacts and self.known_registrant:
+            logger.info('going to rewrite domain %r contacts from existing owner %r', self.domain_name, self.known_registrant.owner)
+            self.event('rewrite-contacts', response)
+            return
 
         if self.known_registrant:
+            logger.info('registrant for domain %r is known: %r', self.domain_name, self.known_registrant)
             self.event('response', response)
             return
 
         if not self.create_new_owner_allowed:
-            # fail if registrant not exist in local DB
-            # that means owner of the domain changed, or his contact is not in sync with back-end
-            # this also happens when domain is transferred to Zenaida, but user account not exist yet
-            logger.error('registrant not exist in local DB')
-            self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
+            if self.domain_transferred_away:
+                logger.error('domain %r is marked as transferred away', self.domain_name)
+                self.event('domain-transferred-away')
+            else:
+                # fail if registrant not exist in local DB
+                # that means owner of the domain changed, or his contact is not in sync with back-end
+                # this also happens when domain is transferred to Zenaida, but user account not exist yet
+                logger.error('registrant %r not exist in local DB', self.received_registrant_epp_id)
+                self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
             return
 
         # currently registrant not exist in local DB, user account needs to be checked and created first
+        logger.info('registrant not exist in local DB, going to create new registrant')
         self.event('registrant-unknown', response)
 
     def doEppContactsInfoMany(self, *args, **kwargs):
@@ -459,10 +486,19 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_update(
-                domain=self.domain_name,
-                change_registrant=self.new_registrant_epp_id,
-            )
+            if self.rewrite_contacts and self.new_domain_contacts:
+                new_contacts = [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
+                response = zclient.cmd_domain_update(
+                    domain=self.domain_name,
+                    change_registrant=self.new_registrant_epp_id,
+                    remove_contacts_list=self.received_contacts,
+                    add_contacts_list=new_contacts,
+                )
+            else:
+                response = zclient.cmd_domain_update(
+                    domain=self.domain_name,
+                    change_registrant=self.new_registrant_epp_id,
+                )
         except zerrors.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
@@ -479,10 +515,25 @@ class DomainRefresher(automat.Automat):
         existing_account = zusers.find_account(self.current_registrant_info['email'])
         self.new_registrant_epp_id = existing_account.registrants.first().epp_id
 
+    def doUseExistingContacts(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.new_registrant_epp_id = self.known_registrant.epp_id
+        first_contact = self.known_registrant.owner.contacts.first()
+        self.new_domain_contacts = {
+            'admin': first_contact.epp_id,
+            'billing': first_contact.epp_id,
+            'tech': first_contact.epp_id,
+        }
+
     def doDBCheckCreateUserAccount(self, *args, **kwargs):
         """
         Action method.
         """
+        if self.known_registrant:
+            logger.debug('registrant already known so skip creating user account')
+            return
         known_owner = zusers.find_account(self.current_registrant_info['email'])
         if not known_owner:
             known_owner = zusers.create_account(
@@ -518,6 +569,7 @@ class DomainRefresher(automat.Automat):
         self.received_registrant_epp_id = self.new_registrant_epp_id
         self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
         if not self.known_registrant:
+            logger.info('new registrant will be created for %r', known_owner)
             self.known_registrant = zcontacts.registrant_create_from_profile(
                 owner=known_owner,
                 profile_object=known_owner.profile,
@@ -537,6 +589,8 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
+        if self.rewrite_contacts:
+            return
         received_contacts_info = args[0]
         # even if domain not exist yet make sure all contacts really exists in DB and in sync with back-end
         for role in ['admin', 'billing', 'tech', ]:
@@ -575,9 +629,9 @@ class DomainRefresher(automat.Automat):
             auth_key='',
             registrar=None,
             registrant=self.known_registrant,
-            contact_admin=zcontacts.by_epp_id(self.received_contact_roles.get('admin')),
-            contact_tech=zcontacts.by_epp_id(self.received_contact_roles.get('tech')),
-            contact_billing=zcontacts.by_epp_id(self.received_contact_roles.get('billing')),
+            contact_admin=zcontacts.by_epp_id(self.new_domain_contacts.get('admin')),
+            contact_tech=zcontacts.by_epp_id(self.new_domain_contacts.get('tech')),
+            contact_billing=zcontacts.by_epp_id(self.new_domain_contacts.get('billing')),
             nameservers=self.received_nameservers,
             save=True,
         )
@@ -611,6 +665,8 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         if not self.target_domain:
+            return
+        if self.rewrite_contacts:
             return
         received_contacts_info = args[0]
         for role in ['admin', 'billing', 'tech', ]:
@@ -768,6 +824,7 @@ class DomainRefresher(automat.Automat):
         """
         self.expected_owner = None
         self.soft_delete = None
+        self.domain_transferred_away = None
         self.change_owner_allowed = None
         self.create_new_owner_allowed = None
         self.domain_name = None
@@ -775,10 +832,9 @@ class DomainRefresher(automat.Automat):
         self.contacts_changed = False
         self.domain_info_response = None
         self.received_contacts = []
-        self.received_contact_roles = {}
+        self.new_domain_contacts = {}
         self.received_nameservers = []
         self.new_registrant_epp_id = None
         self.current_registrant_info = None
         self.current_registrant_address_info = None
         self.destroy()
-

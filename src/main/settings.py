@@ -88,7 +88,7 @@ LOGGING = {
         'zenaida_poll': {
             'level': 'DEBUG',
             'class':'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'stream': sys.stdout,
         },
         'btcpay_verify': {

@@ -99,4 +99,9 @@ class DomainTransferTakeoverForm(forms.Form):
     
     domain_name = fields.CharField()
     transfer_code = fields.CharField()
+    rewrite_contacts = fields.BooleanField(
+        initial=True,
+        label='Use my default contacts',
+        help_text='This will automatically rewrite current domain contacts with my default info'
+    )
 

@@ -9,6 +9,7 @@ static_html/
 
 # Zenaida systemd files are also created manually
 etc/systemd/system/*.service
+etc/nginx/zenaida
 
 # Zenaida Gate health file to be also excluded from GIT
 health

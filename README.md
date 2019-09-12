@@ -137,6 +137,14 @@ Activate nginx site configuration by creating a sym-link:
         sudo unlink /etc/nginx/sites-enabled/default
 
 
+To secure your site you need to configure SSL certificate. Check `etc/nginx/zenaida` file to configure crtificate and key files location. Here is an example SSL config you can use to build your setup:
+
+        ssl_certificate     /home/zenaida/ssl/zenaida.crt;
+        ssl_certificate_key /home/zenaida/ssl/zenaida.key;
+        ssl_ciphers         EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH;
+        ssl_protocols       TLSv1.1 TLSv1.2;
+
+
 Now it is time to configure uwsgi in emperor mode to follow best practices.
 We will need one vassal to be running and serving Zenaida traffic.
 The main uwsgi emperor process will be starting as systemd service:

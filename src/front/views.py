@@ -245,7 +245,7 @@ class AccountDomainTransferTakeoverView(FormView):
             messages.warning(self.request, 'Domain transfer in progress')
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
-        if current_registrar == 'auction':
+        if current_registrar == settings.ZENAIDA_AUCTION_REGISTRAR_ID:
             price = 0.0
         else:
             price = 100.0

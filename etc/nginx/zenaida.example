@@ -19,16 +19,29 @@
 
 
 server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name buy-my-domain.com www.buy-my-domain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+
+server {
     access_log /home/zenaida/logs/nginx;
     error_log /home/zenaida/logs/nginx.err;    
 
-    listen 80 default_server;
-    listen [::]:80 default_server ipv6only=on;
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server ipv6only=on;
 
     root /var/www/;
     index index.html index.htm;
 
     server_name buy-my-domain.com www.buy-my-domain.com;
+
+    ssl_certificate     /home/zenaida/ssl/zenaida.crt;
+    ssl_certificate_key /home/zenaida/ssl/zenaida.key;
+    ssl_ciphers         EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH;
+    ssl_protocols       TLSv1.1 TLSv1.2;
 
     location / {
         include uwsgi_params;

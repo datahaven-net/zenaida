@@ -5,6 +5,7 @@ import calendar
 import pdfkit  # @UnresolvedImport
 
 from django import shortcuts
+from django.conf import settings
 from django.utils import timezone
 from django.core import exceptions
 from django.template.loader import get_template
@@ -121,11 +122,11 @@ def prepare_register_renew_restore_item(domain_object):
     if domain_object.is_blocked:
         raise billing_errors.DomainBlockedError()
     item_type = 'domain_register'
-    item_price = 100.0
+    item_price = settings.ZENAIDA_DOMAIN_PRICE
     item_name = domain_object.name
     if domain_object.can_be_restored:
         item_type = 'domain_restore'
-        item_price = 200.0
+        item_price = settings.ZENAIDA_DOMAIN_RESTORE_PRICE
     elif domain_object.is_registered:
         item_type = 'domain_renew'
     return item_type, item_price, item_name

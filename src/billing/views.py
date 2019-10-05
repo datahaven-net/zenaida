@@ -152,7 +152,7 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
         new_order = billing_orders.order_single_item(
             owner=self.request.user,
             item_type='domain_register',
-            item_price=100.0,
+            item_price=settings.ZENAIDA_DOMAIN_PRICE,
             item_name=kwargs.get('domain_name'),
         )
         context.update({'order': new_order})
@@ -171,7 +171,7 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
         renewal_order = billing_orders.order_single_item(
             owner=self.request.user,
             item_type='domain_renew',
-            item_price=100.0,
+            item_price=settings.ZENAIDA_DOMAIN_PRICE,
             item_name=kwargs.get('domain_name'),
         )
         context.update({'order': renewal_order})
@@ -190,7 +190,7 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
         restore_order = billing_orders.order_single_item(
             owner=self.request.user,
             item_type='domain_restore',
-            item_price=200.0,
+            item_price=settings.ZENAIDA_DOMAIN_RESTORE_PRICE,
             item_name=kwargs.get('domain_name'),
         )
         context.update({'order': restore_order})

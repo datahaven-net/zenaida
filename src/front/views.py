@@ -248,7 +248,7 @@ class AccountDomainTransferTakeoverView(FormView):
         if current_registrar == 'auction':
             price = 0.0
         else:
-            price = 100.0
+            price = settings.ZENAIDA_DOMAIN_PRICE
         transfer_order = orders.order_single_item(
             owner=self.request.user,
             item_type='domain_transfer',

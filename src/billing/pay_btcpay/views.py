@@ -58,8 +58,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
             )
         except Exception as exc:
             logger.exception(exc)
-            messages.error(self.request, "There is a problem with BitCoin payments at this moment."
-                                         "Please try again later.")
+            messages.error(self.request, "There is a technical problem with BitCoin payments at this moment, please try again later")
             return shortcuts.redirect('billing_new_payment')
 
         return HttpResponseRedirect(btcpay_invoice.get("url"))

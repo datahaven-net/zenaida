@@ -450,10 +450,10 @@ def build_receipt(owner, year=None, month=None, order_id=None):
     })
 
     # Create pdf file from a html file
-    pdfkit.from_string(rendered_html, 'out.pdf')
-    with open("out.pdf", "rb") as pdf_file:
+    pdfkit.from_string(rendered_html, '/tmp/out.pdf')
+    with open("/tmp/out.pdf", "rb") as pdf_file:
         pdf_raw = pdf_file.read()
-    os.remove("out.pdf")
+    os.remove("/tmp/out.pdf")
     return {
         'body': pdf_raw,
         'filename': '{}_receipt.pdf'.format(receipt_period.replace(' ', '_')),

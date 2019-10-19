@@ -32,11 +32,11 @@ def validate_profile_and_contacts(dispatch_func):
     def dispatch_wrapper(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:
             if not request.user.profile.is_complete():
-                messages.info(request, 'Please provide your contact information to be able to register new domains.')
+                messages.info(request, 'Please provide your contact information to be able to register new domains')
                 return shortcuts.redirect('account_profile')
             if len(zcontacts.list_contacts(request.user)) == 0:
                 messages.info(request, 'Please create your first contact person and provide your contact information '
-                                       'to be able to register new domains.')
+                                       'to be able to register new domains')
                 return shortcuts.redirect('account_contacts')
         return dispatch_func(self, request, *args, **kwargs)
     return dispatch_wrapper
@@ -73,7 +73,7 @@ class AccountDomainCreateView(FormView):
     template_name = 'front/account_domain_create.html'
     form_class = forms.DomainDetailsForm
     pk_url_kwarg = 'domain_name'
-    success_message = 'New domain is added to your account, now click "Register" to confirm the order and activate it.'
+    success_message = 'New domain name was added to your account, click "Register" to confirm the order and activate your domain'
     success_url = reverse_lazy('account_domains')
 
     @validate_profile_and_contacts
@@ -109,14 +109,14 @@ class AccountDomainCreateView(FormView):
         domain_tld = domain_name.split('.')[-1].lower()
 
         if not zzones.is_supported(domain_tld):
-            messages.error(self.request, f'Domain zone "{domain_tld}" is not supported.')
+            messages.error(self.request, f'Domain zone "{domain_tld}" is not supported')
             return shortcuts.redirect('account_domains')
 
         existing_domain = zdomains.domain_find(domain_name=domain_name)
         if existing_domain:
             if existing_domain.epp_id:
                 # If domain has EPP id, it means that domain is already owned someone.
-                messages.error(self.request, 'This domain is already registered.')
+                messages.error(self.request, 'Domain name already registered')
                 return super().form_valid(form)
             if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
                 # If domain was on someone's basket more than an hour, remove that from database in order to make it
@@ -124,7 +124,7 @@ class AccountDomainCreateView(FormView):
                 zdomains.domain_delete(domain_id=existing_domain.id)
             else:
                 # If domain is on someone's basket, domain becomes unavailable.
-                messages.warning(self.request, 'This domain is not available now.')
+                messages.warning(self.request, 'Domain name is not available at the moment')
                 return super().form_valid(form)
 
         domain_obj = form.save(commit=False)
@@ -156,7 +156,7 @@ class AccountDomainUpdateView(UpdateView):
     template_name = 'front/account_domain_details.html'
     form_class = forms.DomainDetailsForm
     pk_url_kwarg = 'domain_id'
-    success_message = 'Domain details successfully updated.'
+    success_message = 'Domain details successfully updated'
     success_url = reverse_lazy('account_domains')
 
     @validate_profile_and_contacts
@@ -185,8 +185,8 @@ class AccountDomainUpdateView(UpdateView):
                 log_transitions=True,
             )
             if not domain_update:
-                messages.error(self.request, 'There were technical problems with domain info processing. '
-                                             'Please try again later or contact customer support.')
+                messages.error(self.request, 'There is a technical problem with domain processing. '
+                                             'Please try again later or contact site administrator')
                 return super().form_valid(form)
         messages.success(self.request, self.success_message)
         return super().form_valid(form)
@@ -203,8 +203,8 @@ class AccountDomainTransferCodeView(TemplateView):
     def get(self, request, *args, **kwargs):
         domain = shortcuts.get_object_or_404(Domain, pk=self.kwargs.get('domain_id'), owner=self.request.user)
         if not zmaster.domain_set_auth_info(domain):
-            messages.error(self.request, 'There were technical problems with domain transfer code processing. '
-                                         'Please try again later or contact customer support.')
+            messages.error(self.request, 'There is a technical problem with domain transfer code processing. '
+                                         'Please try again later or contact site administrator')
             return shortcuts.redirect('account_domains')
         return self.render_to_response(self.get_context_data(transfer_code=domain.auth_key, domain_name=domain.name))
 
@@ -213,7 +213,7 @@ class AccountDomainTransferTakeoverView(FormView):
 
     template_name = 'front/account_domain_transfer_takeover.html'
     form_class = forms.DomainTransferTakeoverForm
-    success_message = 'New domain will be added to your account after confirmation.'
+    success_message = 'New domain will be added to your account after confirmation'
 
     @validate_profile_and_contacts
     @method_decorator(login_required)
@@ -228,7 +228,7 @@ class AccountDomainTransferTakeoverView(FormView):
             auth_info=transfer_code,
         )
         if not info:
-            messages.warning(self.request, 'Domain is not registered.')
+            messages.warning(self.request, 'Domain name is not registered')
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
         if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
@@ -239,10 +239,10 @@ class AccountDomainTransferTakeoverView(FormView):
         current_statuses = [s['@s'] for s in current_statuses]
         if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
             messages.error(self.request, 'Domain transfer is not possible at the moment. ' \
-                                         'Please contact customer support.')
+                                         'Please contact site administrator')
             return super().form_invalid(form)
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):
-            messages.warning(self.request, 'Domain transfer in progress')
+            messages.warning(self.request, 'Domain transfer is already in progress')
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
         if current_registrar == settings.ZENAIDA_AUCTION_REGISTRAR_ID:
@@ -267,8 +267,8 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
     template_name = 'front/account_profile.html'
     model = Profile
     form_class = forms.AccountProfileForm
-    error_message = 'There were technical problems with contact details processing. ' \
-                    'Please try again later or contact customer support.'
+    error_message = 'There is a technical problem with contact details processing. ' \
+                    'Please try again later or contact site administrator'
     success_url = reverse_lazy('account_profile')
 
     def get_object(self, queryset=None):
@@ -295,11 +295,11 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
                 return HttpResponseRedirect(self.request.path_info)
 
         if existing_registrant and existing_contacts:
-            messages.success(self.request, 'Your profile information was successfully updated.')
+            messages.success(self.request, 'Your profile information was successfully updated')
         else:
             messages.success(
                 self.request,
-                'Your profile information was successfully updated, you can register new domains now.'
+                'Profile information successfully updated, you can register new domains now'
             )
         return super().form_valid(form)
 
@@ -307,9 +307,9 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
 class AccountContactCreateView(LoginRequiredMixin, CreateView):
     template_name = 'front/account_contact_create.html'
     form_class = forms.ContactPersonForm
-    error_message = 'There were technical problems with contact details processing. ' \
-                    'Please try again later or contact customer support.'
-    success_message = 'New contact person successfully created.'
+    error_message = 'There is a technical problem with contact details processing. ' \
+                    'Please try again later or contact site administrator'
+    success_message = 'New contact person successfully created'
     success_url = reverse_lazy('account_contacts')
 
     def form_valid(self, form):
@@ -329,9 +329,9 @@ class AccountContactUpdateView(LoginRequiredMixin, UpdateView):
     model = Contact
     form_class = forms.ContactPersonForm
     pk_url_kwarg = 'contact_id'
-    error_message = 'There were technical problems with contact details processing. ' \
-                    'Please try again later or contact customer support.'
-    success_message = 'Contact person details successfully updated.'
+    error_message = 'There is a technical problem with contact details processing. ' \
+                    'Please try again later or contact site administrator'
+    success_message = 'Contact person details successfully updated'
     success_url = reverse_lazy('account_contacts')
 
     def get_object(self, queryset=None):
@@ -349,7 +349,7 @@ class AccountContactDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'front/account_contact_delete.html'
     model = Contact
     pk_url_kwarg = 'contact_id'
-    success_message = 'Contact person successfully deleted.'
+    success_message = 'Contact person successfully removed'
     success_url = reverse_lazy('account_contacts')
 
     def get_object(self, queryset=None):
@@ -395,7 +395,7 @@ class DomainLookupView(FormView):
             try:
                 brute_force.register_attempt()
             except ExceededMaxAttemptsException:
-                messages.error(self.request, 'Too many attempts, please try again later.')
+                messages.error(self.request, 'Too many attempts made, please try again later')
                 return super().form_valid(form)
 
         domain_name = form.cleaned_data.get('domain_name')
@@ -406,7 +406,7 @@ class DomainLookupView(FormView):
                 return super().form_valid(form)
             domain_tld = domain_name.split('.')[-1].lower()
             if not zzones.is_supported(domain_tld):
-                messages.error(self.request, f'Domain zone "{domain_tld}" is not supported.')
+                messages.error(self.request, f'Domain zone "{domain_tld}" is not supported')
                 return super().form_valid(form)
             domain_available = zdomains.is_domain_available(domain_name)
             if domain_available:

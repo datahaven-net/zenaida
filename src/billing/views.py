@@ -119,7 +119,7 @@ class OrderReceiptsDownloadView(LoginRequiredMixin, FormView):
                 month=form.data.get('month'),
             )
             if not pdf_info:
-                messages.warning(request, 'You don\'t have any order for this period.')
+                messages.warning(request, 'No orders found for given period')
                 return super().post(request, *args, **kwargs)
             response = HttpResponse(pdf_info['body'], content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
@@ -137,7 +137,7 @@ class OrderSingleReceiptDownloadView(View):
                 order_id=kwargs.get('order_id'),
             )
         if not pdf_info:
-            messages.warning(request, 'You can\'t do this action')
+            messages.warning(request, 'Order not found')
             return shortcuts.redirect('billing_orders')
         response = HttpResponse(pdf_info['body'], content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
@@ -199,7 +199,7 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
 
 
 class OrderCreateView(LoginRequiredMixin, CreateView):
-    error_message = 'No domains were selected.'
+    error_message = 'No domains were selected'
 
     def post(self, request, *args, **kwargs):
         order_items = request.POST.getlist('order_items')
@@ -242,11 +242,11 @@ class OrderDetailsView(LoginRequiredMixin, DetailView):
 
 class OrderExecuteView(LoginRequiredMixin, View):
     error_message_balance = 'Not enough funds on your balance to complete order. ' \
-                            'Please buy more credits to be able to register/renew domains.'
-    error_message_technical = 'There were technical problems with order processing. ' \
-                              'Please try again later or contact customer support.'
-    success_message = 'Order processed successfully.'
-    processing_message = 'Order is processing, please wait.'
+                            'Please buy more credits to be able to register/renew domains'
+    error_message_technical = 'There is technical problem with order processing. ' \
+                              'Please try again later or contact site administrator'
+    success_message = 'Order processed successfully'
+    processing_message = 'Order is processing, please wait'
 
     def post(self, request, *args, **kwargs):
         existing_order = billing_orders.get_order_by_id_and_owner(

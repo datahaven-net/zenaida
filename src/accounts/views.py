@@ -107,27 +107,27 @@ class ActivateView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         activation_obj = Activation.objects.filter(code=kwargs.get('code')).first()
         if not activation_obj:
-            messages.error(self.request, 'Activation code is not correct!')
+            messages.error(self.request, 'Activation code is not correct')
             return super().get_redirect_url()
 
         # Remove activation code if it's created more than 24 hours ago.
         activation_code_time_passed = datetime.now(timezone.utc) - activation_obj.created_at
         if activation_code_time_passed.total_seconds() > 60 * 60 * 24:
             activation_obj.delete()
-            messages.error(self.request, 'Activation code is not valid anymore!')
+            messages.error(self.request, 'Activation code is not valid anymore')
             return super().get_redirect_url()
 
         # Activate user's profile if it's not already activated.
         user = activation_obj.account
 
         if user.is_active:
-            messages.warning(self.request, 'Your account is already activated.')
+            messages.warning(self.request, 'Your account is already activated')
             return super().get_redirect_url()
 
         user.is_active = True
         user.save()
 
-        messages.success(self.request, 'You have successfully activated your account!')
+        messages.success(self.request, 'You have successfully activated your account')
         login(self.request, user)
 
         # If user do not have a profile yet need to create it for him.

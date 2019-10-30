@@ -85,6 +85,7 @@ class SignUpForm(UserCreationForm):
 
     error_messages = {
         'unique_email': _('You can not use this email.'),
+        'password_mismatch': _("The two password fields didn't match."),
     }
 
     def clean(self):

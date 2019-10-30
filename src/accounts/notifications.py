@@ -43,10 +43,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain is expiring',
         })
-
     html_content = render_to_string(email_template, context=context, request=None)
     text_content = strip_tags(html_content)
-
     msg = EmailMultiAlternatives(
         context['subject'],
         text_content,
@@ -72,7 +70,7 @@ def process_email_notifications_queue(iterations=None, delay=3):
         if iterations is not None and iteration >= iterations:
             break
         iteration += 1
-        for one_notification in Notification.objects.filter(
+        for one_notification in Notification.notifications.filter(
             status='started',
             type='email',
         ):
@@ -100,6 +98,7 @@ def check_notify_domain_expiring(dry_run=True):
     Also checks notifications history to make sure only one email was sent for given domain.
     Skip sending if user disabled email notifications in Profile settings.
     """
+    outgoing_emails = []
     for user in Account.users.all():
         if not user.profile.email_notifications_enabled:
             continue
@@ -125,12 +124,14 @@ def check_notify_domain_expiring(dry_run=True):
         domains_to_be_notified = list(set(expiring_domains.keys()).difference(set(domains_notified)))
         if not domains_to_be_notified:
             continue
-        if dry_run:
-            logger.info('for %r following domains are expiring: %r', user, domains_to_be_notified)
-            continue
         for expiring_domain in domains_to_be_notified:
+            logger.info('for %r domain %r is expiring', user, expiring_domain)
+            outgoing_emails.append((user, expiring_domain, expiring_domains[expiring_domain], ))
+            if dry_run:
+                continue
             start_email_notification_domain_expiring(
                 user=user,
                 domain_name=expiring_domain,
                 expiry_date=expiring_domains[expiring_domain],
             )
+    return outgoing_emails

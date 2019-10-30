@@ -64,6 +64,7 @@ class Account(AbstractUser):
 
     # related fields:
     # activations -> accounts.models.activation.Activation
+    # notifications -> accounts.models.notification.Notification
     # profile -> back.models.profile.Profile
     # domains -> back.models.domain.Domain
     # contacts -> back.models.contact.Contact

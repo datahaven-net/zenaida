@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME
 from django.contrib import messages
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import SuccessURLAllowedHostsMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
@@ -12,7 +13,7 @@ from django.views.generic.edit import FormView
 from django.conf import settings
 
 from accounts.decorators import check_recaptcha
-from accounts.utils import get_login_form
+from accounts.forms import SignInViaEmailForm
 from accounts.forms import SignUpForm
 from accounts.models.activation import Activation
 
@@ -21,7 +22,11 @@ from zen.zusers import create_profile
 
 class SignInView(SuccessURLAllowedHostsMixin, FormView):
     template_name = 'accounts/login.html'
-    form_class = get_login_form()
+    if hasattr(settings, 'LOGIN_VIA_EMAIL') and settings.LOGIN_VIA_EMAIL:
+        form_class = SignInViaEmailForm
+    else:
+        form_class = AuthenticationForm
+
     redirect_field_name = REDIRECT_FIELD_NAME
     success_url = '/'
 

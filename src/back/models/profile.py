@@ -29,6 +29,8 @@ class Profile(models.Model):
     contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Fax')
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
+    email_notifications_enabled = models.BooleanField(verbose_name='Email notifications', default=True)
+
     def __str__(self):
         return 'Profile({})'.format(self.account.email)
 

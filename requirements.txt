@@ -8,7 +8,7 @@ django-extensions==2.1.9
 django-grappelli==2.13.1
 django-nested-admin==3.2.3
 djangorestframework==3.9.4
-ecdsa==0.13.2
+ecdsa==0.13.3
 filelock==3.0.12
 fqn-decorators==1.2.3
 idna==2.8

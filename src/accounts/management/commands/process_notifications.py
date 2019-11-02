@@ -5,7 +5,7 @@ from accounts import notifications
 
 class Command(BaseCommand):
 
-    help = 'Sending Email notifications from the queue'
+    help = 'Sending Email/SMS notifications from the queue'
 
     def handle(self, *args, **options):
-        notifications.process_email_notifications_queue()
+        notifications.process_notifications_queue()

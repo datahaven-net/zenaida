@@ -55,7 +55,7 @@ def test_execute_email_notification_failed(mock_send):
 
 @pytest.mark.django_db
 @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
-def test_process_email_notifications_queue_with_success(mock_send):
+def test_process_notifications_queue_with_success(mock_send):
     tester = testsupport.prepare_tester_account()
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
@@ -63,14 +63,14 @@ def test_process_email_notifications_queue_with_success(mock_send):
         expiry_date='2020-01-01',
     )
     mock_send.return_value = True
-    notifications.process_email_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1)
     new_notification.refresh_from_db()
     assert new_notification.status == 'sent'
 
 
 @pytest.mark.django_db
 @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
-def test_process_email_notifications_queue_with_failed(mock_send):
+def test_process_notifications_queue_with_failed(mock_send):
     tester = testsupport.prepare_tester_account()
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
@@ -78,7 +78,7 @@ def test_process_email_notifications_queue_with_failed(mock_send):
         expiry_date='2020-01-01',
     )
     mock_send.side_effect = Exception('some error while sending')
-    notifications.process_email_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1)
     new_notification.refresh_from_db()
     assert new_notification.status == 'failed'
 
@@ -100,7 +100,7 @@ def test_check_notify_domain_expiring_email_sent_and_executed(mock_send):
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
     mock_send.return_value = True
-    notifications.process_email_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1)
     new_notification = Notification.notifications.first()
     assert new_notification.status == 'sent'
 
@@ -202,7 +202,7 @@ def test_no_duplicated_emails(mock_send):
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
     mock_send.return_value = True
-    notifications.process_email_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1)
     new_notification = Notification.notifications.first()
     assert new_notification.status == 'sent'
     # second time

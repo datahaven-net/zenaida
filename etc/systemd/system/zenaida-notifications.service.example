@@ -1,0 +1,31 @@
+# Zenaida service to send email/sms notifications to customers.
+#
+# Copy and modify `zenaida-notifications.service` file to your local systemd folder to enable the service:
+#
+#         mkdir -p /home/zenaida/.config/systemd/user/
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-notifications.service.example /home/zenaida/.config/systemd/user/zenaida-notifications.service
+#         systemctl --user enable zenaida-notifications.service
+#
+#
+# To start Zenaida notifications service run this command:
+#
+#         systemctl --user start zenaida-notifications.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl --user status zenaida-notifications.service
+#
+
+[Unit]
+Description=ZenaidaNotifications
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/zenaida/zenaida/
+ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py process_notifications 1>>/home/zenaida/logs/notifications 2>>/home/zenaida/logs/notifications.err"
+
+[Install]
+WantedBy=multi-user.target

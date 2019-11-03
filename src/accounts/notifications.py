@@ -61,7 +61,7 @@ def execute_email_notification(notification_object):
     return True
 
 
-def process_email_notifications_queue(iterations=None, delay=3):
+def process_notifications_queue(iterations=None, delay=3):
     """
     Looping thru all email notifications and execute those which was was not sent yet.
     """
@@ -70,6 +70,7 @@ def process_email_notifications_queue(iterations=None, delay=3):
         if iterations is not None and iteration >= iterations:
             break
         iteration += 1
+        # TODO: able to handle SMS notifications
         for one_notification in Notification.notifications.filter(
             status='started',
             type='email',

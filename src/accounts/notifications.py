@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
 
-from accounts.models.account import Account
 from accounts.models.notification import Notification
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ def execute_email_notification(notification_object):
     return True
 
 
-def process_notifications_queue(iterations=None, delay=3):
+def process_notifications_queue(iterations=None, delay=3, iteration_delay=30):
     """
     Looping thru all email notifications and execute those which was was not sent yet.
     """
@@ -88,51 +87,5 @@ def process_notifications_queue(iterations=None, delay=3):
                 one_notification.save()
                 logger.exception('failed to execute %r' % one_notification)
             time.sleep(delay)
-
-
-def check_notify_domain_expiring(dry_run=True):
-    """
-    Loop all user accounts and all domains and identify all "expiring" domains:
-    less than 90 days left before domain get expired based on `expiry_date` field.
-    If `dry_run` is True only print out identified users and domains.
-    Otherwise actually will send email notifications about those domains.
-    Also checks notifications history to make sure only one email was sent for given domain.
-    Skip sending if user disabled email notifications in Profile settings.
-    """
-    outgoing_emails = []
-    for user in Account.users.all():
-        if not user.profile.email_notifications_enabled:
-            continue
-        expiring_domains = {}
-        for domain in user.domains.all():
-            if not domain.epp_id or domain.status != 'active':
-                # only take in account domains which are registered and active
-                continue
-            t_domain = domain.expiry_date
-            t_now = timezone.now()
-            dt = t_domain - t_now
-            if dt.days > 90:
-                # domain is not expiring at the moment
-                continue
-            if dt.days <= 0:
-                # domain already expired - no email needed
-                continue
-            expiring_domains[domain.name] = domain.expiry_date
-        domains_to_be_notified = []
-        # now look up all already sent notifications and find only domains
-        # which we did not send notification yet
-        domains_notified = user.notifications.values_list('domain_name', flat=True)
-        domains_to_be_notified = list(set(expiring_domains.keys()).difference(set(domains_notified)))
-        if not domains_to_be_notified:
-            continue
-        for expiring_domain in domains_to_be_notified:
-            logger.info('for %r domain %r is expiring', user, expiring_domain)
-            outgoing_emails.append((user, expiring_domain, expiring_domains[expiring_domain], ))
-            if dry_run:
-                continue
-            start_email_notification_domain_expiring(
-                user=user,
-                domain_name=expiring_domain,
-                expiry_date=expiring_domains[expiring_domain],
-            )
-    return outgoing_emails
+        logger.info('finished iteration %d at %r', iteration, timezone.now().isoformat())
+        time.sleep(iteration_delay)

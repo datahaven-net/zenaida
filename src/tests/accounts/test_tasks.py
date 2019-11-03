@@ -5,7 +5,7 @@ import pytest
 from django.conf import settings
 from django.test import TestCase
 
-from accounts.management.commands import clean_inactive_activations_and_accounts
+from accounts.tasks import activations_cleanup
 from accounts.models import Account
 from accounts.models.activation import Activation
 from back.models.domain import Domain
@@ -14,7 +14,8 @@ from billing.models.payment import Payment
 from zen import zusers
 
 
-class TestCleanInactiveActivationsAccounts(TestCase):
+class TestActivationsCleanup(TestCase):
+
     @pytest.mark.django_db
     def setUp(self):
         self.account = zusers.create_account("tester@zenaida.ai", account_password="123", is_active=False)
@@ -33,7 +34,7 @@ class TestCleanInactiveActivationsAccounts(TestCase):
         """
         self.activation.created_at = datetime.datetime.now()
         self.activation.save()
-        clean_inactive_activations_and_accounts.cleanup()
+        activations_cleanup()
 
         assert len(Activation.objects.all()) == 1
 
@@ -48,7 +49,7 @@ class TestCleanInactiveActivationsAccounts(TestCase):
         """
         self.account.is_active = True
         self.account.save()
-        clean_inactive_activations_and_accounts.cleanup()
+        activations_cleanup()
 
         assert len(Activation.objects.all()) == 0
 
@@ -56,17 +57,17 @@ class TestCleanInactiveActivationsAccounts(TestCase):
         assert len(accounts) == 1
         assert accounts[0].email == "tester@zenaida.ai"
 
-    @mock.patch('logging.Logger.warning')
+    @mock.patch('logging.Logger.info')
     def test_delete_inactive_user(self, mock_logging):
         """
         Check if the account is removed as activation_code of the account is expired and the account is inactive
         and there is not any domain, balance or payment belongs to the account.
         """
-        clean_inactive_activations_and_accounts.cleanup()
+        activations_cleanup()
 
         assert len(Account.objects.all()) == 0
         assert len(Activation.objects.all()) == 0
-        mock_logging.assert_called_once_with("Inactive account for this email address is removed: 'tester@zenaida.ai'")
+        mock_logging.assert_called_once()
 
     def test_do_not_delete_inactive_user_with_balance(self):
         """
@@ -76,7 +77,7 @@ class TestCleanInactiveActivationsAccounts(TestCase):
 
         self.account.balance = 100.0
         self.account.save()
-        clean_inactive_activations_and_accounts.cleanup()
+        activations_cleanup()
 
         assert len(Activation.objects.all()) == 0
 
@@ -95,7 +96,7 @@ class TestCleanInactiveActivationsAccounts(TestCase):
             name="test.ai",
             zone=Zone.zones.create(name="ai"),
         )
-        clean_inactive_activations_and_accounts.cleanup()
+        activations_cleanup()
 
         assert len(Activation.objects.all()) == 0
 
@@ -120,7 +121,7 @@ class TestCleanInactiveActivationsAccounts(TestCase):
             started_at=datetime.datetime(2019, 3, 23),
             status="paid",
         )
-        clean_inactive_activations_and_accounts.cleanup()
+        activations_cleanup()
 
         assert len(Activation.objects.all()) == 0
 

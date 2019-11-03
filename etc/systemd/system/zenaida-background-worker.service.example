@@ -1,0 +1,31 @@
+# Systemd service configuration for Zenaida background process which executes different regular tasks
+#
+# Copy and modify `zenaida-background-worker.service` file to your local systemd folder to enable the service:
+#
+#         mkdir -p /home/zenaida/.config/systemd/user/
+#         cd /home/zenaida/zenaida/
+#         cp etc/systemd/system/zenaida-background-worker.service.example /home/zenaida/.config/systemd/user/zenaida-background-worker.service
+#         systemctl --user enable zenaida-background-worker.service
+#
+#
+# To start Zenaida Poll service run this command:
+#
+#         systemctl --user start zenaida-background-worker.service
+#
+#
+# You can always check current situation with:
+#
+#         systemctl --user status zenaida-background-worker.service
+#
+
+[Unit]
+Description=ZenaidaBackgroundWorker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/zenaida/zenaida/
+ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py background_worker 1>>/home/zenaida/logs/background_worker 2>>/home/zenaida/logs/background_worker.err"
+
+[Install]
+WantedBy=multi-user.target

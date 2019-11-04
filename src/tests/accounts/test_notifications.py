@@ -7,6 +7,8 @@ from django.utils import timezone
 from tests import testsupport
 
 from accounts import notifications
+from accounts import tasks
+
 from accounts.models.notification import Notification
 
 
@@ -95,7 +97,7 @@ def test_check_notify_domain_expiring_email_sent_and_executed(mock_send):
     tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
     tester_domain.status = 'active'
     tester_domain.save()
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=False)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=False)
     assert len(outgoing_emails) == 1
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
@@ -116,7 +118,7 @@ def test_check_notify_domain_expiring_email_sent():
     tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
     tester_domain.status = 'active'
     tester_domain.save()
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=True)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=True)
     assert len(outgoing_emails) == 1
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
@@ -133,7 +135,7 @@ def test_check_notify_domain_expiring_email_not_sent():
     tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=180)  # expiry_date 180 days from now
     tester_domain.status = 'active'
     tester_domain.save()
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=True)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=True)
     assert len(outgoing_emails) == 0
 
 
@@ -148,7 +150,7 @@ def test_check_notify_domain_expiring_when_alread_expired():
     tester_domain.expiry_date = timezone.now() - datetime.timedelta(days=10)  # already expired 10 days ago
     tester_domain.status = 'active'
     tester_domain.save()
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=True)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=True)
     assert len(outgoing_emails) == 0
 
 
@@ -163,7 +165,7 @@ def test_check_notify_domain_expiring_when_not_active():
     tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
     tester_domain.status = 'inactive'
     tester_domain.save()
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=True)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=True)
     assert len(outgoing_emails) == 0
 
 
@@ -180,7 +182,7 @@ def test_account_profile_email_notifications_disabled():
     tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
     tester_domain.status = 'active'
     tester_domain.save()
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=False)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=False)
     assert len(outgoing_emails) == 0
 
 
@@ -197,7 +199,7 @@ def test_no_duplicated_emails(mock_send):
     tester_domain.status = 'active'
     tester_domain.save()
     # first time
-    outgoing_emails = notifications.check_notify_domain_expiring(dry_run=False)
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=False)
     assert len(outgoing_emails) == 1
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
@@ -206,8 +208,8 @@ def test_no_duplicated_emails(mock_send):
     new_notification = Notification.notifications.first()
     assert new_notification.status == 'sent'
     # second time
-    outgoing_emails_again = notifications.check_notify_domain_expiring(dry_run=False)
+    outgoing_emails_again = tasks.check_notify_domain_expiring(dry_run=False)
     assert len(outgoing_emails_again) == 0
     # third time
-    outgoing_emails_one_more = notifications.check_notify_domain_expiring(dry_run=False)
+    outgoing_emails_one_more = tasks.check_notify_domain_expiring(dry_run=False)
     assert len(outgoing_emails_one_more) == 0

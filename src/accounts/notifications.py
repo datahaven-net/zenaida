@@ -33,7 +33,7 @@ def execute_email_notification(notification_object):
     from_email = settings.DEFAULT_FROM_EMAIL
     email_template = None
     context = {
-        'person_name': notification_object.account.profile.person_name or 'dear customer',
+        'person_name': notification_object.account.profile.person_name or 'dear Customer',
         'domain_name': notification_object.domain_name,
     }
     if notification_object.subject == 'domain_expiring':
@@ -60,7 +60,7 @@ def execute_email_notification(notification_object):
     return True
 
 
-def process_notifications_queue(iterations=None, delay=3, iteration_delay=30):
+def process_notifications_queue(iterations=None, delay=3, iteration_delay=5*60):
     """
     Looping thru all email notifications and execute those which was was not sent yet.
     """

@@ -20,7 +20,7 @@ def activations_cleanup():
     only the activation code.
     '''
 
-    activation_code_expiry_time = datetime.datetime.now() - datetime.timedelta(
+    activation_code_expiry_time = timezone.now() - datetime.timedelta(
         minutes=settings.ACTIVATION_CODE_EXPIRING_MINUTE
     )
     expired_activation_code_objects = Activation.objects.filter(created_at__lte=activation_code_expiry_time)
@@ -47,6 +47,8 @@ def check_notify_domain_expiring(dry_run=True):
     """
     outgoing_emails = []
     for user in Account.users.all():
+        if not hasattr(user, 'profile'):
+            continue
         if not user.profile.email_notifications_enabled:
             continue
         expiring_domains = {}
@@ -63,7 +65,7 @@ def check_notify_domain_expiring(dry_run=True):
             if dt.days <= 0:
                 # domain already expired - no email needed
                 continue
-            expiring_domains[domain.name] = domain.expiry_date
+            expiring_domains[domain.name] = domain.expiry_date.date()
         domains_to_be_notified = []
         # now look up all already sent notifications and find only domains
         # which we did not send notification yet

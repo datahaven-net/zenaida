@@ -21,5 +21,24 @@ touch /home/zenaida/zenaida/etc/uwsgi/vassals/zenaida.ini
 # restart Zenaida Gate service
 systemctl --user restart zenaida-gate.service
 
+# restart Zenaida Poll service
+systemctl --user restart zenaida-poll.service
+
+# restart Zenaida Gate Watcher service
+systemctl --user restart zenaida-gate-watcher.service
+
+# restart Zenaida Gate Health file trigger
+systemctl --user restart zenaida-gate-health.path
+
+# restart BTCPay background service
+systemctl --user restart zenaida-btcpay.service
+
+# restart Zenaida background worker service
+systemctl --user restart zenaida-background-worker.service
+
+# restart Zenaida notifications queue service
+systemctl --user restart zenaida-notifications.service
+
+
 # DONE!
 exit 0

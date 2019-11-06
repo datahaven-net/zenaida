@@ -97,6 +97,12 @@ LOGGING = {
             'formatter': 'simple',
             'stream': sys.stdout,
         },
+        'background_service': {
+            'level': 'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple',
+            'stream': sys.stdout,
+        },
     },
     'loggers': {
         'django.request': {
@@ -118,6 +124,16 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
             'handlers': ['btcpay_verify', ],
+        },
+        'back.management.commands.background_worker': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['background_service', ],
+        },
+        'accounts.notifications': {
+            'level': 'DEBUG',
+            'propagate': False,
+            'handlers': ['background_service', ],
         },
         'pika': {
             'propagate': False,

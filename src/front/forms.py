@@ -80,6 +80,7 @@ class AccountProfileForm(models.ModelForm):
             'address_province',
             'address_postal_code',
             'address_country',
+            'email_notifications_enabled',
         )
 
     def __init__(self, *args, **kwargs):

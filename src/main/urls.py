@@ -78,12 +78,6 @@ patterns = [
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 
     path('faq/', TemplateView.as_view(template_name='front/faq.html'), name='faq'),
-    path('faq-epp/', TemplateView.as_view(template_name='faq/faq_epp.html'), name='faq_epp'),
-    path('faq-auctions/', TemplateView.as_view(template_name='faq/faq_auctions.html'), name='faq_auctions'),
-    path('faq-payments/', TemplateView.as_view(template_name='faq/faq_payments.html'), name='faq_payments'),
-    path('faq-correspondentbank/', TemplateView.as_view(
-        template_name='faq/faq_correspondentbank.html'), name='faq_correspondentbank'),
-    path('faq-registrars/', TemplateView.as_view(template_name='faq/faq_registrars.html'), name='faq_registrars'),
 
     path('contact-us/', TemplateView.as_view(template_name='front/contact_us.html'), name='contact_us'),
 

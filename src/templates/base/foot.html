@@ -5,17 +5,8 @@
         <nav class="navbar navbar-expand-md fixed-bottom navbar-light bg-light">
         <div class="collapse navbar-collapse" id="navbarTogglerFooter">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item {% if url_name == 'contact_us' %}active{% endif %}">
-                    <a class="nav-link" href="{% url 'contact_us' %}">Contact Us</a>
-                </li>
-                <li class="nav-item dropup">
-                    <a class="nav-link dropdown-toggle {% if 'faq' in url_name %}active{% endif %}" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">FAQ</a>
-                    <div class="dropdown-menu m-0" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="{% url 'faq_epp' %}">EPP</a>
-                        <a class="dropdown-item" href="{% url 'faq_auctions' %}">Auctions</a>
-                        <a class="dropdown-item" href="{% url 'faq_payments' %}">Payments</a>
-                        <a class="dropdown-item" href="{% url 'faq' %}">General</a>
-                    </div>
+                <li class="nav-item {% if url_name == 'faq' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
                 </li>
             </ul>
         </div>

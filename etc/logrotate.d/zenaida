@@ -8,6 +8,10 @@
 /home/zenaida/logs/nginx.err
 /home/zenaida/logs/gate
 /home/zenaida/logs/gate.err
+/home/zenaida/logs/notifications
+/home/zenaida/logs/notifications.err
+/home/zenaida/logs/background_worker
+/home/zenaida/logs/background_worker.err
 /home/zenaida/logs/uwsgi-emperor
 /home/zenaida/logs/uwsgi-zenaida
 {

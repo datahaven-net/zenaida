@@ -3,10 +3,17 @@
 {% block main_content %}
 
 {% include 'base/container_sm_4_offset_4.html' %}
+{% load staticfiles %}
 
+<div class="text-center">
+    <img src="{% static 'images/mastercard.png' %}"  width="30%" height="30%" alt="mastercard logo">
+    <img src="{% static 'images/bitcoin.png' %}"  width="25%" height="25%" alt="bitcoin logo">
+    <img src="{% static 'images/visa.png' %}"  width="30%" height="30%" alt="visa card logo">
+</div>
 
+<br />
 Your current balance is <b>${{ user.balance }} US</b><br />
- <form method="post">
+<form method="post">
     {% csrf_token %}
     {% bootstrap_form form %}
     <button class="btn btn-success">Next</button>

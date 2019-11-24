@@ -109,8 +109,9 @@ def domain_synchronize_from_backend(domain_name,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from back-end and take required actions to update local DB
-    to be fully in sync with  back-end.
+    to be fully in sync with COCCA back-end.
     If domain not exists in local DB it will be created.
+    If domain not exist on COCCA anymore, or owned by another registrar it will be removed from local DB.
     Returns False if error happened, or raise Exception if `raise_errors` is True,
     if all is okay returns domain object from local DB.
     """

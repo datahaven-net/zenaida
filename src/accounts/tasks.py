@@ -23,7 +23,9 @@ def activations_cleanup():
     activation_code_expiry_time = timezone.now() - datetime.timedelta(
         minutes=settings.ACTIVATION_CODE_EXPIRING_MINUTE
     )
-    expired_activation_code_objects = Activation.objects.filter(created_at__lte=activation_code_expiry_time)
+    expired_activation_code_objects = Activation.objects.filter(
+        created_at__lte=activation_code_expiry_time
+    )
 
     for activation_code in expired_activation_code_objects:
         account = activation_code.account

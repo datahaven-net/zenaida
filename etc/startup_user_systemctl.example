@@ -1,0 +1,21 @@
+#!/bin/sh
+
+install -d -o zenaida /run/user/`id -u zenaida`
+
+systemctl start user@`id -u zenaida`
+
+systemctl start uwsgi-emperor.service
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-gate.service'
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-poll.service'
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-gate-watcher.service'
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-gate-health.path'
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-btcpay.service'
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-background-worker.service'
+
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/`id -u zenaida`/bus su zenaida -c 'systemctl --user restart zenaida-notifications.service'

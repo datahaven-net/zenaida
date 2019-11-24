@@ -256,10 +256,10 @@ class DomainRefresher(automat.Automat):
             self.expected_owner = related_order_item.order.owner
             if 'rewrite_contacts' in related_order_item.details:
                 self.rewrite_contacts = related_order_item.details['rewrite_contacts']
-            logger.debug('found expected owner from one pending order %r : %r rewrite_contacts=%r',
+            logger.info('found expected owner from one pending order %r : %r rewrite_contacts=%r',
                          related_order_item, self.expected_owner, self.rewrite_contacts)
         else:
-            logger.debug('no pending orders for %r', self.domain_name)
+            logger.info('no pending orders for %r', self.domain_name)
 
     def doEppDomainCheck(self, *args, **kwargs):
         """
@@ -532,7 +532,7 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         if self.known_registrant:
-            logger.debug('registrant already known so skip creating user account')
+            logger.info('registrant already known so skip creating user account')
             return
         known_owner = zusers.find_account(self.current_registrant_info['email'])
         if not known_owner:
@@ -729,7 +729,7 @@ class DomainRefresher(automat.Automat):
             related_order_item = pending_order_items[0]
             orders.update_order_item(related_order_item, new_status='processed', charge_user=True, save=True)
             orders.refresh_order(related_order_item.order)
-            logger.debug('processed one pending order %r for %r', related_order_item, self.expected_owner)
+            logger.info('processed one pending order %r for %r', related_order_item, self.expected_owner)
         else:
             logger.critical('no actions taken after domain transfer, no pending orders for %r', self.domain_name)
 

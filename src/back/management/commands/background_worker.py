@@ -4,7 +4,8 @@ import logging
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from accounts import tasks
+from accounts import tasks as account_tasks
+from back import tasks as back_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,11 @@ class Command(BaseCommand):
         while True:
             iteration += 1
 
-            tasks.check_notify_domain_expiring(dry_run=dry_run)
+            account_tasks.check_notify_domain_expiring(dry_run=dry_run)
 
-            tasks.activations_cleanup()
+            back_tasks.sync_expired_domains(dry_run=dry_run)
+
+            account_tasks.activations_cleanup()
 
             # TODO: other background periodical jobs to be placed here
 

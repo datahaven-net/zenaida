@@ -120,10 +120,10 @@ def contact_create(epp_id, owner, contact_info_response=None, **kwargs):
             contact_fax=str(d.get('fax', '')),
             contact_email=str(d['email']),
         )
-        logger.debug('contact created: %s', new_contact)
+        logger.info('contact created: %s', new_contact)
         return new_contact
     new_contact = Contact.contacts.create(epp_id=epp_id, owner=owner, **kwargs)
-    logger.debug('contact created: %s', new_contact)
+    logger.info('contact created: %s', new_contact)
     return new_contact
 
 
@@ -144,7 +144,7 @@ def contact_create_from_profile(owner, profile_object):
         contact_fax=profile_object.contact_fax or '',
         contact_email=profile_object.contact_email,
     )
-    logger.debug('contact created from existing profile: %s', new_contact)
+    logger.info('contact created from existing profile: %s', new_contact)
     return new_contact
 
 
@@ -156,7 +156,7 @@ def contact_update(epp_id, **kwargs):
     if not existing_contact:
         raise Exception('Contact not found')
     updated = Contact.contacts.filter(pk=existing_contact.pk).update(**kwargs)
-    logger.debug('contact updated: %s', existing_contact)
+    logger.info('contact updated: %s', existing_contact)
     return updated
 
 
@@ -181,7 +181,7 @@ def contact_refresh(epp_id, contact_info_response):
         contact_fax=str(d.get('fax', '')),
         contact_email=str(d['email']),
     )
-    logger.debug('contact refreshed: %s', existing_contact)
+    logger.info('contact refreshed: %s', existing_contact)
     return updated
 
 
@@ -253,7 +253,7 @@ def registrant_create(epp_id, owner, **kwargs):
             logger.debug('registrant with epp_id=%s already exist', epp_id)
             return existing_registrant
     new_registrant = Registrant.registrants.create(epp_id=epp_id, owner=owner, **kwargs)
-    logger.debug('registrant created: %s', new_registrant)
+    logger.info('registrant created: %s', new_registrant)
     return new_registrant
 
 
@@ -275,7 +275,7 @@ def registrant_create_from_profile(owner, profile_object, epp_id=None):
         contact_fax=profile_object.contact_fax or '',
         contact_email=profile_object.contact_email,
     )
-    logger.debug('registrant created from existing profile: %s', new_contact)
+    logger.info('registrant created from existing profile: %s', new_contact)
     return new_contact
 
 
@@ -287,7 +287,7 @@ def registrant_update(epp_id, **kwargs):
     if not existing_registrant:
         raise Exception('Registrant not found')
     updated = Registrant.registrants.filter(pk=existing_registrant.pk).update(**kwargs)
-    logger.debug('registrant updated: %s', existing_registrant)
+    logger.info('registrant updated: %s', existing_registrant)
     return updated
 
 

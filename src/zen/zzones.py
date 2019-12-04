@@ -31,5 +31,5 @@ def make(tld_zone_name):
     if not zon_obj:
         zon_obj = Zone(name=tld_zone_name)
         zon_obj.save()
-        logger.debug('new zone created: %r', zon_obj)
+        logger.info('new zone created: %r', zon_obj)
     return zon_obj

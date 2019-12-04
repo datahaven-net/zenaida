@@ -87,6 +87,8 @@ def is_domain_available(domain_name):
         return True
     if domain.epp_id:
         return False
+    if not domain.create_date:
+        return True
     if domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
         return True
     return False
@@ -200,7 +202,7 @@ def domain_delete(domain_id=None, domain_name=None):
     """
     from back.models.domain import Domain
     if domain_name is not None:
-        logger.debug('domain domain_name=%r will be removed', domain_name)
+        logger.info('domain domain_name=%r will be removed', domain_name)
         return Domain.domains.filter(name=domain_name).delete()
     logger.info('domain domain_id=%r will be removed', domain_id)
     return Domain.domains.filter(id=domain_id).delete()
@@ -360,12 +362,12 @@ def update_nameservers(domain_object, hosts=[], domain_info_response=None):
     for i in range(len(hosts)):
         if hosts[i]:
             if existing_nameservers[i] != hosts[i]:
-                logger.debug('nameserver host at position %d to be changed for %s : %s -> %s',
+                logger.info('nameserver host at position %d to be changed for %s : %s -> %s',
                              i, domain_object, existing_nameservers[i], hosts[i])
                 domain_object.set_nameserver(i, hosts[i])
                 domain_modified = True
         else:
-            logger.debug('nameserver host at position %d to be erased for %s', i, domain_object)
+            logger.info('nameserver host at position %d to be erased for %s', i, domain_object)
             domain_object.clear_nameserver(i)
             domain_modified = True
     if domain_modified:
@@ -428,7 +430,7 @@ def compare_contacts(domain_object, domain_info_response, target_contacts=None):
         pass
     if domain_object.registrant and current_registrant and current_registrant != domain_object.registrant.epp_id:
         change_registrant = domain_object.registrant.epp_id
-    logger.debug('for %r found such changes: add_contacts=%r remove_contacts=%r change_registrant=%r',
+    logger.info('for %r found such changes: add_contacts=%r remove_contacts=%r change_registrant=%r',
                  domain_object, add_contacts, remove_contacts, change_registrant)
     return add_contacts, remove_contacts, change_registrant
 

@@ -85,6 +85,8 @@ def prepare_tester_domain(
         auth_key='',
         domain_epp_id=None,
         add_contacts=['registrant', 'admin', 'billing', 'tech', ],
+        create_date=True,
+        expiry_date=True,
         epp_id_dict={},
         nameservers=['notexist1.com', 'notexist2.com', ],
     ):
@@ -116,11 +118,17 @@ def prepare_tester_domain(
         create_new=True,
     ) if 'billing' in add_contacts else None
 
+    if create_date is True:
+        create_date = make_aware(datetime.datetime.now())
+
+    if expiry_date is True:
+        expiry_date = make_aware(datetime.datetime.now() + datetime.timedelta(days=365))
+
     tester_domain = zdomains.domain_create(
         domain_name=domain_name,
         owner=tester,
-        expiry_date=make_aware(datetime.datetime.now() + datetime.timedelta(days=365)),
-        create_date=make_aware(datetime.datetime.now()),
+        expiry_date=expiry_date,
+        create_date=create_date,
         epp_id=domain_epp_id,
         auth_key=auth_key,
         registrar=None,

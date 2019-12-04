@@ -87,6 +87,8 @@ def is_domain_available(domain_name):
         return True
     if domain.epp_id:
         return False
+    if not domain.create_date:
+        return True
     if domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
         return True
     return False

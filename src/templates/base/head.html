@@ -24,9 +24,6 @@
         .navbar-nav li:hover .dropdown-menu {
             display: block;
         }
-        body {
-            margin-bottom: 60px;
-        }
         .btn-margin-right {
             margin-right: 8px;
         }
@@ -64,6 +61,11 @@
                                 <a class="dropdown-item" href="{% url 'billing_orders' %}">My Orders</a>
                                 <a class="dropdown-item" href="{% url 'billing_receipts_download' %}">Download Receipts</a>
                             </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link {% if url_name == 'faq' %}active{% endif %}" href="{% url 'faq' %}" id="navbarDropdownMenuFAQ" role="button" aria-haspopup="true" aria-expanded="false">
+                                FAQ
+                            </a>
                         </li>
                     </ul>
                     <ul class="navbar-nav">

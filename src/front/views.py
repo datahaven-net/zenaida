@@ -403,11 +403,11 @@ class DomainLookupView(FormView):
         if domain_name:
             if not zdomains.is_valid(domain_name):
                 messages.error(self.request, 'Domain name is not valid')
-                return super().form_valid(form)
+                return self.render_to_response(self.get_context_data(form=form, domain_name=domain_name, result=result))
             domain_tld = domain_name.split('.')[-1].lower()
             if not zzones.is_supported(domain_tld):
                 messages.error(self.request, f'Domain zone "{domain_tld}" is not supported')
-                return super().form_valid(form)
+                return self.render_to_response(self.get_context_data(form=form, domain_name=domain_name, result=result))
             domain_available = zdomains.is_domain_available(domain_name)
             if domain_available:
                 check_result = zmaster.domains_check(domain_names=[domain_name, ], )

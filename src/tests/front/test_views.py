@@ -509,15 +509,17 @@ class TestDomainLookupView(TestCase):
     @mock.patch('django.contrib.messages.error')
     def test_domain_lookup_with_invalid_domain_name(self, mock_messages_error):
         response = self.client.post('/lookup/', data=dict(domain_name='example'))
-        assert response.status_code == 302
-        assert response.url == '/lookup/'
+        assert response.status_code == 200
+        assert response.context['domain_name'] == 'example'
+        assert response.context['result'] is None
         mock_messages_error.assert_called_once()
 
     @mock.patch('django.contrib.messages.error')
     def test_domain_lookup_with_invalid_domain_extension(self, mock_messages_error):
         response = self.client.post('/lookup/', data=dict(domain_name='example.xyz'))
-        assert response.status_code == 302
-        assert response.url == '/lookup/'
+        assert response.status_code == 200
+        assert response.context['domain_name'] == 'example.xyz'
+        assert response.context['result'] is None
         mock_messages_error.assert_called_once()
 
     @override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS=2, BRUTE_FORCE_PROTECTION_ENABLED=True)

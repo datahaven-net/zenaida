@@ -1,4 +1,3 @@
-import time
 import logging
 import requests
 import subprocess
@@ -6,6 +5,7 @@ import subprocess
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
+from base.push_notifications import PushNotificationService
 from base.sms import SMSSender
 from base.email import send_email
 
@@ -51,10 +51,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--email_alert', action='store_true', dest='email_alert', default=True)
+        parser.add_argument('--push_notification_alert', action='store_true', dest='push_notification_alert', default=False)
         parser.add_argument('--sms_alert', action='store_true', dest='sms_alert', default=False)
         parser.add_argument('--history_filename', dest='history_filename', default='/tmp/smoketests')
 
-    def handle(self, email_alert, sms_alert, history_filename, *args, **options):
+    def handle(self, email_alert, push_notification_alert, sms_alert, history_filename, *args, **options):
         results = ['-', ] * len(DOMAINS)
         not_healthy = []
         for i in range(len(DOMAINS)):
@@ -93,3 +94,11 @@ class Command(BaseCommand):
                     ).send_sms()
                 except:
                     logger.exception('alert sms send failed')
+
+            if push_notification_alert:
+                try:
+                    PushNotificationService(
+                        notification_message='ZENAIDA ALERT: %s' % (', '.join(not_healthy))
+                    ).push()
+                except:
+                    logger.exception('alert push notification send failed')

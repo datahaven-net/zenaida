@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 
 from django.utils import timezone
 
-from base.sms import SMSSender
+from base.push_notifications import PushNotificationService
 from base.email import send_email
 
 from billing import payments
@@ -81,12 +81,12 @@ class Command(BaseCommand):
             time.sleep(60)
 
     @staticmethod
-    def _send_sms_and_email_alert():
-        if not cache.get("bruteforce_protection_sms"):
-            SMSSender(
-                text_message="There is a problem with BTCPay Server. Please check the server status."
-            ).send_sms()
-            cache.set("bruteforce_protection_sms", True, 60 * 60)
+    def _send_push_notification_and_email_alert():
+        if not cache.get("bruteforce_protection_push_notification"):
+            PushNotificationService(
+                notification_message="There is a problem with BTCPay Server. Please check the server status."
+            ).push()
+            cache.set("bruteforce_protection_push_notification", True, 60 * 60)
         if not cache.get("bruteforce_protection_email"):
             for email_address in settings.ALERT_EMAIL_RECIPIENTS:
                 send_email(

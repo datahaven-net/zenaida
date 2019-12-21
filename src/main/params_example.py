@@ -90,6 +90,11 @@ ENV = 'development'
 # SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = 'bearer'
 # SMS_GATEWAY_SEND_URL = 'https://api.clickatell.com/rest/message'
 
+#--- Push notification service configuration
+# PUSH_NOTIFICATION_SERVICE_POST_URL = 'https://api.pushover.net/1/messages.json'
+# PUSH_NOTIFICATION_SERVICE_API_TOKEN = ''
+# PUSH_NOTIFICATION_SERVICE_USER_TOKEN = ''
+
 #--- Alerts
 # ALERT_SMS_PHONE_NUMBERS = []
 # ALERT_EMAIL_RECIPIENTS = []

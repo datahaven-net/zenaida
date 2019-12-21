@@ -417,6 +417,12 @@ SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = getattr(params, 'SMS_GATEWAY_AUTHORIZAT
 SMS_GATEWAY_SEND_URL = getattr(params, 'SMS_GATEWAY_SEND_URL', '')
 
 #------------------------------------------------------------------------------
+#--- PUSH NOTIFICATION SERVICE CONFIGS
+PUSH_NOTIFICATION_SERVICE_POST_URL = getattr(params, 'PUSH_NOTIFICATION_SERVICE_POST_URL', '')
+PUSH_NOTIFICATION_SERVICE_API_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVICE_API_TOKEN', '')
+PUSH_NOTIFICATION_SERVICE_USER_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVICE_USER_TOKEN', '')
+
+#------------------------------------------------------------------------------
 #--- ADMIN ALERTS
 ALERT_SMS_PHONE_NUMBERS = getattr(params, 'ALERT_SMS_PHONE_NUMBERS', [])
 ALERT_EMAIL_RECIPIENTS = getattr(params, 'ALERT_EMAIL_RECIPIENTS', [])

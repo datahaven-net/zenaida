@@ -27,7 +27,7 @@
             {% csrf_token %}
             <div class="form-row justify-content-center">
                 <div class="col-lg-3">
-                    <input class="form-control form-control-lg" type="text" placeholder="Your domain name" aria-label="Search" name="domain_name" value="{{ domain_name }}" autofocus>
+                    <input class="form-control form-control-lg" type="text" placeholder="Your domain name" aria-label="Search" name="domain_name" value="{{ domain_name }}" autofocus required>
                 </div>
                 <div class="col-lg-1">
                     <button class="btn btn-success btn-lg btn-block" type="submit">Register</button>

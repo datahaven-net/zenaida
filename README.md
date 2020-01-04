@@ -18,9 +18,9 @@ Clone project files locally. If you are running on production server please use 
         cd zenaida
 
 
-Install postgress and few other packages:
+Install required packages:
 
-        sudo apt-get install make python3-pip python3-dev python3-venv libpq-dev postgresql postgresql-contrib memcached
+        sudo apt-get install make python3-pip python3-dev python3-venv libpq-dev postgresql postgresql-contrib memcached uwsgi-plugins-all
 
  
 Create DB and user:

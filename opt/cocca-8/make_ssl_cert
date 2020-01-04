@@ -2,9 +2,9 @@
 
 # How to use:
 # sudo ./make_ssl_cert <ssl password>
-# sudo mv epp.zenaida.ai.keystore /opt/cocca-8/keys/
-# sudo /opt/cocca-8/ctlscript.sh stop
-# sudo /opt/cocca-8/ctlscript.sh start
+
+echo " -- Stop COCCA -- "
+sudo /opt/cocca-8/ctlscript.sh stop
 
 echo " -- Cleaning -- "
 sudo rm -rf request.csr
@@ -23,5 +23,11 @@ sudo /opt/cocca-8/java/bin/keytool -certreq -alias cocca -file request.csr -keys
 echo " -- Request Certificate -- "
 sudo certbot certonly --csr ./request.csr --standalone
 
-echo " -- import Certificate -- "
+echo " -- Import Certificate to the Keystore -- "
 sudo /opt/cocca-8/java/bin/keytool -import -trustcacerts -alias cocca -file 0001_chain.pem -keystore epp.zenaida.ai.keystore -storepass "$1"
+
+echo " -- Apply new Keystore -- "
+sudo mv -v epp.zenaida.ai.keystore /opt/cocca-8/keys/
+
+echo " -- Start COCCA again -- "
+sudo /opt/cocca-8/ctlscript.sh start

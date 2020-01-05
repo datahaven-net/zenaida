@@ -30,11 +30,8 @@ class FilterOrdersByDateForm(forms.Form):
     year = forms.fields.ChoiceField(
         choices=(
             (None, '-'),
+            ('2020', '2020',),
             ('2019', '2019',),
-            ('2018', '2018',),
-            ('2017', '2017',),
-            ('2016', '2016',),
-            ('2015', '2015', ),
         ),
     )
     month = forms.fields.ChoiceField(

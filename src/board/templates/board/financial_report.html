@@ -1,0 +1,57 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+
+<div class="alert alert-secondary text-center" role="alert">
+
+    <form method="post">
+    {% csrf_token %}
+        <div class="row">
+            <div class="row col-6">
+                <div class="col-3">
+                    <fieldset>
+                        {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    </fieldset>
+                </div>
+                <div class="col-3">
+                    <fieldset>
+                        {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+                    </fieldset>
+                </div>
+                <div class="col-1">
+                    <button class="btn btn-sm btn-success">Show</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if object_list %}
+    <table class="table table-hover">
+        <tr>
+            <th>Domain Name</th>
+            <th>Transaction Date</th>
+            <th>Price</th>
+        </tr>
+
+        {% for order in object_list %}
+
+            <tr>
+                <td>{{ order.name }}</a></td>
+                <td>{{ order.order.finished_at|date:'d N Y' }}</td>
+                <td>{{ order.price }}</td>
+            </tr>
+
+        {% endfor %}
+
+    </table>
+    <p>
+        Total number of domains in this period: {{ object_list|length }}<br />
+        Total number of new users in this period: {{ total_registered_users }}<br /><br />
+        Total payment by customers in this period: {{ total_payment_by_users }}
+    </p>
+{% endif %}
+
+
+{% endblock %}

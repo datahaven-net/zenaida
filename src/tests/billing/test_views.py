@@ -80,7 +80,7 @@ class TestOrdersListView(BaseAuthTesterMixin, TestCase):
 
     def test_orders_list_by_year_and_month_returns_empty_list(self):
         self.create_order()
-        response = self.client.post('/billing/orders/', data=dict(year=2018, month=3))
+        response = self.client.post('/billing/orders/', data=dict(year=2019, month=4))
         assert response.status_code == 200
         assert len(response.context['object_list']) == 0
 

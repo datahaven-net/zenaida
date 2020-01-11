@@ -11,6 +11,7 @@ from front import views as front_views
 from billing import views as billing_views
 from billing.pay_4csonline import views as pay_4csonline_views
 from billing.pay_btcpay import views as pay_btcpay_views
+from board import views as board_views
 from accounts import views as accounts_views
 
 
@@ -74,6 +75,8 @@ patterns = [
     path('billing/4csonline/verify/', pay_4csonline_views.VerifyPaymentView.as_view(), name='billing_4csonline_verify_payment'),
 
     path('billing/btcpay/process/<str:transaction_id>/', pay_btcpay_views.ProcessPaymentView.as_view(), name='billing_btcpay_process_payment'),
+
+    path('board/financial-report/', board_views.FinancialReportView.as_view(), name='financial_report'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 

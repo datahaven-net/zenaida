@@ -230,6 +230,7 @@ INSTALLED_APPS = [
     'billing',
     'accounts',
     'back',
+    'board',
     'front',
     'main',
 ]

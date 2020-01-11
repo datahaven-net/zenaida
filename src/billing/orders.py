@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
+
 def by_id(order_id):
     """
     Return Order object by ID
@@ -79,29 +80,43 @@ def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
     return list(orders.all())
 
 
-def list_processed_orders_by_date(owner, year, month=None):
+def list_processed_orders_by_date_for_specific_user(owner, year, month=None):
     """
     List only processed orders by date for given user.
     """
     if year and month:
         orders = Order.orders.filter(
             owner=owner,
-            started_at__year=year,
-            started_at__month=month,
+            finished_at__year=year,
+            finished_at__month=month,
             status='processed',
-        ).order_by('finished_at')
+        ).order_by('-finished_at')
     elif year:
         orders = Order.orders.filter(
             owner=owner,
-            started_at__year=year,
+            finished_at__year=year,
             status='processed',
-        ).order_by('finished_at')
+        ).order_by('-finished_at')
     else:
         orders = Order.orders.filter(
             owner=owner,
             status='processed',
-        ).order_by('finished_at')
+        ).order_by('-finished_at')
     return list(orders.all())
+
+
+def list_all_processed_orders_by_date(year, month=None):
+    if year and month:
+        return Order.orders.filter(
+            finished_at__year=year,
+            finished_at__month=month,
+            status='processed',
+        ).order_by('-finished_at')
+    else:
+        return Order.orders.filter(
+            finished_at__year=year,
+            status='processed',
+        ).order_by('-finished_at')
 
 
 def find_pending_domain_transfer_order_items(domain_name):
@@ -417,7 +432,7 @@ def build_receipt(owner, year=None, month=None, order_id=None):
         order_objects.append(order_object)
         receipt_period = order_object.finished_at.strftime('%B %Y')
     else:
-        order_objects = list_processed_orders_by_date(owner=owner, year=year, month=month)
+        order_objects = list_processed_orders_by_date_for_specific_user(owner=owner, year=year, month=month)
         if not order_objects:
             return None
         if year and month:

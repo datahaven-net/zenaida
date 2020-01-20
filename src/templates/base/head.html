@@ -105,6 +105,9 @@
                         <li class="nav-item {% if url_name == 'register' %}active{% endif %}">
                             <a class="nav-link" href="{% url 'register' %}">Create an account</a>
                         </li>
+                        <li class="nav-item {% if url_name == 'faq' %}active{% endif %}">
+                            <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                        </li>
                     </ul>
                 {% endif %}
             {% endwith %}

@@ -13,9 +13,10 @@ class FinancialReportView(StaffRequiredMixin, FormView):
     form_class = billing_forms.FilterOrdersByDateForm
     success_url = reverse_lazy('financial_report')
 
-    def post(self, request, *args, **kwargs):
-        form = billing_forms.FilterOrdersByDateForm(request.POST)
-        if form.data.get('year') or (form.data.get('year') and form.data.get('month')):
+    def form_valid(self, form):
+        year = form.cleaned_data.get('year')
+        month = form.cleaned_data.get('month')
+        if year or (year and month):
             orders_for_specific_time = list_all_processed_orders_by_date(
                 year=form.data.get('year'),
                 month=form.data.get('month')
@@ -28,15 +29,12 @@ class FinancialReportView(StaffRequiredMixin, FormView):
                 for order_item in order.items.all():
                     order_items.append(order_item)
                     total_payment += order_item.price
-
-            return shortcuts.render(
-                request=request,
-                template_name='board/financial_report.html',
-                context={
-                    'form': self.form_class,
-                    'object_list': order_items,
-                    'total_payment_by_users': total_payment,
-                    'total_registered_users': len(list_all_users_by_date(form.data.get('year'), form.data.get('month')))
-                }
+            return self.render_to_response(
+                self.get_context_data(
+                    form=form,
+                    object_list=order_items,
+                    total_payment_by_users=total_payment,
+                    total_registered_users=len(list_all_users_by_date(year, month))
+                )
             )
-        return super().post(request, *args, **kwargs)
+        return super().form_valid(form)

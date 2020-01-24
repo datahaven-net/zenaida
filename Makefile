@@ -257,7 +257,8 @@ rabbitmq_server_dev:
 
 $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# REQUIREMENTS_TXT
-	@$(PIP) install --upgrade pip
+	# FIXME: Do not upgrade pip. v20 is breaking builds
+	# @$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_BASE)
 	@rm -vf $(REQUIREMENTS_TXT)
 	@$(PIP) freeze > $(REQUIREMENTS_TXT)
@@ -281,25 +282,29 @@ $(VENV_NO_SYSTEM_SITE_PACKAGES):
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
 	# VENV_DEPLOY
-	@$(PIP) install -q --upgrade pip
+	# FIXME: Do not upgrade pip. v20 is breaking builds
+	# @$(PIP) install -q --upgrade pip
 	@$(PIP) install -q -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
 	# VENV_BASE
-	@$(PIP) install --upgrade pip
+	# FIXME: Do not upgrade pip. v20 is breaking builds
+	# @$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
 	# VENV_TEST
-	@$(PIP) install --upgrade pip
+	# FIXME: Do not upgrade pip. v20 is breaking builds
+	# @$(PIP) install --upgrade pip
 	@$(PIP) install -r $(REQUIREMENTS_TEST)
 	@touch $@
 
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# VENV_TOX
-	@$(PIP) install --upgrade pip
+	# FIXME: Do not upgrade pip. v20 is breaking builds
+	# @$(PIP) install --upgrade pip
 	@$(PIP) install tox
 	@touch $@
 

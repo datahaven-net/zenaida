@@ -110,21 +110,26 @@ class OrderReceiptsDownloadView(LoginRequiredMixin, FormView):
     form_class = billing_forms.FilterOrdersByDateForm
     success_url = reverse_lazy('billing_receipts_download')
 
-    def post(self, request, *args, **kwargs):
-        form = billing_forms.FilterOrdersByDateForm(request.POST)
-        if form.data.get('year') or (form.data.get('year') and form.data.get('month')):
+    def form_valid(self, form):
+        year = form.cleaned_data.get('year')
+        month = form.cleaned_data.get('month')
+        if year or (year and month):
             pdf_info = billing_orders.build_receipt(
-                owner=request.user,
+                owner=self.request.user,
                 year=form.data.get('year'),
                 month=form.data.get('month'),
             )
             if not pdf_info:
-                messages.warning(request, 'No orders found for given period')
-                return super().post(request, *args, **kwargs)
+                messages.warning(self.request, 'No orders found for given period')
+                return self.render_to_response(
+                    self.get_context_data(
+                        form=form
+                    )
+                )
             response = HttpResponse(pdf_info['body'], content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
             return response
-        return super().post(request, *args, **kwargs)
+        return super().form_valid(form)
 
 
 class OrderSingleReceiptDownloadView(View):

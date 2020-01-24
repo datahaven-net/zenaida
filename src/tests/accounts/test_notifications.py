@@ -18,7 +18,7 @@ def test_start_email_notification_domain_expiring():
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
         domain_name='abcd.ai',
-        expiry_date='2020-01-01',
+        expiry_date='2050-01-01',
     )
     assert new_notification.account == tester
     assert new_notification.recipient == 'tester@zenaida.ai'
@@ -26,7 +26,7 @@ def test_start_email_notification_domain_expiring():
     assert new_notification.type == 'email'
     assert new_notification.subject == 'domain_expiring'
     assert new_notification.domain_name == 'abcd.ai'
-    assert new_notification.details == {'expiry_date': '2020-01-01', }
+    assert new_notification.details == {'expiry_date': '2050-01-01', }
     
 
 @pytest.mark.django_db
@@ -36,7 +36,7 @@ def test_execute_email_notification_success(mock_send):
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
         domain_name='abcd.ai',
-        expiry_date='2020-01-01',
+        expiry_date='2050-01-01',
     )
     mock_send.return_value = True
     assert notifications.execute_email_notification(new_notification) is True
@@ -49,7 +49,7 @@ def test_execute_email_notification_failed(mock_send):
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
         domain_name='abcd.ai',
-        expiry_date='2020-01-01',
+        expiry_date='2050-01-01',
     )
     mock_send.side_effect = Exception('some error while sending')
     assert notifications.execute_email_notification(new_notification) is False
@@ -62,10 +62,10 @@ def test_process_notifications_queue_with_success(mock_send):
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
         domain_name='abcd.ai',
-        expiry_date='2020-01-01',
+        expiry_date='2050-01-01',
     )
     mock_send.return_value = True
-    notifications.process_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
     new_notification.refresh_from_db()
     assert new_notification.status == 'sent'
 
@@ -77,10 +77,10 @@ def test_process_notifications_queue_with_failed(mock_send):
     new_notification = notifications.start_email_notification_domain_expiring(
         user=tester,
         domain_name='abcd.ai',
-        expiry_date='2020-01-01',
+        expiry_date='2050-01-01',
     )
     mock_send.side_effect = Exception('some error while sending')
-    notifications.process_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
     new_notification.refresh_from_db()
     assert new_notification.status == 'failed'
 
@@ -102,7 +102,7 @@ def test_check_notify_domain_expiring_email_sent_and_executed(mock_send):
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
     mock_send.return_value = True
-    notifications.process_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
     new_notification = Notification.notifications.first()
     assert new_notification.status == 'sent'
 
@@ -204,7 +204,7 @@ def test_no_duplicated_emails(mock_send):
     assert outgoing_emails[0][0] == tester
     assert outgoing_emails[0][1] == tester_domain.name
     mock_send.return_value = True
-    notifications.process_notifications_queue(iterations=1, delay=0.1)
+    notifications.process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
     new_notification = Notification.notifications.first()
     assert new_notification.status == 'sent'
     # second time

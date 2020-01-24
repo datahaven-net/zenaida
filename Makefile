@@ -45,11 +45,11 @@ MAKE_MIGRATIONS=`$(shell echo $(PYTHON)) src/manage.py makemigrations;`
 MIGRATIONS_CHECK=`echo $(MAKE_MIGRATIONS_OUTPUT) | awk '{print match($$0, "No changes detected")}'`
 PARAMS=src/main/params.py
 
-.PHONY: clean docsclean pyclean test lint isort docs docker setup.py check_env \
+.PHONY: clean docsclean pyclean test lint isort docs docker check_env \
 	check_forgotten_migrations artifact \
 	requirements_clean_virtualenv requirements_create_virtualenv requirements_build
 
-tox: $(VENV_TOX) setup.py
+tox: $(VENV_TOX)
 	# tox
 	PYTHONPATH=./src/ $(TOX)
 
@@ -129,7 +129,7 @@ test_dev: sanity_checks pyclean venv
 test/%: sanity_checks pyclean venv
 	$(TOX) -e $(TOX_PY_LIST) -- $*
 
-test_e2e: $(VENV_TOX) setup.py
+test_e2e: $(VENV_TOX)
 	E2E=1 PYTHONPATH=./src .tox/py36/bin/py.test -v -s --capture=no src/tests/
 
 lint: $(VENV_TOX)
@@ -145,11 +145,6 @@ docs: clean $(VENV_TOX) $(PARAMS)
 docker/test:
 	# docker/test
 	$(DOCKER_COMPOSE) build && trap '$(DOCKER_COMPOSE) down' EXIT && $(DOCKER_COMPOSE) up --exit-code-from test --no-build
-
-setup.py: $(VENV_DEPLOY)
-	# setup.py
-	@$(PIP) install pkgversion
-	$(PYTHON) setup_gen.py
 
 artifact: $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# artifact

@@ -27,7 +27,7 @@ def test_start_email_notification_domain_expiring():
     assert new_notification.subject == 'domain_expiring'
     assert new_notification.domain_name == 'abcd.ai'
     assert new_notification.details == {'expiry_date': '2050-01-01', }
-    
+
 
 @pytest.mark.django_db
 @mock.patch('accounts.notifications.EmailMultiAlternatives.send')

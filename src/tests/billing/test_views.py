@@ -97,9 +97,10 @@ class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
             self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=3))
             mock_build_receipt.assert_called_once()
 
-    def test_download_receipts_return_warning(self):
-        response = self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=2))
-        assert response.url == '/billing/orders/receipts/download/'
+    @mock.patch('django.contrib.messages.warning')
+    def test_download_receipts_return_warning(self, mock_messages_warning):
+        self.client.post('/billing/orders/receipts/download/', data=dict(year=2019, month=2))
+        mock_messages_warning.assert_called_once()
 
     def test_get_billing_receipt_page(self):
         response = self.client.post('/billing/orders/receipts/download/')

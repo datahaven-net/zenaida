@@ -265,6 +265,7 @@ class DomainResurrector(automat.Automat):
             log_events=self.log_events,
             log_transitions=self.log_transitions,
             raise_errors=self.raise_errors,
+            accept_code_2304=True,
         )
         try:
             ds.event('run', self.target_domain,

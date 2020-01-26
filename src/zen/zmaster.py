@@ -80,6 +80,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
         log_events=log_events,
         log_transitions=log_transitions,
         raise_errors=raise_errors,
+        accept_code_2304=True,
     )
     ds.event('run', domain_object,
         sync_contacts=sync_contacts,

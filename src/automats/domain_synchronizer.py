@@ -52,6 +52,7 @@ class DomainSynchronizer(automat.Automat):
             log_events=settings.DEBUG
         if log_transitions is None:
             log_transitions=settings.DEBUG
+        self.accept_code_2304 = kwargs.pop('accept_code_2304', True)
         super(DomainSynchronizer, self).__init__(
             name="domain_synchronizer",
             state="AT_STARTUP",
@@ -197,7 +198,10 @@ class DomainSynchronizer(automat.Automat):
         """
         Condition method.
         """
-        return args[0] == int(args[1]['epp']['response']['result']['@code'])
+        result_code = int(args[1]['epp']['response']['result']['@code'])
+        if result_code == 2304 and self.accept_code_2304:
+            result_code = 1000
+        return args[0] == result_code
 
     def isDomainExist(self, *args, **kwargs):
         """
@@ -369,6 +373,7 @@ class DomainSynchronizer(automat.Automat):
             skip_roles=[],
             skip_contact_details=(not self.DomainToBeCreated),
             raise_errors=True,
+            accept_code_2304=self.accept_code_2304,
         )
         try:
             dcs.event('run', target_domain=self.target_domain, )

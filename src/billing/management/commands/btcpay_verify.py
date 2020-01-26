@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 client.get_rate("USD")
             except:
                 logger.exception("BTCPay server connection problem while getting rates.")
-                self._send_sms_and_email_alert()
+                self._send_push_notification_and_email_alert()
                 time.sleep(60)
                 continue
 
@@ -49,7 +49,7 @@ class Command(BaseCommand):
                     btcpay_resp = client.get_invoice(invoice.invoice_id)
                 except:
                     logger.exception("BTCPay server connection problem while checking invoice payment status.")
-                    self._send_sms_and_email_alert()
+                    self._send_push_notification_and_email_alert()
                     break
 
                 # If status is new, there is not any update yet on BTCPay server, so move to the next invoice.

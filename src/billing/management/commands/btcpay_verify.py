@@ -35,7 +35,6 @@ class Command(BaseCommand):
                 client.get_rate("USD")
             except:
                 logger.exception("BTCPay server connection problem while getting rates.")
-                self._send_push_notification_and_email_alert()
                 time.sleep(60)
                 continue
 
@@ -49,7 +48,6 @@ class Command(BaseCommand):
                     btcpay_resp = client.get_invoice(invoice.invoice_id)
                 except:
                     logger.exception("BTCPay server connection problem while checking invoice payment status.")
-                    self._send_push_notification_and_email_alert()
                     break
 
                 # If status is new, there is not any update yet on BTCPay server, so move to the next invoice.
@@ -79,20 +77,3 @@ class Command(BaseCommand):
                             f'transaction_id={invoice.transaction_id}')
 
             time.sleep(60)
-
-    @staticmethod
-    def _send_push_notification_and_email_alert():
-        if not cache.get("bruteforce_protection_push_notification"):
-            PushNotificationService(
-                notification_message="There is a problem with BTCPay Server. Please check the server status."
-            ).push()
-            cache.set("bruteforce_protection_push_notification", True, 60 * 60)
-        if not cache.get("bruteforce_protection_email"):
-            for email_address in settings.ALERT_EMAIL_RECIPIENTS:
-                send_email(
-                    subject='BTCPay Server connectivity issue',
-                    text_content='There is a problem with BTCPay Server. Please check the server status.',
-                    from_email=settings.EMAIL_ADMIN,
-                    to_email=email_address,
-                )
-            cache.set("bruteforce_protection_email", True, 60 * 60)

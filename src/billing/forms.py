@@ -20,7 +20,7 @@ class NewPaymentForm(forms.Form):
         label='Payment Method',
         required=True,
         choices=(
-            # ('pay_4csonline', 'Credit Card', ),
+            ('pay_4csonline', 'Credit Card', ),
             ('pay_btcpay', 'BitCoin'),
         ),
     )

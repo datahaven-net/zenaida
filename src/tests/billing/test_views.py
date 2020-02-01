@@ -20,7 +20,7 @@ class BaseAuthTesterMixin(object):
 
 
 class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
-    @override_settings(ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK=True)
+    @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60)
     @pytest.mark.django_db
     def test_create_new_payment_in_db(self):
         response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
@@ -28,7 +28,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         assert response.context['transaction_id']
 
-    @override_settings(ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK=False)
+    @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=3*60)
     @mock.patch('billing.payments.latest_payment')
     @mock.patch('django.utils.timezone.now')
     def test_last_payment_was_done_before_3_minutes(self, mock_timezone_now, mock_latest_payment):
@@ -42,7 +42,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/billing/pay/'
 
     @pytest.mark.django_db
-    @override_settings(ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK=True)
+    @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60)
     def test_payment_method_is_invalid(self):
         response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='unknown'))
         # When payment method is invalid, it returns back to the same page.

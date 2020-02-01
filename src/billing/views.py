@@ -47,10 +47,15 @@ class NewPaymentView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('billing_new_payment')
 
     def form_valid(self, form):
-        if not settings.ZENAIDA_BILLING_BYPASS_PAYMENT_TIME_CHECK:
-            my_latest_payment = payments.latest_payment(self.request.user)
-            if my_latest_payment:
-                if timezone.now() - my_latest_payment.started_at < datetime.timedelta(minutes=3):
+        if settings.ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS:
+            my_latest_unfinished_payment = payments.latest_payment(
+                owner=self.request.user,
+                status_in=['started', 'cancelled', 'declined', ],
+            )
+            if my_latest_unfinished_payment:
+                if timezone.now() - my_latest_unfinished_payment.started_at < datetime.timedelta(
+                    seconds=settings.ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS,
+                ):
                     messages.info(self.request, 'Please wait few minutes and then try again.')
                     return shortcuts.redirect('billing_new_payment')
 

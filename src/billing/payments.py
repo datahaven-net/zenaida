@@ -14,12 +14,15 @@ def generate_transaction_id(size=16, chars=string.ascii_uppercase + string.digit
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def latest_payment(owner):
+def latest_payment(owner, status_in=[]):
     """
     Returns latest payment started by given user or `None`.
     """
     try:
-        return Payment.payments.filter(owner=owner).latest('started_at')
+        query = Payment.payments.filter(owner=owner)
+        if status_in:
+            query = query.filter(status__in=status_in)
+        return query.latest('started_at')
     except ObjectDoesNotExist:
         return None
 

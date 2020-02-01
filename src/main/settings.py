@@ -370,6 +370,9 @@ GRAPH_MODELS = {
   'group_models': True,
 }
 
+#------------------------------------------------------------------------------
+#--- SMOKETEST CONFIGS
+SMOKETEST_HOSTS = getattr(params, 'SMOKETEST_HOSTS', [])
 
 #------------------------------------------------------------------------------
 #--- BRUTE FORCE PROTECTION SETTINGS
@@ -377,6 +380,34 @@ BRUTE_FORCE_PROTECTION_ENABLED = getattr(params, 'BRUTE_FORCE_PROTECTION_ENABLED
 BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX = getattr(params, 'BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX', 'domain_lookup_brute_force')
 BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS = getattr(params, 'BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS', 15)
 BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT = getattr(params, 'BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT', 60*15)
+
+#------------------------------------------------------------------------------
+#--- GOOGLE RE-CAPTCHA KEYS
+GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
+GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
+
+#------------------------------------------------------------------------------
+#--- SMS GATEWAY CONFIGS
+SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = getattr(params, 'SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN', '')
+SMS_GATEWAY_SEND_URL = getattr(params, 'SMS_GATEWAY_SEND_URL', '')
+
+#------------------------------------------------------------------------------
+#--- PUSH NOTIFICATION SERVICE CONFIGS
+PUSH_NOTIFICATION_SERVICE_POST_URL = getattr(params, 'PUSH_NOTIFICATION_SERVICE_POST_URL', '')
+PUSH_NOTIFICATION_SERVICE_API_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVICE_API_TOKEN', '')
+PUSH_NOTIFICATION_SERVICE_USER_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVICE_USER_TOKEN', '')
+
+#------------------------------------------------------------------------------
+#--- ADMIN ALERTS
+ALERT_SMS_PHONE_NUMBERS = getattr(params, 'ALERT_SMS_PHONE_NUMBERS', [])
+ALERT_EMAIL_RECIPIENTS = getattr(params, 'ALERT_EMAIL_RECIPIENTS', [])
+
+#------------------------------------------------------------------------------
+#--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded
+LOADED_OK = 'OK'
+
+# DJANGO SETTINGS
+LOGIN_URL = '/accounts/login/'
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
@@ -406,31 +437,3 @@ ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK = getattr(params, 'ZENAIDA_BILLIN
 ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY = getattr(params, 'ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY', '')
 ZENAIDA_BTCPAY_MERCHANT = getattr(params, 'ZENAIDA_BTCPAY_MERCHANT', '')
 ZENAIDA_BTCPAY_HOST = getattr(params, 'ZENAIDA_BTCPAY_HOST', '')
-
-#------------------------------------------------------------------------------
-#--- GOOGLE RE-CAPTCHA KEYS
-GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
-GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
-
-#------------------------------------------------------------------------------
-#--- SMS GATEWAY CONFIGS
-SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN = getattr(params, 'SMS_GATEWAY_AUTHORIZATION_BEARER_TOKEN', '')
-SMS_GATEWAY_SEND_URL = getattr(params, 'SMS_GATEWAY_SEND_URL', '')
-
-#------------------------------------------------------------------------------
-#--- PUSH NOTIFICATION SERVICE CONFIGS
-PUSH_NOTIFICATION_SERVICE_POST_URL = getattr(params, 'PUSH_NOTIFICATION_SERVICE_POST_URL', '')
-PUSH_NOTIFICATION_SERVICE_API_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVICE_API_TOKEN', '')
-PUSH_NOTIFICATION_SERVICE_USER_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVICE_USER_TOKEN', '')
-
-#------------------------------------------------------------------------------
-#--- ADMIN ALERTS
-ALERT_SMS_PHONE_NUMBERS = getattr(params, 'ALERT_SMS_PHONE_NUMBERS', [])
-ALERT_EMAIL_RECIPIENTS = getattr(params, 'ALERT_EMAIL_RECIPIENTS', [])
-
-#------------------------------------------------------------------------------
-#--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded
-LOADED_OK = 'OK'
-
-# DJANGO SETTINGS
-LOGIN_URL = '/accounts/login/'

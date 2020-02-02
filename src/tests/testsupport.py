@@ -2,6 +2,8 @@ import datetime
 
 from django.utils.timezone import make_aware
 
+from billing import payments
+
 from zen import zcontacts
 from zen import zdomains
 from zen import zusers
@@ -140,3 +142,15 @@ def prepare_tester_domain(
     )
 
     return tester_domain
+
+
+def prepare_tester_payment(tester=None, amount=100, payment_method='pay_4csonline'):
+    if not tester:
+        tester = prepare_tester_account()
+    new_payment = payments.start_payment(
+        owner=tester,
+        amount=amount,
+        payment_method=payment_method,
+    )
+    return new_payment
+    

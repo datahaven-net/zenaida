@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 
 
@@ -27,13 +29,18 @@ class NewPaymentForm(forms.Form):
 
 
 class FilterOrdersByDateForm(forms.Form):
+    @staticmethod
+    def _get_choices_of_years():
+        today = datetime.datetime.today()
+        year_choices = [(None, '-')]
+        for index in range(today.year - 2018):
+            year_choices.append((str(2019+index), str(2019+index)))
+        return tuple(year_choices)
+
     year = forms.fields.ChoiceField(
-        choices=(
-            (None, '-'),
-            ('2020', '2020',),
-            ('2019', '2019',),
-        ),
+        choices=_get_choices_of_years.__func__,
     )
+
     month = forms.fields.ChoiceField(
         choices=(
             (None, '-'),

@@ -6,7 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import SuccessURLAllowedHostsMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, resolve_url
+from django.shortcuts import resolve_url
 from django.utils.http import is_safe_url
 from django.views.generic import RedirectView
 from django.views.generic.edit import FormView
@@ -137,8 +137,8 @@ class ActivateView(RedirectView):
 
         # If user do not have a profile yet need to create it for him.
         try:
-            user_profile = user.profile
+            user.profile
         except ObjectDoesNotExist:
-            user_profile = create_profile(user, contact_email=user.email)
+            create_profile(user, contact_email=user.email)
 
         return super().get_redirect_url()

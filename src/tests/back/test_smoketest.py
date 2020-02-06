@@ -1,6 +1,5 @@
 import os
-
-from unittest import mock
+import mock
 
 from django.test import TestCase, override_settings
 
@@ -24,7 +23,7 @@ class TestSmoketest(TestCase):
     @override_settings(ALERT_EMAIL_RECIPIENTS=['one@email.com', ])
     @mock.patch('back.smoketest.send_email')
     def test_run_one_alert_with_history(self, mock_send_email):
-        with open('/tmp/testsmoke','w') as f:
+        with open('/tmp/testsmoke', 'w') as f:
             f.write('++\n')
         assert smoketest.run(history_filename='/tmp/testsmoke', email_alert=True) == [
             ('email', 'one@email.com', ' host_not_exist.abcd   +-\nanother_dead_host.xyz   +-\n'), ]

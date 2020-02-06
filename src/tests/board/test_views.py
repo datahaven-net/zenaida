@@ -1,8 +1,8 @@
 import datetime
-from unittest import mock
-
+import mock
 import pytest
-from django.test import TestCase, override_settings
+
+from django.test import TestCase
 
 from billing.models.order import Order
 from billing.models.order_item import OrderItem

@@ -1,7 +1,7 @@
 import datetime
-from unittest import mock
-
+import mock
 import pytest
+
 from django.test import TestCase, override_settings
 
 from billing.models.payment import Payment

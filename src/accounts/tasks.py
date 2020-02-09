@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 def activations_cleanup():
-    '''
+    """
     If the activation_code is older than a certain time of period and the account is still inactive (no domain,
     balance or payment belongs to the account as well), removes the inactive account and the expired activation code.
 
     If the activation_code is older than a certain time of period but the account is still active, then removes
     only the activation code.
-    '''
+    """
 
     activation_code_expiry_time = timezone.now() - datetime.timedelta(
         minutes=settings.ACTIVATION_CODE_EXPIRING_MINUTE
@@ -68,7 +68,6 @@ def check_notify_domain_expiring(dry_run=True):
                 # domain already expired - no email needed
                 continue
             expiring_domains[domain.name] = domain.expiry_date.date()
-        domains_to_be_notified = []
         # now look up all already sent notifications and find only domains
         # which we did not send notification yet
         domains_notified = user.notifications.values_list('domain_name', flat=True)

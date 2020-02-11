@@ -2,7 +2,7 @@
 -e git+https://github.com/datahaven-net/btcpay-python.git@63c948f62f67180cf49c978314558813f9d22c86#egg=btcpay_python
 certifi==2019.6.16
 chardet==3.0.4
-Django==2.2.9
+Django==2.2.10
 django-bootstrap4==0.0.8
 django-extensions==2.1.9
 django-grappelli==2.13.1

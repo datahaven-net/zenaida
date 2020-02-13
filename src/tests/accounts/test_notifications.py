@@ -170,6 +170,23 @@ def test_check_notify_domain_expiring_when_not_active():
 
 
 @pytest.mark.django_db
+def test_check_notify_domain_expiring_when_blocked():
+    tester = testsupport.prepare_tester_account()
+    tester_domain = testsupport.prepare_tester_domain(
+        domain_name='abcd.ai',
+        tester=tester,
+        domain_epp_id='aaa123',
+    )
+    tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+    tester_domain.status = 'blocked'
+    tester_domain.save()
+    outgoing_emails = tasks.check_notify_domain_expiring(dry_run=True)
+    assert len(outgoing_emails) == 1
+    assert outgoing_emails[0][0] == tester
+    assert outgoing_emails[0][1] == tester_domain.name
+
+
+@pytest.mark.django_db
 def test_account_profile_email_notifications_disabled():
     tester = testsupport.prepare_tester_account()
     tester_domain = testsupport.prepare_tester_domain(

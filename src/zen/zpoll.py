@@ -96,6 +96,20 @@ def do_domain_status_changed(domain, notify=False):
     return True
 
 
+def do_domain_renewal(domain, notify=False):
+    logger.info('domain %s renewal', domain)
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
+
+
 def do_domain_expiry_date_updated(domain):
     logger.info('domain %s expiry date updated', domain)
     try:
@@ -206,6 +220,9 @@ def on_queue_message(msgQ):
             if details.lower() == 'domain pending delete' or details.lower() == 'domain pending deletion':
                 return do_domain_status_changed(domain)
 
+        if change == 'RENEWAL':
+            return do_domain_renewal(domain)
+
         if change == 'RESTORED':
             if details.lower() in ['domain restored', 'domain restored via ui', ]:
                 return do_domain_status_changed(domain)
@@ -297,7 +314,7 @@ def main():
 
             if resp_code == '1300':
                 # No new messages
-                logger.debug('.')
+                # logger.debug('.')
                 break
 
             if resp_code != '1301':

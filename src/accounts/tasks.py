@@ -55,7 +55,7 @@ def check_notify_domain_expiring(dry_run=True):
             continue
         expiring_domains = {}
         for domain in user.domains.all():
-            if not domain.epp_id or domain.status != 'active':
+            if not domain.epp_id or domain.status in ['inactive', ]:
                 # only take in account domains which are registered and active
                 continue
             t_domain = domain.expiry_date

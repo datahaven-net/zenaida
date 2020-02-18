@@ -10,6 +10,8 @@ from django.views import View
 
 from billing import payments
 
+_Debug = True
+
 
 class ProcessPaymentView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
@@ -105,6 +107,9 @@ class VerifyPaymentView(View):
         reference = request_data.get('ref')
         transaction_id = request_data.get('tid')
         amount = request_data.get('amt')
+
+        if _Debug:
+            logging.debug('verify payment request: %r', request_data)
 
         if self._check_rc_usercan_is_incomplete(result, rc, fc, transaction_id):
             return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {

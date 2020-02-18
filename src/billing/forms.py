@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django.conf import settings
 
 
 class NewPaymentForm(forms.Form):
@@ -18,19 +19,26 @@ class NewPaymentForm(forms.Form):
         ),
     )
 
+    @staticmethod
+    def _get_payment_method_choices():
+        payment_method_choices = []
+        if settings.ZENAIDA_BILLING_4CSONLINE_ENABLED:
+            payment_method_choices.append(('pay_4csonline', 'Credit Card'))
+        if settings.ZENAIDA_BILLING_BTCPAY_ENABLED:
+            payment_method_choices.append(('pay_btcpay', 'BitCoin'))
+        return tuple(payment_method_choices)
+
     payment_method = forms.fields.ChoiceField(
         label='Payment Method',
         required=True,
-        choices=(
-            ('pay_4csonline', 'Credit Card', ),
-            ('pay_btcpay', 'BitCoin'),
-        ),
+        choices=_get_payment_method_choices.__func__,
     )
 
 
 class FilterOrdersByDateForm(forms.Form):
+
     @staticmethod
-    def _get_choices_of_years():
+    def _get_year_choices():
         today = datetime.datetime.today()
         year_choices = [(None, '-')]
         for index in range(today.year - 2018):
@@ -38,7 +46,7 @@ class FilterOrdersByDateForm(forms.Form):
         return tuple(year_choices)
 
     year = forms.fields.ChoiceField(
-        choices=_get_choices_of_years.__func__,
+        choices=_get_year_choices.__func__,
     )
 
     month = forms.fields.ChoiceField(

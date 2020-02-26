@@ -112,6 +112,7 @@ def domain_create(
         expiry_date=None,
         create_date=None,
         epp_id=None,
+        status=None,
         auth_key='',
         registrar=None,
         registrant=None,
@@ -148,6 +149,8 @@ def domain_create(
         registrar=registrar,
         zone=zone,
     )
+    if status:
+        new_domain.status = status
     if registrant:
         new_domain.registrant = registrant
     if contact_admin:
@@ -468,7 +471,10 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     else:
         domain_object.status = 'inactive'
         if 'serverHold' in new_domain_statuses:
-            domain_object.status = 'blocked'
+            if new_domain_statuses['serverHold'].lower().count('suspended'):
+                domain_object.status = 'suspended'
+            else:
+                domain_object.status = 'blocked'
         if 'pendingDelete' in new_domain_statuses:
             domain_object.status = 'to_be_deleted'
         if 'pendingRestore' in new_domain_statuses:

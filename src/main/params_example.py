@@ -46,6 +46,10 @@ ENV = 'development'
 # EMAIL_USE_SSL = False
 # EMAIL_ADMIN = f'admin@{SITE_BASE_URL}'
 
+#--- Smoketest settings
+# SMOKETEST_HOSTS = ["http://example.com"]
+# SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT = 3
+
 #--- Brute force protection settings
 # BRUTE_FORCE_PROTECTION_ENABLED = False
 # BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX = 'domain_lookup_brute_force'

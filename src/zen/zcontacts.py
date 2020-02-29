@@ -214,7 +214,7 @@ def to_dict(contact_object):
     if not c['name']:
         c['name'] = info['email'].lower()
     if not c['org']:
-        c['org'] = info['email'].lower()
+        c['org'] = ''  #  info['email'].lower()
     # Must be fully specified address details
     if not c['address']['street']:
         c['address']['street'] = ['unknown', ]

@@ -29,7 +29,7 @@ def contact_create_update(contact_object, raise_errors=False, log_events=True, l
     logger.info('contact_synchronizer(%r) finished with %d outputs', contact_object, len(outputs))
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        if isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
             logger.error('contact_synchronizer(%r) failed with: %r', contact_object, outputs[-1])
         return False
 

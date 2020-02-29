@@ -12,12 +12,6 @@ class ContactPersonForm(models.ModelForm):
         fields = ('person_name', 'organization_name', 'address_street', 'address_city', 'address_province',
                   'address_postal_code', 'address_country', 'contact_voice', 'contact_fax', 'contact_email', )
 
-    def __init__(self, *args, **kwargs):
-        super(ContactPersonForm, self).__init__(*args, **kwargs)
-        for field_name in self.fields.keys():
-            if field_name not in ['contact_fax', 'address_province', ]:
-                self.fields[field_name].required = True
-
 
 class DomainDetailsForm(models.ModelForm):
 

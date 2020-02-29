@@ -136,7 +136,9 @@ LOGGING = {
             'handlers': ['background_service', ],
         },
         'pika': {
+            'level': 'WARNING',
             'propagate': False,
+            'handlers': ['console', ],
         },
     }
 }

@@ -33,7 +33,7 @@ class Contact(models.Model):
     address_country = CountryField(verbose_name='Country')
 
     contact_voice = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Mobile')
-    contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Fax')
+    contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, null=True, verbose_name='Fax')
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     def __str__(self):
@@ -46,6 +46,8 @@ class Contact(models.Model):
 
     @property
     def label(self):
+        if not self.organization_name:
+            return self.person_name
         return '{} / {}'.format(self.person_name, self.organization_name)
 
     @property

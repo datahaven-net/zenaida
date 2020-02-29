@@ -373,6 +373,7 @@ GRAPH_MODELS = {
 #------------------------------------------------------------------------------
 #--- SMOKETEST CONFIGS
 SMOKETEST_HOSTS = getattr(params, 'SMOKETEST_HOSTS', [])
+SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT = getattr(params, 'SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT', 3)
 
 #------------------------------------------------------------------------------
 #--- BRUTE FORCE PROTECTION SETTINGS

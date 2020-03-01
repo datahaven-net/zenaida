@@ -155,4 +155,9 @@ def prepare_tester_payment(tester=None, amount=100, payment_method='pay_4csonlin
         payment_method=payment_method,
     )
     return new_payment
-    
+
+
+def prepare_tester_order(domain_name, tester=None):
+    if not tester:
+        tester = prepare_tester_account()
+    # TODO: ...

@@ -30,6 +30,7 @@ class Profile(models.Model):
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     email_notifications_enabled = models.BooleanField(verbose_name='Email notifications enabled', default=True)
+    automatic_renewal_enabled = models.BooleanField(verbose_name='Automatically renew expiring domains', default=False)
 
     def __str__(self):
         return 'Profile({})'.format(self.account.email)

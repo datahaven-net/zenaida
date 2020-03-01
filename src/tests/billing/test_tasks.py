@@ -72,6 +72,6 @@ def test_identify_domains_for_auto_renew_order_already_exist():
     tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
     tester_domain.status = 'active'
     tester_domain.save()
-    ordertest
+    # TODO: test order exists already
     domains_to_renew = tasks.identify_domains_for_auto_renew()
     assert domains_to_renew == {tester: ['abcd.ai', ]}

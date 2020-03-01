@@ -113,6 +113,7 @@ def domain_create(
         create_date=None,
         epp_id=None,
         status=None,
+        epp_statuses=None,
         auth_key='',
         registrar=None,
         registrant=None,
@@ -151,6 +152,8 @@ def domain_create(
     )
     if status:
         new_domain.status = status
+    if epp_statuses is not None:
+        new_domain.epp_statuses = epp_statuses
     if registrant:
         new_domain.registrant = registrant
     if contact_admin:

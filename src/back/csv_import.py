@@ -8,6 +8,7 @@ from django.utils.timezone import make_aware
 from zen import zdomains
 from zen import zcontacts
 from zen import zusers
+from zen import zdomains
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +183,20 @@ def get_csv_domain_info(csv_row, headers):
     return info
 
 
+def prepare_domain_status(csv_domain_status, default_status='active'):
+    return {
+        'domain_status_active': 'active',
+        'domain_status_suspended': 'suspended',
+    }.get(csv_domain_status, default_status)
+
+
+def prepare_domain_epp_statuses(csv_domain_status, default_epp_statuses={'ok': 'Active'}):
+    return {
+        'domain_status_active': {'ok': 'Active'},
+        'domain_status_suspended': {'serverHold': 'Suspended automatically'},
+    }.get(csv_domain_status, default_epp_statuses)
+
+
 def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_contact_id, real_owner):
     errors = []
     to_be_created = False
@@ -237,6 +252,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     real_expiry_date = csv_info['expiry_date']
     real_create_date = csv_info['create_date']
     real_epp_id = csv_record.get('roid_0')
+    real_status = csv_record.get('status_5')
     real_auth_key = csv_record.get('auth_info_password_2')
     real_registrant_contact_id = csv_record.get('registrant_contact_id_24')
     real_admin_contact_id = csv_record.get('admin_contact_id_54')
@@ -420,6 +436,8 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             expiry_date=real_expiry_date,
             create_date=real_create_date,
             epp_id=real_epp_id,
+            status=prepare_domain_status(real_status),
+            epp_statuses=prepare_domain_epp_statuses(real_status),
             auth_key=real_auth_key,
             registrar=real_registrar_id,
             registrant=new_registrant_contact,
@@ -542,15 +560,22 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     return errors
 
 
-def load_from_csv(filename, dry_run=True):
+def load_from_csv(filename, dry_run=True, registrar_epp_id=None):
+    from back.models.registrar import Registrar
     epp_domains = csv.reader(open(filename))
     count = 0
     headers = next(epp_domains)
+    if not registrar_epp_id:
+        wanted_registrar = Registrar.registrars.first()
+        if wanted_registrar:
+            registrar_epp_id = wanted_registrar.epp_id
+    if not registrar_epp_id:
+        registrar_epp_id = 'zenaida_ai'
     for row in epp_domains:
         count += 1
         domain = row[1]
         try:
-            errors = domain_regenerate_from_csv_row(row, headers, dry_run=dry_run)
+            errors = domain_regenerate_from_csv_row(row, headers, wanted_registrar=registrar_epp_id, dry_run=dry_run)
         except Exception:
             logger.exception('failed processing %s' % domain)
             return -1

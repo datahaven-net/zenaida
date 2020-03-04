@@ -214,7 +214,7 @@ def to_dict(contact_object):
     if not c['name']:
         c['name'] = info['email'].lower()
     if not c['org']:
-        c['org'] = ''  #  info['email'].lower()
+        c['org'] = ''
     # Must be fully specified address details
     if not c['address']['street']:
         c['address']['street'] = ['unknown', ]
@@ -223,9 +223,9 @@ def to_dict(contact_object):
     if not c['address']['city']:
         c['address']['city'] = 'unknown'
     if not c['address']['sp']:
-        c['address']['sp'] = 'unknown'
+        c['address']['sp'] = ''
     if not c['address']['pc']:
-        c['address']['pc'] = 'unknown'
+        c['address']['pc'] = ''
     # The postal code must be 16 characters or less in length
     c['address']['pc'] = c['address']['pc'][:16]
     # TODO: detect default country based on current location

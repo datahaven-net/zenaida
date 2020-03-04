@@ -32,7 +32,7 @@ class Contact(models.Model):
     address_postal_code = models.CharField(max_length=255, blank=True, verbose_name='ZIP code')
     address_country = CountryField(verbose_name='Country')
 
-    contact_voice = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Mobile')
+    contact_voice = models.CharField(validators=[phone_regex], max_length=17, verbose_name='Mobile')
     contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, null=True, verbose_name='Fax')
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
@@ -95,3 +95,7 @@ class Registrant(models.Model):
         if not self.epp_id:
             self.epp_id = None
         super(Registrant, self).save(*args, **kwargs)
+
+    @property
+    def has_any_domains(self):
+        return bool(self.registrant_domains.first())

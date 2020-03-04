@@ -121,6 +121,7 @@ def domain_create(
         contact_tech=None,
         contact_billing=None,
         nameservers=[],
+        auto_renew_enabled=None,
         save=True,
     ):
     """
@@ -167,6 +168,8 @@ def domain_create(
         if nameserver:
             new_domain.set_nameserver(host_position, nameserver)
         host_position += 1
+    if auto_renew_enabled is not None:
+        new_domain.auto_renew_enabled = auto_renew_enabled
     if save:
         new_domain.save()
     logger.info('domain created: %r', new_domain)

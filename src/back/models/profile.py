@@ -29,8 +29,16 @@ class Profile(models.Model):
     contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, verbose_name='Fax')
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
-    email_notifications_enabled = models.BooleanField(verbose_name='Email notifications enabled', default=True)
-    automatic_renewal_enabled = models.BooleanField(verbose_name='Automatically renew expiring domains', default=False)
+    email_notifications_enabled = models.BooleanField(
+        verbose_name='Email notifications',
+        help_text='Enable email notifications about expiring domains and low balance.',
+        default=True,
+    )
+    automatic_renewal_enabled = models.BooleanField(
+        verbose_name='Automatically renew expiring domains',
+        help_text='Your domains will be automatically renewed 3 months before the expiration date, if you have enough funds.',
+        default=True,
+    )
 
     def __str__(self):
         return 'Profile({})'.format(self.account.email)

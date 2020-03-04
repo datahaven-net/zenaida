@@ -10,7 +10,7 @@ from billing import orders
 def identify_domains_for_auto_renew():
     """
     Loop all user accounts and all domains and identify all "almost expired" domains.
-    If user account profile has `automatic_renewal_enabled` is `False` will skip all of his domains.
+    If domain has `auto_renew_enabled=False` will skip it.
     Also will check all existing "domain renew" orders for that user and skip domains that already
     has started orders to renew.
     Returns dictionary with identified users and domains that suppose to be auto renewed.
@@ -19,12 +19,12 @@ def identify_domains_for_auto_renew():
     for user in Account.users.all():
         if not hasattr(user, 'profile'):
             continue
-        if not user.profile.automatic_renewal_enabled:
-            continue
         expiring_domains = {}
         for domain in user.domains.all():
             if not domain.can_be_renewed:
                 # only take in account domains which are registered and active
+                continue
+            if not domain.auto_renew_enabled:
                 continue
             t_domain = domain.expiry_date
             t_now = timezone.now()

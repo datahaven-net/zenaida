@@ -298,6 +298,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             is_active=True,
         )
         logger.info('generated new account and password for %s : %s', real_registrant_email, new_password)
+        # TODO: also generate profile for that user based on registrant info
 
     if known_domain:
         known_expiry_date = known_domain.expiry_date
@@ -320,6 +321,9 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         errors.append('%s: no csv contacts provided for domain' % domain)
         return errors
 
+    # TODO: try to avoid creating multiple contacts for different domains.
+    # if two contacts have equal details we can re-use first contact and skip other one
+    # but this will require EPP call to update domain infor on COCCA...
     if real_registrant_contact_id:
     #--- registrant check
         _errs, need_registrant = check_contact_to_be_created(

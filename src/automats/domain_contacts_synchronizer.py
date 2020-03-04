@@ -26,6 +26,7 @@ from automats import contact_synchronizer
 from zen import zclient
 from zen import zerrors
 from zen import zdomains
+from zen import zcontacts
 
 #------------------------------------------------------------------------------
 
@@ -34,7 +35,9 @@ class DomainContactsSynchronizer(automat.Automat):
     This class implements all the functionality of ``domain_contacts_synchronizer()`` state machine.
     """
 
-    def __init__(self, update_domain=False, skip_roles=[], skip_contact_details=False,
+    def __init__(self, update_domain=False,
+                 skip_roles=[], skip_contact_details=False,
+                 merge_duplicated_contacts=False,
                  debug_level=0, log_events=None, log_transitions=None,
                  raise_errors=False,
                  **kwargs):
@@ -44,6 +47,7 @@ class DomainContactsSynchronizer(automat.Automat):
         self.domain_to_be_updated = update_domain
         self.skip_roles = skip_roles
         self.skip_contact_details = skip_contact_details
+        self.merge_duplicated_contacts = merge_duplicated_contacts
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -167,6 +171,11 @@ class DomainContactsSynchronizer(automat.Automat):
             if not possbile_contact:
                 continue
             self.target_contacts[role] = possbile_contact
+        if self.merge_duplicated_contacts:
+            self.target_contacts = zcontacts.merge_contacts(self.target_contacts)
+            for role in ['admin', 'billing', 'tech', ]:
+                if self.target_contacts.get(role):
+                    zdomains.domain_join_contact(self.target_domain, role, self.target_contacts[role])
 
     def doSyncContacts(self, *args, **kwargs):
         """

@@ -37,6 +37,7 @@ class DomainAdmin(NestedModelAdmin):
         'domain_synchronize_from_backend_hard',
         'domain_generate_and_set_new_auth_info_key',
         'domain_renew_on_behalf_of_customer',
+        'domain_deduplicate_contacts',
     ]
     list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', )
@@ -45,16 +46,16 @@ class DomainAdmin(NestedModelAdmin):
         return domain_instance.owner.email
 
     def registrant_contact(self, domain_instance):
-        return domain_instance.registrant.contact_email
+        return domain_instance.registrant.contact_email if domain_instance.registrant else ''
 
     def admin_contact(self, domain_instance):
-        return domain_instance.contact_admin.contact_email
+        return domain_instance.contact_admin.contact_email if domain_instance.contact_admin else ''
 
     def billing_contact(self, domain_instance):
-        return domain_instance.contact_billing.contact_email
+        return domain_instance.contact_billing.contact_email if domain_instance.contact_billing else ''
 
     def tech_contact(self, domain_instance):
-        return domain_instance.contact_tech.contact_email
+        return domain_instance.contact_tech.contact_email if domain_instance.contact_tech else ''
 
     def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True):
         report = []
@@ -100,6 +101,25 @@ class DomainAdmin(NestedModelAdmin):
             report.append('"%s": %s' % (domain_object.name, new_status))
         return report
 
+    def _do_domain_deduplicate_contacts(self, queryset):
+        report = []
+        for domain_object in queryset:
+            outputs = zmaster.domain_synchronize_contacts(
+                domain_object=domain_object,
+                merge_duplicated_contacts=True,
+                raise_errors=True,
+                log_events=True,
+                log_transitions=True,
+            )
+            ok = True
+            for output in outputs:
+                if isinstance(output, Exception):
+                    report.append('"%s": %r' % (domain_object.name, output, ))
+                    ok = False
+            if ok:
+                report.append('"%s": %d calls OK' % (domain_object.name, len(outputs), ))
+        return report
+
     def domain_synchronize_from_backend(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
     domain_synchronize_from_backend.short_description = "Synchronize from back-end"
@@ -115,6 +135,10 @@ class DomainAdmin(NestedModelAdmin):
     def domain_renew_on_behalf_of_customer(self, request, queryset):
         self.message_user(request, ', '.join(self._do_renew_on_behalf_of_customer(queryset)))
     domain_renew_on_behalf_of_customer.short_description = "Renew on behalf of customer"
+
+    def domain_deduplicate_contacts(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_domain_deduplicate_contacts(queryset)))
+    domain_deduplicate_contacts.short_description = "Deduplicate contacts"
 
 
 class ContactAdmin(NestedModelAdmin):

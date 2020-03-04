@@ -101,8 +101,8 @@ class Domain(models.Model):
 
     def list_contacts(self):
         """
-        Return list of 4 tuples containing contact and its role for given domain.
-        Always returns list of 4 tuples, empty contact means contact was not set for that role.
+        Return list of 3 tuples containing contact and its role for given domain.
+        Always returns list of 3 tuples, empty contact means contact was not set for that role.
         """
         return [
             ('admin', self.contact_admin, ),

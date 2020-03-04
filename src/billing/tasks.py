@@ -1,5 +1,3 @@
-
-from django.conf import settings
 from django.utils import timezone
 
 from accounts.models.account import Account
@@ -26,10 +24,10 @@ def identify_domains_for_auto_renew():
                 continue
             if not domain.auto_renew_enabled:
                 continue
-            t_domain = domain.expiry_date
-            t_now = timezone.now()
-            dt = t_domain - t_now
-            if dt.days > 90:
+            time_domain = domain.expiry_date
+            time_now = timezone.now()
+            time_delta = time_domain - time_now
+            if time_delta.days > 90:
                 # domain is not expiring at the moment
                 continue
             expiring_domains[domain.name] = domain.expiry_date.date()

@@ -7,7 +7,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from django.utils.html import strip_tags
-from django.utils import timezone
 
 from accounts.models.notification import Notification
 

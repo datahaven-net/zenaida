@@ -731,7 +731,7 @@ class DomainRefresher(automat.Automat):
             orders.refresh_order(related_order_item.order)
             logger.info('processed one pending order %r for %r', related_order_item, self.expected_owner)
         else:
-            logger.critical('no actions taken after domain transfer, no pending orders for %r', self.domain_name)
+            logger.info('no actions taken after domain transfer, no pending orders found for %r', self.domain_name)
 
     def doReportNotExist(self, *args, **kwargs):
         """

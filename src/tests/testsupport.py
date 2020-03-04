@@ -92,6 +92,7 @@ def prepare_tester_domain(
         expiry_date=True,
         epp_id_dict={},
         nameservers=['notexist1.com', 'notexist2.com', ],
+        auto_renew_enabled=None,
     ):
     if not tester:
         tester = prepare_tester_account()
@@ -141,6 +142,7 @@ def prepare_tester_domain(
         contact_tech=tester_contact_tech,
         contact_billing=tester_contact_billing,
         nameservers=nameservers,
+        auto_renew_enabled=auto_renew_enabled,
     )
 
     return tester_domain
@@ -155,4 +157,9 @@ def prepare_tester_payment(tester=None, amount=100, payment_method='pay_4csonlin
         payment_method=payment_method,
     )
     return new_payment
-    
+
+
+def prepare_tester_order(domain_name, tester=None):
+    if not tester:
+        tester = prepare_tester_account()
+    # TODO: ...

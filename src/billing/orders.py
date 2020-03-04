@@ -57,6 +57,18 @@ def list_orders(owner, exclude_cancelled=False, include_statuses=[]):
     return list(qs.all())
 
 
+def list_order_items(owner, order_item_type=None, order_statuses=[]):
+    """
+    List existing order items for given user.
+    """
+    qs = OrderItem.order_items.filter(order__owner=owner)
+    if order_statuses:
+        qs = qs.filter(order__status__in=order_statuses)
+    if order_item_type is not None:
+        qs = qs.filter(type=order_item_type)
+    return list(qs.all())
+
+
 def list_processed_orders(owner, order_id_list):
     """
     List only processed orders for given user.

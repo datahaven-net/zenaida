@@ -69,6 +69,12 @@ class Domain(models.Model):
     nameserver3 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 3')
     nameserver4 = models.CharField(max_length=256, blank=True, default='', verbose_name='Nameserver 4')
 
+    auto_renew_enabled = models.BooleanField(
+        verbose_name='Automatically renew',
+        help_text='Domain will be automatically renewed 3 months before the expiration date, if you have enough funds.',
+        default=True,
+    )
+
     @property
     def tld_name(self):
         return self.name.split('.')[0]

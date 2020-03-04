@@ -113,6 +113,7 @@ def domain_create(
         create_date=None,
         epp_id=None,
         status=None,
+        epp_statuses=None,
         auth_key='',
         registrar=None,
         registrant=None,
@@ -120,6 +121,7 @@ def domain_create(
         contact_tech=None,
         contact_billing=None,
         nameservers=[],
+        auto_renew_enabled=None,
         save=True,
     ):
     """
@@ -151,6 +153,8 @@ def domain_create(
     )
     if status:
         new_domain.status = status
+    if epp_statuses is not None:
+        new_domain.epp_statuses = epp_statuses
     if registrant:
         new_domain.registrant = registrant
     if contact_admin:
@@ -164,6 +168,8 @@ def domain_create(
         if nameserver:
             new_domain.set_nameserver(host_position, nameserver)
         host_position += 1
+    if auto_renew_enabled is not None:
+        new_domain.auto_renew_enabled = auto_renew_enabled
     if save:
         new_domain.save()
     logger.info('domain created: %r', new_domain)

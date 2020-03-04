@@ -7,7 +7,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from django.utils.html import strip_tags
-from django.utils import timezone
 
 from accounts.models.notification import Notification
 
@@ -87,5 +86,5 @@ def process_notifications_queue(iterations=None, delay=3, iteration_delay=5*60):
                 one_notification.save()
                 logger.exception('failed to execute %r' % one_notification)
             time.sleep(delay)
-        logger.info('finished iteration %d at %r', iteration, timezone.now().isoformat())
+        # logger.info('finished iteration %d at %r', iteration, timezone.now().isoformat())
         time.sleep(iteration_delay)

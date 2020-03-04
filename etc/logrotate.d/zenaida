@@ -1,17 +1,86 @@
 /home/zenaida/logs/epp.log
-/home/zenaida/logs/automats.log
-/home/zenaida/logs/btcpay
-/home/zenaida/logs/btcpay.err
-/home/zenaida/logs/poll
-/home/zenaida/logs/poll.err
-/home/zenaida/logs/nginx
-/home/zenaida/logs/nginx.err
 /home/zenaida/logs/gate
-/home/zenaida/logs/gate.err
+{
+  rotate 32
+  monthly
+  compress
+  missingok
+  notifempty
+  postrotate
+    sleep 1
+    XDG_RUNTIME_DIR=/run/user/<put zenaida $UID here> /bin/su -c "systemctl --user restart zenaida-gate.service" zenaida
+    sleep 1
+    /bin/echo "`date` zenaida-gate.service restarted" >> /home/zenaida/logs/logrotate
+  endscript
+}
+
+
+/home/zenaida/logs/poll
+{
+  rotate 32
+  monthly
+  compress
+  missingok
+  notifempty
+  postrotate
+    sleep 1
+    XDG_RUNTIME_DIR=/run/user/<put zenaida $UID here> /bin/su -c "systemctl --user restart zenaida-poll.service" zenaida
+    sleep 1
+    /bin/echo "`date` zenaida-poll.service restarted" >> /home/zenaida/logs/logrotate
+  endscript
+}
+
+
 /home/zenaida/logs/notifications
-/home/zenaida/logs/notifications.err
+{
+  rotate 32
+  monthly
+  compress
+  missingok
+  notifempty
+  postrotate
+    sleep 1
+    XDG_RUNTIME_DIR=/run/user/<put zenaida $UID here> /bin/su -c "systemctl --user restart zenaida-notifications.service" zenaida
+    sleep 1
+    /bin/echo "`date` zenaida-notifications.service restarted" >> /home/zenaida/logs/logrotate
+  endscript
+}
+
+
+/home/zenaida/logs/btcpay
+{
+  rotate 32
+  monthly
+  compress
+  missingok
+  notifempty
+  postrotate
+    sleep 1
+    XDG_RUNTIME_DIR=/run/user/<put zenaida $UID here> /bin/su -c "systemctl --user restart zenaida-btcpay.service" zenaida
+    sleep 1
+    /bin/echo "`date` zenaida-btcpay.service restarted" >> /home/zenaida/logs/logrotate
+  endscript
+}
+
+
 /home/zenaida/logs/background_worker
-/home/zenaida/logs/background_worker.err
+{
+  rotate 32
+  monthly
+  compress
+  missingok
+  notifempty
+  postrotate
+    sleep 1
+    XDG_RUNTIME_DIR=/run/user/<put zenaida $UID here> /bin/su -c "systemctl --user restart zenaida-background-worker.service" zenaida
+    sleep 1
+    /bin/echo "`date` zenaida-background-worker.service restarted" >> /home/zenaida/logs/logrotate
+  endscript
+}
+
+
+/home/zenaida/logs/automats.log
+/home/zenaida/logs/nginx
 /home/zenaida/logs/uwsgi-emperor
 /home/zenaida/logs/uwsgi-zenaida
 {

@@ -58,13 +58,13 @@ def check_notify_domain_expiring(dry_run=True):
             if not domain.epp_id or domain.status in ['inactive', ]:
                 # only take in account domains which are registered and active
                 continue
-            t_domain = domain.expiry_date
-            t_now = timezone.now()
-            dt = t_domain - t_now
-            if dt.days > 90:
+            time_domain = domain.expiry_date
+            time_now = timezone.now()
+            time_delta = time_domain - time_now
+            if time_delta.days > 90:
                 # domain is not expiring at the moment
                 continue
-            if dt.days <= 0:
+            if time_delta.days <= 0:
                 # domain already expired - no email needed
                 continue
             expiring_domains[domain.name] = domain.expiry_date.date()

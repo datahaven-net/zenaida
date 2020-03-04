@@ -22,7 +22,12 @@ class RegistrarAdmin(NestedModelAdmin):
 
 
 class ProfileAdmin(NestedModelAdmin):
-    pass
+
+    list_display = ('account', 'person_name', 'organization_name',
+                    'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
+                    'contact_voice', 'contact_fax', 'contact_email',
+                    'email_notifications_enabled', 'automatic_renewal_enabled', )
+
 
 
 class DomainAdmin(NestedModelAdmin):
@@ -33,10 +38,23 @@ class DomainAdmin(NestedModelAdmin):
         'domain_generate_and_set_new_auth_info_key',
         'domain_renew_on_behalf_of_customer',
     ]
-    list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses', )
+    list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
+                    'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', )
 
     def owner_email(self, domain_instance):
         return domain_instance.owner.email
+
+    def registrant_contact(self, domain_instance):
+        return domain_instance.registrant.contact_email
+
+    def admin_contact(self, domain_instance):
+        return domain_instance.contact_admin.contact_email
+
+    def billing_contact(self, domain_instance):
+        return domain_instance.contact_billing.contact_email
+
+    def tech_contact(self, domain_instance):
+        return domain_instance.contact_tech.contact_email
 
     def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True):
         report = []
@@ -100,11 +118,24 @@ class DomainAdmin(NestedModelAdmin):
 
 
 class ContactAdmin(NestedModelAdmin):
-    pass
+
+    list_display = ('epp_id', 'owner_email', 'person_name', 'organization_name',
+                    'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
+                    'contact_voice', 'contact_fax', 'contact_email', 'has_any_domains', )
+
+    def owner_email(self, contact_instance):
+        return contact_instance.owner.email
+
 
 
 class RegistrantAdmin(NestedModelAdmin):
-    pass
+
+    list_display = ('epp_id', 'owner_email', 'person_name', 'organization_name',
+                    'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
+                    'contact_voice', 'contact_fax', 'contact_email', 'has_any_domains', )
+
+    def owner_email(self, registrant_instance):
+        return registrant_instance.owner.email
 
 
 admin.site.register(Zone, ZoneAdmin)

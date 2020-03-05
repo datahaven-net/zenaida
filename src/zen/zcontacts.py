@@ -185,6 +185,52 @@ def contact_refresh(epp_id, contact_info_response):
     return updated
 
 
+def is_simillar_contacts(contact1, contact2):
+    """
+    Compares two `Contact` objects with each other: only personal and address details
+    are taken in account.
+    """
+    fields_to_compare = [
+        (contact1.person_name, contact2.person_name, ),
+        (contact1.organization_name, contact2.organization_name, ),
+        (contact1.address_street, contact2.address_street, ),
+        (contact1.address_city, contact2.address_city, ),
+        (contact1.address_province, contact2.address_province, ),
+        (contact1.address_postal_code, contact2.address_postal_code, ),
+        (contact1.contact_voice, contact2.contact_voice, ),
+        (contact1.contact_fax, contact2.contact_fax, ),
+        (contact1.contact_email, contact2.contact_email, ),
+        (contact1.person_name, contact2.person_name, ),
+    ]
+    for field1, field2 in fields_to_compare:
+        if (field1 or '').strip() != (field2 or '').strip():
+            return False
+    return True
+
+
+def merge_contacts(domain_contacts):
+    """
+    Compares personal details of the given contacts with each other and "de-duplicate" them.
+    See method `is_simillar_contacts()` above where two contacts are compared with each other.
+    Equal contacts will be merged - only of those contacts will be selected and returned in the result.
+    Input and output is a dictionary with contact roles and contacts objects:
+        {"admin": Contact1, "billing": Contact2, "tech": Contact3}
+    """
+    unique_contacts = {}
+    for current_role, current_contact in domain_contacts.items():
+        unique_contacts[current_role] = current_contact
+        if not current_contact:
+            continue
+        unique_contact = None
+        for another_contact in filter(None, domain_contacts.values()):
+            if is_simillar_contacts(current_contact, another_contact):
+                unique_contact = another_contact
+            else:
+                unique_contact = current_contact
+        unique_contacts[current_role] = unique_contact
+    return unique_contacts
+
+
 def to_dict(contact_object):
     info = {
         'email': contact_object.contact_email,

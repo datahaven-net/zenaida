@@ -5,6 +5,7 @@ from automats import domains_checker
 from automats import domain_synchronizer
 from automats import domain_refresher
 from automats import domain_resurrector
+from automats import domain_contacts_synchronizer
 
 from zen import zerrors
 
@@ -135,6 +136,37 @@ def domain_synchronize_from_backend(domain_name,
     return outputs
 
 
+def domain_synchronize_contacts(domain_object,
+                                skip_roles=[], skip_contact_details=False, merge_duplicated_contacts=False,
+                                raise_errors=False, log_events=True, log_transitions=True):
+    """
+    Write domain contacts to the back-end.
+    Also deduplicates contacts if `merge_duplicated_contacts=True`.
+    """
+    dcs = domain_contacts_synchronizer.DomainContactsSynchronizer(
+        update_domain=True,
+        skip_roles=skip_roles,
+        skip_contact_details=skip_contact_details,
+        merge_duplicated_contacts=merge_duplicated_contacts,
+        log_events=log_events,
+        log_transitions=log_transitions,
+        raise_errors=raise_errors,
+    )
+    dcs.event('run', target_domain=domain_object, )
+    outputs = list(dcs.outputs)
+    del dcs
+
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
+            logger.error('domain_synchronize_contacts(%r) failed with: %r', domain_object.name, outputs[-1])
+        else:
+            logger.error('domain_synchronize_contacts(%r) unexpectedly failed with: %r', domain_object.name, outputs)
+        return outputs or []
+
+    logger.info('domain_synchronize_contacts(%r) finished with %d outputs', domain_object.name, len(outputs))
+    return outputs
+
+
 def domain_restore(domain_object, raise_errors=False, log_events=True, log_transitions=True, **kwargs):
     """
     Restores domain from "pendingDelete" state.
@@ -149,8 +181,10 @@ def domain_restore(domain_object, raise_errors=False, log_events=True, log_trans
     del dr
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        if isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
             logger.error('domain_resurrector(%r) failed with: %r', domain_object.name, outputs[-1])
+        else:
+            logger.error('domain_resurrector(%r) unexpectedly failed with: %r', domain_object.name, outputs)
         return False
 
     logger.info('domain_resurrector(%r) finished with %d outputs', domain_object.name, len(outputs))
@@ -172,8 +206,10 @@ def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_
     del dac
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        if isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
             logger.error('domain_auth_changer(%r) failed with: %r', domain_object.name, outputs[-1])
+        else:
+            logger.error('domain_auth_changer(%r) unexpectedly failed with: %r', domain_object.name, outputs)
         return False
 
     logger.info('domain_auth_changer(%r) finished with %d outputs', domain_object.name, len(outputs))
@@ -199,8 +235,10 @@ def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=Fal
     del dtr
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        if isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
             logger.error('domain_transfer_request(%r) failed with: %r', domain, outputs[-1])
+        else:
+            logger.error('domain_transfer_request(%r) unexpectedly failed with: %r', domain, outputs)
         return False
 
     logger.info('domain_transfer_request(%r) finished with %d outputs', domain, len(outputs))

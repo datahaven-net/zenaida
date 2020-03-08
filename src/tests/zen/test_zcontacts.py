@@ -42,6 +42,9 @@ class TestDomainContactsMerge(TestCase):
             add_contacts=add_contacts,
             epp_id_dict=epp_id_dict,
         )
+        if 'registrant' in person_names:
+            tester_domain.registrant.person_name = person_names['registrant']
+            tester_domain.registrant.save()
         if 'admin' in person_names:
             tester_domain.contact_admin.person_name = person_names['admin']
             tester_domain.contact_admin.save()
@@ -51,7 +54,24 @@ class TestDomainContactsMerge(TestCase):
         if 'tech' in person_names:
             tester_domain.contact_tech.person_name = person_names['tech']
             tester_domain.contact_tech.save()
-        return dict(tester_domain.list_contacts())
+        return dict(tester_domain.list_contacts(include_registrant=True))
+
+    @pytest.mark.django_db
+    def test_skip_registrant(self):
+        domain_contacts = self._make_domain_contacts(
+            add_contacts=['registrant', 'admin', ],
+            epp_id_dict={'admin': 'id1', 'registrant': 'id2', },
+            person_names={'admin': 'Alice', 'registrant': 'Alice', },
+        )
+        assert domain_contacts['registrant'].epp_id == 'id2'
+        assert domain_contacts['admin'].epp_id == 'id1'
+        assert domain_contacts['billing'] is None
+        assert domain_contacts['tech'] is None
+        merged_contacts = zcontacts.merge_contacts(domain_contacts)
+        assert merged_contacts['registrant'].epp_id == 'id2'
+        assert merged_contacts['admin'].epp_id == 'id1'
+        assert merged_contacts['billing'] is None
+        assert merged_contacts['tech'] is None
 
     @pytest.mark.django_db
     def test_1_to_1(self):

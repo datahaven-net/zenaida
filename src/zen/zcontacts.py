@@ -219,15 +219,22 @@ def merge_contacts(domain_contacts):
     unique_contacts = {}
     for current_role, current_contact in domain_contacts.items():
         unique_contacts[current_role] = current_contact
+        if current_role == 'registrant':
+            continue
         if not current_contact:
             continue
         unique_contact = None
-        for another_contact in filter(None, domain_contacts.values()):
+        for another_role, another_contact in domain_contacts.items():
+            if another_role == 'registrant':
+                continue
+            if not another_contact:
+                continue
             if is_simillar_contacts(current_contact, another_contact):
                 unique_contact = another_contact
             else:
                 unique_contact = current_contact
-        unique_contacts[current_role] = unique_contact
+        if unique_contact:
+            unique_contacts[current_role] = unique_contact
     return unique_contacts
 
 

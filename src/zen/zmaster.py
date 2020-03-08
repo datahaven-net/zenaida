@@ -104,6 +104,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
 
 def domain_synchronize_from_backend(domain_name,
                                     refresh_contacts=False,
+                                    rewrite_contacts=False,
                                     change_owner_allowed=False,
                                     create_new_owner_allowed=False,
                                     soft_delete=True,
@@ -127,6 +128,7 @@ def domain_synchronize_from_backend(domain_name,
         change_owner_allowed=change_owner_allowed,
         create_new_owner_allowed=create_new_owner_allowed,
         refresh_contacts=refresh_contacts,
+        rewrite_contacts=rewrite_contacts,
         soft_delete=soft_delete,
         domain_transferred_away=domain_transferred_away,
     )

@@ -22,6 +22,7 @@ from front import forms
 
 from zen import zdomains
 from zen import zcontacts
+from zen import zusers
 from zen import zzones
 from zen import zmaster
 
@@ -31,6 +32,8 @@ from billing import orders
 def validate_profile_and_contacts(dispatch_func):
     def dispatch_wrapper(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:
+            if not hasattr(request.user, 'profile'):
+                zusers.create_profile(request.user, contact_email=request.user.email)
             if not request.user.profile.is_complete():
                 messages.info(request, 'Please provide your contact information to be able to register new domains')
                 return shortcuts.redirect('account_profile')

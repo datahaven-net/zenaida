@@ -99,16 +99,19 @@ class Domain(models.Model):
             self.epp_id = None
         return super(Domain, self).save(*args, **kwargs)
 
-    def list_contacts(self):
+    def list_contacts(self, include_registrant=False):
         """
         Return list of 3 tuples containing contact and its role for given domain.
         Always returns list of 3 tuples, empty contact means contact was not set for that role.
         """
-        return [
+        result = [
             ('admin', self.contact_admin, ),
             ('billing', self.contact_billing, ),
             ('tech', self.contact_tech, ),
         ]
+        if include_registrant:
+            result.append(('registrant', self.registrant, ))
+        return result
 
     def list_nameservers(self):
         """

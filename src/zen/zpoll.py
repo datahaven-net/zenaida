@@ -32,6 +32,7 @@ def do_domain_transfer_in(domain):
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
+            rewrite_contacts=True,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
@@ -158,6 +159,7 @@ def do_domain_contacts_changed(domain):
         zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
+            rewrite_contacts=True,
             change_owner_allowed=True,
         )
     except zerrors.EPPError:

@@ -63,6 +63,7 @@ class DomainAdmin(NestedModelAdmin):
             outputs = zmaster.domain_synchronize_from_backend(
                 domain_name=domain_object.name,
                 refresh_contacts=True,
+                rewrite_contacts=True,
                 change_owner_allowed=True,
                 soft_delete=soft_delete,
                 raise_errors=True,
@@ -106,6 +107,7 @@ class DomainAdmin(NestedModelAdmin):
         for domain_object in queryset:
             outputs = zmaster.domain_synchronize_contacts(
                 domain_object=domain_object,
+                skip_contact_details=True,
                 merge_duplicated_contacts=True,
                 raise_errors=True,
                 log_events=True,

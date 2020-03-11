@@ -397,6 +397,8 @@ def compare_contacts(domain_object, domain_info_response, target_contacts=None):
         target_contacts = domain_object.list_contacts()
     #--- contacts
     new_contacts = []
+    new_contacts_dict = {}
+    current_contacts_dict = {}
     try:
         current_contacts = domain_info_response['epp']['response']['resData']['infData']['contact']
     except:
@@ -407,30 +409,43 @@ def compare_contacts(domain_object, domain_info_response, target_contacts=None):
         'type': i['@type'],
         'id': i['#text'],
     } for i in current_contacts]
+
+    for cur_contact_info in current_contacts:
+        if cur_contact_info['type'] not in current_contacts_dict:
+            current_contacts_dict[cur_contact_info['type']] = []
+        current_contacts_dict[cur_contact_info['type']].append(cur_contact_info['id'])
+        if len(current_contacts_dict[cur_contact_info['type']]) > 1:
+            # remove secondary contacts for same role
+            remove_contacts.append(cur_contact_info)
+
     for role, contact_object in target_contacts:
         if role == 'registrant':
             continue
         if contact_object:
             if contact_object.epp_id:
                 new_contacts.append({'type': role, 'id': contact_object.epp_id, })
-    current_contacts_ids = [old_contact['id'] for old_contact in current_contacts]
-    current_contacts_roles = [old_contact['type'] for old_contact in current_contacts]
+                new_contacts_dict[role] = contact_object.epp_id
+
     for new_cont in new_contacts:
-        if new_cont['id'] not in current_contacts_ids:
-            if new_cont['id'] not in [c['id'] for c in add_contacts]:
+        if new_cont['type'] not in current_contacts_dict:
+            if new_cont not in add_contacts:
                 add_contacts.append(new_cont)
-        if new_cont['type'] not in current_contacts_roles:
-            if new_cont['type'] not in [c['type'] for c in add_contacts]:
+            continue
+        if new_cont['id'] not in current_contacts_dict[new_cont['type']]:
+            if new_cont not in add_contacts:
                 add_contacts.append(new_cont)
-    new_contacts_ids = [new_cont['id'] for new_cont in new_contacts]
-    new_contacts_roles = [new_cont['type'] for new_cont in new_contacts]
+            continue
+
     for old_cont in current_contacts:
-        if old_cont['id'] not in new_contacts_ids:
-            if old_cont['id'] not in [c['id'] for c in remove_contacts]:
+        if old_cont['type'] not in new_contacts_dict:
+            if old_cont not in remove_contacts:
                 remove_contacts.append(old_cont)
-        if old_cont['type'] not in new_contacts_roles:
-            if old_cont['type'] not in [c['type'] for c in remove_contacts]:
+            continue
+        if new_contacts_dict[old_cont['type']] != old_cont['id']:
+            if old_cont not in remove_contacts:
                 remove_contacts.append(old_cont)
+            continue
+
     #--- registrant
     current_registrant = None
     try:

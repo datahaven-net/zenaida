@@ -16,7 +16,7 @@
         {% for contact in object_list %}
         <tr>
             <td>{{contact.person_name}}</td>
-            <td>{{contact.organization_name}}</td>
+            <td>{{contact.organization_name|default:""}}</td>
             <td>{{contact.address_full}}</td>
             <td>{{contact.contact_voice}}</td>
             <td>{{contact.contact_email}}</td>

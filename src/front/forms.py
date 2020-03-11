@@ -1,5 +1,6 @@
 import os
 
+from django.conf import settings
 from django.forms import forms, models, fields
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
@@ -51,9 +52,10 @@ class DomainDetailsForm(models.ModelForm):
         if len(filled_ns_list) != len(set(filled_ns_list)):
             raise forms.ValidationError('Name Servers can not be duplicated.')
         invalid_ns_list = []
-        for ns in filled_ns_list:
-            if not os.system("ping -c 1 " + ns) == 0:
-                invalid_ns_list.append(ns)
+        if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
+            for ns in filled_ns_list:
+                if not os.system("ping -c 1 " + ns) == 0:
+                    invalid_ns_list.append(ns)
         if invalid_ns_list:
             raise forms.ValidationError(f"Invalid nameserver(s): {', '.join(map(str, invalid_ns_list))}")
         return cleaned_data

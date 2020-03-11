@@ -37,7 +37,10 @@ class Contact(models.Model):
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     def __str__(self):
-        return 'Contact ({} {})'.format(self.owner.email, self.epp_id)
+        return 'Contact({} {})'.format(self.owner.email, self.epp_id or '?')
+
+    def __repr__(self):
+        return 'Contact({} {})'.format(self.owner.email, self.epp_id or '?')
 
     def save(self, *args, **kwargs):
         if not self.epp_id:
@@ -52,7 +55,11 @@ class Contact(models.Model):
 
     @property
     def address_full(self):
-        return f'{self.address_street} {self.address_city}, {self.address_province} {self.address_postal_code}, {self.address_country}'
+        addr = f'{self.address_street or ""} {self.address_city or ""}'
+        if self.address_province or self.address_postal_code:
+            addr += f', {self.address_province or ""} {self.address_postal_code or ""}'
+        addr += f', {self.address_country or ""}'
+        return addr
 
     @property
     def has_any_domains(self):
@@ -89,7 +96,10 @@ class Registrant(models.Model):
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     def __str__(self):
-        return 'Registrant ({} {})'.format(self.owner.email, self.epp_id)
+        return 'Registrant({} {})'.format(self.owner.email, self.epp_id or '?')
+
+    def __repr__(self):
+        return 'Registrant({} {})'.format(self.owner.email, self.epp_id or '?')
 
     def save(self, *args, **kwargs):
         if not self.epp_id:

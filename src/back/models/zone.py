@@ -17,3 +17,6 @@ class Zone(models.Model):
 
     def __str__(self):
         return 'Zone({})'.format(self.name.upper())
+
+    def __repr__(self):
+        return 'Zone({})'.format(self.name.upper())

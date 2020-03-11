@@ -37,10 +37,10 @@ class Contact(models.Model):
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     def __str__(self):
-        return 'Contact({} {})'.format(self.epp_id, self.owner.email)
+        return 'Contact({} {})'.format(self.owner.email, self.epp_id or '?')
 
     def __repr__(self):
-        return 'Contact({} {})'.format(self.epp_id, self.owner.email)
+        return 'Contact({} {})'.format(self.owner.email, self.epp_id or '?')
 
     def save(self, *args, **kwargs):
         if not self.epp_id:
@@ -96,10 +96,10 @@ class Registrant(models.Model):
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     def __str__(self):
-        return 'Registrant({} {})'.format(self.epp_id, self.owner.email)
+        return 'Registrant({} {})'.format(self.owner.email, self.epp_id or '?')
 
     def __repr__(self):
-        return 'Registrant({} {})'.format(self.epp_id, self.owner.email)
+        return 'Registrant({} {})'.format(self.owner.email, self.epp_id or '?')
 
     def save(self, *args, **kwargs):
         if not self.epp_id:

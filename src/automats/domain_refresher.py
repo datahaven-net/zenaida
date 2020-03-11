@@ -82,6 +82,8 @@ class DomainRefresher(automat.Automat):
         self.new_registrant_epp_id = None
         self.current_registrant_info = None
         self.current_registrant_address_info = None
+        self.contacts_to_add = None
+        self.contacts_to_remove = None
 
     def state_changed(self, oldstate, newstate, event, *args, **kwargs):
         """
@@ -487,12 +489,13 @@ class DomainRefresher(automat.Automat):
         """
         try:
             if self.rewrite_contacts and self.new_domain_contacts:
-                new_contacts = [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
+                add_contacts_list = self.contacts_to_add or [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
+                remove_contacts_list = self.contacts_to_remove or self.received_contacts
                 response = zclient.cmd_domain_update(
                     domain=self.domain_name,
                     change_registrant=self.new_registrant_epp_id,
-                    remove_contacts_list=self.received_contacts,
-                    add_contacts_list=new_contacts,
+                    remove_contacts_list=remove_contacts_list,
+                    add_contacts_list=add_contacts_list,
                 )
             else:
                 response = zclient.cmd_domain_update(
@@ -526,6 +529,16 @@ class DomainRefresher(automat.Automat):
             'billing': first_contact.epp_id,
             'tech': first_contact.epp_id,
         }
+        if self.target_domain:
+            self.contacts_to_add, self.contacts_to_remove, _ = zdomains.compare_contacts(
+                domain_object=self.target_domain,
+                domain_info_response=self.domain_info_response,
+                target_contacts=list({
+                    'admin': first_contact,
+                    'billing': first_contact,
+                    'tech': first_contact,
+                }.items()),
+            )
 
     def doDBCheckCreateUserAccount(self, *args, **kwargs):
         """
@@ -837,4 +850,6 @@ class DomainRefresher(automat.Automat):
         self.new_registrant_epp_id = None
         self.current_registrant_info = None
         self.current_registrant_address_info = None
+        self.contacts_to_add = None
+        self.contacts_to_remove = None
         self.destroy()

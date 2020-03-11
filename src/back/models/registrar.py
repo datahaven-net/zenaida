@@ -17,3 +17,6 @@ class Registrar(models.Model):
 
     def __str__(self):
         return 'Registrar({})'.format(self.epp_id)
+
+    def __repr__(self):
+        return 'Registrar({})'.format(self.epp_id)

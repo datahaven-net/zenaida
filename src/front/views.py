@@ -34,7 +34,7 @@ def validate_profile_and_contacts(dispatch_func):
         if self.request.user.is_authenticated:
             if not hasattr(request.user, 'profile'):
                 zusers.create_profile(request.user, contact_email=request.user.email)
-            if not request.user.profile.is_complete():
+            if not request.user.profile.is_complete() or not request.user.registrants.count():
                 messages.info(request, 'Please provide your contact information to be able to register new domains')
                 return shortcuts.redirect('account_profile')
             if len(zcontacts.list_contacts(request.user)) == 0:

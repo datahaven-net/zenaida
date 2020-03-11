@@ -1,5 +1,9 @@
 from django.contrib import admin
+from django.db.models import Count
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.conf import settings
+
 from nested_admin import NestedModelAdmin  # @UnresolvedImport
 
 from back.models.zone import Zone
@@ -39,23 +43,33 @@ class DomainAdmin(NestedModelAdmin):
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
     ]
-    list_display = ('name', 'owner_email', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
+    list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', )
 
-    def owner_email(self, domain_instance):
-        return domain_instance.owner.email
+    def account(self, domain_instance):
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:accounts_account_change", args=[domain_instance.owner.pk]),
+            domain_instance.owner.email))
 
     def registrant_contact(self, domain_instance):
-        return domain_instance.registrant.contact_email if domain_instance.registrant else ''
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:back_registrant_change", args=[domain_instance.registrant.pk]),
+            domain_instance.registrant.epp_id)) if domain_instance.registrant else ''
 
     def admin_contact(self, domain_instance):
-        return domain_instance.contact_admin.contact_email if domain_instance.contact_admin else ''
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:back_contact_change", args=[domain_instance.contact_admin.pk]),
+            domain_instance.contact_admin.epp_id)) if domain_instance.contact_admin else ''
 
     def billing_contact(self, domain_instance):
-        return domain_instance.contact_billing.contact_email if domain_instance.contact_billing else ''
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:back_contact_change", args=[domain_instance.contact_billing.pk]),
+            domain_instance.contact_billing.epp_id)) if domain_instance.contact_billing else ''
 
     def tech_contact(self, domain_instance):
-        return domain_instance.contact_tech.contact_email if domain_instance.contact_tech else ''
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk]),
+            domain_instance.contact_tech.epp_id)) if domain_instance.contact_tech else ''
 
     def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True):
         report = []
@@ -145,23 +159,37 @@ class DomainAdmin(NestedModelAdmin):
 
 class ContactAdmin(NestedModelAdmin):
 
-    list_display = ('epp_id', 'owner_email', 'person_name', 'organization_name',
+    list_display = ('epp_id', 'account', 'person_name', 'organization_name',
                     'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
-                    'contact_voice', 'contact_fax', 'contact_email', 'has_any_domains', )
+                    'contact_voice', 'contact_fax', 'contact_email', 'domains_count', )
 
-    def owner_email(self, contact_instance):
-        return contact_instance.owner.email
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            _all_domains_count=Count("admin_domains", distinct=True) + Count("billing_domains", distinct=True) + Count("tech_domains", distinct=True),
+        )
+        return queryset
 
+    def account(self, contact_instance):
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:accounts_account_change", args=[contact_instance.owner.pk]),
+            contact_instance.owner.email))
+
+    def domains_count(self, obj):
+        return obj._all_domains_count
+    domains_count.admin_order_field = '_all_domains_count'
 
 
 class RegistrantAdmin(NestedModelAdmin):
 
-    list_display = ('epp_id', 'owner_email', 'person_name', 'organization_name',
+    list_display = ('epp_id', 'account', 'person_name', 'organization_name',
                     'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
                     'contact_voice', 'contact_fax', 'contact_email', 'has_any_domains', )
 
-    def owner_email(self, registrant_instance):
-        return registrant_instance.owner.email
+    def account(self, registrant_instance):
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk]),
+            registrant_instance.owner.email))
 
 
 admin.site.register(Zone, ZoneAdmin)

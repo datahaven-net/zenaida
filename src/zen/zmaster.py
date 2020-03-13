@@ -139,17 +139,24 @@ def domain_synchronize_from_backend(domain_name,
 
 
 def domain_synchronize_contacts(domain_object,
-                                skip_roles=[], skip_contact_details=False, merge_duplicated_contacts=False,
+                                skip_roles=[], skip_contact_details=False,
+                                merge_duplicated_contacts=False,
+                                reset_to_oldest_registrant=False,
                                 raise_errors=False, log_events=True, log_transitions=True):
     """
     Write domain contacts to the back-end.
     Also deduplicates contacts if `merge_duplicated_contacts=True`.
     """
+    new_registrant = None
+    if reset_to_oldest_registrant:
+        from zen import zcontacts
+        new_registrant = zcontacts.get_oldest_registrant(domain_object.owner)
     dcs = domain_contacts_synchronizer.DomainContactsSynchronizer(
         update_domain=True,
         skip_roles=skip_roles,
         skip_contact_details=skip_contact_details,
         merge_duplicated_contacts=merge_duplicated_contacts,
+        new_registrant=new_registrant,
         log_events=log_events,
         log_transitions=log_transitions,
         raise_errors=raise_errors,

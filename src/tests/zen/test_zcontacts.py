@@ -34,6 +34,77 @@ def test_contact_create_from_profile():
     assert tester_contact.owner.email == 'my@zenaida.ai'
 
 
+class TestClearContactsChange(TestCase):
+
+    def test_add3_remove3_no_change(self):
+        assert zcontacts.clear_contacts_change(
+            to_be_added=[
+                {'type': 'admin', 'id': 'admin0', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech0', },
+            ],
+            to_be_removed=[
+                {'type': 'admin', 'id': 'admin0', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech0', },
+            ],
+        ) == ([], [], )
+
+    def test_add3_remove3_change1(self):
+        assert zcontacts.clear_contacts_change(
+            to_be_added=[
+                {'type': 'admin', 'id': 'admin1', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech0', },
+            ],
+            to_be_removed=[
+                {'type': 'admin', 'id': 'admin0', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech0', },
+            ],
+        ) == ([{'type': 'admin', 'id': 'admin1', }, ], [{'type': 'admin', 'id': 'admin0', }, ], )
+
+    def test_add3_remove3_change2(self):
+        assert zcontacts.clear_contacts_change(
+            to_be_added=[
+                {'type': 'admin', 'id': 'admin2', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech2', },
+            ],
+            to_be_removed=[
+                {'type': 'admin', 'id': 'admin0', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech0', },
+            ],
+        ) == ([{'type': 'admin', 'id': 'admin2', },
+               {'type': 'tech', 'id': 'tech2', }, ],
+              [{'type': 'admin', 'id': 'admin0', },
+               {'type': 'tech', 'id': 'tech0', }, ], )
+
+    def test_add3_remove0_change3(self):
+        assert zcontacts.clear_contacts_change(
+            to_be_added=[
+                {'type': 'admin', 'id': 'admin0', },
+                {'type': 'billing', 'id': 'billing0', },
+                {'type': 'tech', 'id': 'tech0', },
+            ],
+            to_be_removed=[],
+        ) == ([{'type': 'admin', 'id': 'admin0', },
+               {'type': 'billing', 'id': 'billing0', },
+               {'type': 'tech', 'id': 'tech0', }, ], [], )
+
+    def test_add1_remove2_change1(self):
+        assert zcontacts.clear_contacts_change(
+            to_be_added=[
+                {'type': 'admin', 'id': 'admin0', },
+            ],
+            to_be_removed=[
+                {'type': 'admin', 'id': 'admin0', },
+                {'type': 'billing', 'id': 'billing0', },
+            ],
+        ) == ([], [{'type': 'billing', 'id': 'billing0', }, ], )
+
+
 class TestDomainContactsMerge(TestCase):
 
     def _make_domain_contacts(self, add_contacts, epp_id_dict, person_names):
@@ -207,3 +278,21 @@ class TestDomainContactsMerge(TestCase):
         assert merged_contacts['admin'].epp_id == 'id1'
         assert merged_contacts['billing'].epp_id == 'id2'
         assert merged_contacts['tech'].epp_id == 'id2'
+
+
+@pytest.mark.django_db
+def test_get_oldest_registrant():
+    tester = testsupport.prepare_tester_account()
+    assert zcontacts.get_oldest_registrant(tester) is None
+    first_registrant = testsupport.prepare_tester_registrant(tester, epp_id='id1', create_new=True)
+    assert zcontacts.registrant_exists(epp_id='id1') is True
+    assert zcontacts.registrant_exists(epp_id='id2') is False
+    assert zcontacts.registrant_find(epp_id='id1') == first_registrant
+    assert zcontacts.get_oldest_registrant(tester) == first_registrant
+    second_registrant = testsupport.prepare_tester_registrant(tester, epp_id='id2', create_new=True)
+    assert zcontacts.registrant_exists(epp_id='id2') is True
+    assert zcontacts.registrant_find(epp_id='id2') != first_registrant
+    assert zcontacts.registrant_find(epp_id='id2') == second_registrant
+    assert zcontacts.get_oldest_registrant(tester) == first_registrant
+    zcontacts.registrant_delete(epp_id='id1')
+    assert zcontacts.get_oldest_registrant(tester) == second_registrant

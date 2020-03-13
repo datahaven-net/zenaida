@@ -492,10 +492,7 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     else:
         domain_object.status = 'inactive'
         if 'serverHold' in new_domain_statuses:
-            if new_domain_statuses['serverHold'].lower().count('suspended'):
-                domain_object.status = 'suspended'
-            else:
-                domain_object.status = 'blocked'
+            domain_object.status = 'suspended'
         if 'pendingDelete' in new_domain_statuses:
             domain_object.status = 'to_be_deleted'
         if 'pendingRestore' in new_domain_statuses:
@@ -505,7 +502,8 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     if save:
         domain_object.save()
     if modified:
-        logger.info('domain %r statuses modified:  %r -> %r', domain_object, current_domain_statuses, new_domain_statuses)
+        logger.info('domain %r new status is %r because EPP statuses modified:  %r -> %r',
+                    domain_object, domain_object.status, current_domain_statuses, new_domain_statuses)
     return True
 
 #------------------------------------------------------------------------------

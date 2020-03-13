@@ -489,8 +489,9 @@ class DomainRefresher(automat.Automat):
         """
         try:
             if self.rewrite_contacts and self.new_domain_contacts:
-                add_contacts_list = self.contacts_to_add or [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
-                remove_contacts_list = self.contacts_to_remove or self.received_contacts
+                to_be_added = self.contacts_to_add or [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
+                to_be_removed = self.contacts_to_remove or self.received_contacts
+                add_contacts_list, remove_contacts_list = zcontacts.clear_contacts_change(to_be_added, to_be_removed)
                 response = zclient.cmd_domain_update(
                     domain=self.domain_name,
                     change_registrant=self.new_registrant_epp_id,

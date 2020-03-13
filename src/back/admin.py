@@ -45,7 +45,7 @@ class DomainAdmin(NestedModelAdmin):
     ]
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', )
-    list_filter = ('status', 'epp_statuses', )
+    list_filter = ('status', )
     search_fields = ('name', )
 
     def account(self, domain_instance):

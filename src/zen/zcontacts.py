@@ -389,7 +389,7 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
 def registrant_delete(epp_id):
     """
     Removes Registrant with given epp_id from DB.
-    WARNING! will aslo remove all domains associated to it.
+    WARNING! will aslo remove all domains associated to the registrant.
     """
     Registrant.registrants.filter(epp_id=epp_id).delete()
     logger.info('registrant with epp_id %r deleted', epp_id)

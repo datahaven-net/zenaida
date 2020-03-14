@@ -8,6 +8,7 @@ django-extensions==2.1.9
 django-grappelli==2.13.1
 django-nested-admin==3.2.3
 djangorestframework==3.9.4
+django_otp==0.8.1
 ecdsa==0.13.3
 filelock==3.0.12
 fqn-decorators==1.2.3
@@ -27,6 +28,7 @@ python-dateutil==2.8.0
 python-memcached==1.59
 python-monkey-business==1.0.0
 pytz==2019.1
+qrcode==6.1
 requests==2.22.0
 six==1.12.0
 sqlparse==0.3.0

@@ -223,11 +223,18 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    # improved amdin: https://django-nested-admin.readthedocs.io/en/latest/quickstart.html
+
+    # OTP
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_hotp',
+    'django_otp.plugins.otp_static',
+
+    # improved admin: https://django-nested-admin.readthedocs.io/en/latest/quickstart.html
     'nested_admin',
     # html templates: https://django-bootstrap4.readthedocs.io/en/stable/quickstart.html
     'bootstrap4',
-    # usefull things: https://django-extensions.readthedocs.io/en/latest/command_extensions.html
+    # useful things: https://django-extensions.readthedocs.io/en/latest/command_extensions.html
     'django_extensions',
     'billing',
     'accounts',
@@ -243,10 +250,9 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'raven.contrib.django.middleware.SentryLogMiddleware',
-    # 'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
 ]
 
 TEMPLATES = [

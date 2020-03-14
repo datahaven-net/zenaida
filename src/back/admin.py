@@ -187,12 +187,21 @@ class RegistrantAdmin(NestedModelAdmin):
 
     list_display = ('epp_id', 'account', 'person_name', 'organization_name',
                     'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
-                    'contact_voice', 'contact_fax', 'contact_email', 'has_any_domains', )
+                    'contact_voice', 'contact_fax', 'contact_email', 'domains_count', )
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(_all_domains_count=Count("registrant_domains", distinct=True))
+        return queryset
 
     def account(self, registrant_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
             reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk]),
             registrant_instance.owner.email))
+
+    def domains_count(self, obj):
+        return obj._all_domains_count
+    domains_count.admin_order_field = '_all_domains_count'
 
 
 admin.site.register(Zone, ZoneAdmin)

@@ -38,6 +38,7 @@ class DomainContactsSynchronizer(automat.Automat):
     def __init__(self, update_domain=False,
                  skip_roles=[], skip_contact_details=False,
                  merge_duplicated_contacts=False,
+                 new_registrant=None,
                  debug_level=0, log_events=None, log_transitions=None,
                  raise_errors=False,
                  **kwargs):
@@ -48,6 +49,7 @@ class DomainContactsSynchronizer(automat.Automat):
         self.skip_roles = skip_roles
         self.skip_contact_details = skip_contact_details
         self.merge_duplicated_contacts = merge_duplicated_contacts
+        self.new_registrant = new_registrant
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -176,6 +178,9 @@ class DomainContactsSynchronizer(automat.Automat):
             for role in ['admin', 'billing', 'tech', ]:
                 if self.target_contacts.get(role):
                     zdomains.domain_join_contact(self.target_domain, role, self.target_contacts[role])
+        if self.new_registrant:
+            if self.new_registrant.epp_id != self.target_domain.registrant.epp_id:
+                zdomains.domain_change_registrant(self.target_domain, self.new_registrant)
 
     def doSyncContacts(self, *args, **kwargs):
         """

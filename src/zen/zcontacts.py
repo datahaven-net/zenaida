@@ -238,6 +238,28 @@ def merge_contacts(domain_contacts):
     return unique_contacts
 
 
+def clear_contacts_change(to_be_added, to_be_removed):
+    add_contacts_list = []
+    remove_contacts_list = []
+    for add_item in to_be_added:
+        add_remove_collision_found = False
+        for remove_item in to_be_removed:
+            if add_item['type'] == remove_item['type'] and add_item['id'] == remove_item['id']:
+                add_remove_collision_found = True
+                break
+        if not add_remove_collision_found:
+            add_contacts_list.append(add_item)
+    for remove_item in to_be_removed:
+        remove_add_collision_found = False
+        for add_item in to_be_added:
+            if add_item['type'] == remove_item['type'] and add_item['id'] == remove_item['id']:
+                remove_add_collision_found = True
+                break
+        if not remove_add_collision_found:
+            remove_contacts_list.append(remove_item)
+    return add_contacts_list, remove_contacts_list
+
+
 def to_dict(contact_object):
     info = {
         'email': contact_object.contact_email,
@@ -360,6 +382,17 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
     registrant_object.contact_email = profile_object.contact_email
     if save:
         registrant_object.save()
+    logger.info('registrant updated from profile: %s', registrant_object)
+    return True
+
+
+def registrant_delete(epp_id):
+    """
+    Removes Registrant with given epp_id from DB.
+    WARNING! will aslo remove all domains associated to the registrant.
+    """
+    Registrant.registrants.filter(epp_id=epp_id).delete()
+    logger.info('registrant with epp_id %r deleted', epp_id)
     return True
 
 
@@ -374,11 +407,11 @@ def registrant_exists(epp_id):
     """
     Return `True` if Registrant with given epp_id exists, doing query in Registrant table.
     """
-    return bool(Registrant.registrants.filter(epp_id=epp_id).first())
+    return registrant_find(epp_id) is not None
 
 
-def get_registrant(owner):
+def get_oldest_registrant(owner):
     """
-    Return Registrant object for given user or None, doing query in Registrant table.
+    Return "oldest" Registrant object for given user or None, doing query in Registrant table.
     """
-    return Registrant.registrants.filter(owner=owner).first()
+    return Registrant.registrants.filter(owner=owner).order_by('id').first()

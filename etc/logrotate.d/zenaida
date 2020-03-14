@@ -89,4 +89,10 @@
   compress
   missingok
   notifempty
+  postrotate
+    sleep 1
+    XDG_RUNTIME_DIR=/run/user/<put zenaida $UID here> /bin/su -c "touch /home/zenaida/zenaida/etc/uwsgi/vassals/zenaida.ini" zenaida
+    sleep 1
+    /bin/echo "`date` uwsgi vassals restarted" >> /home/zenaida/logs/logrotate
+  endscript
 }

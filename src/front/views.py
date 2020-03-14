@@ -139,7 +139,7 @@ class AccountDomainCreateView(FormView):
             owner=self.request.user,
             create_date=domain_creation_date,
             expiry_date=domain_creation_date + relativedelta(years=2),
-            registrant=zcontacts.get_registrant(self.request.user),
+            registrant=zcontacts.get_oldest_registrant(self.request.user),
             contact_admin=domain_obj.contact_admin,
             contact_tech=domain_obj.contact_tech,
             contact_billing=domain_obj.contact_billing,
@@ -285,7 +285,7 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
                 messages.error(self.request, self.error_message)
                 return HttpResponseRedirect(self.request.path_info)
 
-        existing_registrant = zcontacts.get_registrant(self.request.user)
+        existing_registrant = zcontacts.get_oldest_registrant(self.request.user)
         if not existing_registrant:
             new_registrant = zcontacts.registrant_create_from_profile(self.request.user, form.instance)
             if not zmaster.contact_create_update(new_registrant):

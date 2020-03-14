@@ -1,11 +1,11 @@
 import logging
 
+import re
 import datetime
 import csv
 
 from django.utils.timezone import make_aware
 
-from zen import zdomains
 from zen import zcontacts
 from zen import zusers
 from zen import zdomains
@@ -129,8 +129,8 @@ def get_csv_domain_info(csv_row, headers):
             address_province=csv_record.get('registrant_state_province_36', ''),    # 3d.
             address_postal_code=csv_record.get('registrant_postalcode_37', ''),     # 3e.
             address_country=csv_record.get('registrant_countrycode_38', ''),        # 3f.
-            contact_voice=csv_record.get('registrant_phone_28', ''),                # -
-            contact_fax=csv_record.get('registrant_fax_30', ''),                    # -
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('registrant_phone_28', ''))[:17],        # -
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('registrant_fax_30', ''))[:17],            # -
             contact_email=csv_record.get('registrant_email_26', '').lower(),        # -
         ),
     #--- admin contact
@@ -142,8 +142,8 @@ def get_csv_domain_info(csv_row, headers):
             address_province=csv_record.get('admin_state_province_66', ''),         # 4g.
             address_postal_code=csv_record.get('admin_postalcode_67', ''),          # 4h.
             address_country=csv_record.get('admin_countrycode_68', ''),             # 4i.
-            contact_voice=csv_record.get('admin_phone_58', ''),                     # 4j.
-            contact_fax=csv_record.get('admin_fax_60', ''),                         # 4k.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('admin_phone_58', ''))[:17],             # 4j.
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('admin_fax_60', ''))[:17],                 # 4k.
             contact_email=csv_record.get('admin_email_56', '').lower(),             # 4l.
         ),
     #--- tech contact
@@ -155,8 +155,8 @@ def get_csv_domain_info(csv_row, headers):
             address_province=csv_record.get('technical_state_province_81', ''),     # 5g.
             address_postal_code=csv_record.get('technical_postalcode_82', ''),      # 5h.
             address_country=csv_record.get('technical_countrycode_83', ''),         # 5i.
-            contact_voice=csv_record.get('technical_phone_73', ''),                 # 5j.
-            contact_fax=csv_record.get('technical_fax_75', ''),                     # 5k.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('technical_phone_73', ''))[:17],         # 5j.
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('technical_fax_75', ''))[:17],             # 5k.
             contact_email=csv_record.get('technical_email_71', '').lower(),         # 5l.
         ),
     #--- billing contact
@@ -168,8 +168,8 @@ def get_csv_domain_info(csv_row, headers):
             address_province=csv_record.get('billing_state_province_51', ''),       # 6g.
             address_postal_code=csv_record.get('billing_postalcode_52', ''),        # 6h.
             address_country=csv_record.get('billing_countrycode_53', ''),           # 6i.
-            contact_voice=csv_record.get('billing_phone_43', ''),                   # 6j.
-            contact_fax=csv_record.get('billing_fax_45', ''),                       # 6k.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('billing_phone_43', ''))[:17],           # 6j.
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('billing_fax_45', ''))[:17],               # 6k.
             contact_email=csv_record.get('billing_email_41', '').lower(),           # 6l.
         ),
     #--- nameservers
@@ -223,7 +223,7 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
     return errors, to_be_created
 
 
-def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', dry_run=True):
+def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', skip_failing_contacts=False, dry_run=True):
     """
     """
     errors = []
@@ -291,14 +291,14 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             errors.append('account %s not exist' % real_registrant_email)
             return errors
     #--- account check/create
-        new_password=zusers.generate_password(length=10)
+        new_password = zusers.generate_password(length=10)
         owner_account = zusers.create_account(
             email=real_registrant_email,
             account_password=new_password,
             is_active=True,
+            **csv_info['registrant'],
         )
         logger.info('generated new account and password for %s : %s', real_registrant_email, new_password)
-        # TODO: also generate profile for that user based on registrant info
 
     if known_domain:
         known_expiry_date = known_domain.expiry_date
@@ -388,6 +388,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             new_admin_contact = zcontacts.contact_create(
                 epp_id=real_admin_contact_id,
                 owner=owner_account,
+                raise_owner_exist=not skip_failing_contacts,
                 **csv_info['admin'],
             )
             # TODO: make sure contact was assigned to the domain
@@ -403,6 +404,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             new_tech_contact = zcontacts.contact_create(
                 epp_id=real_tech_contact_id,
                 owner=owner_account,
+                raise_owner_exist=not skip_failing_contacts,
                 **csv_info['tech'],
             )
             # TODO: make sure contact was assigned to the domain
@@ -418,6 +420,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             new_billing_contact = zcontacts.contact_create(
                 epp_id=real_billing_contact_id,
                 owner=owner_account,
+                raise_owner_exist=not skip_failing_contacts,
                 **csv_info['billing'],
             )
             # TODO: make sure contact was assigned to the domain
@@ -427,7 +430,18 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     epp_id=real_billing_contact_id,
                     **csv_info['billing'],
                 )
-    
+
+        if not known_domain and (
+            need_admin_contact or need_billing_contact or need_tech_contact ) and (
+            not new_billing_contact and not new_tech_contact and not new_admin_contact):
+    #--- at least one contact exists
+            logger.info('no valid contacts found for domain %r, inactive "admin" contact will be created from registrant info', domain)
+            new_admin_contact = zcontacts.contact_create(
+                epp_id=None,  # TODO: run sync for those domains after all.
+                owner=owner_account,
+                **csv_info['registrant'],  # will be created new "inactive" contact from registrant's info
+            )
+
     if not known_domain:
         if dry_run:
     #--- domain not found
@@ -579,7 +593,10 @@ def load_from_csv(filename, dry_run=True, registrar_epp_id=None):
         count += 1
         domain = row[1]
         try:
-            errors = domain_regenerate_from_csv_row(row, headers, wanted_registrar=registrar_epp_id, dry_run=dry_run)
+            errors = domain_regenerate_from_csv_row(row, headers,
+                                                    wanted_registrar=registrar_epp_id,
+                                                    skip_failing_contacts=True,
+                                                    dry_run=dry_run)
         except Exception:
             logger.exception('failed processing %s' % domain)
             return -1

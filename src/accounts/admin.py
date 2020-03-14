@@ -9,7 +9,10 @@ from accounts.models.notification import Notification
 
 
 class AccountAdmin(NestedModelAdmin):
+
     list_display = ('email', 'is_active', 'is_staff', 'known_registrants', 'known_contacts', 'total_domains', 'total_payments', 'total_orders', )
+    search_fields = ('email', )
+    readonly_fields = ('email', )
 
     def known_registrants(self, account_instance):
         return mark_safe('<br>'.join([

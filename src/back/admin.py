@@ -27,26 +27,65 @@ class RegistrarAdmin(NestedModelAdmin):
 
 class ProfileAdmin(NestedModelAdmin):
 
+    fields = (
+        ('get_owner_link', ),
+        ('person_name', ),
+        ('organization_name', ),
+        ('address_street', ),
+        ('address_city', ),
+        ('address_province', ),
+        ('address_postal_code', ),
+        ('address_country', ),
+        ('contact_voice', ),
+        ('contact_fax', ),
+        ('contact_email', ),
+        ('email_notifications_enabled', ),
+        ('automatic_renewal_enabled', ),
+    )
     list_display = ('account', 'person_name', 'organization_name',
                     'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
                     'contact_voice', 'contact_fax', 'contact_email',
                     'email_notifications_enabled', 'automatic_renewal_enabled', )
+    readonly_fields = ('get_owner_link', 'contact_email', )
 
+    def get_owner_link(self, profile_instance):
+        link = reverse("admin:accounts_account_change", args=[profile_instance.account.pk])
+        return mark_safe(f'<a href="{link}">{profile_instance.account}</a>')
+    get_owner_link.short_description = 'Account'
 
 
 class DomainAdmin(NestedModelAdmin):
-
-    actions = [
+    fields = (
+        ('name', ),
+        ('get_owner_link', ),
+        ('status', ),
+        ('epp_id',),
+        ('create_date',),
+        ('expiry_date', ),
+        ('epp_statuses',),
+        ('auth_key',),
+        ('zone',),
+        ('registrar',),
+        ('auto_renew_enabled',),
+        ('get_registrant_link',),
+        ('get_contact_admin_link',),
+        ('get_contact_billing_link',),
+        ('get_contact_tech_link',),
+    )
+    actions = (
         'domain_synchronize_from_backend',
         'domain_synchronize_from_backend_hard',
         'domain_generate_and_set_new_auth_info_key',
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
-    ]
+    )
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', )
     list_filter = ('status', )
-    search_fields = ('name', )
+    search_fields = ('name', 'owner__email', )
+    readonly_fields = ('name', 'owner', 'registrar', 'zone',
+                       'get_owner_link', 'get_registrant_link',
+                       'get_contact_admin_link', 'get_contact_billing_link', 'get_contact_tech_link', )
 
     def account(self, domain_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
@@ -72,6 +111,31 @@ class DomainAdmin(NestedModelAdmin):
         return mark_safe('<a href="{}">{}</a>'.format(
             reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk]),
             domain_instance.contact_tech.epp_id)) if domain_instance.contact_tech else ''
+
+    def get_owner_link(self, domain_instance):
+        link = reverse("admin:accounts_account_change", args=[domain_instance.owner.pk])
+        return mark_safe(f'<a href="{link}">{domain_instance.owner}</a>')
+    get_owner_link.short_description = 'Account'
+
+    def get_registrant_link(self, domain_instance):
+        link = reverse("admin:back_registrant_change", args=[domain_instance.registrant.pk])
+        return mark_safe(f'<a href="{link}">{domain_instance.registrant}</a>')
+    get_registrant_link.short_description = 'Registrant'
+
+    def get_contact_admin_link(self, domain_instance):
+        link = reverse("admin:back_contact_change", args=[domain_instance.contact_admin.pk])
+        return mark_safe(f'<a href="{link}">{domain_instance.contact_admin}</a>')
+    get_contact_admin_link.short_description = 'Admin contact'
+
+    def get_contact_billing_link(self, domain_instance):
+        link = reverse("admin:back_contact_change", args=[domain_instance.contact_billing.pk])
+        return mark_safe(f'<a href="{link}">{domain_instance.contact_billing}</a>')
+    get_contact_billing_link.short_description = 'Billing contact'
+
+    def get_contact_tech_link(self, domain_instance):
+        link = reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk])
+        return mark_safe(f'<a href="{link}">{domain_instance.contact_tech}</a>')
+    get_contact_tech_link.short_description = 'Tech contact'
 
     def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True):
         report = []
@@ -162,9 +226,25 @@ class DomainAdmin(NestedModelAdmin):
 
 class ContactAdmin(NestedModelAdmin):
 
+    fields = (
+        ('get_owner_link', ),
+        ('epp_id', ),
+        ('person_name', ),
+        ('organization_name', ),
+        ('address_street', ),
+        ('address_city', ),
+        ('address_province', ),
+        ('address_postal_code', ),
+        ('address_country', ),
+        ('contact_voice', ),
+        ('contact_fax', ),
+        ('contact_email', ),
+    )
     list_display = ('epp_id', 'account', 'person_name', 'organization_name',
                     'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
                     'contact_voice', 'contact_fax', 'contact_email', 'domains_count', )
+    search_fields = ('owner__email', )
+    readonly_fields = ('owner', 'get_owner_link', )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
@@ -182,12 +262,33 @@ class ContactAdmin(NestedModelAdmin):
         return obj._all_domains_count
     domains_count.admin_order_field = '_all_domains_count'
 
+    def get_owner_link(self, contact_instance):
+        link = reverse("admin:accounts_account_change", args=[contact_instance.owner.pk])
+        return mark_safe(f'<a href="{link}">{contact_instance.owner}</a>')
+    get_owner_link.short_description = 'Account'
+
 
 class RegistrantAdmin(NestedModelAdmin):
 
+    fields = (
+        ('get_owner_link', ),
+        ('epp_id', ),
+        ('person_name', ),
+        ('organization_name', ),
+        ('address_street', ),
+        ('address_city', ),
+        ('address_province', ),
+        ('address_postal_code', ),
+        ('address_country', ),
+        ('contact_voice', ),
+        ('contact_fax', ),
+        ('contact_email', ),
+    )
     list_display = ('epp_id', 'account', 'person_name', 'organization_name',
                     'address_street', 'address_city', 'address_province', 'address_postal_code', 'address_country',
                     'contact_voice', 'contact_fax', 'contact_email', 'domains_count', )
+    search_fields = ('owner__email', )
+    readonly_fields = ('owner', 'get_owner_link', )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
@@ -202,6 +303,11 @@ class RegistrantAdmin(NestedModelAdmin):
     def domains_count(self, obj):
         return obj._all_domains_count
     domains_count.admin_order_field = '_all_domains_count'
+
+    def get_owner_link(self, registrant_instance):
+        link = reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk])
+        return mark_safe(f'<a href="{link}">{registrant_instance.owner}</a>')
+    get_owner_link.short_description = 'Account'
 
 
 admin.site.register(Zone, ZoneAdmin)

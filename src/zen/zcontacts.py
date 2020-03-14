@@ -92,16 +92,19 @@ def extract_address_info(contact_info_response):
     return a
 
 
-def contact_create(epp_id, owner, contact_info_response=None, **kwargs):
+def contact_create(epp_id, owner, contact_info_response=None, raise_owner_exist=True, **kwargs):
     """
     Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
     """
     if epp_id:
         existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
         if existing_contact:
+            logger.debug('contact with epp_id=%s already exist, owner is %r', epp_id, existing_contact.owner)
             if existing_contact.owner.pk != owner.pk:
-                raise Exception('Invalid owner, existing contact have another owner already')
-            logger.debug('contact with epp_id=%s already exist', epp_id)
+                if raise_owner_exist:
+                    raise Exception('Invalid owner %r, existing contact have another owner already: %r' % (
+                        owner, existing_contact.owner))
+                return None
             return existing_contact
     if contact_info_response:
         d = contact_info_response['epp']['response']['resData']['infData']

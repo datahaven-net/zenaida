@@ -72,7 +72,6 @@ class Account(AbstractUser):
     # payments -> billing.models.payment.Payment
     # orders -> billing.models.order.Order
 
-
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,

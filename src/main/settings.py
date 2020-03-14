@@ -286,8 +286,7 @@ EMAIL_USE_TLS = getattr(params, 'EMAIL_USE_TLS', False)
 EMAIL_USE_SSL = getattr(params, 'EMAIL_USE_SSL', True)
 EMAIL_ADMIN = getattr(params, 'EMAIL_ADMIN', '')
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
+DEFAULT_FROM_EMAIL = getattr(params, 'DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 #------------------------------------------------------------------------------
 #--- Sentry defaults

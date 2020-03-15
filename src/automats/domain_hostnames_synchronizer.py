@@ -49,6 +49,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         Builds `domain_hostnames_synchronizer()` state machine.
         """
+        self.target_domain = None
         self.update_domain = update_domain
         if log_events is None:
             log_events=settings.DEBUG
@@ -64,6 +65,11 @@ class DomainHostnamesSynchronizer(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_domain:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.target_domain.name or '?', self.state)
 
     def init(self):
         """

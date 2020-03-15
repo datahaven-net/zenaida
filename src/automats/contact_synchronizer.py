@@ -36,6 +36,7 @@ class ContactSynchronizer(automat.Automat):
         """
         Builds `contact_synchronizer()` state machine.
         """
+        self.target_contact = None
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -50,6 +51,11 @@ class ContactSynchronizer(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_contact:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.target_contact.epp_id or '?', self.state)
 
     def state_changed(self, oldstate, newstate, event, *args, **kwargs):
         """

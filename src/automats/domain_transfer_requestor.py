@@ -44,6 +44,7 @@ class DomainTransferRequestor(automat.Automat):
         """
         Builds `domain_transfer_requestor()` state machine.
         """
+        self.target_domain_name = None
         self.skip_info = skip_info
         self.auth_info_verify = auth_info_verify
         if log_events is None:
@@ -60,6 +61,11 @@ class DomainTransferRequestor(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_domain_name:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.target_domain_name, self.state)
 
     def init(self):
         """

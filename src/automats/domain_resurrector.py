@@ -53,6 +53,7 @@ class DomainResurrector(automat.Automat):
         """
         Builds `domain_resurrector()` state machine.
         """
+        self.target_domain = None
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -67,6 +68,11 @@ class DomainResurrector(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_domain:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.target_domain.name or '?', self.state)
 
     def init(self):
         """

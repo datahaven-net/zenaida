@@ -45,6 +45,7 @@ class DomainContactsSynchronizer(automat.Automat):
         """
         Builds `domain_contacts_synchronizer()` state machine.
         """
+        self.target_domain = None
         self.domain_to_be_updated = update_domain
         self.skip_roles = skip_roles
         self.skip_contact_details = skip_contact_details
@@ -65,6 +66,11 @@ class DomainContactsSynchronizer(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_domain:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.target_domain.name or '?', self.state)
 
     def init(self):
         """

@@ -48,6 +48,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Builds `domain_synchronizer()` state machine.
         """
+        self.target_domain = None
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -63,6 +64,11 @@ class DomainSynchronizer(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_domain:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.target_domain.name, self.state)
 
     def init(self):
         """

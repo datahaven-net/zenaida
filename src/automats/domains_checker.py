@@ -45,6 +45,7 @@ class DomainsChecker(automat.Automat):
         """
         Builds `domains_checker()` state machine.
         """
+        self.target_domain_names = None
         self.skip_check = skip_check
         self.skip_info = skip_info
         self.verify_registrant = verify_registrant
@@ -63,6 +64,13 @@ class DomainsChecker(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.target_domain_names:
+            return '%s(%s)' % (self.id, self.state)
+        if len(self.target_domain_names) > 1:
+            return '%s[%d](%s)' % (self.id, len(self.target_domain_names), self.state)
+        return '%s[%s](%s)' % (self.id, self.target_domain_names[0], self.state)
 
     def init(self):
         """

@@ -51,6 +51,7 @@ class DomainRefresher(automat.Automat):
         """
         Builds `domain_refresher()` state machine.
         """
+        self.domain_name = None
         if log_events is None:
             log_events=settings.DEBUG
         if log_transitions is None:
@@ -65,6 +66,11 @@ class DomainRefresher(automat.Automat):
             raise_errors=raise_errors,
             **kwargs
         )
+
+    def __str__(self):
+        if not self.domain_name:
+            return '%s(%s)' % (self.id, self.state)
+        return '%s[%s](%s)' % (self.id, self.domain_name, self.state)
 
     def init(self):
         """

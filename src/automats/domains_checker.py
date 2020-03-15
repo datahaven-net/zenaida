@@ -65,7 +65,8 @@ class DomainsChecker(automat.Automat):
             **kwargs
         )
 
-    def __str__(self):
+    @property
+    def label(self):
         if not self.target_domain_names:
             return '%s(%s)' % (self.id, self.state)
         if len(self.target_domain_names) > 1:

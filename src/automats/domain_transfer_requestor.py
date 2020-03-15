@@ -62,7 +62,8 @@ class DomainTransferRequestor(automat.Automat):
             **kwargs
         )
 
-    def __str__(self):
+    @property
+    def label(self):
         if not self.target_domain_name:
             return '%s(%s)' % (self.id, self.state)
         return '%s[%s](%s)' % (self.id, self.target_domain_name, self.state)

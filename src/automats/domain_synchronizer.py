@@ -65,7 +65,8 @@ class DomainSynchronizer(automat.Automat):
             **kwargs
         )
 
-    def __str__(self):
+    @property
+    def label(self):
         if not self.target_domain:
             return '%s(%s)' % (self.id, self.state)
         return '%s[%s](%s)' % (self.id, self.target_domain.name, self.state)
@@ -267,7 +268,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-        if self.renew_years == -1:
+        if self.renew_years == -1 or self.renew_years is None:
             # initial load scenario
             days_difference = (self.target_domain.expiry_date - datetime.datetime.now()).days
         else:
@@ -339,7 +340,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-        if self.renew_years == -1:
+        if self.renew_years == -1 or self.renew_years is None:
             # initial load scenario
             days_difference = (self.target_domain.expiry_date - datetime.datetime.now()).days
         else:

@@ -52,7 +52,8 @@ class ContactSynchronizer(automat.Automat):
             **kwargs
         )
 
-    def __str__(self):
+    @property
+    def label(self):
         if not self.target_contact:
             return '%s(%s)' % (self.id, self.state)
         return '%s[%s](%s)' % (self.id, self.target_contact.epp_id or '?', self.state)

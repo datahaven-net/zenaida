@@ -216,8 +216,18 @@ class Automat(object):
 
     def __str__(self):
         """
-        Will print something like: "network_connector(CONNECTED)"
+        Will return something like: "network_connector(CONNECTED)"
         """
+        return self.label
+
+    def __repr__(self):
+        """
+        Will return something like: "network_connector(CONNECTED)"
+        """
+        return self.label
+
+    @property
+    def label(self):
         return '%s(%s)' % (self.id, self.state)
 
     def register(self):
@@ -426,7 +436,7 @@ class Automat(object):
         global _GlobalStateChangedCallback
         if self._prev_state != new_state:
             if self.log_transitions:
-                self.log(self.debug_level, '%s(%s): (%s)->(%s)' % (self.id, event, self._prev_state, new_state))
+                self.log(self.debug_level, '%s after "%s" : (%s)->(%s)' % (self, event, self._prev_state, new_state))
             self.state_changed(self._prev_state, new_state, event, *args, **kwargs)
             if _GlobalStateChangedCallback is not None:
                 _GlobalStateChangedCallback(self.index, self.id, self.name, self._prev_state, new_state)

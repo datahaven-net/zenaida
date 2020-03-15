@@ -22,6 +22,7 @@ import logging
 import datetime
 
 from django.conf import settings
+from django.utils import timezone
 
 #------------------------------------------------------------------------------
 
@@ -270,7 +271,7 @@ class DomainSynchronizer(automat.Automat):
         """
         if self.renew_years == -1 or self.renew_years is None:
             # initial load scenario
-            days_difference = (self.target_domain.expiry_date - datetime.datetime.now()).days
+            days_difference = (self.target_domain.expiry_date - timezone.now()).days
         else:
             days_difference = 365 * self.renew_years
         if days_difference > 365 * 10 - 1:
@@ -342,7 +343,7 @@ class DomainSynchronizer(automat.Automat):
         """
         if self.renew_years == -1 or self.renew_years is None:
             # initial load scenario
-            days_difference = (self.target_domain.expiry_date - datetime.datetime.now()).days
+            days_difference = (self.target_domain.expiry_date - timezone.now()).days
         else:
             days_difference = 365 * self.renew_years
         if days_difference > 365 * 10 - 1:

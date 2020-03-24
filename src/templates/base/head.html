@@ -95,6 +95,7 @@
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">My domains: <b>{{user.domains.count}}</b></a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{% url 'account_profile' %}">My Profile</a>
+                                <a class="dropdown-item" href="{% url 'two_factor:profile' %}">Account Security</a>
                                 <a class="dropdown-item" href="{% url 'password_change' %}">Change password</a>
                                 <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                             </div>
@@ -102,8 +103,8 @@
                     </ul>
                 {% else %}
                     <ul class="navbar-nav mr-auto">
-                        <li class="nav-item {% if url_name == 'login' %}active{% endif %}">
-                            <a class="nav-link" href="{% url 'login' %}">Log in</a>
+                        <li class="nav-item {% if url_name == 'two_factor:login' %}active{% endif %}">
+                            <a class="nav-link" href="{% url 'two_factor:login' %}">Log in</a>
                         </li>
                         <li class="nav-item {% if url_name == 'register' %}active{% endif %}">
                             <a class="nav-link" href="{% url 'register' %}">Create an account</a>

@@ -1,0 +1,13 @@
+{% extends "two_factor/_base.html" %}
+
+{% block content %}
+  <h1>{% block title %}Disable Two-factor Authentication{% endblock %}</h1>
+  <p>You are about to disable two-factor authentication. This
+    compromises your account security, are you sure?</p>
+  <form method="post">
+    {% csrf_token %}
+    <table>{{ form }}</table>
+    <button class="btn btn-danger"
+            type="submit">Disable</button>
+  </form>
+{% endblock %}

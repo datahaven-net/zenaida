@@ -19,6 +19,12 @@
     {# hidden submit button to enable [enter] key #}
     <div style="margin-left: -9999px"><input type="submit" value=""/></div>
 
-    {% include "two_factor/_wizard_actions.html" %}
+    {% if cancel_url %}
+      <a href="{{ cancel_url }}"
+         class="pull-right btn btn-danger">Cancel</a>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Confirm</button>
+
+
   </form>
 {% endblock %}

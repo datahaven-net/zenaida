@@ -485,10 +485,10 @@ class TestDomainLookupView(TestCase):
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') != '1':
             return pytest.skip('skip E2E')  # @UndefinedVariable
-        response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
+        response = self.client.post('/lookup/', data=dict(domain_name='Bitdust123.ai'))
         assert response.status_code == 200
         assert response.context['result'] == 'not exist'
-        assert response.context['domain_name'] == 'bitdust.ai'
+        assert response.context['domain_name'] == 'bitdust123.ai'
 
     def test_e2e_domain_exists(self):
         if os.environ.get('E2E', '0') != '1':

@@ -401,7 +401,7 @@ class DomainLookupView(FormView):
                 messages.error(self.request, 'Too many attempts made, please try again later')
                 return super().form_valid(form)
 
-        domain_name = form.cleaned_data.get('domain_name')
+        domain_name = form.cleaned_data.get('domain_name').lower()
 
         if domain_name:
             if not zdomains.is_valid(domain_name):

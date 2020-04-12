@@ -63,7 +63,7 @@ ENV = 'development'
 
 #--- Zenaida configuration 
 # ZENAIDA_REGISTRAR_ID = 'zenaida_registrar'
-# ZENAIDA_SUPPORTED_ZONES = ['com', 'net', 'org', 'ai', ]
+# ZENAIDA_SUPPORTED_ZONES = []
 
 # ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys/rabbitmq_client_credentials.txt'
 # ZENAIDA_EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'

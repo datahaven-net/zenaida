@@ -1,5 +1,6 @@
 import logging
 import os
+import requests
 
 from django.conf import settings
 
@@ -27,12 +28,36 @@ def prepare_report(history_filename):
     return report_text
 
 
-def single_smoke_test(host):
+def single_smoke_test(host, method='ping'):
     """
     Executes system `ping` util to check availability of given host.
     """
+    if method in ['http', 'https', ]:
+        try:
+            req = requests.get('%s://%s' % (method, host, ),  verify=False)
+            req.raise_for_status()
+        except:
+            return False
+        return True
     ret_code = os.system(f'ping -c 1 {host} 1>/dev/null')
     return ret_code == 0
+
+
+def get_method_host(host):
+    """
+    Decides which method to use for given host and returns tuple (method, host). 
+    """
+    method = 'ping'
+    if host.startswith('http://'):
+        method = 'http'
+        host = host.replace('http://', '')
+    elif host.startswith('https://'):
+        method = 'https'
+        host = host.replace('https://', '')
+    elif host.startswith('ping://'):
+        method = 'ping'
+        host = host.replace('ping://', '')
+    return method, host
 
 
 def run(history_filename, email_alert=False, push_notification_alert=False, sms_alert=False):
@@ -43,7 +68,8 @@ def run(history_filename, email_alert=False, push_notification_alert=False, sms_
 
     health_results = ["-", ] * len(settings.SMOKETEST_HOSTS)
     for index, host in enumerate(settings.SMOKETEST_HOSTS):
-        if single_smoke_test(host):
+        method, host = get_method_host(host)
+        if single_smoke_test(host, method):
             health_results[index] = "+"
 
     # If file is empty, write health results for the first time.

@@ -15,6 +15,7 @@ django-grappelli
 django-extensions
 django_otp
 django-formtools
+django-dbbackup
 qrcode
 pdfkit
 btcpay-python

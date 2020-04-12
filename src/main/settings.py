@@ -224,6 +224,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
+    # Database Backup
+    'dbbackup',  # django-dbbackup
+
     # OTP
     'django_otp',
     'django_otp.plugins.otp_totp',
@@ -319,6 +322,9 @@ DATABASES = {
         'CONN_MAX_AGE': DATABASES_CONN_MAX_AGE,
     }
 }
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = getattr(params, 'DBBACKUP_STORAGE_OPTIONS', {'location': '/tmp'})
 
 # overwrite live settings if something was set in src/main/params.py
 for key in ('ENGINE', 'HOST', 'PORT', 'USER', 'PASSWORD'):

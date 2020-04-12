@@ -35,6 +35,8 @@ ENV = 'development'
 # DATABASES_HOST = 'localhost'
 # DATABASES_PORT = ''
 
+#--- Database Backups
+# DBBACKUP_STORAGE_OPTIONS = {'location': '/tmp'}
 
 #--- EMAIL
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

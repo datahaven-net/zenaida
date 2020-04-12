@@ -453,6 +453,21 @@ TODO:
 
 TODO:
 
+## Database Backups
+In params.py file, storage location should be defined.
+
+        DBBACKUP_STORAGE_OPTIONS = {'location': '/tmp/'}
+
+To backup your database, use below Django command.
+
+        ./venv/bin/python manage.py dbbackup
+
+ To restore latest backup for database, use below Django command.
+
+        ./venv/bin/python manage.py dbrestore
+
+There are more options to use for database backups like compressing, encrypyting etc.
+Go to [django-dbbackup](https://django-dbbackup.readthedocs.io/en/stable/commands.html) documentation for more info.
 
 
 ## Importing domains from CSV file

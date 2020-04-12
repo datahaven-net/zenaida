@@ -1,5 +1,6 @@
 import logging
 import os
+import socket
 import requests
 
 from django.conf import settings
@@ -39,6 +40,24 @@ def single_smoke_test(host, method='ping'):
         except:
             return False
         return True
+    if method == 'dns':
+        captive_dns_addr = ""
+        host_addr = ""
+        try:
+            captive_dns_addr = socket.gethostbyname("ThisDomainMustNotExist1234.notexist")
+        except:
+            pass
+        try:
+            host_addr = socket.gethostbyname(host)
+            if captive_dns_addr and captive_dns_addr == host_addr:
+                return False
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            s.connect((host, 53))
+            s.close()
+        except:
+            return False
+        return True
     ret_code = os.system(f'ping -c 1 {host} 1>/dev/null')
     return ret_code == 0
 
@@ -57,6 +76,9 @@ def get_method_host(host):
     elif host.startswith('ping://'):
         method = 'ping'
         host = host.replace('ping://', '')
+    elif host.startswith('dns://'):
+        method = 'dns'
+        host = host.replace('dns://', '')
     return method, host
 
 

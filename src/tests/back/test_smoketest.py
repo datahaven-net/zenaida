@@ -74,6 +74,16 @@ class TestSmoketest(TestCase):
         os.remove('/tmp/testsmoke')
         mock_send_email.assert_not_called()
 
+    @override_settings(SMOKETEST_HOSTS=['dns://ns2.offshore.ai', ], ALERT_EMAIL_RECIPIENTS=['one@email.com', ])
+    @mock.patch('back.smoketest.send_email')
+    def test_dns_ok(self, mock_send_email):
+        assert smoketest.run(history_filename='/tmp/testsmoke', email_alert=True) is None
+        with open('/tmp/testsmoke', 'r') as f:
+            for line in f:
+                assert line == "+"
+        os.remove('/tmp/testsmoke')
+        mock_send_email.assert_not_called()
+
     @override_settings(SMOKETEST_HOSTS=['http://zenaida.cate.ai', ], ALERT_EMAIL_RECIPIENTS=['one@email.com', ])
     @mock.patch('back.smoketest.send_email')
     def test_http_ok(self, mock_send_email):
@@ -97,6 +107,16 @@ class TestSmoketest(TestCase):
     @override_settings(SMOKETEST_HOSTS=['ping://localhost-not-exist', ], ALERT_EMAIL_RECIPIENTS=['one@email.com', ])
     @mock.patch('back.smoketest.send_email')
     def test_ping_not_ok(self, mock_send_email):
+        assert smoketest.run(history_filename='/tmp/testsmoke', email_alert=True) is None
+        with open('/tmp/testsmoke', 'r') as f:
+            for line in f:
+                assert line == "-"
+        os.remove('/tmp/testsmoke')
+        mock_send_email.assert_not_called()
+
+    @override_settings(SMOKETEST_HOSTS=['dns://ns1234.offshore.ai', ], ALERT_EMAIL_RECIPIENTS=['one@email.com', ])
+    @mock.patch('back.smoketest.send_email')
+    def test_dns_not_ok(self, mock_send_email):
         assert smoketest.run(history_filename='/tmp/testsmoke', email_alert=True) is None
         with open('/tmp/testsmoke', 'r') as f:
             for line in f:

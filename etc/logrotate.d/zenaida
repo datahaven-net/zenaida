@@ -1,4 +1,3 @@
-/home/zenaida/logs/epp.log
 /home/zenaida/logs/gate
 {
   rotate 32
@@ -79,7 +78,6 @@
 }
 
 
-/home/zenaida/logs/automats.log
 /home/zenaida/logs/nginx
 /home/zenaida/logs/uwsgi-emperor
 /home/zenaida/logs/uwsgi-zenaida

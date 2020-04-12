@@ -147,10 +147,10 @@ ZENAIDA_EPP_LOG_FILENAME = getattr(params, 'ZENAIDA_EPP_LOG_FILENAME', None)
 if ZENAIDA_EPP_LOG_FILENAME:
     LOGGING['handlers']['epp'] = {
         'level': 'DEBUG',
-        'class' : 'logging.handlers.RotatingFileHandler',
+        'class': 'logging.handlers.RotatingFileHandler',
         'filename': ZENAIDA_EPP_LOG_FILENAME,
-        'maxBytes' : 1024*1024*10,  # 10MB
-        'backupCount' : 10,
+        'maxBytes': 1024*1024*10,  # 10MB
+        'backupCount': 10,
         'formatter': 'timestamped',
     }
     LOGGING['loggers']['zen.zclient'] = {
@@ -163,10 +163,10 @@ ZENAIDA_AUTOMATS_LOG_FILENAME = getattr(params, 'ZENAIDA_AUTOMATS_LOG_FILENAME',
 if ZENAIDA_AUTOMATS_LOG_FILENAME:
     LOGGING['handlers']['automats'] = {
         'level': 'DEBUG',
-        'class' : 'logging.handlers.RotatingFileHandler',
+        'class': 'logging.handlers.RotatingFileHandler',
         'filename': ZENAIDA_AUTOMATS_LOG_FILENAME,
-        'maxBytes' : 1024*1024*10,  # 10MB
-        'backupCount' : 10,
+        'maxBytes': 1024*1024*10,  # 10MB
+        'backupCount': 10,
         'formatter': 'timestamped',
     }
     LOGGING['loggers']['automats.automat'] = {
@@ -432,8 +432,8 @@ ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '
 ZENAIDA_EPP_POLL_INTERVAL_SECONDS = getattr(params, 'ZENAIDA_EPP_POLL_INTERVAL_SECONDS', 20)
 
 ZENAIDA_REGISTRAR_ID = getattr(params, 'ZENAIDA_REGISTRAR_ID', 'zenaida_registrar')
-ZENAIDA_SUPPORTED_ZONES = getattr(params, 'ZENAIDA_SUPPORTED_ZONES', ['com', 'net', 'ai'])
-ZENAIDA_AUCTION_REGISTRAR_ID = getattr(params, 'ZENAIDA_AUCTION_REGISTRAR_ID', 'auction_ai')
+ZENAIDA_SUPPORTED_ZONES = getattr(params, 'ZENAIDA_SUPPORTED_ZONES', [])
+ZENAIDA_AUCTION_REGISTRAR_ID = getattr(params, 'ZENAIDA_AUCTION_REGISTRAR_ID', '')
 
 ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
 

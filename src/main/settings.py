@@ -245,7 +245,6 @@ INSTALLED_APPS = [
     'board',
     'front',
     'main',
-    'two_factor',
 ]
 
 MIDDLEWARE = [

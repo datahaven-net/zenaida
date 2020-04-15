@@ -24,6 +24,6 @@ def check_recaptcha(view_func):
                 request.request.recaptcha_is_valid = True
             else:
                 request.request.recaptcha_is_valid = False
-                messages.error(request.request, 'You filled the captcha wrong, please try again')
+                messages.error(request.request, 'Invalid code, please try again')
         return view_func(request, *args, **kwargs)
     return _wrapped_view

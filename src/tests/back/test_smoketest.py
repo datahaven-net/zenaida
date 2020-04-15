@@ -40,7 +40,7 @@ class TestSmoketest(TestCase):
         os.remove('/tmp/testsmoke')
 
     @override_settings(
-        SMOKETEST_HOSTS=['host_not_exist.abcd', 'another_dead_host.xyz', ],
+        SMOKETEST_HOSTS=['not_exist.abcd', 'dead_host.xyz', 'new_host.ai'],
         SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT=3,
         ALERT_EMAIL_RECIPIENTS=['one@email.com', ]
     )
@@ -54,9 +54,9 @@ class TestSmoketest(TestCase):
         assert smoketest.run(
             history_filename='/tmp/testsmoke', email_alert=True, sms_alert=True, push_notification_alert=True
         ) == [
-            ('email', 'one@email.com', 'host_not_exist.abcd   ++-+---\nanother_dead_host.xyz   ---\n'),
-            ('sms', '', 'host_not_exist.abcd   ++-+---\nanother_dead_host.xyz   ---\n'),
-            ('push', '', 'host_not_exist.abcd   ++-+---\nanother_dead_host.xyz   ---\n')
+            ('email', 'one@email.com', 'not_exist.abcd   ++-+---\ndead_host.xyz   ---\nnew_host.ai   -\n'),
+            ('sms', '', 'not_exist.abcd   ++-+---\ndead_host.xyz   ---\nnew_host.ai   -\n'),
+            ('push', '', 'not_exist.abcd   ++-+---\ndead_host.xyz   ---\nnew_host.ai   -\n')
         ]
 
         os.remove('/tmp/testsmoke')

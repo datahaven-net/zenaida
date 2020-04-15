@@ -23,8 +23,9 @@ def prepare_report(history_filename):
     """
     report_text = ""
     with open(history_filename, 'r') as health_check_file:
-        for index, line in enumerate(health_check_file):
-            report_text += f"{settings.SMOKETEST_HOSTS[index]}   {line}"
+        lines_of_files = health_check_file.readlines()
+        for index, line in enumerate(settings.SMOKETEST_HOSTS):
+            report_text += f"{settings.SMOKETEST_HOSTS[index]}   {lines_of_files[index]}"
 
     return report_text
 
@@ -42,7 +43,6 @@ def single_smoke_test(host, method='ping'):
         return True
     if method == 'dns':
         captive_dns_addr = ""
-        host_addr = ""
         try:
             captive_dns_addr = socket.gethostbyname("ThisDomainMustNotExist1234.notexist")
         except:
@@ -110,12 +110,18 @@ def run(history_filename, email_alert=False, push_notification_alert=False, sms_
     unhealthy_hosts = []
     updated_lines_of_file = ""
     with open(history_filename, 'r') as health_check_file:
-        for index, line in enumerate(health_check_file):
-            # Add health of the host to its line.
-            updated_line = line.strip()+f"{health_results[index]}\n"
-            # Do not make any line more than 20 characters.
-            if len(updated_line) == 20:
-                updated_line = updated_line[1:]
+        lines_of_files = health_check_file.readlines()
+        for index, host in enumerate(settings.SMOKETEST_HOSTS):
+            if index < len(lines_of_files):
+                # Add health of the host to its line.
+                updated_line = lines_of_files[index].strip()+f"{health_results[index]}\n"
+                # Do not make any line more than 20 characters.
+                if len(updated_line) == 20:
+                    updated_line = updated_line[1:]
+            else:
+                # If there is new host is added after file was created, add new line with the health result
+                updated_line = f"{health_results[index]}\n"
+
             updated_lines_of_file += updated_line
             # If last X amount of health checks are negative, add that host to the unhealthy hosts group.
             if updated_line.split('\n')[0].endswith(settings.SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT * '-'):

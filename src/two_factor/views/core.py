@@ -31,7 +31,7 @@ from two_factor.utils import totp_digits
 from ..forms import (
     AuthenticationTokenForm, BackupTokenForm, MethodForm, TOTPDeviceForm,
 )
-from ..utils import default_device, get_otpauth_url
+from ..utils import default_device, get_otp_auth_url
 from .utils import IdempotentSessionWizardView, class_view_decorator
 
 
@@ -371,10 +371,10 @@ class QRGeneratorView(View):
         except AttributeError:
             username = self.request.user.username
 
-        otpauth_url = get_otpauth_url(accountname=username,
-                                      issuer=get_current_site(self.request).name,
-                                      secret=key,
-                                      digits=totp_digits())
+        otpauth_url = get_otp_auth_url(account_name=username,
+                                       issuer=get_current_site(self.request).name,
+                                       secret=key,
+                                       digits=totp_digits())
 
         # Make and return QR code
         img = qrcode.make(otpauth_url, image_factory=image_factory)

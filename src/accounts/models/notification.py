@@ -43,10 +43,13 @@ class Notification(models.Model):
         max_length=32,
         choices=(
             ('domain_expiring', 'DOMAIN EXPIRING', ),
+            ('domain_expiring_30_days', 'DOMAIN EXPIRE IN 30 DAYS', ),
             ('domain_restored', 'DOMAIN RESTORED', ),
             ('domain_transferred', 'DOMAIN TRANSFERRED', ),
             ('domain_activated', 'DOMAIN ACTIVATED', ),
             ('domain_deactivated', 'DOMAIN DEACTIVATED', ),
+            ('domain_renewed', 'DOMAIN RENEWED', ),
+            ('low_balance', 'LOW BALANCE', ),
         ),
     )
 

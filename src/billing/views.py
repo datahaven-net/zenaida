@@ -65,6 +65,9 @@ class NewPaymentView(LoginRequiredMixin, FormView):
             payment_method=form.cleaned_data['payment_method'],
         )
 
+        # TODO: for the future, if we need to implement other types of payments
+        # https://www.dreamhost.com/blog/10-online-payment-gateways-compared/
+
         if new_payment.method == 'pay_4csonline':
             return shortcuts.render(
                 self.request,

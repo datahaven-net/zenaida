@@ -9,7 +9,7 @@ from zen import zdomains
 from zen import zusers
 
 
-def prepare_tester_account(email='tester@zenaida.ai', account_password='tester'):
+def prepare_tester_account(email='tester@zenaida.ai', account_password='tester', account_balance=None):
     tester = zusers.find_account(email)
     if not tester:
         tester = zusers.create_account(
@@ -26,7 +26,11 @@ def prepare_tester_account(email='tester@zenaida.ai', account_password='tester')
             contact_voice='1234567890',
             contact_fax='1234567890',
             contact_email='tester@zenaida.ai',
+            automatic_renewal_enabled=True,
         )
+    if account_balance is not None:
+        tester.balance = account_balance
+        tester.save()
     return tester
 
 
@@ -125,7 +129,7 @@ def prepare_tester_domain(
     if create_date is True:
         create_date = make_aware(datetime.datetime.now())
 
-    if expiry_date is True:
+    if isinstance(expiry_date, bool) and expiry_date is True:
         expiry_date = make_aware(datetime.datetime.now() + datetime.timedelta(days=365))
 
     tester_domain = zdomains.domain_create(

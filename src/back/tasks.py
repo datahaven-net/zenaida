@@ -69,6 +69,11 @@ def auto_renew_expiring_domains(dry_run=True):
     )
     report = []
     for expiring_domain in expiring_active_domains:
+        if not expiring_domain.auto_renew_enabled:
+            continue
+        if not expiring_domain.owner.profile.automatic_renewal_enabled:
+            continue
+        logger.info('domain %r is expiring, going to start auto-renew now', expiring_domain.name)
         current_expiry_date = expiring_domain.expiry_date
         if dry_run:
             report.append((expiring_domain.name, current_expiry_date, ))

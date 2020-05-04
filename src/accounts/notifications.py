@@ -57,8 +57,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain is expiring',
         })
-    elif notification_object.subject == 'domain_expiring_30_days':
-        email_template = 'email/domain_expiring_30_days.html'
+    elif notification_object.subject == 'domain_expire_soon':
+        email_template = 'email/domain_expire_soon.html'
         context.update({
             'domain_name': notification_object.domain_name,
             'domain_expiry_date': notification_object.details.get('expiry_date'),
@@ -76,14 +76,14 @@ def execute_email_notification(notification_object):
             'domain_name': notification_object.domain_name,
             'domain_expiry_date_prev': notification_object.details.get('old_expiry_date'),
             'domain_expiry_date': notification_object.details.get('expiry_date'),
-            'subject': 'AI domain automatically renewed',
+            'subject': 'AI domain is automatically renewed',
         })
     elif notification_object.subject == 'domain_deactivated':
         email_template = 'email/domain_deactivated.html'
         context.update({
             'domain_name': notification_object.domain_name,
             'domain_expiry_date': notification_object.details.get('expiry_date'),
-            'subject': 'AI domain deactivated',
+            'subject': 'AI domain is deactivated',
         })
 
     html_content = render_to_string(email_template, context=context, request=None)

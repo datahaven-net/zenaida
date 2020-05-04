@@ -137,7 +137,7 @@ lint: $(VENV_TOX)
 	@$(TOX) -e isort-check
 
 isort: $(VENV_TOX)
-	# @$(TOX) -e isort-fix
+	@$(TOX) -e isort-fix
 
 docs: clean $(VENV_TOX) $(PARAMS)
 	# @$(TOX) -e docs

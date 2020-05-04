@@ -2,7 +2,6 @@ import time
 import logging
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
 from accounts import tasks as account_tasks
 from back import tasks as back_tasks
@@ -27,9 +26,10 @@ class Command(BaseCommand):
 
             back_tasks.sync_expired_domains(dry_run=dry_run)
 
+            back_tasks.auto_renew_expiring_domains(dry_run=dry_run)
+
             account_tasks.activations_cleanup()
 
             # TODO: other background periodical jobs to be placed here
 
-            logger.info('finished iteration %d at %r', iteration, timezone.now().isoformat())
             time.sleep(delay)

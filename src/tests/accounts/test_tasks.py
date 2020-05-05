@@ -1,13 +1,19 @@
 import datetime
 
+from django.utils import timezone
+
 import mock
 import pytest
 from django.conf import settings
 from django.test import TestCase
 
-from accounts.tasks import activations_cleanup
+from tests import testsupport
+
+from accounts.tasks import activations_cleanup, check_notify_domain_expiring
 from accounts.models import Account
 from accounts.models.activation import Activation
+from accounts.models.notification import Notification
+from accounts.notifications import process_notifications_queue
 from back.models.domain import Domain
 from back.models.zone import Zone
 from billing.models.payment import Payment
@@ -132,3 +138,147 @@ class TestActivationsCleanup(TestCase):
         payments = accounts[0].payments.all()
         assert len(payments) == 1
         assert payments[0].transaction_id == "12345"
+
+
+class TestCheckNotifyDomainExpiring(TestCase):
+
+    @pytest.mark.django_db
+    @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
+    def test_email_sent_and_executed(self, mock_send):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.status = 'active'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=False)
+        assert len(outgoing_emails) == 1
+        assert outgoing_emails[0][0] == tester
+        assert outgoing_emails[0][1] == tester_domain.name
+        mock_send.return_value = True
+        process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
+        new_notification = Notification.notifications.first()
+        assert new_notification.subject == 'domain_expiring'
+        assert new_notification.domain_name == 'abcd.ai'
+        assert new_notification.status == 'sent'
+
+    @pytest.mark.django_db
+    def test_email_sent(self):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.status = 'active'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        assert len(outgoing_emails) == 1
+        assert outgoing_emails[0][0] == tester
+        assert outgoing_emails[0][1] == tester_domain.name
+
+    @pytest.mark.django_db
+    def test_email_not_sent(self):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=61)  # expiry_date 80 days from now
+        tester_domain.status = 'active'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        assert len(outgoing_emails) == 0
+
+    @pytest.mark.django_db
+    def test_alread_expired(self):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() - datetime.timedelta(days=10)  # already expired 10 days ago
+        tester_domain.status = 'active'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        assert len(outgoing_emails) == 0
+
+    @pytest.mark.django_db
+    def test_not_active(self):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.status = 'inactive'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        assert len(outgoing_emails) == 0
+
+    @pytest.mark.django_db
+    def test_blocked(self):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.status = 'blocked'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        assert len(outgoing_emails) == 1
+        assert outgoing_emails[0][0] == tester
+        assert outgoing_emails[0][1] == tester_domain.name
+
+    @pytest.mark.django_db
+    def test_notifications_disabled(self):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester.profile.email_notifications_enabled = False
+        tester.profile.save()
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.status = 'active'
+        tester_domain.save()
+        outgoing_emails = check_notify_domain_expiring(dry_run=False)
+        assert len(outgoing_emails) == 0
+
+    @pytest.mark.django_db
+    @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
+    def test_no_duplicated_emails(self, mock_send):
+        tester = testsupport.prepare_tester_account()
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+        )
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.status = 'active'
+        tester_domain.save()
+        # first time
+        outgoing_emails = check_notify_domain_expiring(dry_run=False)
+        assert len(outgoing_emails) == 1
+        assert outgoing_emails[0][0] == tester
+        assert outgoing_emails[0][1] == tester_domain.name
+        mock_send.return_value = True
+        process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
+        new_notification = Notification.notifications.first()
+        assert new_notification.status == 'sent'
+        # second time
+        outgoing_emails_again = check_notify_domain_expiring(dry_run=False)
+        assert len(outgoing_emails_again) == 0
+        # third time
+        outgoing_emails_one_more = check_notify_domain_expiring(dry_run=False)
+        assert len(outgoing_emails_one_more) == 0

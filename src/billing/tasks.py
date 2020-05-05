@@ -9,6 +9,7 @@ def identify_domains_for_auto_renew():
     """
     Loop all user accounts and all domains and identify all "almost expired" domains.
     If domain has `auto_renew_enabled=False` will skip it.
+    If domain's owner profile has `automatic_renewal_enabled=False` will also skip auto-renew.
     Also will check all existing "domain renew" orders for that user and skip domains that already
     has started orders to renew.
     Returns dictionary with identified users and domains that suppose to be auto renewed.

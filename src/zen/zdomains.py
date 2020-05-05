@@ -170,6 +170,8 @@ def domain_create(
         host_position += 1
     if auto_renew_enabled is not None:
         new_domain.auto_renew_enabled = auto_renew_enabled
+    else:
+        new_domain.auto_renew_enabled = owner.profile.automatic_renewal_enabled
     if save:
         new_domain.save()
     logger.info('domain created: %r', new_domain)

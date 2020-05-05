@@ -6,6 +6,7 @@
 
 
 <h1>Personal information</h1>
+<br>
 <form method="post">
     {% csrf_token %}
     <div class="row">
@@ -30,15 +31,16 @@
             </fieldset>
         </div>
     </div>
+    <br>
     <div class="row">
         <div class="col-12">
             <fieldset>
-                <br>
-                {% bootstrap_field form.email_notifications_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-5 text-right" horizontal_field_class="col-sm-7" %}
-                </br>
+                {% bootstrap_field form.email_notifications_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-2 text-right" horizontal_field_class="col-sm-9" %}
+                {% bootstrap_field form.automatic_renewal_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-2 text-right" horizontal_field_class="col-sm-9" %}
             </fieldset>
         </div>
     </div>
+    <br>
     <div class="row">
         <div class="col-12 text-center">
             {% buttons %}

@@ -72,6 +72,10 @@ class EPPDomainNotExist(EPPError):
 #------------------------------------------------------------------------------
 # those exceptions are based on EPP response code
 
+class EPPObjectNotExist(EPPError):
+    code = 2303
+
+
 class EPPObjectStatusProhibitsOperation(EPPError):
     code = 2304
 
@@ -93,6 +97,8 @@ def exception_from_response(response, message=None, code=None):
         return EPPBadResponse(response=response)
     if code == 2201: 
         return EPPAuthorizationError(response=response, message=message)
+    if code == 2303:
+        return EPPObjectNotExist(response=response, message=message)
     if code == 2304:
         return EPPObjectStatusProhibitsOperation(response=response, message=message)
     # TODO: create and add other exceptions here

@@ -19,7 +19,7 @@ class DomainDetailsForm(models.ModelForm):
     class Meta:
         model = Domain
         fields = ('contact_admin', 'contact_billing', 'contact_tech',
-                  'nameserver1', 'nameserver2', 'nameserver3', 'nameserver4', )
+                  'nameserver1', 'nameserver2', 'nameserver3', 'nameserver4', 'auto_renew_enabled', )
 
     def __init__(self, current_user, *args, **kwargs):
         super(DomainDetailsForm, self).__init__(*args, **kwargs)
@@ -77,6 +77,7 @@ class AccountProfileForm(models.ModelForm):
             'address_postal_code',
             'address_country',
             'email_notifications_enabled',
+            'automatic_renewal_enabled',
         )
 
     def __init__(self, *args, **kwargs):

@@ -25,7 +25,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/home/zenaida/zenaida/
-ExecStart=/bin/sh -c "perl /home/zenaida/zenaida/bin/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt 1>>/home/zenaida/logs/gate 2>>/home/zenaida/logs/gate.err"
+ExecStart=/bin/sh -c "perl /home/zenaida/zenaida/bin/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt 2>&1 1>>/home/zenaida/logs/gate"
 
 [Install]
 WantedBy=multi-user.target

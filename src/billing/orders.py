@@ -88,7 +88,7 @@ def list_orders_by_date(owner, year, month=None, exclude_cancelled=False):
         orders = Order.orders.filter(owner=owner)
     if exclude_cancelled:
         orders = orders.exclude(status='cancelled')
-    orders = orders.order_by('finished_at')
+    orders = orders.order_by('-finished_at')
     return list(orders.all())
 
 

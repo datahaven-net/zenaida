@@ -1,7 +1,9 @@
+import datetime
 import pytest
 import mock
-from django.test import TestCase
 from django.conf import settings
+from django.test import TestCase
+from django.utils import timezone
 
 from billing import orders
 
@@ -213,3 +215,46 @@ class TestOrders(TestCase):
         assert order_object.status == 'processed'
         tester_domain.owner.refresh_from_db()
         assert tester_domain.owner.balance == 900.0
+
+    def test_list_orders(self):
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='testdomain.ai',
+            add_contacts=['registrant', 'admin', ],
+            epp_id_dict={
+                'registrant': 'ThisIDNotExist1',
+                'admin': 'ThisIDNotExist2',
+            },
+            nameservers=['notexist1.com', 'notexist2.com', ],
+        )
+        order_object_1 = orders.order_single_item(
+            owner=tester_domain.owner,
+            item_type='domain_register',
+            item_price=100.0,
+            item_name='testdomain.ai',
+            item_details={'some': 'details', },
+        )
+        order_object_1.finished_at = timezone.now() + datetime.timedelta(seconds=1)
+        order_object_1.save()
+        order_object_2 = orders.order_single_item(
+            owner=tester_domain.owner,
+            item_type='domain_renew',
+            item_price=100.0,
+            item_name='testdomain.ai',
+            item_details={'some': 'details', },
+        )
+        order_object_2.finished_at = timezone.now() + datetime.timedelta(seconds=2)
+        order_object_2.save()
+        order_object_3 = orders.order_single_item(
+            owner=tester_domain.owner,
+            item_type='domain_renew',
+            item_price=100.0,
+            item_name='testdomain.ai',
+            item_details={'some': 'details', },
+        )
+        order_object_3.finished_at = timezone.now() + datetime.timedelta(seconds=3)
+        order_object_3.save()
+        l = orders.list_orders(tester_domain.owner, exclude_cancelled=True, include_statuses=['started', ])
+        assert len(l) == 3
+        assert l[0].id == order_object_3.id
+        assert l[1].id == order_object_2.id
+        assert l[2].id == order_object_1.id

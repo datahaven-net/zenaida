@@ -154,7 +154,12 @@ class TestCheckNotifyDomainExpiring(TestCase):
         tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
         tester_domain.status = 'active'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=False)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=False,
+            min_days_before_expire=30,
+            max_days_before_expire=60,
+            subject='domain_expiring',
+        )
         assert len(outgoing_emails) == 1
         assert outgoing_emails[0][0] == tester
         assert outgoing_emails[0][1] == tester_domain.name
@@ -176,7 +181,12 @@ class TestCheckNotifyDomainExpiring(TestCase):
         tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
         tester_domain.status = 'active'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=True,
+            min_days_before_expire=30,
+            max_days_before_expire=60,
+            subject='domain_expiring',
+        )
         assert len(outgoing_emails) == 1
         assert outgoing_emails[0][0] == tester
         assert outgoing_emails[0][1] == tester_domain.name
@@ -189,10 +199,15 @@ class TestCheckNotifyDomainExpiring(TestCase):
             tester=tester,
             domain_epp_id='aaa123',
         )
-        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=61)  # expiry_date 80 days from now
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=61)  # expiry_date 61 days from now
         tester_domain.status = 'active'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=True,
+            min_days_before_expire=0,
+            max_days_before_expire=30,
+            subject='domain_expire_soon',
+        )
         assert len(outgoing_emails) == 0
 
     @pytest.mark.django_db
@@ -206,7 +221,12 @@ class TestCheckNotifyDomainExpiring(TestCase):
         tester_domain.expiry_date = timezone.now() - datetime.timedelta(days=10)  # already expired 10 days ago
         tester_domain.status = 'active'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=True,
+            min_days_before_expire=0,
+            max_days_before_expire=30,
+            subject='domain_expire_soon',
+        )
         assert len(outgoing_emails) == 0
 
     @pytest.mark.django_db
@@ -220,7 +240,12 @@ class TestCheckNotifyDomainExpiring(TestCase):
         tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
         tester_domain.status = 'inactive'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=True,
+            min_days_before_expire=0,
+            max_days_before_expire=30,
+            subject='domain_expire_soon',
+        )
         assert len(outgoing_emails) == 0
 
     @pytest.mark.django_db
@@ -231,10 +256,15 @@ class TestCheckNotifyDomainExpiring(TestCase):
             tester=tester,
             domain_epp_id='aaa123',
         )
-        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=15)  # expiry_date 15 days from now
         tester_domain.status = 'blocked'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=True)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=True,
+            min_days_before_expire=0,
+            max_days_before_expire=30,
+            subject='domain_expire_soon',
+        )
         assert len(outgoing_emails) == 1
         assert outgoing_emails[0][0] == tester
         assert outgoing_emails[0][1] == tester_domain.name
@@ -249,10 +279,15 @@ class TestCheckNotifyDomainExpiring(TestCase):
         )
         tester.profile.email_notifications_enabled = False
         tester.profile.save()
-        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=45)  # expiry_date 45 days from now
+        tester_domain.expiry_date = timezone.now() + datetime.timedelta(days=15)  # expiry_date 15 days from now
         tester_domain.status = 'active'
         tester_domain.save()
-        outgoing_emails = check_notify_domain_expiring(dry_run=False)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=False,
+            min_days_before_expire=0,
+            max_days_before_expire=30,
+            subject='domain_expire_soon',
+        )
         assert len(outgoing_emails) == 0
 
     @pytest.mark.django_db
@@ -268,7 +303,12 @@ class TestCheckNotifyDomainExpiring(TestCase):
         tester_domain.status = 'active'
         tester_domain.save()
         # first time
-        outgoing_emails = check_notify_domain_expiring(dry_run=False)
+        outgoing_emails = check_notify_domain_expiring(
+            dry_run=False,
+            min_days_before_expire=30,
+            max_days_before_expire=60,
+            subject='domain_expiring',
+        )
         assert len(outgoing_emails) == 1
         assert outgoing_emails[0][0] == tester
         assert outgoing_emails[0][1] == tester_domain.name
@@ -277,8 +317,18 @@ class TestCheckNotifyDomainExpiring(TestCase):
         new_notification = Notification.notifications.first()
         assert new_notification.status == 'sent'
         # second time
-        outgoing_emails_again = check_notify_domain_expiring(dry_run=False)
+        outgoing_emails_again = check_notify_domain_expiring(
+            dry_run=False,
+            min_days_before_expire=30,
+            max_days_before_expire=60,
+            subject='domain_expiring',
+        )
         assert len(outgoing_emails_again) == 0
         # third time
-        outgoing_emails_one_more = check_notify_domain_expiring(dry_run=False)
+        outgoing_emails_one_more = check_notify_domain_expiring(
+            dry_run=False,
+            min_days_before_expire=30,
+            max_days_before_expire=60,
+            subject='domain_expiring',
+        )
         assert len(outgoing_emails_one_more) == 0

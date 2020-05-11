@@ -13,12 +13,12 @@ from accounts.models.notification import Notification
 logger = logging.getLogger(__name__)
 
 
-def start_email_notification_domain_expiring(user, domain_name, expiry_date):
+def start_email_notification_domain_expiring(user, domain_name, expiry_date, subject='domain_expiring'):
     new_notification = Notification.notifications.create(
         account=user,
         recipient=user.profile.contact_email,
         type='email',
-        subject='domain_expiring',
+        subject=subject,
         domain_name=domain_name,
         details={
             'expiry_date': expiry_date,

@@ -122,14 +122,28 @@ class TestAutoRenewExpiringDomains(TestCase):
         assert report[0][0] == tester_domain.name
 
     @pytest.mark.django_db
-    def test_auto_renew_not_started(self):
+    def test_auto_renew_not_started_before_90_days(self):
         tester = testsupport.prepare_tester_account(account_balance=200.0)
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
             domain_epp_id='aaa123',
             domain_status='active',
-            expiry_date=timezone.now() + datetime.timedelta(days=91),  # will expire in 91 days
+            expiry_date=timezone.now() + datetime.timedelta(days=95),  # will expire in 95 days
+            auto_renew_enabled=True,
+        )
+        report = tasks.auto_renew_expiring_domains(dry_run=True)
+        assert len(report) == 0
+
+    @pytest.mark.django_db
+    def test_auto_renew_not_started_after_60(self):
+        tester = testsupport.prepare_tester_account(account_balance=200.0)
+        testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+            domain_status='active',
+            expiry_date=timezone.now() + datetime.timedelta(days=55),  # will expire in 55 days
             auto_renew_enabled=True,
         )
         report = tasks.auto_renew_expiring_domains(dry_run=True)

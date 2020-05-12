@@ -22,11 +22,29 @@ class Command(BaseCommand):
         while True:
             iteration += 1
 
-            account_tasks.check_notify_domain_expiring(dry_run=dry_run)
-
             back_tasks.sync_expired_domains(dry_run=dry_run)
 
-            back_tasks.auto_renew_expiring_domains(dry_run=dry_run)
+            account_tasks.check_notify_domain_expiring(
+                dry_run=dry_run,
+                min_days_before_expire=0,
+                max_days_before_expire=30,
+                subject='domain_expire_soon',
+            )
+
+            account_tasks.check_notify_domain_expiring(
+                dry_run=dry_run,
+                min_days_before_expire=31,
+                max_days_before_expire=60,
+                subject='domain_expiring',
+            )
+
+            back_tasks.auto_renew_expiring_domains(
+                dry_run=dry_run,
+                min_days_before_expire=61,
+                max_days_before_expire=90,
+            )
+
+            # account_tasks.check_notify_low_balance(dry_run=dry_run)
 
             account_tasks.activations_cleanup()
 

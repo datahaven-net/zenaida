@@ -38,7 +38,7 @@ def activations_cleanup():
         logger.info("activation code removed: %r", activation_code.code)
 
 
-def check_notify_domain_expiring(dry_run=True):
+def check_notify_domain_expiring(dry_run=True, min_days_before_expire=0, max_days_before_expire=30, subject='domain_expiring'):
     """
     Loop all user accounts and all domains and identify all "expiring" domains:
     less than 60 days left before domain get expired based on `expiry_date` field.
@@ -61,16 +61,16 @@ def check_notify_domain_expiring(dry_run=True):
                 continue
             time_domain = domain.expiry_date
             time_delta = time_domain - time_now
-            if time_delta.days >= 60:
-                # domain is not expiring at the moment
+            if time_delta.days >= max_days_before_expire:
+                # domain is not expiring at the moment or must be handled in another task
                 continue
-            if time_delta.days <= 0:
-                # domain already expired - no email needed
+            if time_delta.days <= min_days_before_expire:
+                # domain already expired or must be handled in another task - no email needed
                 continue
             expiring_domains[domain.name] = domain.expiry_date.date()
         # now look up all already sent notifications and find only domains
         # which we did not send notification yet
-        domains_notified = user.notifications.values_list('domain_name', flat=True)
+        domains_notified = user.notifications.filter(subject=subject).values_list('domain_name', flat=True)
         domains_to_be_notified = list(set(expiring_domains.keys()).difference(set(domains_notified)))
         if not domains_to_be_notified:
             continue
@@ -83,5 +83,6 @@ def check_notify_domain_expiring(dry_run=True):
                 user=user,
                 domain_name=expiring_domain,
                 expiry_date=expiring_domains[expiring_domain],
+                subject=subject,
             )
     return outgoing_emails

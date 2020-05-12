@@ -54,6 +54,7 @@ def list_orders(owner, exclude_cancelled=False, include_statuses=[]):
         qs = qs.exclude(status='cancelled')
     if include_statuses:
         qs = qs.filter(status__in=include_statuses)
+    qs = qs.order_by('-finished_at')
     return list(qs.all())
 
 

@@ -47,7 +47,7 @@ def sync_expired_domains(dry_run=True):
     return report
 
 
-def auto_renew_expiring_domains(dry_run=True):
+def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_days_before_expire=90):
     """
     When customer enables "domain auto-renew" feature on "My Profile" page and possess enough account balance
     Zenaida must take care of his expiring domains and automatically renew them 3 months before the expiration date.
@@ -59,10 +59,11 @@ def auto_renew_expiring_domains(dry_run=True):
     if `dry_run` is True will only return a list of domains to be automatically renewed.
     """
     moment_now = timezone.now()
-    moment_3_months_in_future = timezone.now() + datetime.timedelta(days=90)
+    moment_min_days_before_expire = timezone.now() + datetime.timedelta(days=min_days_before_expire)
+    moment_max_days_before_expire = timezone.now() + datetime.timedelta(days=max_days_before_expire)
     expiring_active_domains = Domain.domains.filter(
-        expiry_date__gte=moment_now,
-        expiry_date__lte=moment_3_months_in_future,
+        expiry_date__gte=moment_min_days_before_expire,
+        expiry_date__lte=moment_max_days_before_expire,
         status='active',
     ).exclude(
         epp_id=None,

@@ -10,8 +10,10 @@ from tests import testsupport
 def test_domain_is_valid():
     assert zdomains.is_valid('test.com') is True
 
+
 def test_domain_is_not_valid():
     assert zdomains.is_valid('-not-valid-domain-.com') is False
+    assert zdomains.is_valid('test..ai') is False
 
 @pytest.mark.django_db
 def test_domain_find():

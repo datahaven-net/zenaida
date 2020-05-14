@@ -35,6 +35,9 @@ def is_valid(domain_name, idn=False):
     if len(domain_name) >= 4 and domain_name[2] == '.' and domain_name[1] == '-':
         # x-.com is not valid name
         return False
+    if domain_name.count('..'):
+        # abcd..com is not a valid name
+        return False
     if domain_name.count('-.'):
         # abcd-.com is not a valid name
         return False

@@ -44,6 +44,21 @@ def start_email_notification_domain_renewed(user, domain_name, expiry_date, old_
     return new_notification
 
 
+def start_email_notification_low_balance(user, expiring_domains_list=[]):
+    new_notification = Notification.notifications.create(
+        account=user,
+        recipient=user.profile.contact_email,
+        type='email',
+        subject='low_balance',
+        domain_name='',
+        details={
+            'expiring_domains_list': expiring_domains_list,
+        },
+    )
+    logger.info('created new %r', new_notification)
+    return new_notification
+
+
 def execute_email_notification(notification_object):
     from_email = settings.DEFAULT_FROM_EMAIL
     email_template = None
@@ -67,7 +82,7 @@ def execute_email_notification(notification_object):
     elif notification_object.subject == 'low_balance':
         email_template = 'email/low_balance.html'
         context.update({
-            'expiring_domains': [],
+            'expiring_domains_list': notification_object.details.get('expiring_domains_list', []),
             'subject': 'AI account balance insufficient for auto-renew',
         })
     elif notification_object.subject == 'domain_renewed':

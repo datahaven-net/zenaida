@@ -44,8 +44,6 @@ class Command(BaseCommand):
                 max_days_before_expire=90,
             )
 
-            # account_tasks.check_notify_low_balance(dry_run=dry_run)
-
             account_tasks.activations_cleanup()
 
             # TODO: other background periodical jobs to be placed here

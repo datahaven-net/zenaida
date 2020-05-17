@@ -11,12 +11,22 @@
 
 <p>Hello, {{ person_name }}.</p>
 
-<p>Registration of <b>{{ domain_name }}</b> was paid before <b>{{ domain_expiry_date_prev }}</b>
-and the AI domains registry system automatically renewed the domain for 2 years in accordance with the settings of your account.
+<p>The domains listed below are expiring:</p>
 
-<p>Your account balance has been automatically deducted to cover domain renewal costs.</p>
+<ul><li>{{ expiring_domains_list }}</li></ul>
 
-<p>The new expiration date for the domain <b>{{ domain_name }}</b> is <b>{{ domain_expiry_date }}</b>.</p>
+<p>
+The AI domains registry system tried to automatically renew your domain in accordance with the settings of your account.
+<br>
+However, due to the fact that your account has insufficient funds, the operation could not be completed.
+</p>
+
+<p>Please sign in to <a href="https://zenaida.cate.ai" target=_blank>zenaida.cate.ai</a> and <b>make a payment</b> for the domains you wish to keep.
+See <a href="https://zenaida.cate.ai/faq/" target=_blank>payments F.A.Q.</a> for more information.</p>
+
+<p><b>We auction off expired domains</b> at <a href="https://auction.whois.ai" target=_blank>auction.whois.ai</a>.
+The auctions start on the 4th Friday of the month at noon Anguilla time and go for 10 days.
+You can read more about this at <a href="https://zenaida.cate.ai/faq-auctions/">auctions F.A.Q.</a></p>
 
 <p>
 To disable the automatic renewal of your domains by AI domains registry system

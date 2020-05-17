@@ -1,20 +1,18 @@
-{% extends 'base/index.html' %}
+{% extends 'base/container_sm_4.html' %}
 
-{% block main_content %}
-
-{% include 'base/container_sm_4_offset_4.html' %}
+{% block content %}
 
 
 <h4>Create an account</h4>
 
 <form method="post">
-    {% csrf_token %}
+  {% csrf_token %}
 
-    {% bootstrap_form form %}
+  {% bootstrap_form form %}
 
-    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div><br />
+  <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div><br />
 
-    <button class="btn btn-success">Create</button>
+  <button class="btn btn-success">Create</button>
 </form>
 
 

@@ -46,20 +46,20 @@
                 {% if request.user.is_authenticated %}
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'account_domains' or url_name == 'account_contacts' %}active{% endif %}" href="{% url 'account_domains' %}" id="navbarDropdownMenuDomains" role="button" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'account_domains' or url_name == 'account_contacts' %}active{% endif %}" href="{% url 'account_domains' %}" id="navbarDropdownMenuDomains" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Domains
                             </a>
-                            <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuDomains">
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuDomains">
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">My Domains ({{user.domains.count}})</a>
                                 <a class="dropdown-item" href="{% url 'account_contacts' %}">Contact details</a>
                                 <a class="dropdown-item" href="{% url 'account_domain_transfer_takeover' %}">Transfer domain</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'billing_new_payment' or url_name == 'billing_payments' or url_name == 'billing_orders' %}active{% endif %}" href="{% url 'billing_orders' %}" id="navbarDropdownMenuBilling" role="button" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'billing_new_payment' or url_name == 'billing_payments' or url_name == 'billing_orders' %}active{% endif %}" href="{% url 'billing_orders' %}" id="navbarDropdownMenuBilling" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Billing
                             </a>
-                            <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuBilling">
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuBilling">
                                 <a class="dropdown-item" href="{% url 'billing_payments' %}">My Payments</a>
                                 <a class="dropdown-item" href="{% url 'billing_orders' %}">My Orders</a>
                                 <a class="dropdown-item" href="{% url 'billing_receipts_download' %}">Download Receipts</a>
@@ -67,10 +67,10 @@
                         </li>
                         {% if request.user.is_staff %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'financial_report' %}active{% endif %}" href="{% url 'financial_report' %}" id="navbarDropdownMenuBilling" role="button" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'financial_report' %}active{% endif %}" href="{% url 'financial_report' %}" id="navbarDropdownMenuManagement" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Management
                             </a>
-                            <div class="dropdown-menu m-0" aria-labelledby="navbarDropdownMenuBilling">
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuManagement">
                                 <a class="dropdown-item" href="{% url 'financial_report' %}">Financial Report</a>
                             </div>
                         </li>
@@ -89,8 +89,10 @@
                             <a class="btn btn-success" href="{% url 'billing_new_payment' %}" role="button">Buy Credits</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}" href="#" id="navbarDropdownMenuProfile" data-role="button" aria-haspopup="true" aria-expanded="false">{{ user.email }}</a>
-                            <div class="dropdown-menu m-0 dropdown-menu-right" aria-labelledby="navbarDropdownMenuProfile">
+                            <a class="nav-link dropdown-toggle {% if url_name == 'account_profile' or url_name == 'password_change' %}active{% endif %}" href="#" id="navbarDropdownMenuProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              {{ user.email }}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuProfile">
                                 <a class="dropdown-item" href="{% url 'billing_new_payment' %}">Current balance: <b>${{user.balance}} US</b></a>
                                 <a class="dropdown-item" href="{% url 'account_domains' %}">My domains: <b>{{user.domains.count}}</b></a>
                                 <div class="dropdown-divider"></div>

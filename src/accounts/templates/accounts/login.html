@@ -1,29 +1,27 @@
-{% extends 'base/index.html' %}
+{% extends 'base/container_sm_4.html' %}
 
-{% block main_content %}
-
-{% include 'base/container_sm_4_offset_4.html' %}
+{% block content %}
 
 
 <h4>Log in</h4>
 
 <form method="post">
-    {% csrf_token %}
+  {% csrf_token %}
 
-    {% bootstrap_form form %}
+  {% bootstrap_form form %}
 
-    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div><br />
+  <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div><br />
 
-    <button class="btn btn-primary">Login</button>
+  <button class="btn btn-primary">Login</button>
 </form>
 
 
 <hr>
 
 <ul>
-    <li>
-        <a href="{% url 'password_reset' %}">Password Reset</a>
-    </li>
+  <li>
+    <a href="{% url 'password_reset' %}">Password Reset</a>
+  </li>
 </ul>
 
 

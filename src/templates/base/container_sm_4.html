@@ -1,0 +1,19 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+  {% block content_wrapper %}
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm"></div>
+        <div class="col-sm-4">
+          {% block content %}{% endblock %}
+        </div>
+        <div class="col-sm"></div>
+      </div>
+    </div>
+
+  {% endblock %}
+
+{% endblock %}

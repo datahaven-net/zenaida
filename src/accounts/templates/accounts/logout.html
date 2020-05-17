@@ -1,18 +1,16 @@
-{% extends 'base/index.html' %}
+{% extends 'base/container_sm_4.html' %}
 
-{% block main_content %}
-
-{% include 'base/container_sm_4_offset_4.html' %}
+{% block content %}
 
 
 <h4>Logged out</h4>
 
 <p>
-    We wish you a good time and see you again.
+  We wish you a good time and see you again.
 </p>
 
 <p>
-    <a href="{% url 'two_factor:login' %}">Log in again</a>
+  <a href="{% url 'two_factor:login' %}">Log in again</a>
 </p>
 
 

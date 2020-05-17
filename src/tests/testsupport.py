@@ -9,7 +9,8 @@ from zen import zdomains
 from zen import zusers
 
 
-def prepare_tester_account(email='tester@zenaida.ai', account_password='tester', account_balance=None):
+def prepare_tester_account(email='tester@zenaida.ai', account_password='tester', account_balance=None,
+                           automatic_renewal_enabled=True, email_notifications_enabled=True, ):
     tester = zusers.find_account(email)
     if not tester:
         tester = zusers.create_account(
@@ -26,7 +27,8 @@ def prepare_tester_account(email='tester@zenaida.ai', account_password='tester',
             contact_voice='1234567890',
             contact_fax='1234567890',
             contact_email='tester@zenaida.ai',
-            automatic_renewal_enabled=True,
+            automatic_renewal_enabled=automatic_renewal_enabled,
+            email_notifications_enabled=email_notifications_enabled,
         )
     if account_balance is not None:
         tester.balance = account_balance

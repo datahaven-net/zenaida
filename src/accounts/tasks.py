@@ -40,12 +40,16 @@ def activations_cleanup():
 
 def check_notify_domain_expiring(dry_run=True, min_days_before_expire=0, max_days_before_expire=30, subject='domain_expiring'):
     """
-    Loop all user accounts and all domains and identify all "expiring" domains:
-    less than 60 days left before domain get expired based on `expiry_date` field.
+    Loop all user accounts and all domains and identify all "expiring" domains.
+
+    Skip sending any notifications if user disabled email notifications in Profile settings.
+    Also checks notifications history to make sure only one email is sent for given domain.
+
+    Values `min_days_before_expire` and `max_days_before_expire` will select domains based on `expiry_date` field.
+
+    Parameter `subject` must be one of "domain_expiring" or "domain_expire_soon".
+
     If `dry_run` is True only returns identified users and domains without taking any actions.
-    Otherwise actually will send email notifications about those domains.
-    Also checks notifications history to make sure only one email was sent for given domain.
-    Skip sending if user disabled email notifications in Profile settings.
     """
     time_now = timezone.now()
     outgoing_emails = []

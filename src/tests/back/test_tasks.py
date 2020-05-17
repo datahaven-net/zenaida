@@ -159,11 +159,38 @@ class TestAutoRenewExpiringDomains(TestCase):
             domain_status='active',
             expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
             auto_renew_enabled=True,
+            
         )
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 1
         assert report[0][0] == tester_domain.name
-        assert report[0][1].args[0] == 'not enough funds'
+        assert report[0][1] == tester.email
+        assert report[0][2].args[0] == 'not enough funds'
+
+    @pytest.mark.django_db
+    def test_low_balance_notification_already_sent(self):
+        tester = testsupport.prepare_tester_account(account_balance=50.0)
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+            domain_status='active',
+            expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
+            auto_renew_enabled=True,
+        )
+        report1 = tasks.auto_renew_expiring_domains(dry_run=False)
+        assert len(report1) == 1
+        assert report1[0][0] == tester_domain.name
+        assert report1[0][1] == tester.email
+        assert report1[0][2].args[0] == 'not enough funds'
+        report2 = tasks.auto_renew_expiring_domains(dry_run=False)
+        assert len(report2) == 2
+        assert report2[0][0] == tester_domain.name
+        assert report2[0][1] == tester.email
+        assert report2[0][2].args[0] == 'not enough funds'
+        assert report2[1][0] == None
+        assert report2[1][1] == tester.email
+        assert report2[1][2].args[0] == 'notification already sent recently'
 
     @pytest.mark.django_db
     @mock.patch('billing.orders.execute_order')
@@ -181,7 +208,8 @@ class TestAutoRenewExpiringDomains(TestCase):
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 1
         assert report[0][0] == tester_domain.name
-        assert report[0][1].args[0] == 'renew order status is failed'
+        assert report[0][1] == tester.email
+        assert report[0][2].args[0] == 'renew order status is failed'
 
     @pytest.mark.django_db
     def test_domain_auto_renew_disabled(self):
@@ -199,9 +227,7 @@ class TestAutoRenewExpiringDomains(TestCase):
 
     @pytest.mark.django_db
     def test_owner_profile_automatic_renewal_disabled(self):
-        tester = testsupport.prepare_tester_account(account_balance=200.0)
-        tester.profile.automatic_renewal_enabled = False
-        tester.profile.save()
+        tester = testsupport.prepare_tester_account(account_balance=200.0, automatic_renewal_enabled=False)
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
@@ -212,3 +238,24 @@ class TestAutoRenewExpiringDomains(TestCase):
         )
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 0
+
+    @pytest.mark.django_db
+    @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    def test_owner_profile_email_notifications_disabled(self, mock_send, mock_domain_check_create_update_renew):
+        mock_send.return_value = True
+        mock_domain_check_create_update_renew.return_value = True
+        tester = testsupport.prepare_tester_account(account_balance=200.0, email_notifications_enabled=False)
+        testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+            domain_status='active',
+            expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
+            auto_renew_enabled=True,
+        )
+        report = tasks.auto_renew_expiring_domains(dry_run=False)
+        assert len(report) == 1
+        assert report[0][0] == 'abcd.ai'
+        assert report[0][1] == tester.email
+        assert report[0][2].args[0] == 'email notifications are disabled'

@@ -78,7 +78,7 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             continue
         if not expiring_domain.owner.profile.automatic_renewal_enabled:
             continue
-        logger.info('domain %r is expiring, going to start auto-renew now', expiring_domain.name)
+        logger.debug('domain %r is expiring, going to start auto-renew now', expiring_domain.name)
         current_expiry_date = expiring_domain.expiry_date
         if expiring_domain.owner.balance < settings.ZENAIDA_DOMAIN_PRICE:
             # step 4: user is on low balance
@@ -86,6 +86,7 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             if expiring_domain.owner.email not in users_on_low_balance:
                 users_on_low_balance[expiring_domain.owner.email] = []
             users_on_low_balance[expiring_domain.owner.email].append(expiring_domain.name)
+            logger.debug('not enough funds to auto-renew domain %r', expiring_domain.name)
             continue
         if dry_run:
             report.append((expiring_domain.name, expiring_domain.owner.email, current_expiry_date, ))
@@ -104,9 +105,11 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         new_status = billing_orders.execute_order(renewal_order)
         if new_status != 'processed':
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
+            logger.debug('for account %r renew order status is %r', expiring_domain.owner, new_status)
             continue
         if not expiring_domain.owner.profile.email_notifications_enabled:
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('email notifications are disabled', ), ))
+            logger.debug('skip "domain_renewed" notification, email notifications are disabled for account %r', expiring_domain.owner)
             continue
         # step 3: send a notification to the customer
         notifications.start_email_notification_domain_renewed(
@@ -120,6 +123,7 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         one_user = zusers.find_account(one_user_email)
         if not one_user.profile.email_notifications_enabled:
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('email notifications are disabled', ), ))
+            logger.debug('skip "low_balance" notification, email notifications are disabled for account %r', expiring_domain.owner)
             continue
         recent_low_balance_notification = one_user.notifications.filter(
             subject='low_balance',
@@ -128,6 +132,7 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         if recent_low_balance_notification:
             # step 5: found recent notification, skip
             report.append((None, one_user.email, Exception('notification already sent recently'), ))
+            logger.debug('skip "low_balance" notification, notification already sent recently for account %r', expiring_domain.owner)
             continue
         if dry_run:
             report.append((None, one_user.email, True, ))

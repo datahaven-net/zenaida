@@ -22,6 +22,8 @@ class Command(BaseCommand):
         while True:
             iteration += 1
 
+            logger.debug('# %d', iteration)
+
             back_tasks.sync_expired_domains(dry_run=dry_run)
 
             account_tasks.check_notify_domain_expiring(

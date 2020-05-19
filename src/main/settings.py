@@ -24,7 +24,7 @@ if os.environ.get('DOCKER_ENV'):
 else:
     from main import params
 
-#------------------------------------------------------------------------------ 
+#------------------------------------------------------------------------------
 #--- Basic Django settings
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = '/home/zenaida/live/current'
@@ -34,7 +34,7 @@ REPO_ROOT = os.path.dirname(SRC_PATH)
 CONTENT_DIR = BASE_DIR
 
 
-#------------------------------------------------------------------------------ 
+#------------------------------------------------------------------------------
 #--- Quick-start development settings
 # Unsuitable for production!
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
@@ -82,7 +82,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'filters': [],
         },
         'zenaida_poll': {
@@ -94,13 +94,13 @@ LOGGING = {
         'btcpay_verify': {
             'level': 'DEBUG',
             'class':'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'stream': sys.stdout,
         },
         'background_service': {
             'level': 'DEBUG',
             'class':'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'stream': sys.stdout,
         },
     },

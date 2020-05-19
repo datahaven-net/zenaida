@@ -76,10 +76,11 @@ def check_notify_domain_expiring(dry_run=True, min_days_before_expire=0, max_day
         # which we did not send notification yet
         domains_notified = user.notifications.filter(subject=subject).values_list('domain_name', flat=True)
         domains_to_be_notified = list(set(expiring_domains.keys()).difference(set(domains_notified)))
+        # TODO: need to also clean up old notifications
         if not domains_to_be_notified:
             continue
         for expiring_domain in domains_to_be_notified:
-            logger.info('for %r domain %r is expiring', user, expiring_domain)
+            logger.info('for %r domain %r is expiring and has not been communicated yet', user, expiring_domain)
             outgoing_emails.append((user, expiring_domain, expiring_domains[expiring_domain], ))
             if dry_run:
                 continue

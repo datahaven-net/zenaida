@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 time.sleep(60)
                 continue
 
-            logger.info('Check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
+            logger.info('check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
 
             # Check status of all incomplete invoices.
             incomplete_invoices = BTCPayInvoice.invoices.filter(finished_at=None)
@@ -67,13 +67,13 @@ class Command(BaseCommand):
                     btcpay_invoice_status = 'expired'
 
                 if not payments.finish_payment(transaction_id=invoice.transaction_id, status=payment_status):
-                    logger.critical(f'Payment failed to be completed, transaction_id={invoice.transaction_id}')
+                    logger.critical(f'payment failed to be completed, transaction_id={invoice.transaction_id}')
                     continue
 
                 invoice.status = btcpay_invoice_status
                 invoice.finished_at = timezone.now()
                 invoice.save()
-                logger.info(f'Payment is {payment_status} because it is {btcpay_invoice_status}, '
+                logger.info(f'payment is {payment_status} because it is {btcpay_invoice_status}, '
                             f'transaction_id={invoice.transaction_id}')
 
             time.sleep(60)

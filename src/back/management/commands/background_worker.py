@@ -50,4 +50,4 @@ class Command(BaseCommand):
 
             # TODO: other background periodical jobs to be placed here
 
-            time.sleep(delay)
+            time.sleep(5)

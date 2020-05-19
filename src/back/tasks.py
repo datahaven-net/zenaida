@@ -88,6 +88,9 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             users_on_low_balance[expiring_domain.owner.email].append(expiring_domain.name)
             logger.debug('not enough funds to auto-renew domain %r', expiring_domain.name)
             continue
+        if billing_orders.find_pending_domain_renew_order_items(expiring_domain.name):
+            logger.debug('domain renew order already started for %r', expiring_domain.name)
+            continue
         if dry_run:
             report.append((expiring_domain.name, expiring_domain.owner.email, current_expiry_date, ))
             continue
@@ -105,11 +108,11 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         new_status = billing_orders.execute_order(renewal_order)
         if new_status != 'processed':
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
-            logger.debug('for account %r renew order status is %r', expiring_domain.owner, new_status)
+            logger.info('for account %r renew order status is %r', expiring_domain.owner, new_status)
             continue
         if not expiring_domain.owner.profile.email_notifications_enabled:
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('email notifications are disabled', ), ))
-            logger.debug('skip "domain_renewed" notification, email notifications are disabled for account %r', expiring_domain.owner)
+            logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expiring_domain.owner)
             continue
         # step 3: send a notification to the customer
         notifications.start_email_notification_domain_renewed(

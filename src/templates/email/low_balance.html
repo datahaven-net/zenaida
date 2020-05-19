@@ -13,7 +13,11 @@
 
 <p>The domains listed below are expiring:</p>
 
-<ul><li>{{ expiring_domains_list }}</li></ul>
+<ul>
+{% for domain_name in expiring_domains_list %}
+    <li>{{ domain_name }}</li>
+{% endfor %}
+</ul>
 
 <p>
 The AI domains registry system tried to automatically renew your domain in accordance with the settings of your account.

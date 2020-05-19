@@ -102,5 +102,5 @@ def exception_from_response(response, message=None, code=None):
     if code == 2304:
         return EPPObjectStatusProhibitsOperation(response=response, message=message)
     # TODO: create and add other exceptions here
-    logger.warn('Response code %d do not have mapped exception yet' % code)
+    logger.warn('response code %d do not have mapped exception yet' % code)
     return EPPUnexpectedResponse(response=response, message=message, code=code) 

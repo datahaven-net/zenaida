@@ -10,6 +10,7 @@ from tests import testsupport
 from accounts.models.notification import Notification
 from accounts.notifications import process_notifications_queue
 from back import tasks
+from billing import orders
 
 
 class TestSyncExpiredDomains(TestCase):
@@ -120,6 +121,27 @@ class TestAutoRenewExpiringDomains(TestCase):
         report = tasks.auto_renew_expiring_domains(dry_run=True)
         assert len(report) == 1
         assert report[0][0] == tester_domain.name
+
+    @pytest.mark.django_db
+    def test_pending_renew_order_already_exist(self):
+        tester = testsupport.prepare_tester_account(account_balance=200.0)
+        testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+            domain_status='active',
+            expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
+            auto_renew_enabled=True,
+        )
+        orders.order_single_item(
+            owner=tester,
+            item_type='domain_renew',
+            item_price=100.0,
+            item_name='abcd.ai',
+            item_details={'some': 'details', },
+        )
+        report = tasks.auto_renew_expiring_domains(dry_run=True)
+        assert len(report) == 0
 
     @pytest.mark.django_db
     def test_auto_renew_not_started_before_90_days(self):

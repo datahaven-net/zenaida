@@ -92,7 +92,7 @@ class IdempotentSessionWizardView(SessionWizardView):
         conditions have changed.
         """
         if self.steps.current not in self.steps.all:
-            logger.warning("Current step '%s' is no longer valid, returning "
+            logger.warning("current step '%s' is no longer valid, returning "
                            "to last valid step in the wizard.",
                            self.steps.current)
             return self.render_goto_step(self.steps.all[-1])
@@ -123,7 +123,7 @@ class IdempotentSessionWizardView(SessionWizardView):
         # This is different from the first check, as this checks
         # if the new step is available. See issue #65.
         if self.steps.current not in self.steps.all:
-            logger.warning("Requested step '%s' is no longer valid, returning "
+            logger.warning("requested step '%s' is no longer valid, returning "
                            "to last valid step in the wizard.",
                            self.steps.current)
             return self.render_goto_step(self.steps.all[-1])

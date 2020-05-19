@@ -109,7 +109,7 @@ class VerifyPaymentView(View):
         amount = request_data.get('amt')
 
         if _Debug:
-            logging.debug('verify payment request: %r', request_data)
+            logging.debug('Verify payment request: %r', request_data)
 
         if self._check_rc_usercan_is_incomplete(result, rc, fc, transaction_id):
             return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {

@@ -15,14 +15,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--dry_run', action='store_true', dest='dry_run')
-        parser.add_argument('--delay', type=int, default=5*60, dest='delay')
+        parser.add_argument('--delay', type=int, default=10*60, dest='delay')
 
     def handle(self, dry_run, delay, *args, **options):
         iteration = 0
         while True:
             iteration += 1
-
-            logger.debug('# %d', iteration)
+            logger.info('# %d', iteration)
 
             back_tasks.sync_expired_domains(dry_run=dry_run)
 
@@ -50,4 +49,4 @@ class Command(BaseCommand):
 
             # TODO: other background periodical jobs to be placed here
 
-            time.sleep(5)
+            time.sleep(delay)

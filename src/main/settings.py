@@ -61,7 +61,7 @@ ROOT_URLCONF = 'main.urls'
 #------------------------------------------------------------------------------
 #--- Logging configuration
 
-LOG_LEVEL = 'DEBUG' if DEBUG else 'WARNING'
+LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
 
 LOGGING = {
     'version': 1,

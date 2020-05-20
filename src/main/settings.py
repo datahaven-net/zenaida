@@ -24,7 +24,7 @@ if os.environ.get('DOCKER_ENV'):
 else:
     from main import params
 
-#------------------------------------------------------------------------------ 
+#------------------------------------------------------------------------------
 #--- Basic Django settings
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = '/home/zenaida/live/current'
@@ -34,7 +34,7 @@ REPO_ROOT = os.path.dirname(SRC_PATH)
 CONTENT_DIR = BASE_DIR
 
 
-#------------------------------------------------------------------------------ 
+#------------------------------------------------------------------------------
 #--- Quick-start development settings
 # Unsuitable for production!
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
@@ -61,13 +61,15 @@ ROOT_URLCONF = 'main.urls'
 #------------------------------------------------------------------------------
 #--- Logging configuration
 
+LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
     },
     'root': {
-        'level': 'DEBUG' if DEBUG else 'WARNING',
+        'level': LOG_LEVEL,
         'handlers': ['console', ],
     },
     'formatters': {
@@ -80,58 +82,58 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'filters': [],
         },
         'zenaida_poll': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'class':'logging.StreamHandler',
             'formatter': 'timestamped',
             'stream': sys.stdout,
         },
         'btcpay_verify': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'class':'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'stream': sys.stdout,
         },
         'background_service': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'class':'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'timestamped',
             'stream': sys.stdout,
         },
     },
     'loggers': {
         'django.request': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['console', ],
         },
         'back.csv_import': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['console', ],
         },
         'zen.zpoll': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['zenaida_poll', ],
         },
         'billing.management.commands.btcpay_verify': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['btcpay_verify', ],
         },
         'back.management.commands.background_worker': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['background_service', ],
         },
         'accounts.notifications': {
-            'level': 'DEBUG',
+            'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['background_service', ],
         },
@@ -146,7 +148,7 @@ LOGGING = {
 ZENAIDA_EPP_LOG_FILENAME = getattr(params, 'ZENAIDA_EPP_LOG_FILENAME', None)
 if ZENAIDA_EPP_LOG_FILENAME:
     LOGGING['handlers']['epp'] = {
-        'level': 'DEBUG',
+        'level': LOG_LEVEL,
         'class': 'logging.handlers.RotatingFileHandler',
         'filename': ZENAIDA_EPP_LOG_FILENAME,
         'maxBytes': 1024*1024*10,  # 10MB
@@ -154,7 +156,7 @@ if ZENAIDA_EPP_LOG_FILENAME:
         'formatter': 'timestamped',
     }
     LOGGING['loggers']['zen.zclient'] = {
-        'level': 'DEBUG',
+        'level': LOG_LEVEL,
         'propagate': False,
         'handlers': ['epp', ]
     }
@@ -162,7 +164,7 @@ if ZENAIDA_EPP_LOG_FILENAME:
 ZENAIDA_AUTOMATS_LOG_FILENAME = getattr(params, 'ZENAIDA_AUTOMATS_LOG_FILENAME', None)
 if ZENAIDA_AUTOMATS_LOG_FILENAME:
     LOGGING['handlers']['automats'] = {
-        'level': 'DEBUG',
+        'level': LOG_LEVEL,
         'class': 'logging.handlers.RotatingFileHandler',
         'filename': ZENAIDA_AUTOMATS_LOG_FILENAME,
         'maxBytes': 1024*1024*10,  # 10MB
@@ -170,7 +172,7 @@ if ZENAIDA_AUTOMATS_LOG_FILENAME:
         'formatter': 'timestamped',
     }
     LOGGING['loggers']['automats.automat'] = {
-        'level': 'DEBUG',
+        'level': LOG_LEVEL,
         'propagate': False,
         'handlers': ['automats', ]
     }

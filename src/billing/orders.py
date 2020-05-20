@@ -37,10 +37,10 @@ def get_order_by_id_and_owner(order_id, owner, log_action=None):
     """
     order = by_id(order_id)
     if not order:
-        logging.critical(f'User {owner} tried to {log_action} non-existing order')
+        logger.critical(f'user {owner} tried to {log_action} non-existing order')
         raise exceptions.SuspiciousOperation()
     if order.owner != owner:
-        logging.critical(f'User {owner} tried to {log_action} an order for another user')
+        logger.critical(f'user {owner} tried to {log_action} an order for another user')
         raise exceptions.SuspiciousOperation()
     return order
 
@@ -132,6 +132,18 @@ def list_all_processed_orders_by_date(year, month=None):
         ).order_by('-finished_at')
 
 
+def find_pending_domain_renew_order_items(domain_name):
+    """
+    Find OrderItem objects for domain transfer order for given domain.
+    """
+    return list(OrderItem.order_items.filter(
+        type='domain_renew',
+        name=domain_name,
+    ).exclude(
+        status__in=['processed', ],
+    ).all())
+
+
 def find_pending_domain_transfer_order_items(domain_name):
     """
     Find OrderItem objects for domain transfer order for given domain.
@@ -170,13 +182,14 @@ def order_single_item(owner, item_type, item_price, item_name, item_details=None
         started_at=timezone.now(),
         description='{} {}'.format(item_name, item_type.replace('_', ' ').split(' ')[1]),
     )
-    OrderItem.order_items.create(
+    new_order_item = OrderItem.order_items.create(
         order=new_order,
         type=item_type,
         price=item_price,
         name=item_name,
         details=item_details,
     )
+    logger.info('created new %r with single %r', new_order, new_order_item)
     return new_order
 
 
@@ -212,6 +225,7 @@ def order_multiple_items(owner, order_items):
             price=order_item['item_price'],
             name=order_item['item_name'],
         )
+    logger.info('created new %r with %d items', new_order, len(order_items))
     return new_order
 
 
@@ -223,7 +237,7 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
     """
     if charge_user:
         if order_item.order.owner.balance < order_item.price:
-            logging.critical('Not enough account balance on %r', order_item.order.owner)
+            logger.critical('not enough account balance on %r', order_item.order.owner)
             return False
         order_item.order.owner.balance -= order_item.price
         if save:
@@ -231,13 +245,13 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
         order_item.order.finished_at = timezone.now()
         if save:
             order_item.order.save() 
-        logging.debug('Charged user %s for "%s"' % (order_item.order.owner, order_item.price))
+        logger.debug('charged user %s for "%s"' % (order_item.order.owner, order_item.price))
     if new_status:
         old_status = order_item.status
         order_item.status = new_status
         if save:
             order_item.save()
-        logging.debug('Updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
+        logger.debug('updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
     return True
 
 
@@ -319,12 +333,12 @@ def execute_one_item(order_item):
     
     target_domain = zdomains.domain_find(order_item.name)
     if not target_domain:
-        logging.critical('Domain not exist', order_item.name)
+        logger.critical('Domain not exist', order_item.name)
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
     if target_domain.owner != order_item.order.owner:
-        logging.critical('User %s tried to execute an order with domain from another owner' % order_item.order.owner)
+        logger.critical('user %s tried to execute an order with domain from another owner' % order_item.order.owner)
         raise exceptions.SuspiciousOperation()
 
     if order_item.type == 'domain_register':
@@ -336,7 +350,7 @@ def execute_one_item(order_item):
     if order_item.type == 'domain_restore':
         return execute_domain_restore(order_item, target_domain)
 
-    logging.critical('Order item %s have a wrong type' % order_item)
+    logger.critical('order item %s have a wrong type' % order_item)
     return False
 
 
@@ -367,7 +381,7 @@ def execute_order(order_object):
             elif order_item.status == 'failed':
                 total_failed += 1
             else:
-                logging.critical('Order item %s execution finished with unexpected status: %s', order_item, order_item.status)
+                logger.critical('order item %s execution finished with unexpected status: %s', order_item, order_item.status)
     if total_processed == total_executed:
         new_status = 'processed'
     else:
@@ -379,7 +393,7 @@ def execute_order(order_object):
             new_status = 'incomplete'
     order_object.status = new_status
     order_object.save()
-    logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
+    logger.debug('updated status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
     return new_status
 
 
@@ -415,7 +429,7 @@ def refresh_order(order_object):
             new_status = 'incomplete'
     order_object.status = new_status
     order_object.save()
-    logging.debug('Refreshed status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
+    logger.debug('refreshed status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
     return new_status
 
 
@@ -427,7 +441,7 @@ def cancel_order(order_object):
     old_status = order_object.status
     order_object.status = new_status
     order_object.save()
-    logging.debug('Updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
+    logger.debug('updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
     return new_status
 
 

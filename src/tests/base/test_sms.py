@@ -28,7 +28,7 @@ class TestSMSSender(object):
         sms_sender = SMSSender(text_message="test sms", phone_numbers=[31612345678])
         assert sms_sender.send_sms() is True
         mock_log_error.assert_called_once_with(
-            "Sending a SMS to [31612345678] with this message: 'test sms' returned an error. "
+            "sending a SMS to [31612345678] with this message: 'test sms' returned an error. "
             "Error code: 105, Error description: Invalid Destination Address")
 
     @mock.patch("logging.Logger.critical")
@@ -38,7 +38,7 @@ class TestSMSSender(object):
         sms_sender = SMSSender(text_message="test sms", phone_numbers=[31612345678])
 
         assert sms_sender.send_sms() is False
-        mock_log_error.assert_called_once_with("Sending a SMS is failed to [31612345678] with this message: test sms")
+        mock_log_error.assert_called_once_with("sending a SMS is failed to [31612345678] with this message: test sms")
 
 
 class TestSMSStatus(object):
@@ -78,7 +78,7 @@ class TestSMSStatus(object):
         resp = sms_status.get_status()
 
         assert resp is False
-        mock_log_error.assert_called_once_with("Sending a SMS with this 3bc862d60fb8825fbd6c9e1bf74197f8 ID was not "
+        mock_log_error.assert_called_once_with("sending a SMS with this 3bc862d60fb8825fbd6c9e1bf74197f8 ID was not "
                                                "successfully done. Error description: Message unknown")
 
     @mock.patch("logging.Logger.critical")
@@ -98,7 +98,7 @@ class TestSMSStatus(object):
         resp = sms_status.get_status()
 
         assert resp is False
-        mock_log_error.assert_called_once_with("Sending a SMS with this None ID was not successfully done. "
+        mock_log_error.assert_called_once_with("sending a SMS with this None ID was not successfully done. "
                                                "Error description: Invalid or missing parameter: apiMessageId")
 
     @mock.patch("logging.Logger.critical")
@@ -108,5 +108,5 @@ class TestSMSStatus(object):
         sms_status = SMSStatus(sms_id="3bc862d60fb8825fbd6c9e1bf74197b9")
 
         assert sms_status.get_status() is False
-        mock_log_error.assert_called_once_with("Getting status of SMS call was not successful. "
+        mock_log_error.assert_called_once_with("getting status of SMS call was not successful. "
                                                "SMS ID: 3bc862d60fb8825fbd6c9e1bf74197b9")

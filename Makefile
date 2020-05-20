@@ -246,6 +246,14 @@ rabbitmq_server_dev:
 	@rabbitmq-server
 
 
+run_background_worker_dev: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py background_worker
+
+
+run_process_notifications_dev: $(VENV_DEPLOY)
+	@$(PYTHON) src/manage.py process_notifications
+
+
 ################################################
 # Setting up of different kinds of virtualenvs #
 ################################################

@@ -5,26 +5,26 @@
 
 <div class="alert alert-secondary text-center" role="alert">
 
-    <form method="post">
+  <form method="post">
     {% csrf_token %}
-        <div class="row">
-            <div class="row col-6">
-                <div class="col-3">
-                    <fieldset>
-                        {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                    </fieldset>
-                </div>
-                <div class="col-3">
-                    <fieldset>
-                        {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                    </fieldset>
-                </div>
-                <div class="col-3">
-                    <button type="submit" class="form-button btn-sm btn-info">Download Receipt</button>
-                </div>
-            </div>
+    <div class="row">
+      <div class="row col-sm-6">
+        <div class="col-sm-3">
+          <fieldset>
+            {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
         </div>
-    </form>
+        <div class="col-sm-3">
+          <fieldset>
+            {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
+        </div>
+        <div class="col-sm-3">
+          <button type="submit" class="form-button btn-sm btn-info">Download Receipt</button>
+        </div>
+      </div>
+    </div>
+  </form>
 </div>
 
 

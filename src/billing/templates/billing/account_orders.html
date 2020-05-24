@@ -2,74 +2,75 @@
 
 {% block main_content %}
 
+
 <div class="alert alert-secondary text-center" role="alert">
 
-    <form method="post">
+  <form method="post">
     {% csrf_token %}
-        <div class="row">
-            <div class="row col-6">
-                <div class="col-3">
-                    <fieldset>
-                        {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                    </fieldset>
-                </div>
-                <div class="col-3">
-                    <fieldset>
-                        {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                    </fieldset>
-                </div>
-                <div class="col-1">
-                    <button class="btn btn-sm btn-success">Show</button>
-                </div>
-            </div>
+    <div class="row">
+      <div class="row col-sm-6">
+        <div class="col-sm-3">
+          <fieldset>
+            {% bootstrap_field form.year layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
         </div>
-    </form>
+        <div class="col-sm-3">
+          <fieldset>
+            {% bootstrap_field form.month layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
+        </div>
+        <div class="col-sm-1">
+          <button class="btn btn-sm btn-success">Show</button>
+        </div>
+      </div>
+    </div>
+</form>
 </div>
 
 <table class="table table-hover">
-    <tr>
-        <th>Description</th>
-        <th>Date</th>
-        <th>Status</th>
-        <th>Actions</th>
-    </tr>
+  <tr>
+    <th>Description</th>
+    <th>Date</th>
+    <th>Status</th>
+    <th>Actions</th>
+  </tr>
 
-    {% for order in object_list %}
+  {% for order in object_list %}
 
-        <tr>
-            <td><a href="{% url 'billing_order_details' order.id %}">{{ order.description }}</a></td>
-            <td>{{ order.started_at|date:'d N Y' }}</td>
-            <td>{{ order.status }}</td>
-            <td>
-                <div class="container">
-                    <div class="row">
-                        {% if order.is_processable %}
-                            <div>
-                                <form action="{% url 'billing_order_process' order.id %}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success" name="action_pay">Confirm</button>
-                                </form>
-                            </div>
-                            <div class="col-sm-1">
-                                <form action="{% url 'billing_order_cancel' order.id %}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-warning" name="action_cancel">Cancel</button>
-                                </form>
-                            </div>
-                        {% elif order.is_processed %}
-                            <div>
-                                <form action="{% url 'billing_receipt_download' order.id %}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-info" name="action_receipt_download">Receipt</button>
-                                </form>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </td>
-        </tr>
+  <tr>
+    <td><a href="{% url 'billing_order_details' order.id %}">{{ order.description }}</a></td>
+    <td>{{ order.started_at|date:'d N Y' }}</td>
+    <td>{{ order.status }}</td>
+    <td>
+      <div class="container">
+        <div class="row">
+          {% if order.is_processable %}
+            <div>
+              <form action="{% url 'billing_order_process' order.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-success" name="action_pay">Confirm</button>
+              </form>
+            </div>
+            <div class="col-sm-1">
+              <form action="{% url 'billing_order_cancel' order.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-warning" name="action_cancel">Cancel</button>
+              </form>
+            </div>
+          {% elif order.is_processed %}
+            <div>
+              <form action="{% url 'billing_receipt_download' order.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-info" name="action_receipt_download">Receipt</button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </td>
+  </tr>
 
-    {% endfor %}
+  {% endfor %}
 
 </table>
 

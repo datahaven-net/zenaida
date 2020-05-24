@@ -1,56 +1,53 @@
-{% extends 'base/index.html' %}
+{% extends 'base/container_sm_10.html' %}
 
-{% block main_content %}
-
-{% include 'base/container_sm_10_offset_1.html' %}
+{% block content %}
 
 
 <h1>Personal information</h1>
 <br>
+
 <form method="post">
-    {% csrf_token %}
-    <div class="row">
-        <div class="col-6">
-            <fieldset>
-                {% bootstrap_field form.person_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.organization_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-            </fieldset>
-            <fieldset>
-                {% bootstrap_field form.contact_email layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.contact_voice layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.contact_fax layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-            </fieldset>
-        </div>
-        <div class="col-6">
-            <fieldset>
-                {% bootstrap_field form.address_street layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.address_city layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.address_province layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.address_postal_code layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-                {% bootstrap_field form.address_country layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
-            </fieldset>
-        </div>
+  {% csrf_token %}
+  <div class="row">
+    <div class="col-6">
+      <fieldset>
+        {% bootstrap_field form.person_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.organization_name layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+      </fieldset>
+      <fieldset>
+        {% bootstrap_field form.contact_email layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.contact_voice layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.contact_fax layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+      </fieldset>
     </div>
-    <br>
-    <div class="row">
-        <div class="col-12">
-            <fieldset>
-                {% bootstrap_field form.email_notifications_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-2 text-right" horizontal_field_class="col-sm-9" %}
-                {% bootstrap_field form.automatic_renewal_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-2 text-right" horizontal_field_class="col-sm-9" %}
-            </fieldset>
-        </div>
+    <div class="col-6">
+      <fieldset>
+        {% bootstrap_field form.address_street layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.address_city layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.address_province layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.address_postal_code layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+        {% bootstrap_field form.address_country layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-8" %}
+      </fieldset>
     </div>
-    <br>
-    <div class="row">
-        <div class="col-12 text-center">
-            {% buttons %}
-                <button type="submit" class="form-button btn btn-success">Save</button>
-            {% endbuttons %}
-        </div>
+  </div>
+  <br>
+  <div class="row">
+    <div class="col-12">
+      <fieldset>
+        {% bootstrap_field form.email_notifications_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-2 text-right" horizontal_field_class="col-sm-10" %}
+        {% bootstrap_field form.automatic_renewal_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-2 text-right" horizontal_field_class="col-sm-10" %}
+      </fieldset>
     </div>
+  </div>
+  <br>
+  <div class="row">
+    <div class="col-12 text-center">
+      {% buttons %}
+        <button type="submit" class="form-button btn btn-success">Save</button>
+      {% endbuttons %}
+    </div>
+  </div>
 </form>
 
-
-{% include 'base/container_close.html' %}
 
 {% endblock %}

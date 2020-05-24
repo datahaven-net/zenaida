@@ -1,46 +1,45 @@
 {% include 'base/head.html' %}
 
-{% include 'base/container_fluid.html' %}
 
-<main>
+<div class="container-fluid">
+  <div class="mt-3 mb-3">
 
     {% block main_content %}
 
-    <div class="text-center">
+      <div class="text-center">
         {% if request.user.is_authenticated %}
-            <h4>Welcome to AI Domains Registry, <b>{{ user.profile.person_name }}</b>!</h4>
-            Your current balance: <b>${{ user.balance }} US</b>
+          <h4>Welcome to AI Domains Registry, <b>{{ user.profile.person_name }}</b>!</h4>
+          Your current balance: <b>${{ user.balance }} US</b>
+          <br />
+          {% if total_domains > 0 %}
+            Number of domains that you have: <b>{{ total_domains }}</b>
             <br />
-            {% if total_domains > 0 %}
-                Number of domains that you have: <b>{{ total_domains }}</b>
-                <br />
-                Browse your current <a href="{% url 'account_domains' %}">domains</a>
-            {% else %}
-                You don't have any registered domain yet.
-            {% endif %}
-            <br />
+            Browse your current <a href="{% url 'account_domains' %}">domains</a>
+          {% else %}
+            You don't have any registered domain yet.
+          {% endif %}
+          <br />
         {% else %}
-            <h1>Welcome to AI Domains Registry!</h1>
+          <h1>Welcome to AI Domains Registry!</h1>
         {% endif %}
         <br />
         <form action="{% url 'domain_lookup' %}" method="post">
-            {% csrf_token %}
-            <div class="form-row justify-content-center">
-                <div class="col-lg-3">
-                    <input class="form-control form-control-lg" type="text" placeholder="Your domain name" aria-label="Search" name="domain_name" value="{{ domain_name }}" autofocus required>
-                </div>
-                <div class="col-lg-1">
-                    <button class="btn btn-success btn-lg btn-block" type="submit">Register</button>
-                </div>
+          {% csrf_token %}
+          <div class="form-row justify-content-center">
+            <div class="col-lg-3">
+              <input class="form-control form-control-lg" type="text" placeholder="Your domain name" aria-label="Search" name="domain_name" value="{{ domain_name }}" autofocus required>
             </div>
+            <div class="col-lg-1">
+              <button class="btn btn-success btn-lg btn-block" type="submit">Register</button>
+            </div>
+          </div>
         </form>
-    </div>
-
+      </div>
 
     {% endblock %}
 
-</main>
+  </div>
+</div>
 
-{% include 'base/container_close.html' %}
 
 {% include 'base/foot.html' %}

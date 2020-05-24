@@ -1,54 +1,51 @@
-{% extends 'base/index.html' %}
+{% extends 'base/container_sm_10.html' %}
 
-{% block main_content %}
-
-{% include 'base/container_sm_10_offset_1.html' %}
+{% block content %}
 
 
 <h1 class="text-center">{{ domain_name }}</h1>
 <br />
+
 <form method="post">
-    {% csrf_token %}
-    {% bootstrap_form_errors form %}
-    <div class="row">
-        <div class="col-12">
-            <fieldset name="contacts">
-                {% bootstrap_field form.contact_admin layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                {% bootstrap_field form.contact_billing layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                {% bootstrap_field form.contact_tech layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                <br />
-            </fieldset>
-        </div>
-        <div class="col-12">
-            <fieldset>
-                {% bootstrap_field form.nameserver1 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                {% bootstrap_field form.nameserver2 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                {% bootstrap_field form.nameserver3 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                {% bootstrap_field form.nameserver4 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
-                <br />
-            </fieldset>
-        </div>
+  {% csrf_token %}
+  {% bootstrap_form_errors form %}
+  <div class="row">
+    <div class="col-12">
+      <fieldset name="contacts">
+        {% bootstrap_field form.contact_admin layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        {% bootstrap_field form.contact_billing layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        {% bootstrap_field form.contact_tech layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        <br />
+      </fieldset>
     </div>
-
-    <h3 align=center>
-        Register <b>{{ domain_name }}</b> for <b>2 years</b><br />
-        starting from {% now "j F Y" %}<br />
-        on name <b>{{ person_name }}</b>?
-    </h3>
-    <br />
-
-    <div class="row">
-        <div class="col-12 text-center">
-            {% buttons %}
-                <a class="btn btn-danger" href="{% url 'domain_lookup' %}" role="button">Cancel</a>
-                <button type="submit" class="form-button btn btn-success" name=yes>Confirm</button>
-            {% endbuttons %}
-        </div>
+    <div class="col-12">
+      <fieldset>
+        {% bootstrap_field form.nameserver1 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        {% bootstrap_field form.nameserver2 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        {% bootstrap_field form.nameserver3 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        {% bootstrap_field form.nameserver4 layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-right" horizontal_field_class="col-sm-4" %}
+        <br />
+      </fieldset>
     </div>
-    <input type="hidden" name="next_page" value="{{ next_page }}">
+  </div>
+
+  <h3 align=center>
+    Register <b>{{ domain_name }}</b> for <b>2 years</b><br />
+    starting from {% now "j F Y" %}<br />
+    on name <b>{{ person_name }}</b>?
+  </h3>
+  <br />
+
+  <div class="row">
+    <div class="col-12 text-center">
+      {% buttons %}
+        <a class="btn btn-danger" href="{% url 'domain_lookup' %}" role="button">Cancel</a>
+        <button type="submit" class="form-button btn btn-success" name=yes>Confirm</button>
+      {% endbuttons %}
+    </div>
+  </div>
+  <input type="hidden" name="next_page" value="{{ next_page }}">
 </form>
 
-
-{% include 'base/container_close.html' %}
 
 {% endblock %}

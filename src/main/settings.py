@@ -259,6 +259,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'admin_ip_restrictor.middleware.AdminIPRestrictorMiddleware',
 ]
 
 TEMPLATES = [
@@ -418,6 +419,15 @@ PUSH_NOTIFICATION_SERVICE_USER_TOKEN = getattr(params, 'PUSH_NOTIFICATION_SERVIC
 #--- ADMIN ALERTS
 ALERT_SMS_PHONE_NUMBERS = getattr(params, 'ALERT_SMS_PHONE_NUMBERS', [])
 ALERT_EMAIL_RECIPIENTS = getattr(params, 'ALERT_EMAIL_RECIPIENTS', [])
+
+#------------------------------------------------------------------------------
+#--- ADMIN PANEL RESTRICTIONS
+RESTRICT_ADMIN = getattr(params, 'RESTRICT_ADMIN', False)
+ALLOWED_ADMIN_IPS = getattr(params, 'ALLOWED_ADMIN_IPS', ['127.0.0.1', '::1'])
+ALLOWED_ADMIN_IP_RANGES = getattr(params, 'ALLOWED_ADMIN_IP_RANGES', ['127.0.0.0/24', '::/1'])
+RESTRICTED_APP_NAMES = ['admin']
+TRUST_PRIVATE_IP = getattr(params, 'TRUST_PRIVATE_IP', False)
+
 
 #------------------------------------------------------------------------------
 #--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded

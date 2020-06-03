@@ -106,3 +106,10 @@ ENV = 'development'
 
 #--- Account & Auth
 # ACTIVATION_CODE_EXPIRING_MINUTE = 15
+
+#--- Admin Panel Restrictions
+# RESTRICT_ADMIN = True
+# ALLOWED_ADMIN_IPS = ['127.0.0.1', '::1']
+# ALLOWED_ADMIN_IP_RANGES = ['127.0.0.0/24', '::/1']
+# RESTRICTED_APP_NAMES = ['admin']
+# TRUST_PRIVATE_IP = True

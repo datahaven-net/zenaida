@@ -42,18 +42,20 @@
 
     <div class="container">
         <div class="row">
-            <div class="col-sm-2 offset-4">
+            <div class="col-sm"></div>
+            <div class="col-sm-1">
                 <form action="{% url 'billing_order_cancel' order.id %}" method="post">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-warning" name="action_cancel">Cancel</button>
+                <button type="submit" class="btn btn-danger" name="action_cancel">Cancel</button>
                 </form>
             </div>
-            <div class="col-sm-2">
+            <div class="col-sm-1">
                 <form action="{% url 'billing_order_process' order.id %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-success" name="action_pay">Confirm</button>
                 </form>
             </div>
+          <div class="col-sm"></div>
         </div>
     </div>
 {% else %}

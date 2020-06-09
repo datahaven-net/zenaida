@@ -445,9 +445,11 @@ TODO: memcached...
 
 ## Configure Googla Captcha
 
-TODO:
+If you want users to see Google Captcha in login screen, you need to go to https://www.google.com/recaptcha/ and setup captcha for your website
+In order to setup, you can check Google documentation: https://developers.google.com/recaptcha
+Once you have site key and secret key for your website, you should go to params.py and assign them to GOOGLE_RECAPTCHA_SITE_KEY and GOOGLE_RECAPTCHA_SECRET_KEY.
 
-
+If you don't want to enable Google captcha for your local environment or for your website, you can make GOOGLE_RECAPTCHA_SITE_KEY value as None or ""
 
 ## Configure BTCPayServer
 

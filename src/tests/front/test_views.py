@@ -557,3 +557,10 @@ class TemplateContactUsTemplateView(TestCase):
     def test_contact_us_successful(self):
         response = self.client.get('/contact-us/')
         assert response.status_code == 200
+
+
+class TestErrorViews(TestCase):
+
+    def test_404_handler(self):
+        response = self.client.get('/notfound/')
+        assert response.status_code == 404

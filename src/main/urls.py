@@ -16,6 +16,9 @@ from accounts import views as accounts_views
 from two_factor.urls import urlpatterns as two_factor_urls
 
 
+handler404 = 'front.views.handler404'
+handler500 = 'front.views.handler500'
+
 admin_patterns = [
     path('grappelli/', include('grappelli.urls')),
     path('_nested_admin/', include('nested_admin.urls')),

@@ -38,7 +38,7 @@ class Profile(models.Model):
         verbose_name='Automatically renew expiring domains',
         help_text='Your domains will be automatically renewed 3 months before the expiration date, if you have enough funds. '
                   'Account balance will be automatically deducted.',
-        default=False,
+        default=True,
     )
 
     def __str__(self):

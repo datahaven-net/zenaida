@@ -235,9 +235,6 @@ class AccountDomainTransferTakeoverView(FormView):
             messages.warning(self.request, 'Domain name is not registered')
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
-        if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
-            messages.warning(self.request, 'Domain transfer is not possible')
-            return super().form_invalid(form)
         current_statuses = info['epp']['response']['resData']['infData']['status']
         current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
         current_statuses = [s['@s'] for s in current_statuses]
@@ -248,7 +245,7 @@ class AccountDomainTransferTakeoverView(FormView):
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):
             messages.warning(self.request, 'Domain transfer is already in progress')
             return super().form_invalid(form)
-        current_registrar = info['epp']['response']['resData']['infData']['clID']
+
         if current_registrar == settings.ZENAIDA_AUCTION_REGISTRAR_ID:
             price = 0.0
         else:

@@ -284,7 +284,7 @@ class Automat(object):
         global _Debug
         if not _Debug:
             return
-        logger.debug((' ' * level) + text)
+        logger.info((' ' * level) + text)
 
     def add_state_changed_callback(self, cb, oldstate=None, newstate=None, callback_id=None):
         """

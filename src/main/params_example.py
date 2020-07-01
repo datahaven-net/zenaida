@@ -9,11 +9,13 @@ ENV = 'development'
 # SECRET_KEY = 'must be declared here !!!'
 # SITE_BASE_URL = ''
 
+#--- Log files permission fix
+import os
+os.umask(0o002)
 
 #--- SQlite3
 # DATABASES_ENGINE = 'django.db.backends.sqlite3'
 # DATABASES_NAME = 'db.sqlite'
-
 
 #--- Oracle
 # DATABASES_ENGINE = 'django.db.backends.oracle'
@@ -25,7 +27,6 @@ ENV = 'development'
 # DATABASES_OPTIONS = {}
 # DATABASES_TEST = dict(NAME='unittest.db')
 # DATABASES_CONN_MAX_AGE = 0
-
 
 #--- Postgres
 # DATABASES_ENGINE = 'django.db.backends.postgresql_psycopg2'
@@ -61,7 +62,6 @@ ENV = 'development'
 #--- Google reCaptcha Keys
 # GOOGLE_RECAPTCHA_SECRET_KEY = 'dummy_secret_key'
 # GOOGLE_RECAPTCHA_SITE_KEY = 'dummy_site_key'
-
 
 #--- Zenaida configuration 
 # ZENAIDA_REGISTRAR_ID = 'zenaida_registrar'

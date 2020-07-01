@@ -120,6 +120,11 @@ First lets create a separate folder to store all interesting logs in one place a
         sudo cp etc/logrotate.d/zenaida /etc/logrotate.d/
 
 
+Add `www-data` user to `zenaida` group so uwsgi process will be able to access log files created by Django:
+
+        sudo usermod -a -G zenaida www-data
+
+
 Make sure you set the correct domain name on your server:
 
         sudo hostname -b yourdomain.com

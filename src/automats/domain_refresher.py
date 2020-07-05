@@ -370,12 +370,12 @@ class DomainRefresher(automat.Automat):
         self.domain_info_response = response
 
         if self.expected_owner:
-            # if pending order exists, select registrant from the owner
+            # if pending order exists, select registrant from the owner of that order
             self.known_registrant = self.expected_owner.registrants.first()
             logger.info('trying to use registrant from existing owner: %r', self.known_registrant)
         else:
             # find registrant in local DB
-            self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+            self.known_registrant = zcontacts.registrant_find(epp_id=self.received_registrant_epp_id)
             logger.info('trying to find registrant by epp id %r: %r',
                         self.received_registrant_epp_id, self.known_registrant)
 
@@ -588,7 +588,7 @@ class DomainRefresher(automat.Automat):
                 contact_email=self.current_registrant_info['email'],
             )
         self.received_registrant_epp_id = self.new_registrant_epp_id
-        self.known_registrant = zcontacts.registrant_find(self.received_registrant_epp_id)
+        self.known_registrant = zcontacts.registrant_find(epp_id=self.received_registrant_epp_id)
         if not self.known_registrant:
             logger.info('new registrant will be created for %r', known_owner)
             self.known_registrant = zcontacts.registrant_create_from_profile(
@@ -670,16 +670,32 @@ class DomainRefresher(automat.Automat):
                 return
             logger.info('domain %r going to switch registrant %r to %r',
                         self.target_domain, self.target_domain.registrant, self.known_registrant)
-            zdomains.domain_change_registrant(self.target_domain, self.known_registrant)
+            self.target_domain = zdomains.domain_change_registrant(self.target_domain, self.known_registrant)
+            self.target_domain.refresh_from_db()
         # make sure owner of the domain is correct
         if self.target_domain.owner != self.known_registrant.owner:
             # just in case given user have multiple registrant contacts... 
             if not self.change_owner_allowed:
-                self.event('error', zerrors.EPPRegistrantAuthFailed('domain already have another owner in local DB'))
-                return
-            logger.info('domain %r going to switch owner %r to %r',
+                logger.error('domain already have another owner in local DB')
+                raise zerrors.EPPRegistrantAuthFailed('domain already have another owner in local DB')
+            logger.info('domain %r going to switch owner %r to %r because of different registrant found',
                         self.target_domain, self.target_domain.owner, self.known_registrant.owner)
-            zdomains.domain_change_owner(self.target_domain, self.known_registrant.owner)
+            self.target_domain = zdomains.domain_change_owner(self.target_domain, self.known_registrant.owner)
+            self.target_domain.refresh_from_db()
+            return
+        # also check if only registrant's email was changed
+        try:
+            received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email']
+        except:
+            received_registrant_email = self.target_domain.owner.email
+        if received_registrant_email != self.target_domain.owner.email:
+            if not self.change_owner_allowed:
+                logger.error('registrant email changed and is different from current owner in local DB')
+                raise zerrors.EPPRegistrantAuthFailed('registrant email changed and is different from current owner in local DB')
+            logger.info('domain %r going to switch owner %r because registrant email changed to %r',
+                        self.target_domain, self.target_domain.owner, received_registrant_email, )
+            self.target_domain = zdomains.domain_change_owner_from_registrant_email(self.target_domain, received_registrant_email)
+            self.target_domain.refresh_from_db()
 
     def doDBCheckChangeContacts(self, *args, **kwargs):
         """
@@ -687,7 +703,7 @@ class DomainRefresher(automat.Automat):
         """
         if not self.target_domain:
             return
-        if self.rewrite_contacts:
+        if self.rewrite_contacts or self.change_owner_allowed:
             return
         received_contacts_info = args[0]
         for role in ['admin', 'billing', 'tech', ]:
@@ -752,7 +768,7 @@ class DomainRefresher(automat.Automat):
             orders.refresh_order(related_order_item.order)
             logger.info('processed one pending order %r for %r', related_order_item, self.expected_owner)
         else:
-            logger.info('no actions taken after domain transfer, no pending orders found for %r', self.domain_name)
+            logger.info('no pending orders found for %r', self.domain_name)
 
     def doReportNotExist(self, *args, **kwargs):
         """

@@ -15,6 +15,7 @@ from back.models.contact import Contact, Registrant
 from billing import orders as billing_orders
 
 from zen import zmaster
+from zen import zerrors
 
 
 class ZoneAdmin(NestedModelAdmin):
@@ -75,6 +76,7 @@ class DomainAdmin(NestedModelAdmin):
     actions = (
         'domain_synchronize_from_backend',
         'domain_synchronize_from_backend_hard',
+        'domain_synchronize_from_backend_transfer',
         'domain_generate_and_set_new_auth_info_key',
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
@@ -137,20 +139,46 @@ class DomainAdmin(NestedModelAdmin):
         return mark_safe(f'<a href="{link}">{domain_instance.contact_tech}</a>')
     get_contact_tech_link.short_description = 'Tech contact'
 
-    def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True):
+    def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True, change_owner_allowed=False):
         report = []
         for domain_object in queryset:
+            ok = True
+            # first run with `rewrite_contacts=False` so it will only update contacts in localDB 
             outputs = zmaster.domain_synchronize_from_backend(
                 domain_name=domain_object.name,
                 refresh_contacts=True,
-                rewrite_contacts=True,
-                change_owner_allowed=True,
+                rewrite_contacts=False,
+                change_owner_allowed=change_owner_allowed,
                 soft_delete=soft_delete,
                 raise_errors=True,
                 log_events=True,
                 log_transitions=True,
             )
-            ok = True
+            domain_object.refresh_from_db()
+            if change_owner_allowed:
+                # now run with `rewrite_contacts=True` to overwrite info on back-end instead of sync back to Zenaida
+                outputs = zmaster.domain_synchronize_from_backend(
+                    domain_name=domain_object.name,
+                    refresh_contacts=True,
+                    rewrite_contacts=True,
+                    change_owner_allowed=False,
+                    soft_delete=True,
+                    raise_errors=True,
+                    log_events=True,
+                    log_transitions=True,
+                )
+                domain_object.refresh_from_db()
+                # make sure registrant also was overwritten on back-end
+                outputs.extend(zmaster.domain_synchronize_contacts(
+                    domain_object,
+                    merge_duplicated_contacts=True,
+                    rewrite_registrant=True,
+                    new_registrant=None,
+                    raise_errors=True,
+                    log_events=True,
+                    log_transitions=True,
+                ))
+                domain_object.refresh_from_db()
             for output in outputs:
                 if isinstance(output, Exception):
                     report.append('"%s": %r' % (domain_object.name, output, ))
@@ -189,7 +217,7 @@ class DomainAdmin(NestedModelAdmin):
                 domain_object=domain_object,
                 skip_contact_details=True,
                 merge_duplicated_contacts=True,
-                reset_to_oldest_registrant=True,
+                rewrite_registrant=True,
                 raise_errors=True,
                 log_events=True,
                 log_transitions=True,
@@ -207,9 +235,13 @@ class DomainAdmin(NestedModelAdmin):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
     domain_synchronize_from_backend.short_description = "Synchronize from back-end"
 
+    def domain_synchronize_from_backend_transfer(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, change_owner_allowed=True)))
+    domain_synchronize_from_backend_transfer.short_description = "Synchronize and change owner"
+
     def domain_synchronize_from_backend_hard(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=False)))
-    domain_synchronize_from_backend_hard.short_description = "Synchronize from back-end (hard delete)"
+    domain_synchronize_from_backend_hard.short_description = "Synchronize and delete"
 
     def domain_generate_and_set_new_auth_info_key(self, request, queryset):
         self.message_user(request, ', '.join(self._do_generate_and_set_new_auth_info_key(queryset)))

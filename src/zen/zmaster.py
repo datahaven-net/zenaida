@@ -112,27 +112,33 @@ def domain_synchronize_from_backend(domain_name,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from back-end and take required actions to update local DB
-    to be fully in sync with COCCA back-end.
+    to be in sync with COCCA back-end, but with some limitations.
     If domain not exists in local DB it will be created.
-    If domain not exist on COCCA anymore, or owned by another registrar it will be removed from local DB.
-    Returns False if error happened, or raise Exception if `raise_errors` is True,
-    if all is okay returns domain object from local DB.
+    If domain not exist on COCCA anymore, or owned by another registrar it will be removed from local DB,
+    but only if `soft_delete=False`. Otherwise marked as INACTIVE.
+    Skip any actions with domain contacts if `refresh_contacts=False`.
+    If `rewrite_contacts=True` will actually first write current contact IDs is from DB to COCCA and
+    then do the full contacts details synchronization.
     """
     dr = domain_refresher.DomainRefresher(
         log_events=log_events,
         log_transitions=log_transitions,
         raise_errors=raise_errors,
     )
-    dr.event('run',
-        domain_name=domain_name,
-        change_owner_allowed=change_owner_allowed,
-        create_new_owner_allowed=create_new_owner_allowed,
-        refresh_contacts=refresh_contacts,
-        rewrite_contacts=rewrite_contacts,
-        soft_delete=soft_delete,
-        domain_transferred_away=domain_transferred_away,
-    )
-    outputs = list(dr.outputs)
+    outputs = []
+    try:
+        dr.event('run',
+            domain_name=domain_name,
+            change_owner_allowed=change_owner_allowed,
+            create_new_owner_allowed=create_new_owner_allowed,
+            refresh_contacts=refresh_contacts,
+            rewrite_contacts=rewrite_contacts,
+            soft_delete=soft_delete,
+            domain_transferred_away=domain_transferred_away,
+        )
+        outputs = list(dr.outputs)
+    except zerrors.EPPError as exc:
+        outputs = [exc, ]
     del dr
     logger.info('domain_refresher(%r) finished with %d outputs', domain_name, len(outputs))
     return outputs
@@ -141,16 +147,16 @@ def domain_synchronize_from_backend(domain_name,
 def domain_synchronize_contacts(domain_object,
                                 skip_roles=[], skip_contact_details=False,
                                 merge_duplicated_contacts=False,
-                                reset_to_oldest_registrant=False,
+                                rewrite_registrant=False, new_registrant=None,
                                 raise_errors=False, log_events=True, log_transitions=True):
     """
-    Write domain contacts to the back-end.
-    Also deduplicates contacts if `merge_duplicated_contacts=True`.
+    Write domain contacts to the back-end including contacts details info.
+    Must pass `rewrite_registrant=True` if need to write registrant info also.
+    Also de-duplicates contacts if `merge_duplicated_contacts=True`.
     """
-    new_registrant = None
-    if reset_to_oldest_registrant:
+    if rewrite_registrant:
         from zen import zcontacts
-        new_registrant = zcontacts.get_oldest_registrant(domain_object.owner)
+        new_registrant = new_registrant or zcontacts.get_oldest_registrant(domain_object.owner)
     dcs = domain_contacts_synchronizer.DomainContactsSynchronizer(
         update_domain=True,
         skip_roles=skip_roles,

@@ -34,6 +34,20 @@ def test_contact_create_from_profile():
     assert tester_contact.owner.email == 'my@zenaida.ai'
 
 
+@pytest.mark.django_db
+def test_registrant_find_by_contact_email():
+    tester = testsupport.prepare_tester_account(email='tester@zenaida.ai')
+    tester_registrant = testsupport.prepare_tester_registrant(tester=tester, epp_id='reg1234', profile_object=tester.profile, create_new=True)
+    assert zcontacts.registrant_find(contact_email='tester@zenaida.ai') == tester_registrant
+
+
+@pytest.mark.django_db
+def test_registrant_find_by_epp_id():
+    tester = testsupport.prepare_tester_account(email='tester@zenaida.ai')
+    tester_registrant = testsupport.prepare_tester_registrant(tester=tester, epp_id='reg1234', profile_object=tester.profile, create_new=True)
+    assert zcontacts.registrant_find(epp_id='reg1234') == tester_registrant
+
+
 class TestClearContactsChange(TestCase):
 
     def test_add3_remove3_no_change(self):

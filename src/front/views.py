@@ -192,6 +192,12 @@ class AccountDomainUpdateView(UpdateView):
                 messages.error(self.request, 'There is a technical problem with domain processing. '
                                              'Please try again later or contact site administrator')
                 return super().form_valid(form)
+
+        if form.cleaned_data.get('invalid_nameservers'):
+            messages.warning(self.request, "Your domain info is saved. However, nameserver(s) you "
+                                           "provided is not reachable at this moment.")
+            return super().form_valid(form)
+
         messages.success(self.request, self.success_message)
         return super().form_valid(form)
 

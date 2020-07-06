@@ -328,6 +328,41 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/contacts/'
 
+    @mock.patch('django.contrib.messages.warning')
+    @mock.patch('zen.zmaster.contact_create_update')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('os.system')
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    def test_nameserver_is_not_available(
+        self, mock_epp_call, mock_ping, mock_user_profile_complete, mock_contact_create_update, mock_messages_warning
+    ):
+        mock_epp_call.return_value = True
+        mock_ping.return_value = -1
+        mock_user_profile_complete.return_value = True
+
+        # Create a contact person to have a domain.
+        mock_contact_create_update.return_value = True
+        self.client.post('/contacts/create/', data=contact_person, follow=True)
+
+        # Create a domain.
+        created_domain = Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345'
+        )
+
+        # Update the domain.
+        response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
+            nameserver1='dns1.kuwaitnet.net',
+            contact_tech=Contact.contacts.all()[0].id,
+        ))
+
+        assert response.status_code == 302
+        mock_messages_warning.assert_called_once()
+
 
 class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zcontacts.list_contacts')

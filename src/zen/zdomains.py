@@ -11,6 +11,7 @@ from django.core import exceptions
 from back.models.registrar import Registrar
 
 from zen import zzones
+from zen import zcontacts
 from zen import zusers
 
 logger = logging.getLogger(__name__)
@@ -206,7 +207,7 @@ def domain_unregister(domain_id=None, domain_name=None):
     domain_object.epp_statuses = None
     domain_object.auth_key = ''
     domain_object.save()
-    logger.info('domain %r is unregistered', domain_object)
+    logger.info('domain %r unregistered', domain_object)
     return True
 
 
@@ -216,7 +217,7 @@ def domain_delete(domain_id=None, domain_name=None):
     """
     from back.models.domain import Domain
     if domain_name is not None:
-        logger.info('domain domain_name=%r will be removed', domain_name)
+        logger.info('domain %r will be removed', domain_name)
         return Domain.domains.filter(name=domain_name).delete()
     logger.info('domain domain_id=%r will be removed', domain_id)
     return Domain.domains.filter(id=domain_id).delete()
@@ -228,32 +229,117 @@ def domain_change_registrant(domain_object, new_registrant_object, save=True):
     Need to keep in mind that each registrant must have same owner as a domain he controls.
     """
     new_owner = new_registrant_object.owner
+    current_owner = domain_object.owner
     current_registrant = domain_object.registrant
     domain_object.registrant = new_registrant_object
     domain_object.owner = new_owner
     if save:
         domain_object.save()
-    logger.info('domain %s registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
+    logger.info('domain %r registrant changed: %r -> %r', domain_object.name, current_registrant, new_registrant_object)
+    if current_owner != new_owner:
+        logger.info('domain %r owner changed after registrant update: %r -> %r', domain_object.name, current_owner, new_owner)
     return domain_object
 
 
-def domain_change_owner(domain_object, new_owner, save=True):
+def domain_change_owner_from_registrant_email(domain_object, new_registrant_email, save=True):
+    """
+    Search for existing registrant with `contact_email` field value equals to `new_registrant_email`.
+    If such exists attach `domain_object` to its owner and update domain registrant in local DB.
+    If registrant with `new_registrant_email` is not found - creates new  account and profile
+    if not exists and also new registrant and attach `domain_object` to the new account.
+    """
+    existing_registrant = zcontacts.registrant_find(contact_email=new_registrant_email)
+    if existing_registrant:
+        if domain_object.registrant.id == existing_registrant.id:
+            logger.warn('skip registrant change, current domain %r registrant %r already has same email',
+                        domain_object.name, existing_registrant)
+            return domain_object
+        logger.info('found existing registrant %r and will change the owner to %r', existing_registrant, existing_registrant.owner)
+        domain_object = domain_change_registrant(domain_object, existing_registrant, save=save)
+        domain_object = domain_detach_contact(domain_object, 'admin')
+        domain_object = domain_detach_contact(domain_object, 'billing')
+        domain_object = domain_detach_contact(domain_object, 'tech')
+        domain_object.refresh_from_db()
+        first_contact = domain_object.owner.contacts.first()
+        if first_contact:
+            domain_object = domain_join_contact(domain_object, 'admin', first_contact)
+            domain_object.refresh_from_db()
+        return domain_object
+    # must create a new account (if not exist) and registrant with a new email now
+    logger.info('will create new account and registrant for %s and copy details from %r', new_registrant_email, domain_object.registrant)
+    existing_account = zusers.find_account(email=new_registrant_email)
+    if not existing_account:
+        existing_account = zusers.create_account(
+            email=new_registrant_email,
+            account_password=zusers.generate_password(length=10),
+            also_profile=True,
+            is_active=True,
+            person_name=domain_object.registrant.person_name,
+            organization_name=domain_object.registrant.organization_name,
+            address_street=domain_object.registrant.address_street,
+            address_city=domain_object.registrant.address_city,
+            address_province=domain_object.registrant.address_province,
+            address_postal_code=domain_object.registrant.address_postal_code,
+            address_country=domain_object.registrant.address_country,
+            contact_voice=domain_object.registrant.contact_voice,
+            contact_fax=domain_object.registrant.contact_fax,
+            contact_email=new_registrant_email,  # email changed here
+        )
+    if not hasattr(existing_account, 'profile'):
+        zusers.create_profile(
+            existing_account,
+            person_name=domain_object.registrant.person_name,
+            organization_name=domain_object.registrant.organization_name,
+            address_street=domain_object.registrant.address_street,
+            address_city=domain_object.registrant.address_city,
+            address_province=domain_object.registrant.address_province,
+            address_postal_code=domain_object.registrant.address_postal_code,
+            address_country=domain_object.registrant.address_country,
+            contact_voice=domain_object.registrant.contact_voice,
+            contact_fax=domain_object.registrant.contact_fax,
+            contact_email=new_registrant_email,
+        )
+    if len(list(existing_account.contacts.all())) == 0:
+        zcontacts.contact_create_from_profile(
+            owner=existing_account,
+            profile_object=existing_account.profile,
+        )
+    new_registrant = zcontacts.registrant_create_from_profile(
+        owner=existing_account,
+        profile_object=existing_account.profile,
+        # we will have to create another registrant object, and contacts must be de-duplicated later
+        epp_id=None,
+    )
+    domain_object = domain_change_registrant(domain_object, new_registrant, save=save)
+    domain_object = domain_detach_contact(domain_object, 'admin')
+    domain_object = domain_detach_contact(domain_object, 'billing')
+    domain_object = domain_detach_contact(domain_object, 'tech')
+    domain_object.refresh_from_db()
+    first_contact = existing_account.contacts.first()
+    if first_contact:
+        domain_object = domain_join_contact(domain_object, 'admin', first_contact)
+        domain_object.refresh_from_db()
+    return domain_object
+
+
+def domain_change_owner(domain_object, new_owner, also_registrants=True, save=True):
     """
     Change owner of the domain.
     Need to keep in mind that each registrant must have same owner as a domain he controls.
     """
     current_owner = domain_object.owner
     count = 0
-    for registrant in domain_object.registrants:
-        # change owners all of my known registrant contacts (I can have multiple ...)
-        registrant.owner = new_owner
-        if save:
-            registrant.owner.save()
-        count += 1
+    if also_registrants:
+        for registrant in domain_object.owner.registrants.all():
+            # change owners all of my known registrant contacts (I can have multiple ...)
+            registrant.owner = new_owner
+            if save:
+                registrant.save()
+            count += 1
     domain_object.owner = new_owner
     if save:
         domain_object.save()
-    logger.info('domain %s owner changed (and all %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
+    logger.info('domain %r owner changed (also for %d registrants): %r -> %r', domain_object.name, count, current_owner, new_owner)
     return domain_object
 
 
@@ -263,9 +349,12 @@ def domain_join_contact(domain_object, role, new_contact_object):
     This will only create a new relation, contact object must already exist.
     """
     current_contact = domain_object.get_contact(role)
+    if current_contact == new_contact_object:
+        logger.info('domain %s contact "%s" was not modified', domain_object.name, role)
+        return domain_object
     domain_object.set_contact(role, new_contact_object)
     domain_object.save()
-    logger.info('domain %s contact "%s" modified : %r -> %r', domain_object.name, role, current_contact, new_contact_object)
+    logger.info('domain %r contact role %r modified : %r -> %r', domain_object.name, role, current_contact, new_contact_object)
     return domain_object
 
 
@@ -277,7 +366,7 @@ def domain_detach_contact(domain_object, role):
     current_contact = domain_object.get_contact(role)
     domain_object.set_contact(role, None)
     domain_object.save()
-    logger.info('domain %s contact "%s" disconnected, previous was : %r', domain_object.name, role, current_contact)
+    logger.info('domain %r contact role %r disconnected, previous was : %r', domain_object.name, role, current_contact)
     return domain_object
 
 
@@ -287,7 +376,7 @@ def domain_set_auth_key(domain_object, new_auth_key):
     """
     domain_object.auth_key = new_auth_key
     domain_object.save()
-    logger.info('domain %s auth_key changed', domain_object.name)
+    logger.info('domain %r auth_key changed', domain_object.name)
     return domain_object
 
 
@@ -305,12 +394,12 @@ def get_last_registered_domain(registrant_email):
 
 def list_domains(registrant_email):
     """
-    List all domains for given user identified by email where he have registrant role assigned.
+    List all domains for given user identified by email.
     """
     existing_account = zusers.find_account(registrant_email)
     if not existing_account:
         return []
-    return list(existing_account.domains.all())
+    return list(existing_account.domains.all().order_by('-expiry_date'))
 
 #------------------------------------------------------------------------------
 
@@ -376,12 +465,12 @@ def update_nameservers(domain_object, hosts=[], domain_info_response=None):
     for i in range(len(hosts)):
         if hosts[i]:
             if existing_nameservers[i] != hosts[i]:
-                logger.info('nameserver host at position %d to be changed for %s : %s -> %s',
-                             i, domain_object, existing_nameservers[i], hosts[i])
+                logger.info('nameserver host at position %d to be changed for %r : %s -> %s',
+                             i, domain_object.name, existing_nameservers[i], hosts[i])
                 domain_object.set_nameserver(i, hosts[i])
                 domain_modified = True
         else:
-            logger.info('nameserver host at position %d to be erased for %s', i, domain_object)
+            logger.info('nameserver host at position %d to be erased for %r', i, domain_object.name)
             domain_object.clear_nameserver(i)
             domain_modified = True
     if domain_modified:
@@ -426,10 +515,14 @@ def compare_contacts(domain_object, domain_info_response, target_contacts=None):
     for role, contact_object in target_contacts:
         if role == 'registrant':
             continue
-        if contact_object:
-            if contact_object.epp_id:
-                new_contacts.append({'type': role, 'id': contact_object.epp_id, })
-                new_contacts_dict[role] = contact_object.epp_id
+        if not contact_object:
+            continue
+        if contact_object.owner != domain_object.owner:
+            remove_contacts.append({'type': role, 'id': contact_object.epp_id, })
+            continue
+        if contact_object.epp_id:
+            new_contacts.append({'type': role, 'id': contact_object.epp_id, })
+            new_contacts_dict[role] = contact_object.epp_id
 
     for new_cont in new_contacts:
         if new_cont['type'] not in current_contacts_dict:
@@ -460,7 +553,7 @@ def compare_contacts(domain_object, domain_info_response, target_contacts=None):
     if domain_object.registrant and current_registrant and current_registrant != domain_object.registrant.epp_id:
         change_registrant = domain_object.registrant.epp_id
     logger.info('for %r found such changes: add_contacts=%r remove_contacts=%r change_registrant=%r',
-                 domain_object, add_contacts, remove_contacts, change_registrant)
+                 domain_object.name, add_contacts, remove_contacts, change_registrant)
     return add_contacts, remove_contacts, change_registrant
 
 #------------------------------------------------------------------------------
@@ -508,7 +601,7 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         domain_object.save()
     if modified:
         logger.info('domain %r new status is %r because EPP statuses modified:  %r -> %r',
-                    domain_object, domain_object.status, current_domain_statuses, new_domain_statuses)
+                    domain_object.name, domain_object.status, current_domain_statuses, new_domain_statuses)
     return True
 
 #------------------------------------------------------------------------------

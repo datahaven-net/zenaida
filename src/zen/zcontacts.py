@@ -123,10 +123,10 @@ def contact_create(epp_id, owner, contact_info_response=None, raise_owner_exist=
             contact_fax=str(d.get('fax', '')),
             contact_email=str(d['email']),
         )
-        logger.info('contact created: %s', new_contact)
+        logger.info('contact created: %r', new_contact)
         return new_contact
     new_contact = Contact.contacts.create(epp_id=epp_id, owner=owner, **kwargs)
-    logger.info('contact created: %s', new_contact)
+    logger.info('contact created: %r', new_contact)
     return new_contact
 
 
@@ -147,7 +147,7 @@ def contact_create_from_profile(owner, profile_object):
         contact_fax=profile_object.contact_fax or '',
         contact_email=profile_object.contact_email,
     )
-    logger.info('contact created from existing profile: %s', new_contact)
+    logger.info('contact created from existing profile: %r', new_contact)
     return new_contact
 
 
@@ -159,7 +159,7 @@ def contact_update(epp_id, **kwargs):
     if not existing_contact:
         raise Exception('Contact not found')
     updated = Contact.contacts.filter(pk=existing_contact.pk).update(**kwargs)
-    logger.info('contact updated: %s', existing_contact)
+    logger.info('contact updated: %r', existing_contact)
     return updated
 
 
@@ -184,7 +184,7 @@ def contact_refresh(epp_id, contact_info_response):
         contact_fax=str(d.get('fax', '')),
         contact_email=str(d['email']),
     )
-    logger.info('contact refreshed: %s', existing_contact)
+    logger.info('contact refreshed: %r', existing_contact)
     return updated
 
 
@@ -324,14 +324,14 @@ def registrant_create(epp_id, owner, **kwargs):
     Creates new Registrant for given owner, but only if Registrant with same epp_id not exist yet.
     """
     if epp_id:
-        existing_registrant = registrant_find(epp_id)
+        existing_registrant = registrant_find(epp_id=epp_id)
         if existing_registrant:
             if existing_registrant.owner.pk != owner.pk:
                 raise Exception('Invalid owner, existing registrant have another owner already')
             logger.debug('registrant with epp_id=%s already exist', epp_id)
             return existing_registrant
     new_registrant = Registrant.registrants.create(epp_id=epp_id, owner=owner, **kwargs)
-    logger.info('registrant created: %s', new_registrant)
+    logger.info('registrant created: %r', new_registrant)
     return new_registrant
 
 
@@ -353,7 +353,7 @@ def registrant_create_from_profile(owner, profile_object, epp_id=None):
         contact_fax=profile_object.contact_fax or '',
         contact_email=profile_object.contact_email,
     )
-    logger.info('registrant created from existing profile: %s', new_contact)
+    logger.info('registrant created from existing profile: %r', new_contact)
     return new_contact
 
 
@@ -361,11 +361,11 @@ def registrant_update(epp_id, **kwargs):
     """
     Update given Registrant with new field values.
     """
-    existing_registrant = registrant_find(epp_id)
+    existing_registrant = registrant_find(epp_id=epp_id)
     if not existing_registrant:
         raise Exception('Registrant not found')
     updated = Registrant.registrants.filter(pk=existing_registrant.pk).update(**kwargs)
-    logger.info('registrant updated: %s', existing_registrant)
+    logger.info('registrant updated: %r', existing_registrant)
     return updated
 
 
@@ -385,7 +385,7 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
     registrant_object.contact_email = profile_object.contact_email
     if save:
         registrant_object.save()
-    logger.info('registrant updated from profile: %s', registrant_object)
+    logger.info('registrant updated from profile: %r', registrant_object)
     return True
 
 
@@ -395,14 +395,16 @@ def registrant_delete(epp_id):
     WARNING! will aslo remove all domains associated to the registrant.
     """
     Registrant.registrants.filter(epp_id=epp_id).delete()
-    logger.info('registrant with epp_id %r deleted', epp_id)
+    logger.info('registrant with epp_id=%r deleted', epp_id)
     return True
 
 
-def registrant_find(epp_id):
+def registrant_find(epp_id=None, contact_email=None):
     """
     If such Registrant exists with given epp_id - returns it, otherwise None.
     """
+    if contact_email is not None:
+        return Registrant.registrants.filter(contact_email=contact_email).first()
     return Registrant.registrants.filter(epp_id=epp_id).first()
 
 
@@ -410,11 +412,13 @@ def registrant_exists(epp_id):
     """
     Return `True` if Registrant with given epp_id exists, doing query in Registrant table.
     """
-    return registrant_find(epp_id) is not None
+    return registrant_find(epp_id=epp_id) is not None
 
 
 def get_oldest_registrant(owner):
     """
     Return "oldest" Registrant object for given user or None, doing query in Registrant table.
     """
-    return Registrant.registrants.filter(owner=owner).order_by('id').first()
+    found_registrant = Registrant.registrants.filter(owner=owner).order_by('id').first()
+    logger.info('oldest registrant for %r is: %r', owner, found_registrant)
+    return found_registrant

@@ -187,7 +187,8 @@ class DomainContactsSynchronizer(automat.Automat):
                     zdomains.domain_join_contact(self.target_domain, role, self.target_contacts[role])
         if self.new_registrant:
             if self.new_registrant.epp_id != self.target_domain.registrant.epp_id:
-                zdomains.domain_change_registrant(self.target_domain, self.new_registrant)
+                self.target_domain = zdomains.domain_change_registrant(self.target_domain, self.new_registrant)
+                self.target_domain.refresh_from_db()
 
     def doSyncContacts(self, *args, **kwargs):
         """
@@ -297,5 +298,3 @@ class DomainContactsSynchronizer(automat.Automat):
         self.target_domain = None
         self.target_contacts = None
         self.destroy()
-
-

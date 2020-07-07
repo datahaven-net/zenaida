@@ -174,7 +174,7 @@ if ZENAIDA_AUTOMATS_LOG_FILENAME:
     LOGGING['loggers']['automats.automat'] = {
         'level': LOG_LEVEL,
         'propagate': False,
-        'handlers': ['automats', ]
+        'handlers': ['automats', 'console', ]
     }
 
 #------------------------------------------------------------------------------

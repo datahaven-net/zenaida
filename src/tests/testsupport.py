@@ -26,7 +26,7 @@ def prepare_tester_account(email='tester@zenaida.ai', account_password='tester',
             address_country='AI',
             contact_voice='1234567890',
             contact_fax='1234567890',
-            contact_email='tester@zenaida.ai',
+            contact_email=email,
             automatic_renewal_enabled=automatic_renewal_enabled,
             email_notifications_enabled=email_notifications_enabled,
         )
@@ -99,6 +99,7 @@ def prepare_tester_domain(
         epp_id_dict={},
         nameservers=['notexist1.com', 'notexist2.com', ],
         auto_renew_enabled=None,
+        create_new_registrant=True,
     ):
     if not tester:
         tester = prepare_tester_account()
@@ -107,7 +108,7 @@ def prepare_tester_domain(
         tester,
         epp_id=epp_id_dict.get('registrant', ''),
         profile_object=tester.profile,
-        create_new=True,
+        create_new=create_new_registrant,
     ) if 'registrant' in add_contacts else None
 
     tester_contact_admin = prepare_tester_contact(

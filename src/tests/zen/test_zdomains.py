@@ -205,3 +205,84 @@ class TestDomainCompareContacts(TestCase):
         assert add_contacts == [{'id': 'admin_1', 'type': 'admin'}, {'id': 'billing_1', 'type': 'billing'}, {'id': 'tech_1', 'type': 'tech'}, ]
         assert remove_contacts == [{'id': 'admin_2', 'type': 'admin'}, {'id': 'billing_2', 'type': 'billing'}, {'id': 'tech_2', 'type': 'tech'}, ]
         assert change_registrant is None
+
+
+class TestDomainChangeOwner(TestCase):
+
+    def test_change_owner(self):
+        tester1 = testsupport.prepare_tester_account(email='tester1@zenaida.ai')
+        tester2 = testsupport.prepare_tester_account(email='tester2@zenaida.ai')
+        tester_domain = testsupport.prepare_tester_domain(domain_name='abc.ai', tester=tester1)
+        assert tester_domain.owner == tester1
+        assert tester_domain.registrant.owner == tester1
+        tester_domain = zdomains.domain_change_owner(domain_object=tester_domain, new_owner=tester2, also_registrants=False, save=True)
+        tester_domain.refresh_from_db()
+        assert tester_domain.owner == tester2
+        assert tester_domain.registrant.owner == tester1
+
+    def test_change_owner_and_registrants(self):
+        tester1 = testsupport.prepare_tester_account(email='tester1@zenaida.ai')
+        tester2 = testsupport.prepare_tester_account(email='tester2@zenaida.ai')
+        tester_domain = testsupport.prepare_tester_domain(domain_name='abc.ai', tester=tester1)
+        assert tester_domain.owner == tester1
+        assert tester_domain.registrant.owner == tester1
+        tester_domain = zdomains.domain_change_owner(domain_object=tester_domain, new_owner=tester2, also_registrants=True, save=True)
+        tester_domain.refresh_from_db()
+        assert tester_domain.owner == tester2
+        assert tester_domain.registrant.owner == tester2
+
+    def test_change_owner_from_registrant_email_to_new_account(self):
+        tester1 = testsupport.prepare_tester_account(email='tester1@zenaida.ai')
+        tester1_registrant = testsupport.prepare_tester_registrant(tester=tester1, epp_id='reg1234', profile_object=tester1.profile, create_new=True)
+        tester1_contact = testsupport.prepare_tester_contact(tester=tester1, epp_id='admin1234', create_new=True)
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abc.ai',
+            tester=tester1,
+            add_contacts=['registrant', 'admin', ],
+            epp_id_dict={'admin': 'admin1234', },
+            create_new_registrant=False,
+        )
+        assert tester_domain.owner == tester1
+        assert tester_domain.registrant == tester1_registrant
+        assert tester_domain.registrant.owner == tester1
+        assert tester_domain.get_contact('admin') == tester1_contact
+        assert tester_domain.get_contact('billing') is None
+        assert tester_domain.get_contact('tech') is None
+        zdomains.domain_change_owner_from_registrant_email(domain_object=tester_domain, new_registrant_email='tester2@zenaida.ai', save=True)
+        tester_domain.refresh_from_db()
+        assert tester_domain.owner != tester1
+        assert tester_domain.registrant != tester1_registrant
+        assert tester_domain.registrant.owner != tester1
+        assert tester_domain.get_contact('admin') != tester1_contact
+        assert tester_domain.get_contact('billing') is None
+        assert tester_domain.get_contact('tech') is None
+
+    def test_change_owner_from_registrant_email_to_existing_account(self):
+        tester1 = testsupport.prepare_tester_account(email='tester1@zenaida.ai')
+        tester1_registrant = testsupport.prepare_tester_registrant(tester=tester1, epp_id='reg1234', profile_object=tester1.profile, create_new=True)
+        tester1_contact = testsupport.prepare_tester_contact(tester=tester1, epp_id='admin1234', create_new=True)
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abc.ai',
+            tester=tester1,
+            add_contacts=['registrant', 'admin', ],
+            epp_id_dict={'admin': 'admin1234', },
+            create_new_registrant=False,
+        )
+        tester2 = testsupport.prepare_tester_account(email='tester2@zenaida.ai')
+        tester2_registrant = testsupport.prepare_tester_registrant(tester=tester2, epp_id='reg5678', profile_object=tester2.profile, create_new=True)
+        tester2_contact = testsupport.prepare_tester_contact(tester=tester2, epp_id='tech5678', create_new=True)
+        assert tester_domain.owner == tester1
+        assert tester_domain.registrant == tester1_registrant
+        assert tester_domain.registrant.owner == tester1
+        assert tester_domain.get_contact('admin') == tester1_contact
+        assert tester_domain.get_contact('billing') is None
+        assert tester_domain.get_contact('tech') is None
+        zdomains.domain_change_owner_from_registrant_email(domain_object=tester_domain, new_registrant_email='tester2@zenaida.ai', save=True)
+        tester_domain.refresh_from_db()
+        # tester2_registrant.refresh_from_db
+        assert tester_domain.owner == tester2
+        assert tester_domain.registrant == tester2_registrant
+        assert tester_domain.registrant.owner == tester2
+        assert tester_domain.get_contact('admin') == tester2_contact
+        assert tester_domain.get_contact('billing') is None
+        assert tester_domain.get_contact('tech') is None

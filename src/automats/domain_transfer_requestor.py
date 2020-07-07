@@ -135,6 +135,7 @@ class DomainTransferRequestor(automat.Automat):
         """
         Condition method.
         """
+        # TODO: Update state machine, this step is not needed anymore.
         # current_registrar = args[0]['epp']['response']['resData']['infData']['clID']
         # domain must not belong to the given registrar
         return True

@@ -416,6 +416,11 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
         mock_messages_error.assert_called_once()
 
 
+class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
+    # TODO: Add these tests
+    pass
+
+
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db

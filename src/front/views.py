@@ -233,6 +233,7 @@ class AccountDomainTransferTakeoverView(FormView):
     def form_valid(self, form):
         domain_name = form.cleaned_data.get('domain_name').strip()
         transfer_code = form.cleaned_data.get('transfer_code').strip()
+        internal = False  # defines if transfer within same registrar
         info = zmaster.domain_read_info(
             domain=domain_name,
             auth_info=transfer_code,
@@ -242,8 +243,7 @@ class AccountDomainTransferTakeoverView(FormView):
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
         if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
-            messages.warning(self.request, 'Domain transfer is not possible')
-            return super().form_invalid(form)
+            internal = True
         current_statuses = info['epp']['response']['resData']['infData']['status']
         current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
         current_statuses = [s['@s'] for s in current_statuses]
@@ -259,6 +259,7 @@ class AccountDomainTransferTakeoverView(FormView):
             price = 0.0
         else:
             price = settings.ZENAIDA_DOMAIN_PRICE
+
         transfer_order = orders.order_single_item(
             owner=self.request.user,
             item_type='domain_transfer',
@@ -267,6 +268,7 @@ class AccountDomainTransferTakeoverView(FormView):
             item_details={
                 'transfer_code': transfer_code,
                 'rewrite_contacts': form.cleaned_data.get('rewrite_contacts'),
+                'internal': internal
             },
         )
         messages.success(self.request, self.success_message)

@@ -137,9 +137,10 @@ class DomainTransferRequestor(automat.Automat):
         """
         Condition method.
         """
-        current_registrar = args[0]['epp']['response']['resData']['infData']['clID']
+        # current_registrar = args[0]['epp']['response']['resData']['infData']['clID']
         # domain must not belong to the given registrar
-        return current_registrar != settings.ZENAIDA_REGISTRAR_ID
+        return True
+        # return current_registrar != settings.ZENAIDA_REGISTRAR_ID
 
     def doInit(self, *args, **kwargs):
         """

@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 from back.models.domain import Domain
 from back.models.zone import Zone
 from billing.models.order import Order
+from billing.models.order_item import OrderItem
 from billing.models.payment import Payment
 from billing.payments import finish_payment
 from zen import zusers
@@ -395,6 +396,56 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/domains/'
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_synchronize_from_backend')
+    @mock.patch('zen.zmaster.domain_synchronize_contacts')
+    def test_order_execute_within_same_registrant(self, mock_sync_contacts, mock_sync_backend):
+        account_to_transfer = zusers.create_account('new_user@zenaida.ai', account_password='123', is_active=True)
+        self.client.login(email='new_user@zenaida.ai', password='123')
+
+        # Create the order and order_item for the account_to_transfer
+        order = Order.orders.create(
+            owner=account_to_transfer,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed',
+        )
+        OrderItem.order_items.create(
+            order=order,
+            type='domain_transfer',
+            price=0,
+            details={
+                'internal': True,
+                'transfer_code': 'abcd1234',
+            },
+            name='test.ai'
+        )
+
+        # Create a domain owned by previous user.
+        ai_zone = Zone.zones.create(name='ai')
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=ai_zone,
+            epp_id='epp2',
+            status='active',
+            auth_key='abcd1234'
+        )
+
+        response = self.client.post(f'/billing/order/process/{order.id}/')
+        assert response.status_code == 302
+        assert response.url == '/domains/'
+
+        # Check if backends is called to sync the domain info
+        mock_sync_contacts.assert_called_once()
+        mock_sync_backend.assert_called_once()
+
+        # Check if domain is transfered to the new owner in database
+        transfered_domain = Domain.domains.filter(name='test.ai')[0]
+        assert transfered_domain.auth_key == ''
+        assert transfered_domain.owner == account_to_transfer
 
     @pytest.mark.django_db
     def test_order_execute_returns_technical_error(self):

@@ -14,7 +14,7 @@ from billing import billing_errors
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
-from zen import zdomains
+from zen import zdomains, zcontacts
 from zen import zmaster
 
 #------------------------------------------------------------------------------
@@ -314,6 +314,47 @@ def execute_domain_transfer(order_item):
     """
     Execute domain transfer take-over order fulfillment and update order item, status will be "pending".
     """
+    if hasattr(order_item, 'details') and order_item.details.get('internal'):
+        domain = zdomains.domain_find(order_item.name)
+        if domain and domain.auth_key and domain.auth_key == order_item.details.get('transfer_code'):
+            # Change the owner of the domain
+            domain = zdomains.domain_change_owner(domain, order_item.order.owner)
+            domain.refresh_from_db()
+
+            # Override info on backend
+            zmaster.domain_synchronize_from_backend(
+                domain_name=domain.name,
+                refresh_contacts=True,
+                rewrite_contacts=True,
+                change_owner_allowed=False,
+                soft_delete=True,
+                raise_errors=True,
+                log_events=True,
+                log_transitions=True,
+            )
+            domain.refresh_from_db()
+
+            # Override registrant on backend
+            zmaster.domain_synchronize_contacts(
+                domain,
+                merge_duplicated_contacts=True,
+                rewrite_registrant=True,
+                new_registrant=None,
+                raise_errors=True,
+                log_events=True,
+                log_transitions=True,
+            )
+            domain.refresh_from_db()
+
+            # Auth key shouldn't be used anymore as transfer is done.
+            domain.auth_key = ''
+            domain.save()
+
+            # In the end, order is done so, update order item as processed.
+            update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+
+            return True
+
     if not zmaster.domain_transfer_request(
         domain=order_item.name,
         auth_info=order_item.details.get('transfer_code'),

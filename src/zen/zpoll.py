@@ -155,15 +155,38 @@ def do_domain_nameservers_changed(domain):
 
 def do_domain_contacts_changed(domain):
     logger.info('domain %s contacts changed', domain)
+    # step 1: read info from back-end and make changes in local DB
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=True,
+            rewrite_contacts=False,
+            change_owner_allowed=True,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    # step 2: write changes to back-end
     try:
         zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             rewrite_contacts=True,
-            change_owner_allowed=True,
+            change_owner_allowed=False,
         )
     except zerrors.EPPError:
-        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        logger.exception('failed to re-write domain info on back-end: %s' % domain)
+        return False
+    # step 3: read again latest info from back-end and make sure all contacts are refreshed
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=True,
+            rewrite_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain contacts from back-end: %s' % domain)
         return False
     return True
 

@@ -41,7 +41,7 @@ class DomainsChecker(automat.Automat):
     """
 
     def __init__(self, verify_registrant=True, skip_check=False, skip_info=False, stop_on_error=False,
-                 debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
+                 debug_level=4, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domains_checker()` state machine.
         """

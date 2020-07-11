@@ -32,7 +32,7 @@ class ContactSynchronizer(automat.Automat):
     This class implements all the functionality of ``contact_synchronizer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
+    def __init__(self, debug_level=4, log_events=None, log_transitions=None, raise_errors=False, **kwargs):
         """
         Builds `contact_synchronizer()` state machine.
         """

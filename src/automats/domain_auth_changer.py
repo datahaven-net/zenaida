@@ -32,7 +32,7 @@ class DomainAuthChanger(automat.Automat):
     This class implements all the functionality of ``domain_auth_changer()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
+    def __init__(self, debug_level=4, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domain_auth_changer()` state machine.
         """

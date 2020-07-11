@@ -47,7 +47,7 @@ class DomainRefresher(automat.Automat):
     This class implements all the functionality of ``domain_refresher()`` state machine.
     """
 
-    def __init__(self, debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
+    def __init__(self, debug_level=4, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domain_refresher()` state machine.
         """
@@ -352,12 +352,13 @@ class DomainRefresher(automat.Automat):
         if not self.target_domain:
             self.contacts_changed = True
         else:
-            add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
-                domain_object=self.target_domain,
-                domain_info_response=response,
-            )
-            if add_contacts or remove_contacts or change_registrant:
-                self.contacts_changed = True
+            if not self.refresh_contacts:
+                add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
+                    domain_object=self.target_domain,
+                    domain_info_response=response,
+                )
+                if add_contacts or remove_contacts or change_registrant:
+                    self.contacts_changed = True
 
         # detect current registrant
         try:
@@ -621,6 +622,8 @@ class DomainRefresher(automat.Automat):
             existing_contact = zcontacts.by_epp_id(epp_id=received_contact_id)
             if existing_contact:
                 if existing_contact.owner != self.known_registrant.owner:
+                    if self.change_owner_allowed:
+                        continue
                     logger.error('existing contact have another owner in local DB')
                     self.event('error', zerrors.EPPRegistrantAuthFailed('existing contact have another owner in local DB'))
                     return
@@ -666,12 +669,16 @@ class DomainRefresher(automat.Automat):
         # update registrant of the domain if it is known
         if self.target_domain.registrant != self.known_registrant:
             if not self.change_owner_allowed:
-                self.event('error', zerrors.EPPRegistrantAuthFailed('domain already have another registrant in local DB'))
-                return
+                logger.error('domain registrant changed, but domain already have another owner in local DB')
+                raise zerrors.EPPRegistrantAuthFailed('domain registrant changed, but domain already have another owner in local DB')
             logger.info('domain %r going to switch registrant %r to %r',
                         self.target_domain, self.target_domain.registrant, self.known_registrant)
             self.target_domain = zdomains.domain_change_registrant(self.target_domain, self.known_registrant)
             self.target_domain.refresh_from_db()
+            first_contact = self.known_registrant.owner.contacts.first()
+            self.target_domain = zdomains.domain_replace_contacts(self.target_domain, new_admin_contact=first_contact)
+            self.target_domain.refresh_from_db()
+            return
         # make sure owner of the domain is correct
         if self.target_domain.owner != self.known_registrant.owner:
             # just in case given user have multiple registrant contacts... 
@@ -682,20 +689,30 @@ class DomainRefresher(automat.Automat):
                         self.target_domain, self.target_domain.owner, self.known_registrant.owner)
             self.target_domain = zdomains.domain_change_owner(self.target_domain, self.known_registrant.owner)
             self.target_domain.refresh_from_db()
+            first_contact = self.known_registrant.owner.contacts.first()
+            self.target_domain = zdomains.domain_replace_contacts(self.target_domain, new_admin_contact=first_contact)
+            self.target_domain.refresh_from_db()
             return
-        # also check if only registrant's email was changed
+        # also check if registrant's email changed on back-end
+        # in that situation new account needs to be created and all domains and contacts re-attached to the new account
+        # this must be done separately, because that flow is only focused on single domain object
         try:
             received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email']
         except:
-            received_registrant_email = self.target_domain.owner.email
-        if received_registrant_email != self.target_domain.owner.email:
-            if not self.change_owner_allowed:
-                logger.error('registrant email changed and is different from current owner in local DB')
-                raise zerrors.EPPRegistrantAuthFailed('registrant email changed and is different from current owner in local DB')
-            logger.info('domain %r going to switch owner %r because registrant email changed to %r',
-                        self.target_domain, self.target_domain.owner, received_registrant_email, )
-            self.target_domain = zdomains.domain_change_owner_from_registrant_email(self.target_domain, received_registrant_email)
-            self.target_domain.refresh_from_db()
+            received_registrant_email = self.target_domain.registrant.contact_email
+        if received_registrant_email != self.target_domain.registrant.contact_email:
+            existing_registrant = zcontacts.registrant_find(contact_email=received_registrant_email)
+            if existing_registrant:
+                logger.error('registrant %r contact email changed to %r, but another registrant with same email already exist in local DB: %r',
+                             self.target_domain.registrant, received_registrant_email, existing_registrant)
+                raise zerrors.EPPRegistrantAuthFailed('registrant contact email changed, but another registrant with same email already exist in local DB')
+            existing_account = zusers.find_account(email=received_registrant_email)
+            if existing_account:
+                logger.error('registrant %r contact email changed to %r, but another account already exist in local DB with same email: %r',
+                             self.target_domain.registrant, received_registrant_email, existing_registrant)
+                raise zerrors.EPPRegistrantAuthFailed('registrant contact email changed, but another account already exist in local DB with same email')
+            logger.error('registrant %r contact email changed to %s and needs to be synchronized', self.target_domain.registrant, received_registrant_email)
+            raise zerrors.EPPRegistrantAuthFailed('registrant contact email changed and needs to be synchronized')
 
     def doDBCheckChangeContacts(self, *args, **kwargs):
         """

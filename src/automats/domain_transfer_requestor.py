@@ -17,7 +17,6 @@ EVENTS:
 #------------------------------------------------------------------------------
 
 import logging
-import datetime
 
 from django.conf import settings
 
@@ -27,7 +26,6 @@ from automats import automat
 
 from zen import zclient
 from zen import zerrors
-from zen import zdomains
 
 #------------------------------------------------------------------------------
 
@@ -40,7 +38,7 @@ class DomainTransferRequestor(automat.Automat):
     This class implements all the functionality of ``domain_transfer_requestor()`` state machine.
     """
 
-    def __init__(self, skip_info=False, auth_info_verify=True, debug_level=0, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
+    def __init__(self, skip_info=False, auth_info_verify=True, debug_level=4, log_events=False, log_transitions=False, raise_errors=False, **kwargs):
         """
         Builds `domain_transfer_requestor()` state machine.
         """

@@ -241,87 +241,6 @@ def domain_change_registrant(domain_object, new_registrant_object, save=True):
     return domain_object
 
 
-def domain_change_owner_from_registrant_email(domain_object, new_registrant_email, save=True):
-    """
-    Search for existing registrant with `contact_email` field value equals to `new_registrant_email`.
-    If such exists attach `domain_object` to its owner and update domain registrant in local DB.
-    If registrant with `new_registrant_email` is not found - creates new  account and profile
-    if not exists and also new registrant and attach `domain_object` to the new account.
-    """
-    existing_registrant = zcontacts.registrant_find(contact_email=new_registrant_email)
-    if existing_registrant:
-        if domain_object.registrant.id == existing_registrant.id:
-            logger.warn('skip registrant change, current domain %r registrant %r already has same email',
-                        domain_object.name, existing_registrant)
-            return domain_object
-        logger.info('found existing registrant %r and will change the owner to %r', existing_registrant, existing_registrant.owner)
-        domain_object = domain_change_registrant(domain_object, existing_registrant, save=save)
-        domain_object = domain_detach_contact(domain_object, 'admin')
-        domain_object = domain_detach_contact(domain_object, 'billing')
-        domain_object = domain_detach_contact(domain_object, 'tech')
-        domain_object.refresh_from_db()
-        first_contact = domain_object.owner.contacts.first()
-        if first_contact:
-            domain_object = domain_join_contact(domain_object, 'admin', first_contact)
-            domain_object.refresh_from_db()
-        return domain_object
-    # must create a new account (if not exist) and registrant with a new email now
-    logger.info('will create new account and registrant for %s and copy details from %r', new_registrant_email, domain_object.registrant)
-    existing_account = zusers.find_account(email=new_registrant_email)
-    if not existing_account:
-        existing_account = zusers.create_account(
-            email=new_registrant_email,
-            account_password=zusers.generate_password(length=10),
-            also_profile=True,
-            is_active=True,
-            person_name=domain_object.registrant.person_name,
-            organization_name=domain_object.registrant.organization_name,
-            address_street=domain_object.registrant.address_street,
-            address_city=domain_object.registrant.address_city,
-            address_province=domain_object.registrant.address_province,
-            address_postal_code=domain_object.registrant.address_postal_code,
-            address_country=domain_object.registrant.address_country,
-            contact_voice=domain_object.registrant.contact_voice,
-            contact_fax=domain_object.registrant.contact_fax,
-            contact_email=new_registrant_email,  # email changed here
-        )
-    if not hasattr(existing_account, 'profile'):
-        zusers.create_profile(
-            existing_account,
-            person_name=domain_object.registrant.person_name,
-            organization_name=domain_object.registrant.organization_name,
-            address_street=domain_object.registrant.address_street,
-            address_city=domain_object.registrant.address_city,
-            address_province=domain_object.registrant.address_province,
-            address_postal_code=domain_object.registrant.address_postal_code,
-            address_country=domain_object.registrant.address_country,
-            contact_voice=domain_object.registrant.contact_voice,
-            contact_fax=domain_object.registrant.contact_fax,
-            contact_email=new_registrant_email,
-        )
-    if len(list(existing_account.contacts.all())) == 0:
-        zcontacts.contact_create_from_profile(
-            owner=existing_account,
-            profile_object=existing_account.profile,
-        )
-    new_registrant = zcontacts.registrant_create_from_profile(
-        owner=existing_account,
-        profile_object=existing_account.profile,
-        # we will have to create another registrant object, and contacts must be de-duplicated later
-        epp_id=None,
-    )
-    domain_object = domain_change_registrant(domain_object, new_registrant, save=save)
-    domain_object = domain_detach_contact(domain_object, 'admin')
-    domain_object = domain_detach_contact(domain_object, 'billing')
-    domain_object = domain_detach_contact(domain_object, 'tech')
-    domain_object.refresh_from_db()
-    first_contact = existing_account.contacts.first()
-    if first_contact:
-        domain_object = domain_join_contact(domain_object, 'admin', first_contact)
-        domain_object.refresh_from_db()
-    return domain_object
-
-
 def domain_change_owner(domain_object, new_owner, also_registrants=True, save=True):
     """
     Change owner of the domain.
@@ -367,6 +286,18 @@ def domain_detach_contact(domain_object, role):
     domain_object.set_contact(role, None)
     domain_object.save()
     logger.info('domain %r contact role %r disconnected, previous was : %r', domain_object.name, role, current_contact)
+    return domain_object
+
+
+def domain_replace_contacts(domain_object, new_admin_contact=None):
+    """
+    Detach all current contacts of the domain and attach new contact as admin role if required.
+    """
+    domain_object = domain_detach_contact(domain_object, 'admin')
+    domain_object = domain_detach_contact(domain_object, 'billing')
+    domain_object = domain_detach_contact(domain_object, 'tech')
+    if new_admin_contact is not None:
+        domain_object = domain_join_contact(domain_object, 'admin', new_admin_contact)
     return domain_object
 
 

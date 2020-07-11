@@ -158,7 +158,7 @@ if ZENAIDA_EPP_LOG_FILENAME:
     LOGGING['loggers']['zen.zclient'] = {
         'level': LOG_LEVEL,
         'propagate': False,
-        'handlers': ['epp', ]
+        'handlers': ['epp', 'console', ]
     }
 
 ZENAIDA_AUTOMATS_LOG_FILENAME = getattr(params, 'ZENAIDA_AUTOMATS_LOG_FILENAME', None)

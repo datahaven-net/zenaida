@@ -39,7 +39,7 @@ class DomainContactsSynchronizer(automat.Automat):
                  skip_roles=[], skip_contact_details=False,
                  merge_duplicated_contacts=False,
                  new_registrant=None,
-                 debug_level=0, log_events=None, log_transitions=None,
+                 debug_level=4, log_events=None, log_transitions=None,
                  raise_errors=False,
                  **kwargs):
         """

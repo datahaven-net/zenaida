@@ -151,13 +151,16 @@ def do_rpc_request(json_request):
 
 def run(json_request, raise_for_result=True, unserialize=True, logs=True):
     try:
-        json_input = json.dumps(json_request)
+        json.dumps(json_request)
     except Exception as exc:
         logger.error('epp request failed, invalid json input')
         raise zerrors.EPPBadResponse('epp request failed, invalid json input')
 
     if logs:
-        logger.info('>>> %s\n' % json_input)
+        if settings.DEBUG:
+            logger.debug('        >>> EPP: %s' % json_request)
+        else:
+            logger.info('        >>> EPP: %s' % json_request.get('cmd', 'unknown'))
 
     try:
         out = do_rpc_request(json_request)
@@ -207,7 +210,14 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                 raise zerrors.EPPResponseFailed('Command failed')
 
     if logs:
-        logger.info('<<< %s\n' % json.dumps(json_output, indent=2))
+        if settings.DEBUG:
+            logger.debug('        <<< EPP: %s' % (json_output or out))
+        else:
+            try:
+                code = json_output['epp']['response']['result']['@code']
+            except:
+                code = 'unknown'
+            logger.info('        <<< EPP: %s', code)
 
     return json_output or out
 

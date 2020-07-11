@@ -44,7 +44,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
     """
 
     def __init__(self, update_domain=True,
-                 debug_level=0, log_events=None, log_transitions=None,
+                 debug_level=4, log_events=None, log_transitions=None,
                  raise_errors=False, **kwargs):
         """
         Builds `domain_hostnames_synchronizer()` state machine.

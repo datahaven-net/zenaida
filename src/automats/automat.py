@@ -46,7 +46,6 @@ of Information Technologies, Mechanics and Optics, Programming Technologies Depa
 #------------------------------------------------------------------------------
 
 import logging
-import sys
 import traceback
 
 #------------------------------------------------------------------------------ 
@@ -260,7 +259,7 @@ class Automat(object):
         and delete that instance. Be sure to not have any existing references on 
         that instance so destructor will be called immediately.
         """
-        self.log(self.debug_level, 'destroying %s, index=%d, heap=%d' % (
+        self.log(self.debug_level + 2, 'destroying %s, index=%d, heap=%d' % (
             self, self.index, len(self._heap), ))
         self.shutdown(**kwargs)
         self.unregister()
@@ -404,11 +403,11 @@ class Automat(object):
 
     def _execute(self, event, *args, **kwargs):
         if _LogEvents:
-            self.log(self.debug_level * 4, '%s fired with event "%s", refs=%d' % (
-                self, event, sys.getrefcount(self)))
+            self.log(self.debug_level + 4, '%s fired with event "%s"' % (
+                self, event, ))
         elif self.log_events:
-            self.log(self.debug_level, '%s fired with event "%s", refs=%d' % (
-                self, event, sys.getrefcount(self)))
+            self.log(self.debug_level + 4, '%s fired with event "%s"' % (
+                self, event, ))
         self._prev_state = self.state
         if self.post:
             if self.raise_errors:
@@ -436,7 +435,7 @@ class Automat(object):
         global _GlobalStateChangedCallback
         if self._prev_state != new_state:
             if self.log_transitions:
-                self.log(self.debug_level, '%s after "%s" : (%s)->(%s)' % (self, event, self._prev_state, new_state))
+                self.log(self.debug_level + 2, '%s after "%s" : (%s)->(%s)' % (self, event, self._prev_state, new_state))
             self.state_changed(self._prev_state, new_state, event, *args, **kwargs)
             if _GlobalStateChangedCallback is not None:
                 _GlobalStateChangedCallback(self.index, self.id, self.name, self._prev_state, new_state)

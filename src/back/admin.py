@@ -142,9 +142,8 @@ class DomainAdmin(NestedModelAdmin):
     def _do_domain_synchronize_from_backend(self, queryset, soft_delete=True, change_owner_allowed=False):
         report = []
         for domain_object in queryset:
-            ok = True
-            # first run with `rewrite_contacts=False` so it will only update contacts in localDB 
-            outputs = zmaster.domain_synchronize_from_backend(
+            outputs = []
+            outputs.extend(zmaster.domain_synchronize_from_backend(
                 domain_name=domain_object.name,
                 refresh_contacts=True,
                 rewrite_contacts=False,
@@ -153,32 +152,9 @@ class DomainAdmin(NestedModelAdmin):
                 raise_errors=True,
                 log_events=True,
                 log_transitions=True,
-            )
+            ))
             domain_object.refresh_from_db()
-            if change_owner_allowed:
-                # now run with `rewrite_contacts=True` to overwrite info on back-end instead of sync back to Zenaida
-                outputs = zmaster.domain_synchronize_from_backend(
-                    domain_name=domain_object.name,
-                    refresh_contacts=True,
-                    rewrite_contacts=True,
-                    change_owner_allowed=False,
-                    soft_delete=True,
-                    raise_errors=True,
-                    log_events=True,
-                    log_transitions=True,
-                )
-                domain_object.refresh_from_db()
-                # make sure registrant also was overwritten on back-end
-                outputs.extend(zmaster.domain_synchronize_contacts(
-                    domain_object,
-                    merge_duplicated_contacts=True,
-                    rewrite_registrant=True,
-                    new_registrant=None,
-                    raise_errors=True,
-                    log_events=True,
-                    log_transitions=True,
-                ))
-                domain_object.refresh_from_db()
+            ok = True
             for output in outputs:
                 if isinstance(output, Exception):
                     report.append('"%s": %r' % (domain_object.name, output, ))

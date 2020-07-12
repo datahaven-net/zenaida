@@ -138,6 +138,7 @@ def domain_synchronize_from_backend(domain_name,
         )
         outputs = list(dr.outputs)
     except zerrors.EPPError as exc:
+        dr.destroy()
         outputs = [exc, ]
     del dr
     logger.info('domain_refresher(%r) finished with %d outputs', domain_name, len(outputs))

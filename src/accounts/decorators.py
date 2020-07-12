@@ -16,7 +16,7 @@ def check_recaptcha(view_func):
                 'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
                 'response': recaptcha_response
             }
-            r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+            r = requests.post('https://www.recaptcha.net/recaptcha/api/siteverify', data=data)
             result = r.json()
             # If recaptcha is active, then check if user correctly filled the captcha.
             # When recaptcha is not active, application will behave as captcha was filled correctly.

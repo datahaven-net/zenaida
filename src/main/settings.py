@@ -142,40 +142,18 @@ LOGGING = {
             'propagate': False,
             'handlers': ['console', ],
         },
+        'zen.zclient': {
+            'level': LOG_LEVEL,
+            'propagate': False,
+            'handlers': ['console', ]
+        },
+        'automats.automat': {
+            'level': LOG_LEVEL,
+            'propagate': False,
+            'handlers': ['console', ]
+        },
     }
 }
-
-ZENAIDA_EPP_LOG_FILENAME = getattr(params, 'ZENAIDA_EPP_LOG_FILENAME', None)
-if ZENAIDA_EPP_LOG_FILENAME:
-    LOGGING['handlers']['epp'] = {
-        'level': LOG_LEVEL,
-        'class': 'logging.handlers.RotatingFileHandler',
-        'filename': ZENAIDA_EPP_LOG_FILENAME,
-        'maxBytes': 1024*1024*10,  # 10MB
-        'backupCount': 10,
-        'formatter': 'timestamped',
-    }
-    LOGGING['loggers']['zen.zclient'] = {
-        'level': LOG_LEVEL,
-        'propagate': False,
-        'handlers': ['epp', 'console', ]
-    }
-
-ZENAIDA_AUTOMATS_LOG_FILENAME = getattr(params, 'ZENAIDA_AUTOMATS_LOG_FILENAME', None)
-if ZENAIDA_AUTOMATS_LOG_FILENAME:
-    LOGGING['handlers']['automats'] = {
-        'level': LOG_LEVEL,
-        'class': 'logging.handlers.RotatingFileHandler',
-        'filename': ZENAIDA_AUTOMATS_LOG_FILENAME,
-        'maxBytes': 1024*1024*10,  # 10MB
-        'backupCount': 10,
-        'formatter': 'timestamped',
-    }
-    LOGGING['loggers']['automats.automat'] = {
-        'level': LOG_LEVEL,
-        'propagate': False,
-        'handlers': ['automats', 'console', ]
-    }
 
 #------------------------------------------------------------------------------
 #--- Password validation

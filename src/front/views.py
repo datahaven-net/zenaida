@@ -267,8 +267,8 @@ class AccountDomainTransferTakeoverView(FormView):
             item_name=domain_name,
             item_details={
                 'transfer_code': transfer_code,
-                'rewrite_contacts': form.cleaned_data.get('rewrite_contacts'),
-                'internal': internal
+                'rewrite_contacts': True,
+                'internal': internal,
             },
         )
         messages.success(self.request, self.success_message)

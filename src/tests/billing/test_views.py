@@ -4,6 +4,7 @@ import pytest
 
 from django.test import TestCase, override_settings
 
+from back.models.contact import Registrant
 from back.models.domain import Domain
 from back.models.zone import Zone
 from billing.models.order import Order
@@ -400,9 +401,23 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     @mock.patch('zen.zmaster.domain_synchronize_from_backend')
     @mock.patch('zen.zmaster.domain_synchronize_contacts')
-    def test_order_execute_within_same_registrant(self, mock_sync_contacts, mock_sync_backend):
+    def test_order_execute_within_same_registrar(self, mock_sync_contacts, mock_sync_backend):
         account_to_transfer = zusers.create_account('new_user@zenaida.ai', account_password='123', is_active=True)
         self.client.login(email='new_user@zenaida.ai', password='123')
+
+        registrant = Registrant.registrants.create(
+            person_name='TesterA',
+            organization_name='TestingCorporation',
+            address_street='Testers Boulevard 123',
+            address_city='Testopia',
+            address_province='TestingLands',
+            address_postal_code='1234AB',
+            address_country='NL',
+            contact_voice='+31612341234',
+            contact_fax='+31656785678',
+            contact_email='tester_contact@zenaida.ai',
+            owner=account_to_transfer
+        )
 
         # Create the order and order_item for the account_to_transfer
         order = Order.orders.create(

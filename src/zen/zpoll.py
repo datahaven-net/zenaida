@@ -348,7 +348,7 @@ def main():
 
             try:
                 msg_id = req['epp']['response']['msgQ']['@id']
-                logger.debug('msg_id: %r', msg_id)
+                logger.info('msg_id: %r', msg_id)
                 zclient.cmd_poll_ack(msg_id)
             except:
                 logger.exception('ERROR in cmd_poll_ack()')

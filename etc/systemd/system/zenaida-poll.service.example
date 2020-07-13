@@ -25,7 +25,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/home/zenaida/zenaida/
-ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py epp_poll 2>&1 1>>/home/zenaida/logs/poll"
+ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py epp_poll 1>>/home/zenaida/logs/poll 2>>/home/zenaida/logs/poll"
 
 [Install]
 WantedBy=multi-user.target

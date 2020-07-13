@@ -68,8 +68,6 @@ os.umask(0o002)
 # ZENAIDA_SUPPORTED_ZONES = []
 
 # ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys/rabbitmq_client_credentials.txt'
-# ZENAIDA_EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'
-# ZENAIDA_AUTOMATS_LOG_FILENAME = '/home/zenaida/logs/automats.log'
 # ZENAIDA_GATE_HEALTH_FILENAME = '/home/zenaida/health'
 
 # ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS = 5

@@ -406,11 +406,6 @@ Edit file `src/main/params.py` and add such line:
         ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys-www-data/rabbitmq_client_credentials.txt'
 
 
-Also if you would like to store EPP traffic comming thru Zenaida Django application you can just set a file name to log it :
-
-        ZENAIDA_EPP_LOG_FILENAME = '/home/zenaida/logs/epp.log'
-
-
 You know, you can try to play with multiple console terminals running in parallel to see all stuff connected and run smoothly.
 
 If you are developing locally and started Zenaida application directly on your local OS you can run such command to start EPP Gate:

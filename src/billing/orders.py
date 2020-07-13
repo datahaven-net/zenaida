@@ -317,8 +317,13 @@ def execute_domain_transfer(order_item):
     if hasattr(order_item, 'details') and order_item.details.get('internal'):
         domain = zdomains.domain_find(order_item.name)
         if domain and domain.auth_key and domain.auth_key == order_item.details.get('transfer_code'):
-            # Change the owner of the domain
-            domain = zdomains.domain_change_owner(domain, order_item.order.owner)
+            # Change the owner of the domain with removing his/her contact and updating the new contact
+            oldest_registrant = zcontacts.get_oldest_registrant(order_item.order.owner)
+            zdomains.domain_change_registrant(domain, oldest_registrant, True)
+            zdomains.domain_detach_contact(domain, 'admin')
+            zdomains.domain_detach_contact(domain, 'billing')
+            zdomains.domain_detach_contact(domain, 'tech')
+            zdomains.domain_join_contact(domain, 'admin', order_item.order.owner.contacts.first())
             domain.refresh_from_db()
 
             # Override info on backend

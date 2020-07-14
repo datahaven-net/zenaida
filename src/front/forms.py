@@ -1,4 +1,5 @@
 import os
+import re
 
 from django.conf import settings
 from django.forms import forms, models, fields
@@ -47,10 +48,14 @@ class DomainDetailsForm(models.ModelForm):
             cleaned_data.get('nameserver4'),
         ]
         if not any(ns_list):
-            raise forms.ValidationError('At least one Name Server must be specified for the domain.')
+            raise forms.ValidationError('At least one nameserver must be specified for the domain.')
+        for nameserver in ns_list:
+            if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", nameserver):
+                raise forms.ValidationError('Nameserver can not be an IP address.')
+
         filled_ns_list = list(filter(None, ns_list))
         if len(filled_ns_list) != len(set(filled_ns_list)):
-            raise forms.ValidationError('Name Servers can not be duplicated.')
+            raise forms.ValidationError('Nameservers can not be duplicated.')
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
                 if not os.system("ping -c 1 " + ns) == 0:

@@ -153,7 +153,8 @@ class DomainAdmin(NestedModelAdmin):
                 log_events=True,
                 log_transitions=True,
             ))
-            domain_object.refresh_from_db()
+            if soft_delete is True:
+                domain_object.refresh_from_db()
             ok = True
             for output in outputs:
                 if isinstance(output, Exception):

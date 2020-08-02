@@ -5,6 +5,7 @@ from django.conf import settings
 
 
 class NewPaymentForm(forms.Form):
+
     amount = forms.fields.ChoiceField(
         label='Amount',
         required=True,

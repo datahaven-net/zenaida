@@ -501,10 +501,10 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
                 owner=self.account,
                 started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
                 status='processed',
-                total_price=100.00,
+                total_price=200.00,
                 id=1,
             )
             order_id = order_mock().id
             response = self.client.post(f'/billing/order/process/{order_id}/')
         assert response.status_code == 302
-        assert response.url == '/billing/pay/'
+        assert response.url == '/billing/pay/?amount=200'

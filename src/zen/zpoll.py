@@ -190,6 +190,20 @@ def do_domain_contacts_changed(domain):
         return False
     return True
 
+
+def do_domain_change_unknown(domain):
+    logger.info('domain %s change is unknown, doing lazy-synchronize', domain)
+    try:
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=False,
+            change_owner_allowed=False,
+        )
+    except zerrors.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    return True
+
 #------------------------------------------------------------------------------
 
 def on_queue_response(resData):
@@ -293,8 +307,9 @@ def on_queue_message(msgQ):
             # TODO: found that when you change domain auth code directly on backend epp messages coming to Zenaida like that:
             # {'offlineUpdate': {'domain': {'name': 'lala.ai', 'change': 'UNKNOWN', 'details': None}}}
             # need to ask guys from COCCA about that...
-            # if details.lower() == 'none':
-            #     ...
+            if not details or details.lower() == 'none':
+                # for now we can try to do a simple domain sync to at least try to solve the most issues
+                return do_domain_change_unknown(domain)
 
     logger.error('UNKNOWN message: %s' % json_input)
     return False

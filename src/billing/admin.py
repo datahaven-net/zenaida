@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from nested_admin import NestedModelAdmin  # @UnresolvedImport
 
 from billing.models.payment import Payment
@@ -8,19 +10,33 @@ from billing.pay_btcpay.models import BTCPayInvoice
 
 
 class PaymentAdmin(NestedModelAdmin):
-    list_display = ('transaction_id', 'amount', 'owner', 'method', 'started_at', 'finished_at', 'status', )
+    list_display = ('transaction_id', 'amount', 'account', 'method', 'started_at', 'finished_at', 'status', )
+    search_fields = ('owner__email', )
+    list_filter = ('status', 'method', )
+
+    def account(self, payment_instance):
+        return mark_safe('<a href="{}?q={}">{}</a>'.format(
+            reverse("admin:accounts_account_changelist"), payment_instance.owner.email, payment_instance.owner.email))
 
 
 class BTCPayInvoiceAdmin(NestedModelAdmin):
     list_display = ('invoice_id', 'transaction_id', 'amount', 'started_at', 'finished_at', 'status', )
+    list_filter = ('status', )
 
 
 class OrderAdmin(NestedModelAdmin):
-    list_display = ('description', 'total_price', 'owner', 'started_at', 'finished_at', 'status', )
+    list_display = ('description', 'total_price', 'account', 'started_at', 'finished_at', 'status', )
+    search_fields = ('owner__email', 'description', )
+    list_filter = ('status', )
+
+    def account(self, order_instance):
+        return mark_safe('<a href="{}?q={}">{}</a>'.format(
+            reverse("admin:accounts_account_changelist"), order_instance.owner.email, order_instance.owner.email))
 
 
 class OrderItemAdmin(NestedModelAdmin):
     list_display = ('name', 'type', 'price', 'status', 'order', )
+    list_filter = ('status', 'type', )
 
 
 admin.site.register(Payment, PaymentAdmin)

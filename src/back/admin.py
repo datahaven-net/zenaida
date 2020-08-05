@@ -15,7 +15,6 @@ from back.models.contact import Contact, Registrant
 from billing import orders as billing_orders
 
 from zen import zmaster
-from zen import zerrors
 
 
 class ZoneAdmin(NestedModelAdmin):
@@ -60,18 +59,18 @@ class DomainAdmin(NestedModelAdmin):
         ('name', ),
         ('get_owner_link', ),
         ('status', ),
-        ('epp_id',),
-        ('create_date',),
+        ('epp_id', ),
+        ('create_date', ),
         ('expiry_date', ),
-        ('epp_statuses',),
-        ('auth_key',),
-        ('zone',),
-        ('registrar',),
-        ('auto_renew_enabled',),
-        ('get_registrant_link',),
-        ('get_contact_admin_link',),
-        ('get_contact_billing_link',),
-        ('get_contact_tech_link',),
+        ('epp_statuses', ),
+        ('auth_key', ),
+        ('zone', ),
+        ('registrar', ),
+        ('auto_renew_enabled', ),
+        ('get_registrant_link', ),
+        ('get_contact_admin_link', ),
+        ('get_contact_billing_link', ),
+        ('get_contact_tech_link', ),
     )
     actions = (
         'domain_synchronize_from_backend',
@@ -90,9 +89,8 @@ class DomainAdmin(NestedModelAdmin):
                        'get_contact_admin_link', 'get_contact_billing_link', 'get_contact_tech_link', )
 
     def account(self, domain_instance):
-        return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:accounts_account_change", args=[domain_instance.owner.pk]),
-            domain_instance.owner.email))
+        return mark_safe('<a href="{}?q={}">{}</a>'.format(
+            reverse("admin:accounts_account_changelist"), domain_instance.owner.email, domain_instance.owner.email))
 
     def registrant_contact(self, domain_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
@@ -115,7 +113,7 @@ class DomainAdmin(NestedModelAdmin):
             domain_instance.contact_tech.epp_id)) if domain_instance.contact_tech else ''
 
     def get_owner_link(self, domain_instance):
-        link = reverse("admin:accounts_account_change", args=[domain_instance.owner.pk])
+        link = '{}?q={}'.format(reverse("admin:accounts_account_changelist"), domain_instance.owner.email)
         return mark_safe(f'<a href="{link}">{domain_instance.owner}</a>')
     get_owner_link.short_description = 'Account'
 

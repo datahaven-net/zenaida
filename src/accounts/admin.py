@@ -25,13 +25,22 @@ class AccountAdmin(NestedModelAdmin):
                 reverse("admin:back_contact_change", args=[c.pk]), str(c)) for c in account_instance.contacts.all()]))
 
     def total_domains(self, account_instance):
-        return account_instance.domains.count()
+        return mark_safe('<a href="{}?q={}">{} domains</a>'.format(
+            reverse("admin:back_domain_changelist"),
+            account_instance.email,
+            str(account_instance.domains.count() or 'no')))
 
     def total_payments(self, account_instance):
-        return account_instance.payments.count()
+        return mark_safe('<a href="{}?q={}">{} payments</a>'.format(
+            reverse("admin:billing_payment_changelist"),
+            account_instance.email,
+            str(account_instance.payments.count() or 'no')))
 
     def total_orders(self, account_instance):
-        return account_instance.orders.count()
+        return mark_safe('<a href="{}?q={}">{} orders</a>'.format(
+            reverse("admin:billing_order_changelist"),
+            account_instance.email,
+            str(account_instance.orders.count() or 'no')))
 
 
 class ActivationAdmin(NestedModelAdmin):

@@ -239,7 +239,7 @@ class AccountDomainTransferTakeoverView(FormView):
             auth_info=transfer_code,
         )
         if not info:
-            messages.warning(self.request, 'Domain name is not registered')
+            messages.warning(self.request, 'Domain name is not registered or transfer is not possible at the moment')
             return super().form_invalid(form)
         current_registrar = info['epp']['response']['resData']['infData']['clID']
         if current_registrar == settings.ZENAIDA_REGISTRAR_ID:

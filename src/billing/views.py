@@ -6,7 +6,7 @@ from django import shortcuts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
@@ -45,6 +45,15 @@ class NewPaymentView(LoginRequiredMixin, FormView):
     form_class = billing_forms.NewPaymentForm
     error_message = 'Payment method is invalid'
     success_url = reverse_lazy('billing_new_payment')
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        if 'data' not in kw:
+            kw['data'] = {
+                'amount': self.request.GET.get('amount', '100'),
+                'payment_method': self.form_class._get_payment_method_choices()[0][0]
+            }
+        return kw
 
     def form_valid(self, form):
         if settings.ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS:
@@ -141,6 +150,7 @@ class OrderReceiptsDownloadView(LoginRequiredMixin, FormView):
 
 
 class OrderSingleReceiptDownloadView(View):
+
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         pdf_info = None
@@ -267,7 +277,8 @@ class OrderExecuteView(LoginRequiredMixin, View):
         )
         if existing_order.total_price > existing_order.owner.balance:
             messages.error(request, self.error_message_balance)
-            return shortcuts.redirect('billing_new_payment')
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(existing_order.total_price - existing_order.owner.balance)))
 
         new_status = billing_orders.execute_order(existing_order)
         if new_status == 'processed':
@@ -280,6 +291,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
 
 
 class OrderCancelView(LoginRequiredMixin, View):
+
     def post(self, request, *args, **kwargs):
         existing_order = billing_orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'

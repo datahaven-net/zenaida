@@ -3,6 +3,8 @@ import datetime
 from django.utils.timezone import make_aware
 
 from billing import payments
+from billing.models.order import Order
+from billing.models.order_item import OrderItem
 
 from zen import zcontacts
 from zen import zdomains
@@ -167,7 +169,28 @@ def prepare_tester_payment(tester=None, amount=100, payment_method='pay_4csonlin
     return new_payment
 
 
-def prepare_tester_order(domain_name, tester=None):
+def prepare_tester_order(
+    domain_name,
+    order_type='domain_register',
+    status='started',
+    started_at=datetime.datetime.now(),
+    price=100.0,
+    tester=None,
+):
     if not tester:
         tester = prepare_tester_account()
-    # TODO: ...
+
+    order = Order.orders.create(
+        owner=tester,
+        started_at=started_at,
+        status=status,
+    )
+
+    OrderItem.order_items.create(
+        order=order,
+        type=order_type,
+        price=price,
+        name=domain_name
+    )
+
+    return order

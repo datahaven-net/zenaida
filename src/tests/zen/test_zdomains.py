@@ -1,4 +1,5 @@
 import pytest
+import datetime
 
 from django.test import TestCase
 
@@ -31,6 +32,16 @@ def test_domain_find_not_registered():
         expiry_date=None,
     )
     assert zdomains.domain_find(domain_name='abc.ai').id == tester_domain.id
+
+
+@pytest.mark.django_db
+def test_list_domains():
+    tester_domain1 = testsupport.prepare_tester_domain(domain_name='abc.ai', expiry_date=datetime.datetime(2020, 1, 1))
+    tester_domain2 = testsupport.prepare_tester_domain(domain_name='xyz.ai', expiry_date=datetime.datetime(2020, 2, 1))
+    tester_domain3 = testsupport.prepare_tester_domain(domain_name='www.ai', expiry_date=datetime.datetime(2020, 3, 1))
+    assert zdomains.list_domains('tester@zenaida.ai')[0].id == tester_domain1.id
+    assert zdomains.list_domains('tester@zenaida.ai')[1].id == tester_domain2.id
+    assert zdomains.list_domains('tester@zenaida.ai')[2].id == tester_domain3.id
 
 
 class TestDomainStatuses(TestCase):

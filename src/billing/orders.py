@@ -255,6 +255,25 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
     return True
 
 
+def update_order_with_order_item(owner, order, order_item, item_type, item_price, item_name, item_details=None):
+    order.owner = owner
+    order.status = 'started'
+    order.started_at = timezone.now()
+    order.description = '{} {}'.format(item_name, item_type.replace('_', ' ').split(' ')[1])
+    order.save()
+
+    order_item.order = order
+    order_item.type = item_type
+    order_item.price = item_price
+    order_item.name = item_name
+    order_item.details = item_details
+    order_item.save()
+
+    logger.info('Updated order item %s in %s order' % (order_item, order))
+
+    return order
+
+
 def execute_domain_register(order_item, target_domain):
     """
     Execute domain register order fulfillment and update order item.
@@ -479,15 +498,14 @@ def refresh_order(order_object):
     return new_status
 
 
-def cancel_order(order_object):
+def cancel_and_remove_order(order_object):
     """
-    Cancel Order and returns new status: "cancelled".
+    Cancel order and remove it from database.
     """
     new_status = 'cancelled'
     old_status = order_object.status
-    order_object.status = new_status
-    order_object.save()
-    logger.debug('updated status for %s from "%s" to "%s"' % (order_object, old_status, new_status))
+    order_object.delete()
+    logger.debug('updated status for %s from "%s" to "%s" and removed it' % (order_object, old_status, new_status))
     return new_status
 
 

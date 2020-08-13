@@ -20,6 +20,7 @@ from billing import forms as billing_forms
 from billing import orders as billing_orders
 from billing import payments
 from billing import billing_errors
+from billing.decorators import create_or_update_single_order
 
 from zen import zdomains
 
@@ -170,62 +171,74 @@ class OrderSingleReceiptDownloadView(View):
 class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
 
+    @create_or_update_single_order(item_type='domain_register', item_price=settings.ZENAIDA_DOMAIN_PRICE)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        new_order = billing_orders.order_single_item(
-            owner=self.request.user,
-            item_type='domain_register',
-            item_price=settings.ZENAIDA_DOMAIN_PRICE,
-            item_name=kwargs.get('domain_name'),
-        )
-        context.update({'order': new_order})
+        context.update({'order': kwargs.get('order')})
         context['domain_expiry_date'] = ''
         domain = zdomains.domain_find(domain_name=kwargs.get('domain_name'))
         if domain:
             context['domain_expiry_date'] = domain.expiry_date
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
+        return super(OrderDomainRegisterView, self).dispatch(request, *args, **kwargs)
+
 
 class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
 
+    @create_or_update_single_order(item_type='domain_renew', item_price=settings.ZENAIDA_DOMAIN_PRICE)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        renewal_order = billing_orders.order_single_item(
-            owner=self.request.user,
-            item_type='domain_renew',
-            item_price=settings.ZENAIDA_DOMAIN_PRICE,
-            item_name=kwargs.get('domain_name'),
-        )
-        context.update({'order': renewal_order})
+        context.update({'order': kwargs.get('order')})
         context['domain_expiry_date'] = ''
         domain = zdomains.domain_find(domain_name=kwargs.get('domain_name'))
         if domain:
             context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=2)
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
+        return super(OrderDomainRenewView, self).dispatch(request, *args, **kwargs)
+
 
 class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
 
+    @create_or_update_single_order(item_type='domain_restore', item_price=settings.ZENAIDA_DOMAIN_RESTORE_PRICE)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        restore_order = billing_orders.order_single_item(
-            owner=self.request.user,
-            item_type='domain_restore',
-            item_price=settings.ZENAIDA_DOMAIN_RESTORE_PRICE,
-            item_name=kwargs.get('domain_name'),
-        )
-        context.update({'order': restore_order})
+        context.update({'order': kwargs.get('order')})
         context['domain_expiry_date'] = timezone.now() + relativedelta(years=2)
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
+        return super(OrderDomainRestoreView, self).dispatch(request, *args, **kwargs)
 
 
 class OrderCreateView(LoginRequiredMixin, CreateView):
     error_message = 'No domains were selected'
 
     def post(self, request, *args, **kwargs):
+        # Check if there is already an order that started. If so, redirect user to that order.
+        started_orders = billing_orders.list_orders(
+            owner=self.request.user,
+            exclude_cancelled=True,
+            include_statuses=['started']
+        )
+        if started_orders:
+            messages.warning(self.request, 'There is an order you did not complete yet. '
+                                           'Please confirm or cancel this order to create a new one')
+            return shortcuts.redirect('billing_order_details', order_id=started_orders[0].id)
+
         order_items = request.POST.getlist('order_items')
+
         to_be_ordered = []
         for domain_name in order_items:
             domain_object = zdomains.domain_find(domain_name=domain_name)
@@ -296,6 +309,6 @@ class OrderCancelView(LoginRequiredMixin, View):
         existing_order = billing_orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
         )
-        billing_orders.cancel_order(existing_order)
+        billing_orders.cancel_and_remove_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')

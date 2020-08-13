@@ -156,9 +156,32 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
                 amount=100.0,
                 owner=self.account,
             )
-            finish_payment('12345', status='processed')
         response = self.client.get('/billing/order/create/renew/test.ai/')
         assert response.status_code == 200
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_renew_order_once_per_domain_for_same_user(self, mock_domain_search):
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
+        with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
+            # Add 100.0 to the balance of the user to renew a domain
+            mock_payment_by_transaction_id.return_value = mock.MagicMock(
+                status='started',
+                amount=100.0,
+                owner=self.account,
+            )
+        response = self.client.get('/billing/order/create/renew/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
+        # Do the same call again to verify that order is not created again for the same domain in the same account.
+        response = self.client.get('/billing/order/create/renew/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
 
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
@@ -176,6 +199,70 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
             finish_payment('12345', status='processed')
         response = self.client.get('/billing/order/create/register/test.ai/')
         assert response.status_code == 200
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_register_order_once_per_domain_for_same_user(self, mock_domain_search):
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
+        with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
+            # Add 100.0 to the balance of the user to register a domain
+            mock_payment_by_transaction_id.return_value = mock.MagicMock(
+                status='started',
+                amount=100.0,
+                owner=self.account,
+            )
+        response = self.client.get('/billing/order/create/register/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
+        # Do the same call again to verify that order is not created again for the same domain in the same account.
+        response = self.client.get('/billing/order/create/register/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
+
+class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_restore_order_successful(self, mock_domain_search):
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
+        with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
+            # Add 200.0 to the balance of the user to register a domain
+            mock_payment_by_transaction_id.return_value = mock.MagicMock(
+                status='started',
+                amount=200.0,
+                owner=self.account,
+            )
+        response = self.client.get('/billing/order/create/restore/test.ai/')
+        assert response.status_code == 200
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_restore_order_once_per_domain_for_same_user(self, mock_domain_search):
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
+        with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
+            # Add 200.0 to the balance of the user to register a domain
+            mock_payment_by_transaction_id.return_value = mock.MagicMock(
+                status='started',
+                amount=200.0,
+                owner=self.account,
+            )
+        response = self.client.get('/billing/order/create/restore/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
+        # Do the same call again to verify that order is not created again for the same domain in the same account.
+        response = self.client.get('/billing/order/create/restore/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
 
 
 class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):

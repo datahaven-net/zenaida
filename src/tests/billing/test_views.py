@@ -160,8 +160,9 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
 
     @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.warning')
     @mock.patch('zen.zdomains.domain_find')
-    def test_domain_renew_order_once_per_domain_for_same_user(self, mock_domain_search):
+    def test_one_started_order_for_same_user(self, mock_domain_search, mock_messages_warning):
         mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 100.0 to the balance of the user to renew a domain
@@ -176,12 +177,13 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         assert len(orders) == 1
         assert orders[0].status == 'started'
 
-        # Do the same call again to verify that order is not created again for the same domain in the same account.
-        response = self.client.get('/billing/order/create/renew/test.ai/')
-        assert response.status_code == 200
+        # Do another call again to verify that new order is not created for the same account.
+        response = self.client.get('/billing/order/create/renew/test1.ai/')
         orders = Order.orders.all()
         assert len(orders) == 1
         assert orders[0].status == 'started'
+        assert orders[0].items.all()[0].name == 'test.ai'
+        mock_messages_warning.assert_called_once()
 
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
@@ -201,8 +203,9 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
 
     @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.warning')
     @mock.patch('zen.zdomains.domain_find')
-    def test_domain_register_order_once_per_domain_for_same_user(self, mock_domain_search):
+    def test_one_started_order_for_same_user(self, mock_domain_search, mock_messages_warning):
         mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 100.0 to the balance of the user to register a domain
@@ -217,12 +220,13 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
         assert len(orders) == 1
         assert orders[0].status == 'started'
 
-        # Do the same call again to verify that order is not created again for the same domain in the same account.
-        response = self.client.get('/billing/order/create/register/test.ai/')
-        assert response.status_code == 200
+        # Do another call again to verify that new order is not created for the same account.
+        response = self.client.get('/billing/order/create/register/test1.ai/')
         orders = Order.orders.all()
         assert len(orders) == 1
         assert orders[0].status == 'started'
+        assert orders[0].items.all()[0].name == 'test.ai'
+        mock_messages_warning.assert_called_once()
 
 
 class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
@@ -241,8 +245,9 @@ class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
 
     @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.warning')
     @mock.patch('zen.zdomains.domain_find')
-    def test_domain_restore_order_once_per_domain_for_same_user(self, mock_domain_search):
+    def test_one_started_order_for_same_user(self, mock_domain_search, mock_messages_warning):
         mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 200.0 to the balance of the user to register a domain
@@ -257,12 +262,13 @@ class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
         assert len(orders) == 1
         assert orders[0].status == 'started'
 
-        # Do the same call again to verify that order is not created again for the same domain in the same account.
-        response = self.client.get('/billing/order/create/restore/test.ai/')
-        assert response.status_code == 200
+        # Do another call again to verify that new order is not created for the same account.
+        response = self.client.get('/billing/order/create/restore/test1.ai/')
         orders = Order.orders.all()
         assert len(orders) == 1
         assert orders[0].status == 'started'
+        assert orders[0].items.all()[0].name == 'test.ai'
+        mock_messages_warning.assert_called_once()
 
 
 class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
@@ -307,7 +313,8 @@ class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):
 class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
-    def test_multiple_domains_order(self):
+    @mock.patch('django.contrib.messages.warning')
+    def test_multiple_domains_order_and_one_started_order_per_user(self, mock_messages_warning):
         aizone = Zone.zones.create(name='ai')
         Domain.domains.create(
             owner=self.account,
@@ -344,6 +351,37 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert response.context['order'].description == 'register 1 domain, restore 1 domain, renew 1 domain'
         assert response.context['order'].owner == self.account
         assert len(response.context['order'].items.all()) == 3
+
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=aizone,
+        )
+        Domain.domains.create(
+            owner=self.account,
+            name='test1_active.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=aizone,
+            epp_id='epp10',
+            status='active',
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': [
+            'test.ai',
+            'test1_active.ai',
+        ]})
+
+        assert response.status_code == 302
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+        # It is still previous order as that one's status is started.
+        assert orders[0].description == 'register 1 domain, restore 1 domain, renew 1 domain'
+        assert len(orders[0].items.all()) == 3
+        assert orders[0].items.all()[0].name == 'test_not_registered.ai'
+        mock_messages_warning.assert_called_once()
 
     @pytest.mark.django_db
     def test_domain_register_order(self):

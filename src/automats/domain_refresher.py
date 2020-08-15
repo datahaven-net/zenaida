@@ -533,6 +533,8 @@ class DomainRefresher(automat.Automat):
         """
         self.new_registrant_epp_id = self.known_registrant.epp_id
         first_contact = self.known_registrant.owner.contacts.first()
+        if not first_contact:
+            first_contact = zcontacts.contact_create_from_profile(self.known_registrant.owner, self.known_registrant.owner.profile)
         self.new_domain_contacts = {
             'admin': first_contact.epp_id,
             'billing': first_contact.epp_id,
@@ -597,6 +599,10 @@ class DomainRefresher(automat.Automat):
                 profile_object=known_owner.profile,
                 epp_id=self.received_registrant_epp_id,
             )
+            if self.target_domain:
+                zdomains.domain_detach_contact(self.target_domain, 'admin')
+                zdomains.domain_detach_contact(self.target_domain, 'billing')
+                zdomains.domain_detach_contact(self.target_domain, 'tech')
 
     def doDBDeleteDomain(self, *args, **kwargs):
         """

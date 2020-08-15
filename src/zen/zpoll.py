@@ -162,6 +162,7 @@ def do_domain_contacts_changed(domain):
             refresh_contacts=True,
             rewrite_contacts=False,
             change_owner_allowed=True,
+            create_new_owner_allowed=True,
         )
     except zerrors.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)

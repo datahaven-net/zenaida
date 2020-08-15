@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
                 # If invoice is paid, process the payment in the database as paid.
                 # Else, payment is not done, so decline the payment in the database.
-                if btcpay_resp['btcPaid'] == btcpay_resp['btcPrice']:
+                if btcpay_resp['btcPaid'] >= btcpay_resp['btcPrice']:
                     logger.debug(f'paid btcpay invoice: {invoice}')
                     payment_status = 'processed'
                     btcpay_invoice_status = 'paid'

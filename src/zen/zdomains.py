@@ -510,30 +510,52 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     except:
         logger.exception('Failed to read domain statuses from domain_info response')
         return False
+    try:
+        epp_id = domain_info_response['epp']['response']['resData']['infData']['roid']
+    except:
+        logger.exception('Failed to read domain epp id from domain_info response')
+        return False
     if not isinstance(epp_statuses, list):
         epp_statuses = [epp_statuses, ]
     for st in epp_statuses:
         new_domain_statuses[str(st['@s'])] = st['#text']
     modified = (sorted(current_domain_statuses.keys()) != sorted(new_domain_statuses.keys()))
-    domain_object.epp_statuses = new_domain_statuses
+    updated = False
+    old_domain_status = domain_object.status
+    if modified:
+        domain_object.epp_statuses = new_domain_statuses
+        updated = True
+    if epp_id and domain_object.epp_id != epp_id:
+        domain_object.epp_id = epp_id
+        updated = True
     if 'ok' in new_domain_statuses:
-        domain_object.status = 'active'
+        if domain_object.status != 'active':
+            domain_object.status = 'active'
+            updated = True
     else:
-        domain_object.status = 'inactive'
+        new_domain_status = 'inactive'
         if 'serverHold' in new_domain_statuses:
-            domain_object.status = 'suspended'
+            new_domain_status = 'suspended'
         if 'pendingDelete' in new_domain_statuses:
-            domain_object.status = 'to_be_deleted'
+            new_domain_status = 'to_be_deleted'
         if 'pendingRestore' in new_domain_statuses:
             # TODO: check that flow
-            domain_object.status = 'to_be_restored'
+            new_domain_status = 'to_be_restored'
         # TODO: continue with other statuses: https://www.icann.org/resources/pages/epp-status-codes-2014-06-16-en
-    if save:
-        domain_object.save()
+        if domain_object.status != new_domain_status:
+            domain_object.status = new_domain_status
+            updated = True
+    if updated:
+        if save:
+            domain_object.save()
+        logger.info('domain %r status updated from EPP response: %r -> %r',
+                    domain_object, old_domain_status, domain_object.status)
+    else:
+        logger.info('no changes in domain status were detected for %r', domain_object)
     if modified:
         logger.info('domain %r new status is %r because EPP statuses modified:  %r -> %r',
-                    domain_object.name, domain_object.status, current_domain_statuses, new_domain_statuses)
-    return True
+                    domain_object, domain_object.status, current_domain_statuses, new_domain_statuses)
+    return updated
 
 #------------------------------------------------------------------------------
 

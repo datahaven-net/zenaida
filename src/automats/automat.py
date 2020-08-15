@@ -15,32 +15,32 @@ This is the base class for State Machine.
 You can read more about `Automata-based programming <http://en.wikipedia.org/wiki/Automata-based_programming>`_
 principles and learn how to develop your project in such way.
 
-This is a programming paradigm in which the program or its part is thought of as a model of a 
-`finite state machine <http://en.wikipedia.org/wiki/Finite_state_machine>`_ or any other formal automaton.   
+This is a programming paradigm in which the program or its part is thought of as a model of a
+`finite state machine <http://en.wikipedia.org/wiki/Finite_state_machine>`_ or any other formal automaton.
 
-Its defining characteristic is the use of finite state machines to 
+Its defining characteristic is the use of finite state machines to
 `describe program behavior <http://en.wikipedia.org/wiki/State_diagram>`_.
-      
-The transition graphs of state machines are used in all stages of software development: 
-- specification, 
+
+The transition graphs of state machines are used in all stages of software development:
+- specification,
 - implementation, 
-- debugging and 
+- debugging and
 - documentation.
 
-A small tool called `visio2python <https://github.com/vesellov/visio2python/>`_ 
-was written by Veselin Penev to simplify working with the visualized state machines. 
+A small tool called `visio2python <https://github.com/vesellov/visio2python/>`_
+was written by Veselin Penev to simplify working with the visualized state machines.
 It can translate transition graphs created in Microsoft Visio into Python code.
 
-Automata-Based Programming technology was introduced by Anatoly Shalyto in 1991 and Switch-technology was 
+Automata-Based Programming technology was introduced by Anatoly Shalyto in 1991 and Switch-technology was
 developed to support automata-based programming.
-Automata-Based Programming is considered to be rather general purpose program development methodology 
+Automata-Based Programming is considered to be rather general purpose program development methodology
 than just another one finite state machine implementation.
-Anatoly Shalyto is the former of 
-`Foundation for Open Project Documentation <http://en.wikipedia.org/wiki/Foundation_for_Open_Project_Documentation>`_. 
+Anatoly Shalyto is the former of
+`Foundation for Open Project Documentation <http://en.wikipedia.org/wiki/Foundation_for_Open_Project_Documentation>`_.
 
-Read more about Switch-technology on the Saint-Petersburg National Research University 
-of Information Technologies, Mechanics and Optics, Programming Technologies Department 
-`Page <http://is.ifmo.ru/english>`_.     
+Read more about Switch-technology on the Saint-Petersburg National Research University
+of Information Technologies, Mechanics and Optics, Programming Technologies Department
+`Page <http://is.ifmo.ru/english>`_.
 """
 
 #------------------------------------------------------------------------------

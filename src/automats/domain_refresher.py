@@ -312,7 +312,7 @@ class DomainRefresher(automat.Automat):
             self.event('response', response)
             return
 
-        # read create/expire date
+        # check create/expire date
         try:
             datetime.datetime.strptime(
                 response['epp']['response']['resData']['infData']['exDate'],
@@ -650,6 +650,7 @@ class DomainRefresher(automat.Automat):
             expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response),
             create_date=zdomains.response_to_datetime('crDate', self.domain_info_response),
             epp_id=self.domain_info_response['epp']['response']['resData']['infData']['roid'],
+            epp_statuses=self.received_epp,
             auth_key='',
             registrar=None,
             registrant=self.known_registrant,

@@ -91,8 +91,9 @@ def prepare_tester_domain(
         domain_name,
         tester=None,
         auth_key='',
-        domain_epp_id=None,
         domain_status=None,
+        domain_epp_id=None,
+        domain_epp_statuses=None,
         add_contacts=['registrant', 'admin', 'billing', 'tech', ],
         create_date=True,
         expiry_date=True,
@@ -142,6 +143,7 @@ def prepare_tester_domain(
         create_date=create_date,
         epp_id=domain_epp_id,
         status=domain_status,
+        epp_statuses=domain_epp_statuses,
         auth_key=auth_key,
         registrar=None,
         registrant=tester_registrant,
@@ -151,7 +153,6 @@ def prepare_tester_domain(
         nameservers=nameservers,
         auto_renew_enabled=auto_renew_enabled,
     )
-
     return tester_domain
 
 

@@ -115,7 +115,7 @@ class TestDomainCompareContacts(TestCase):
             epp_id_dict['tech'] = tech_id
         return testsupport.prepare_tester_domain(domain_name='abc.ai', epp_id_dict=epp_id_dict)
 
-    def _prepare_rspnse(self, reg_id=None, admin_id=None, bil_id=None, tech_id=None):
+    def _prepare_response(self, reg_id=None, admin_id=None, bil_id=None, tech_id=None):
         infData = {'contact': []}
         if reg_id:
             infData['registrant'] = reg_id
@@ -131,7 +131,7 @@ class TestDomainCompareContacts(TestCase):
     def test_no_changes(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
         )
         assert add_contacts == []
         assert remove_contacts == []
@@ -141,7 +141,7 @@ class TestDomainCompareContacts(TestCase):
     def test_change_registrant(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_1', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_2', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
+            self._prepare_response(reg_id='registrant_2', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
         )
         assert add_contacts == []
         assert remove_contacts == []
@@ -151,7 +151,7 @@ class TestDomainCompareContacts(TestCase):
     def test_add_1_contact(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id=None)
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id=None)
         )
         assert add_contacts == [{'id': 'tech_0', 'type': 'tech'}, ]
         assert remove_contacts == []
@@ -161,7 +161,7 @@ class TestDomainCompareContacts(TestCase):
     def test_remove_1_contact(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id=None, bil_id='billing_0', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
         )
         assert add_contacts == []
         assert remove_contacts == [{'id': 'admin_0', 'type': 'admin'}, ]
@@ -171,7 +171,7 @@ class TestDomainCompareContacts(TestCase):
     def test_add_2_contact(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_0', bil_id=None, tech_id=None)
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_0', bil_id=None, tech_id=None)
         )
         assert add_contacts == [{'id': 'billing_0', 'type': 'billing'}, {'id': 'tech_0', 'type': 'tech'}, ]
         assert remove_contacts == []
@@ -181,7 +181,7 @@ class TestDomainCompareContacts(TestCase):
     def test_remove_2_contacts(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id=None, bil_id='billing_0', tech_id=None),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_0', bil_id='billing_0', tech_id='tech_0')
         )
         assert add_contacts == []
         assert remove_contacts == [{'id': 'admin_0', 'type': 'admin'}, {'id': 'tech_0', 'type': 'tech'}, ]
@@ -191,7 +191,7 @@ class TestDomainCompareContacts(TestCase):
     def test_switch_1_contact(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id='admin_1', bil_id='billing_0', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_2', bil_id='billing_0', tech_id='tech_0')
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_2', bil_id='billing_0', tech_id='tech_0')
         )
         assert add_contacts == [{'id': 'admin_1', 'type': 'admin'}, ]
         assert remove_contacts == [{'id': 'admin_2', 'type': 'admin'}, ]
@@ -201,7 +201,7 @@ class TestDomainCompareContacts(TestCase):
     def test_switch_2_contacts(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id='admin_1', bil_id='billing_1', tech_id='tech_0'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_2', bil_id='billing_2', tech_id='tech_0')
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_2', bil_id='billing_2', tech_id='tech_0')
         )
         assert add_contacts == [{'id': 'admin_1', 'type': 'admin'}, {'id': 'billing_1', 'type': 'billing'}, ]
         assert remove_contacts == [{'id': 'admin_2', 'type': 'admin'}, {'id': 'billing_2', 'type': 'billing'}, ]
@@ -211,7 +211,7 @@ class TestDomainCompareContacts(TestCase):
     def test_switch_3_contacts(self):
         add_contacts, remove_contacts, change_registrant = zdomains.compare_contacts(
             self._prepare_domain(reg_id='registrant_0', admin_id='admin_1', bil_id='billing_1', tech_id='tech_1'),
-            self._prepare_rspnse(reg_id='registrant_0', admin_id='admin_2', bil_id='billing_2', tech_id='tech_2')
+            self._prepare_response(reg_id='registrant_0', admin_id='admin_2', bil_id='billing_2', tech_id='tech_2')
         )
         assert add_contacts == [{'id': 'admin_1', 'type': 'admin'}, {'id': 'billing_1', 'type': 'billing'}, {'id': 'tech_1', 'type': 'tech'}, ]
         assert remove_contacts == [{'id': 'admin_2', 'type': 'admin'}, {'id': 'billing_2', 'type': 'billing'}, {'id': 'tech_2', 'type': 'tech'}, ]
@@ -241,3 +241,66 @@ class TestDomainChangeOwner(TestCase):
         tester_domain.refresh_from_db()
         assert tester_domain.owner == tester2
         assert tester_domain.registrant.owner == tester2
+
+
+class TestDomainUpdateStatuses(TestCase):
+
+    def _prepare_response(self, epp_statuses=None, epp_id=None):
+        infData = {'contact': []}
+        if epp_statuses:
+            infData['status'] = epp_statuses
+        if epp_id:
+            infData['roid'] = epp_id
+        return {'epp': {'response': {'resData': {'infData': infData}}}}
+
+    def test_domain_was_not_updated(self):
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abc.ai',
+            domain_epp_id='epp123',
+            domain_status='to_be_restored',
+            domain_epp_statuses={'pendingRestore': 'requested by admin', },
+        )
+        assert tester_domain.status == 'to_be_restored'
+        assert zdomains.domain_update_statuses(tester_domain, domain_info_response=self._prepare_response(
+            epp_statuses={'@s': 'pendingRestore', '#text': 'requested by admin', },
+            epp_id='epp123',
+        ), save=True) is False
+        assert tester_domain.epp_id == 'epp123'
+        assert tester_domain.epp_statuses['pendingRestore'] == 'requested by admin'
+        assert tester_domain.status == 'to_be_restored'
+
+    def test_domain_updated_with_single_status(self):
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abc.ai',
+            domain_epp_id='epp123',
+            domain_status='to_be_restored',
+            domain_epp_statuses={'pendingRestore': 'requested by admin', },
+        )
+        assert tester_domain.status == 'to_be_restored'
+        assert zdomains.domain_update_statuses(tester_domain, domain_info_response=self._prepare_response(
+            epp_statuses={'@s': 'ok', '#text': 'Active', },
+            epp_id='another_epp_id_456',
+        ), save=True) is True
+        assert tester_domain.epp_id == 'another_epp_id_456'
+        assert tester_domain.epp_statuses['ok'] == 'Active'
+        assert tester_domain.status == 'active'
+
+    def test_domain_updated_with_multiple_statuses(self):
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abc.ai',
+            domain_epp_id='epp123',
+            domain_status='active',
+            domain_epp_statuses={'ok': 'Active', },
+        )
+        assert tester_domain.status == 'active'
+        assert zdomains.domain_update_statuses(tester_domain, domain_info_response=self._prepare_response(
+            epp_statuses=[
+                {'@s': 'clientUpdateProhibited', '#text': 'Set by admin through UI on Aug 15, 2020 7:21 AM', },
+                {'@s': 'clientTransferProhibited', '#text': 'Set by admin through UI on Aug 15, 2020 7:21 AM', },
+            ],
+            epp_id='another_epp_id_456',
+        ), save=True) is True
+        assert tester_domain.epp_id == 'another_epp_id_456'
+        assert tester_domain.epp_statuses['clientUpdateProhibited'] == 'Set by admin through UI on Aug 15, 2020 7:21 AM'
+        assert tester_domain.epp_statuses['clientTransferProhibited'] == 'Set by admin through UI on Aug 15, 2020 7:21 AM'
+        assert tester_domain.status == 'inactive'

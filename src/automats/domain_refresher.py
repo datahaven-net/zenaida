@@ -312,7 +312,7 @@ class DomainRefresher(automat.Automat):
             self.event('response', response)
             return
 
-        # read create/expire date
+        # check create/expire date
         try:
             datetime.datetime.strptime(
                 response['epp']['response']['resData']['infData']['exDate'],

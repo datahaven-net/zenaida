@@ -944,9 +944,9 @@ class DomainRefresher(automat.Automat):
         self.new_domain_contacts = {}
         self.received_nameservers = []
         self.new_registrant_epp_id = None
-        self.latest_registrant_response = None
         self.current_registrant_info = None
         self.current_registrant_address_info = None
         self.contacts_to_add = None
         self.contacts_to_remove = None
+        self.latest_registrant_response = None
         self.destroy()

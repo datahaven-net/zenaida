@@ -185,6 +185,7 @@ class DomainContactsSynchronizer(automat.Automat):
             for role in ['admin', 'billing', 'tech', ]:
                 if self.target_contacts.get(role):
                     zdomains.domain_join_contact(self.target_domain, role, self.target_contacts[role])
+            self.target_domain.refresh_from_db()
         if self.new_registrant:
             if self.new_registrant.epp_id != self.target_domain.registrant.epp_id:
                 self.target_domain = zdomains.domain_change_registrant(self.target_domain, self.new_registrant)

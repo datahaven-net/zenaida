@@ -146,6 +146,7 @@ class DomainAdmin(NestedModelAdmin):
                 refresh_contacts=True,
                 rewrite_contacts=False,
                 change_owner_allowed=change_owner_allowed,
+                create_new_owner_allowed=change_owner_allowed,
                 soft_delete=soft_delete,
                 raise_errors=True,
                 log_events=True,

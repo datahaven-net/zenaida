@@ -601,8 +601,8 @@ class DomainRefresher(automat.Automat):
                 address_province=self.current_registrant_address_info.get('sp', 'unknown'),
                 address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
                 address_country=self.current_registrant_address_info.get('cc', 'AF'),
-                contact_voice=self.current_registrant_info.get('voice', ''),
-                contact_fax=self.current_registrant_info.get('fax', ''),
+                contact_voice=zcontacts.extract_phone_number(self.current_registrant_info.get('voice', '')),
+                contact_fax=zcontacts.extract_phone_number(self.current_registrant_info.get('fax', '')),
                 contact_email=self.current_registrant_info['email'],
             )
         if not hasattr(known_owner, 'profile'):
@@ -615,8 +615,8 @@ class DomainRefresher(automat.Automat):
                 address_province=self.current_registrant_address_info.get('sp', 'unknown'),
                 address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
                 address_country=self.current_registrant_address_info.get('cc', 'AF'),
-                contact_voice=self.current_registrant_info.get('voice', ''),
-                contact_fax=self.current_registrant_info.get('fax', ''),
+                contact_voice=zcontacts.extract_phone_number(self.current_registrant_info.get('voice', '')),
+                contact_fax=zcontacts.extract_phone_number(self.current_registrant_info.get('fax', '')),
                 contact_email=self.current_registrant_info['email'],
             )
         self.received_registrant_epp_id = self.new_registrant_epp_id

@@ -228,7 +228,7 @@ class DomainReader(automat.Automat):
             d = response['epp']['response']['resData']['infData']
             self.result[contact['type']] = {
                 'id': str(d['id']),
-                'email': str(d['email']),
+                'email': str(d['email']).lower(),
                 'voice': str(d.get('voice', '')),
                 'fax': str(d.get('fax', '')),
             }

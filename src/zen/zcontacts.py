@@ -55,6 +55,15 @@ def verify(epp_id, email=None, owner=None):
     return True
 
 
+def extract_phone_number(value):
+    """
+    In case fax or voice fields are returned in a sub-structure because of disclose tag.
+    """
+    if isinstance(value, dict):
+        value = value.get('#text', '')
+    return str(value)[:17]
+
+
 def extract_address_info(contact_info_response):
     """
     From given contact info EPP response extracts address info into flat dictionary.   
@@ -119,9 +128,9 @@ def contact_create(epp_id, owner, contact_info_response=None, raise_owner_exist=
             address_province=a['sp'],
             address_postal_code=a['pc'],
             address_country=a['cc'],
-            contact_voice=str(d.get('voice', '')),
-            contact_fax=str(d.get('fax', '')),
-            contact_email=str(d['email']),
+            contact_voice=extract_phone_number(d.get('voice', '')),
+            contact_fax=extract_phone_number(d.get('fax', '')),
+            contact_email=str(d['email']).lower(),
         )
         logger.info('contact created: %r', new_contact)
         return new_contact
@@ -143,8 +152,8 @@ def contact_create_from_profile(owner, profile_object):
         address_province=profile_object.address_province or '',
         address_postal_code=profile_object.address_postal_code or '',
         address_country=profile_object.address_country,
-        contact_voice=profile_object.contact_voice or '',
-        contact_fax=profile_object.contact_fax or '',
+        contact_voice=(profile_object.contact_voice or '')[:17],
+        contact_fax=(profile_object.contact_fax or '')[:17],
         contact_email=profile_object.contact_email,
     )
     logger.info('contact created from existing profile: %r', new_contact)
@@ -180,9 +189,9 @@ def contact_refresh(epp_id, contact_info_response):
         address_province=a['sp'],
         address_postal_code=a['pc'],
         address_country=a['cc'],
-        contact_voice=str(d.get('voice', '')),
-        contact_fax=str(d.get('fax', '')),
-        contact_email=str(d['email']),
+        contact_voice=extract_phone_number(d.get('voice', '')),
+        contact_fax=extract_phone_number(d.get('fax', '')),
+        contact_email=str(d['email']).lower(),
     )
     logger.info('contact refreshed: %r', existing_contact)
     return updated
@@ -349,8 +358,8 @@ def registrant_create_from_profile(owner, profile_object, epp_id=None):
         address_province=profile_object.address_province or '',
         address_postal_code=profile_object.address_postal_code or '',
         address_country=profile_object.address_country,
-        contact_voice=profile_object.contact_voice or '',
-        contact_fax=profile_object.contact_fax or '',
+        contact_voice=(profile_object.contact_voice or '')[:17],
+        contact_fax=(profile_object.contact_fax or '')[:17],
         contact_email=profile_object.contact_email,
     )
     logger.info('registrant created from existing profile: %r', new_contact)
@@ -380,8 +389,8 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
     registrant_object.address_province = profile_object.address_province or ''
     registrant_object.address_postal_code = profile_object.address_postal_code or ''
     registrant_object.address_country = profile_object.address_country
-    registrant_object.contact_voice = profile_object.contact_voice or ''
-    registrant_object.contact_fax = profile_object.contact_fax or ''
+    registrant_object.contact_voice = (profile_object.contact_voice or '')[:17]
+    registrant_object.contact_fax = (profile_object.contact_fax or '')[:17]
     registrant_object.contact_email = profile_object.contact_email
     if save:
         registrant_object.save()

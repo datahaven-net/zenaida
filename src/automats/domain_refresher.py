@@ -247,7 +247,7 @@ class DomainRefresher(automat.Automat):
         """
         if self.expected_owner:
             return self.expected_owner.registrants.first()
-        existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'])
+        existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'].lower())
         if not existing_account:
             return False
 #         existing_registrant = existing_account.registrants.first()
@@ -507,7 +507,7 @@ class DomainRefresher(automat.Automat):
         self.latest_registrant_response = response
         self.current_registrant_info = response['epp']['response']['resData']['infData']
         self.current_registrant_address_info = zcontacts.extract_address_info(response)
-        existing_account = zusers.find_account(self.current_registrant_info['email'])
+        existing_account = zusers.find_account(self.current_registrant_info['email'].lower())
         self.new_registrant_epp_id = existing_account.registrants.first().epp_id
 
     def doUseReceivedRegistrantInfo(self, *args, **kwargs):
@@ -601,8 +601,8 @@ class DomainRefresher(automat.Automat):
                 address_province=self.current_registrant_address_info.get('sp', 'unknown'),
                 address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
                 address_country=self.current_registrant_address_info.get('cc', 'AF'),
-                contact_voice=self.current_registrant_info.get('voice', ''),
-                contact_fax=self.current_registrant_info.get('fax', ''),
+                contact_voice=zcontacts.extract_phone_number(self.current_registrant_info.get('voice', '')),
+                contact_fax=zcontacts.extract_phone_number(self.current_registrant_info.get('fax', '')),
                 contact_email=self.current_registrant_info['email'],
             )
         if not hasattr(known_owner, 'profile'):
@@ -615,8 +615,8 @@ class DomainRefresher(automat.Automat):
                 address_province=self.current_registrant_address_info.get('sp', 'unknown'),
                 address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
                 address_country=self.current_registrant_address_info.get('cc', 'AF'),
-                contact_voice=self.current_registrant_info.get('voice', ''),
-                contact_fax=self.current_registrant_info.get('fax', ''),
+                contact_voice=zcontacts.extract_phone_number(self.current_registrant_info.get('voice', '')),
+                contact_fax=zcontacts.extract_phone_number(self.current_registrant_info.get('fax', '')),
                 contact_email=self.current_registrant_info['email'],
             )
         self.received_registrant_epp_id = self.new_registrant_epp_id
@@ -746,7 +746,7 @@ class DomainRefresher(automat.Automat):
         # in that situation new account needs to be created and all domains and contacts re-attached to the new account
         # this must be done separately, because that flow is only focused on single domain object
         try:
-            received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email']
+            received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email'].lower()
         except:
             received_registrant_email = self.target_domain.registrant.contact_email
         if received_registrant_email != self.target_domain.registrant.contact_email:
@@ -944,9 +944,9 @@ class DomainRefresher(automat.Automat):
         self.new_domain_contacts = {}
         self.received_nameservers = []
         self.new_registrant_epp_id = None
-        self.latest_registrant_response = None
         self.current_registrant_info = None
         self.current_registrant_address_info = None
         self.contacts_to_add = None
         self.contacts_to_remove = None
+        self.latest_registrant_response = None
         self.destroy()

@@ -181,6 +181,11 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
             context['domain_expiry_date'] = domain.expiry_date
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
+        return super(OrderDomainRegisterView, self).dispatch(request, *args, **kwargs)
+
 
 class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
@@ -195,6 +200,11 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
             context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=2)
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
+        return super(OrderDomainRenewView, self).dispatch(request, *args, **kwargs)
+
 
 class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
@@ -206,12 +216,29 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
         context['domain_expiry_date'] = timezone.now() + relativedelta(years=2)
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
+        return super(OrderDomainRestoreView, self).dispatch(request, *args, **kwargs)
+
 
 class OrderCreateView(LoginRequiredMixin, CreateView):
     error_message = 'No domains were selected'
 
     def post(self, request, *args, **kwargs):
+        # Check if there is already an order that started. If so, redirect user to that order.
+        started_orders = billing_orders.list_orders(
+            owner=self.request.user,
+            exclude_cancelled=True,
+            include_statuses=['started']
+        )
+        if started_orders:
+            messages.warning(self.request, 'There is an order you did not complete yet. '
+                                           'Please confirm or cancel this order to create a new one')
+            return shortcuts.redirect('billing_order_details', order_id=started_orders[0].id)
+
         order_items = request.POST.getlist('order_items')
+
         to_be_ordered = []
         for domain_name in order_items:
             domain_object = zdomains.domain_find(domain_name=domain_name)

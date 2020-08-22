@@ -16,6 +16,7 @@ from billing.models.order_item import OrderItem
 
 from zen import zdomains, zcontacts
 from zen import zmaster
+from billing.models import order_item
 
 #------------------------------------------------------------------------------
 
@@ -245,13 +246,13 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
         order_item.order.finished_at = timezone.now()
         if save:
             order_item.order.save() 
-        logger.debug('charged user %s for "%s"' % (order_item.order.owner, order_item.price))
+        logger.info('charged user %s for "%s"' % (order_item.order.owner, order_item.price))
     if new_status:
         old_status = order_item.status
         order_item.status = new_status
         if save:
             order_item.save()
-        logger.debug('updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
+        logger.info('updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
     return True
 
 
@@ -261,16 +262,13 @@ def update_order_with_order_item(owner, order, order_item, item_type, item_price
     order.started_at = timezone.now()
     order.description = '{} {}'.format(item_name, item_type.replace('_', ' ').split(' ')[1])
     order.save()
-
     order_item.order = order
     order_item.type = item_type
     order_item.price = item_price
     order_item.name = item_name
     order_item.details = item_details
     order_item.save()
-
-    logger.info('Updated order item %s in %s order' % (order_item, order))
-
+    logger.info('updated order item %s in %s order' % (order_item, order))
     return order
 
 
@@ -335,49 +333,72 @@ def execute_domain_transfer(order_item):
     """
     if hasattr(order_item, 'details') and order_item.details.get('internal'):
         domain = zdomains.domain_find(order_item.name)
-        if domain and domain.auth_key and domain.auth_key == order_item.details.get('transfer_code'):
-            # Change the owner of the domain with removing his/her contact and updating the new contact
-            oldest_registrant = zcontacts.get_oldest_registrant(order_item.order.owner)
-            zdomains.domain_change_registrant(domain, oldest_registrant, True)
-            zdomains.domain_detach_contact(domain, 'admin')
-            zdomains.domain_detach_contact(domain, 'billing')
-            zdomains.domain_detach_contact(domain, 'tech')
-            zdomains.domain_join_contact(domain, 'admin', order_item.order.owner.contacts.first())
-            domain.refresh_from_db()
-
-            # Override info on backend
+        if not domain:
+            logger.info('domain name %r was not found in local DB, sync from back-end', order_item.name)
             zmaster.domain_synchronize_from_backend(
-                domain_name=domain.name,
+                domain_name=order_item.name,
                 refresh_contacts=True,
-                rewrite_contacts=True,
-                change_owner_allowed=False,
-                soft_delete=True,
+                rewrite_contacts=False,
+                change_owner_allowed=True,
+                create_new_owner_allowed=True,
+                soft_delete=False,
+                domain_transferred_away=False,
                 raise_errors=True,
                 log_events=True,
                 log_transitions=True,
             )
-            domain.refresh_from_db()
 
-            # Override registrant on backend
-            zmaster.domain_synchronize_contacts(
-                domain,
-                merge_duplicated_contacts=True,
-                rewrite_registrant=True,
-                new_registrant=None,
-                raise_errors=True,
-                log_events=True,
-                log_transitions=True,
-            )
-            domain.refresh_from_db()
+        domain = zdomains.domain_find(order_item.name)
+        if not domain:
+            logger.critical('failed to synchronize domain %r, not possible to finish internal transfer', order_item.name)
+            return False
 
-            # Auth key shouldn't be used anymore as transfer is done.
-            domain.auth_key = ''
-            domain.save()
+        if domain.auth_key and domain.auth_key != order_item.details.get('transfer_code'):
+            logger.critical('failed to finish internal domain transfer of %r because of invalid transfer code', domain)
+            return False
 
-            # In the end, order is done so, update order item as processed.
-            update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+        # Change the owner of the domain with removing his/her contact and updating the new contact
+        oldest_registrant = zcontacts.get_oldest_registrant(order_item.order.owner)
+        zdomains.domain_change_registrant(domain, oldest_registrant, True)
+        zdomains.domain_detach_contact(domain, 'admin')
+        zdomains.domain_detach_contact(domain, 'billing')
+        zdomains.domain_detach_contact(domain, 'tech')
+        zdomains.domain_join_contact(domain, 'admin', order_item.order.owner.contacts.first())
+        domain.refresh_from_db()
 
-            return True
+        # Override info on backend
+        zmaster.domain_synchronize_from_backend(
+            domain_name=domain.name,
+            refresh_contacts=True,
+            rewrite_contacts=True,
+            change_owner_allowed=False,
+            soft_delete=True,
+            raise_errors=True,
+            log_events=True,
+            log_transitions=True,
+        )
+        domain.refresh_from_db()
+
+        # Override registrant on backend
+        zmaster.domain_synchronize_contacts(
+            domain,
+            merge_duplicated_contacts=True,
+            rewrite_registrant=True,
+            new_registrant=None,
+            raise_errors=True,
+            log_events=True,
+            log_transitions=True,
+        )
+        domain.refresh_from_db()
+
+        # Auth key shouldn't be used anymore as transfer is done.
+        domain.auth_key = ''
+        domain.save()
+
+        # In the end, order is done so, update order item as processed.
+        update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+
+        return True
 
     if not zmaster.domain_transfer_request(
         domain=order_item.name,
@@ -393,9 +414,11 @@ def execute_one_item(order_item):
     """
     Based on type of OrderItem executes corresponding fulfillment procedure.
     """
+    logger.info('executing %r with %r', order_item, order_item.details)
+
     if order_item.type == 'domain_transfer':
         return execute_domain_transfer(order_item)
-    
+
     target_domain = zdomains.domain_find(order_item.name)
     if not target_domain:
         logger.critical('Domain not exist', order_item.name)
@@ -415,7 +438,7 @@ def execute_one_item(order_item):
     if order_item.type == 'domain_restore':
         return execute_domain_restore(order_item, target_domain)
 
-    logger.critical('order item %s have a wrong type' % order_item)
+    logger.critical('order item %s has a wrong type' % order_item)
     return False
 
 
@@ -435,7 +458,7 @@ def execute_order(order_object):
     # TODO: check/verify every item against Back-end before start processing
     for order_item in order_object.items.all():
         if order_item.status in ['processed', 'pending', ]:
-            # only take actions with items that are not yet started
+            # only take actions with items that are not yet finished or in pending state
             continue
         total_executed += 1
         if execute_one_item(order_item):
@@ -458,7 +481,7 @@ def execute_order(order_object):
             new_status = 'incomplete'
     order_object.status = new_status
     order_object.save()
-    logger.debug('updated status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
+    logger.info('updated status for %s : "%s" -> "%s"' % (order_object, current_status, new_status))
     return new_status
 
 

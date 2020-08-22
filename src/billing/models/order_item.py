@@ -51,4 +51,4 @@ class OrderItem(models.Model):
     )
 
     def __str__(self):
-        return 'OrderItem({} {})'.format(self.type, self.name)
+        return 'OrderItem({} {} {})'.format(self.type, self.name, self.status)

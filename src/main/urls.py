@@ -82,6 +82,7 @@ patterns = [
     path('billing/4csonline/verify/', pay_4csonline_views.VerifyPaymentView.as_view(), name='billing_4csonline_verify_payment'),
 
     path('billing/btcpay/process/<str:transaction_id>/', pay_btcpay_views.ProcessPaymentView.as_view(), name='billing_btcpay_process_payment'),
+    path('billing/btcpay/redirect/', pay_btcpay_views.RedirectPaymentView.as_view(), name='billing_btcpay_redirect_payment'),
 
     path('board/financial-report/', board_views.FinancialReportView.as_view(), name='financial_report'),
 

@@ -1,7 +1,10 @@
+import datetime
+
 import mock
 import pytest
 from django.test import TestCase
 
+from billing.models.order import Order
 from billing.pay_btcpay.models import BTCPayInvoice
 from zen import zusers
 
@@ -51,3 +54,30 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/billing/pay/'
         mock_log_exception.assert_called_once()
         mock_messaging_error.assert_called_once()
+
+
+class TestRedirectPaymentView(BaseAuthTesterMixin, TestCase):
+    @mock.patch('django.contrib.messages.warning')
+    def test_redirect_payment_to_order(self, mock_messages_warning):
+        with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
+            mock_payment_by_transaction_id.return_value = mock.MagicMock(
+                status='started',
+                amount=200.0,
+                owner=self.account,
+            )
+        response = self.client.get('/billing/order/create/restore/test.ai/')
+        assert response.status_code == 200
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
+        redirect_payment_resp = self.client.get('/billing/btcpay/redirect/')
+        assert redirect_payment_resp.status_code == 302
+        order_id = Order.orders.filter(owner=self.account)[0].id
+        assert redirect_payment_resp.url == f'/billing/order/{order_id}/'
+        mock_messages_warning.assert_called_once()
+
+    def test_redirect_payment_to_payments_overview(self):
+        resp = self.client.get('/billing/btcpay/redirect/')
+        assert resp.status_code == 302
+        assert resp.url == '/billing/payments/'

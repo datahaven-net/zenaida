@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.views import View
 
+from billing import orders as billing_orders
 from billing.pay_btcpay.models import BTCPayInvoice
 
 logger = logging.getLogger(__name__)
@@ -62,3 +63,19 @@ class ProcessPaymentView(LoginRequiredMixin, View):
             return shortcuts.redirect('billing_new_payment')
 
         return HttpResponseRedirect(btcpay_invoice.get("url"))
+
+
+class RedirectPaymentView(View):
+    def dispatch(self, request, *args, **kwargs):
+        # If there is any order which needs to be completed, redirect user to that order to complete the order.
+        # Otherwise, go back to the payments overview.
+        started_orders = billing_orders.list_orders(
+            owner=self.request.user,
+            exclude_cancelled=True,
+            include_statuses=['started']
+        )
+        if started_orders:
+            messages.warning(self.request, 'You have an ongoing order. Please click the "Confirm" button '
+                                           'to complete the order.')
+            return shortcuts.redirect('billing_order_details', order_id=started_orders[0].id)
+        return shortcuts.redirect('billing_payments')

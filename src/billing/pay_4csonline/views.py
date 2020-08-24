@@ -3,12 +3,14 @@ import requests
 
 from django import urls
 from django import shortcuts
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core import exceptions
 from django.conf import settings
 from django.views import View
 
 from billing import payments
+from billing import orders as billing_orders
 
 _Debug = True
 
@@ -137,4 +139,16 @@ class VerifyPaymentView(View):
             logging.critical(f'Payment not found, transaction_id is {transaction_id}')  # TODO Use Django messages
             raise exceptions.SuspiciousOperation()
 
-        return shortcuts.render(request, 'billing/4csonline/success_payment.html')
+        redirect_url = '/billing/payments/'
+
+        started_orders = billing_orders.list_orders(
+            owner=self.request.user,
+            exclude_cancelled=True,
+            include_statuses=['started']
+        )
+        if started_orders:
+            messages.warning(self.request, 'You have an ongoing order. Please click the "Confirm" button '
+                                           'to complete the order.')
+            redirect_url = '/billing/order/' + str(started_orders[0].id)
+
+        return shortcuts.render(request, 'billing/4csonline/success_payment.html', {'redirect_url': redirect_url})

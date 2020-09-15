@@ -77,7 +77,7 @@ class AccountDomainCreateView(FormView):
     template_name = 'front/account_domain_create.html'
     form_class = forms.DomainDetailsForm
     pk_url_kwarg = 'domain_name'
-    success_message = 'New domain name was added to your account, click "Register" to confirm the order and activate your domain'
+    success_message = 'Please confirm the payment to finish registering your domain.'
     success_url = reverse_lazy('account_domains')
 
     @validate_profile_and_contacts
@@ -153,7 +153,7 @@ class AccountDomainCreateView(FormView):
         )
 
         messages.success(self.request, self.success_message)
-        return super().form_valid(form)
+        return shortcuts.redirect('billing_order_register', domain_name=domain_name)
 
 
 class AccountDomainUpdateView(UpdateView):

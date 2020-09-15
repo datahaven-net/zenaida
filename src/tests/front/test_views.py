@@ -132,6 +132,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             ))
 
             assert response.status_code == 302
+            assert response.url == '/billing/order/create/register/test.ai/'
             assert len(Domain.domains.all()) == 1
 
     @pytest.mark.django_db
@@ -158,6 +159,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             ))
 
             assert response.status_code == 302
+            assert response.url == '/domains/'
             assert len(Domain.domains.all()) == 0
 
     @pytest.mark.django_db
@@ -184,6 +186,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
                 contact_admin=Contact.contacts.all()[0].id
             ))
             assert response.status_code == 302
+            assert response.url == '/domains/'
             assert len(Domain.domains.all()) == 0
 
     @pytest.mark.django_db
@@ -219,6 +222,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             ))
 
             assert response.status_code == 302
+            assert response.url == '/billing/order/create/register/test.ai/'
             assert len(Domain.domains.all()) == 1
 
     def test_profile_is_not_complete(self):

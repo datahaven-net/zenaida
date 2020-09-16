@@ -309,6 +309,11 @@ class OrderCancelView(LoginRequiredMixin, View):
         existing_order = billing_orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
         )
+        for order_item in existing_order.items.all():
+            if order_item.type == 'domain_register':
+                domain = zdomains.domain_find(domain_name=order_item.name)
+                if domain.status == 'inactive':
+                    zdomains.domain_delete(domain_name=order_item.name)
         billing_orders.cancel_and_remove_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')

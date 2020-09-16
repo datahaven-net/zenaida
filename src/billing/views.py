@@ -312,7 +312,7 @@ class OrderCancelView(LoginRequiredMixin, View):
         for order_item in existing_order.items.all():
             if order_item.type == 'domain_register':
                 domain = zdomains.domain_find(domain_name=order_item.name)
-                if domain.status == 'inactive':
+                if domain.status == 'inactive' and not domain.epp_id:
                     zdomains.domain_delete(domain_name=order_item.name)
         billing_orders.cancel_and_remove_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')

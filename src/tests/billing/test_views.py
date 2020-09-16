@@ -479,37 +479,16 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
 
 class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
-    @mock.patch('back.models.profile.Profile.is_complete')
-    @mock.patch('zen.zzones.is_supported')
-    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
-    def test_order_cancel_successful(self, mock_zone_is_supported, mock_user_profile_complete):
-        mock_zone_is_supported.return_value = True
-        mock_user_profile_complete.return_value = True
-
-        contact_person = {
-            'person_name': 'TesterA',
-            'organization_name': 'TestingCorporation',
-            'address_street': 'Testers Boulevard 123',
-            'address_city': 'Testopia',
-            'address_province': 'TestingLands',
-            'address_postal_code': '1234AB',
-            'address_country': 'NL',
-            'contact_voice': '+31612341234',
-            'contact_fax': '+31656785678',
-            'contact_email': 'tester_contact@zenaida.ai',
-        }
-
-        # First create a domain in database.
-        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
-            mock_contact_create_update.return_value = True
-            self.client.post('/contacts/create/', data=contact_person, follow=True)
-            registrant_info = copy.deepcopy(contact_person)
-            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
-            Registrant.registrants.create(**registrant_info)
-            self.client.post('/domains/create/test.ai/', data=dict(
-                nameserver1='ns1.google.com',
-                contact_admin=Contact.contacts.all()[0].id
-            ))
+    def test_order_cancel_successful(self):
+        # First, create a domain in database without epp_id as there was no payment yet.
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            status='inactive'
+        )
 
         assert Domain.domains.all().count() == 1
 
@@ -532,6 +511,75 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
         assert Domain.domains.all().count() == 0
+
+    @pytest.mark.django_db
+    def test_do_not_remove_domain_with_epp_id(self):
+        # First, create a domain in database with an epp_id.
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            status='inactive'
+        )
+
+        assert Domain.domains.all().count() == 1
+
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed',
+        )
+
+        OrderItem.order_items.create(
+            order=order,
+            type='domain_register',
+            price=100.0,
+            name='test.ai'
+        )
+
+        response = self.client.post(f'/billing/order/cancel/{order.id}/')
+        assert response.status_code == 302
+        assert response.url == '/billing/orders/'
+        # Order is removed but domain is still there.
+        assert Domain.domains.all().count() == 1
+        assert Order.orders.all().count() == 0
+
+    @pytest.mark.django_db
+    def test_do_not_remove_domain_without_inactive_status(self):
+        # First, create a domain in database with an active status.
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            status='active'
+        )
+
+        assert Domain.domains.all().count() == 1
+
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed',
+        )
+
+        OrderItem.order_items.create(
+            order=order,
+            type='domain_register',
+            price=100.0,
+            name='test.ai'
+        )
+
+        response = self.client.post(f'/billing/order/cancel/{order.id}/')
+        assert response.status_code == 302
+        assert response.url == '/billing/orders/'
+        # Order is removed but domain is still there.
+        assert Domain.domains.all().count() == 1
+        assert Order.orders.all().count() == 0
 
     def test_unknown_order_returns_bad_request(self):
         """

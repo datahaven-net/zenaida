@@ -332,6 +332,20 @@ def list_domains(registrant_email):
         return []
     return list(existing_account.domains.all().order_by('expiry_date'))
 
+
+def remove_inactive_domains(days=1):
+    """
+    Remove all inactive domains older than X days.
+    """
+    from back.models.domain import Domain
+
+    given_days_before_create_date = timezone.now() - datetime.timedelta(days=days)
+
+    domains = Domain.domains.filter(status='inactive', epp_id=None, create_date__lt=given_days_before_create_date)
+    domains.all().delete()
+    return
+
+
 #------------------------------------------------------------------------------
 
 def check_nameservers_changed(domain_object, domain_info_response=None):

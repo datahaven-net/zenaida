@@ -2,7 +2,9 @@ import pytest
 import datetime
 
 from django.test import TestCase
+from django.test.utils import freeze_time
 
+from back.models.domain import Domain
 from zen import zdomains
 
 from tests import testsupport
@@ -42,6 +44,18 @@ def test_list_domains():
     assert zdomains.list_domains('tester@zenaida.ai')[0].id == tester_domain1.id
     assert zdomains.list_domains('tester@zenaida.ai')[1].id == tester_domain2.id
     assert zdomains.list_domains('tester@zenaida.ai')[2].id == tester_domain3.id
+
+
+@pytest.mark.django_db
+def test_list_domains_by_status_and_epp_id():
+    time_now = datetime.datetime.now()
+    testsupport.prepare_tester_domain(domain_name='abc.ai', create_date=(time_now-datetime.timedelta(hours=23)))
+    testsupport.prepare_tester_domain(domain_name='xyz.ai', create_date=(time_now-datetime.timedelta(days=2)))
+
+    assert len(Domain.domains.all()) == 2
+
+    zdomains.remove_inactive_domains(days=1)
+    assert len(Domain.domains.all()) == 1
 
 
 class TestDomainStatuses(TestCase):

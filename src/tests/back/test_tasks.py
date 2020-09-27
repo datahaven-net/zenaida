@@ -106,6 +106,8 @@ class TestAutoRenewExpiringDomains(TestCase):
         assert new_notification.domain_name == 'abcd.ai'
         assert new_notification.status == 'sent'
         assert new_notification.subject == 'domain_renewed'
+        tester_orders = orders.list_orders(owner=tester)
+        assert tester_orders[0].description == 'abcd.ai renew (automatically)'
 
     @pytest.mark.django_db
     def test_auto_renew_started(self):

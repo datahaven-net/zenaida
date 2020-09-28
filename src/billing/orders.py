@@ -177,11 +177,15 @@ def order_single_item(owner, item_type, item_price, item_name, item_details=None
     """
     Create an Order with one item with given attributes.
     """
+    if item_details and item_details.get('created_automatically'):
+        description = '{} {} (automatically)'.format(item_name, item_type.replace('_', ' ').split(' ')[1])
+    else:
+        description = '{} {}'.format(item_name, item_type.replace('_', ' ').split(' ')[1])
     new_order = Order.orders.create(
         owner=owner,
         status='started',
         started_at=timezone.now(),
-        description='{} {}'.format(item_name, item_type.replace('_', ' ').split(' ')[1]),
+        description=description,
     )
     new_order_item = OrderItem.order_items.create(
         order=new_order,

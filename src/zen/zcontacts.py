@@ -48,7 +48,7 @@ def verify(epp_id, email=None, owner=None):
     if not exists(epp_id):
         return False
     cont = Contact.contacts.get(epp_id=epp_id)
-    if email and cont.owner.email != email:
+    if email and cont.owner.email.lower() != email.lower():
         return False
     if owner and cont.owner.pk != owner.pk:
         return False
@@ -154,7 +154,7 @@ def contact_create_from_profile(owner, profile_object):
         address_country=profile_object.address_country,
         contact_voice=(profile_object.contact_voice or '')[:17],
         contact_fax=(profile_object.contact_fax or '')[:17],
-        contact_email=profile_object.contact_email,
+        contact_email=profile_object.contact_email.lower(),
     )
     logger.info('contact created from existing profile: %r', new_contact)
     return new_contact
@@ -211,7 +211,7 @@ def is_simillar_contacts(contact1, contact2):
         (contact1.address_postal_code, contact2.address_postal_code, ),
         (contact1.contact_voice, contact2.contact_voice, ),
         (contact1.contact_fax, contact2.contact_fax, ),
-        (contact1.contact_email, contact2.contact_email, ),
+        (contact1.contact_email.lower(), contact2.contact_email.lower(), ),
         (contact1.person_name, contact2.person_name, ),
     ]
     for field1, field2 in fields_to_compare:
@@ -274,7 +274,7 @@ def clear_contacts_change(to_be_added, to_be_removed):
 
 def to_dict(contact_object):
     info = {
-        'email': contact_object.contact_email,
+        'email': contact_object.contact_email.lower(),
         'contacts': [{
             'name': contact_object.person_name,
             'org': contact_object.organization_name,
@@ -360,7 +360,7 @@ def registrant_create_from_profile(owner, profile_object, epp_id=None):
         address_country=profile_object.address_country,
         contact_voice=(profile_object.contact_voice or '')[:17],
         contact_fax=(profile_object.contact_fax or '')[:17],
-        contact_email=profile_object.contact_email,
+        contact_email=profile_object.contact_email.lower(),
     )
     logger.info('registrant created from existing profile: %r', new_contact)
     return new_contact
@@ -391,7 +391,7 @@ def registrant_update_from_profile(registrant_object, profile_object, save=True)
     registrant_object.address_country = profile_object.address_country
     registrant_object.contact_voice = (profile_object.contact_voice or '')[:17]
     registrant_object.contact_fax = (profile_object.contact_fax or '')[:17]
-    registrant_object.contact_email = profile_object.contact_email
+    registrant_object.contact_email = profile_object.contact_email.lower()
     if save:
         registrant_object.save()
     logger.info('registrant updated from profile: %r', registrant_object)

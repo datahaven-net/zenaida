@@ -445,17 +445,23 @@ TODO: memcached...
 
 ## Configure Googla Captcha
 
-If you want users to see Google Captcha in login screen, you need to go to https://www.google.com/recaptcha/ and setup captcha for your website
-In order to setup, you can check Google documentation: https://developers.google.com/recaptcha
-Once you have site key and secret key for your website, you should go to params.py and assign them to GOOGLE_RECAPTCHA_SITE_KEY and GOOGLE_RECAPTCHA_SECRET_KEY.
+If you want users to see Google Captcha in login screen, you need to go to https://www.google.com/recaptcha/ and setup captcha for your website.
+In order to setup, you can check Google documentation here: https://developers.google.com/recaptcha
 
-If you don't want to enable Google captcha for your local environment or for your website, you can make GOOGLE_RECAPTCHA_SITE_KEY value as None or ""
+Once you have site key and secret key for your website, you should edit `src/main/params.py` file and set `GOOGLE_RECAPTCHA_SITE_KEY` and `GOOGLE_RECAPTCHA_SECRET_KEY` constants.
+
+If you don't want to enable Google captcha for your local environment or for your website, you can set `GOOGLE_RECAPTCHA_SITE_KEY = None`.
+
+
 
 ## Configure BTCPayServer
 
 TODO:
 
+
+
 ## Database Backups
+
 In params.py file, storage location should be defined.
 
         DBBACKUP_STORAGE_OPTIONS = {'location': '/tmp/'}
@@ -470,6 +476,7 @@ To backup your database, use below Django command.
 
 There are more options to use for database backups like compressing, encrypyting etc.
 Go to [django-dbbackup](https://django-dbbackup.readthedocs.io/en/stable/commands.html) documentation for more info.
+
 
 
 ## Importing domains from CSV file

@@ -748,8 +748,8 @@ class DomainRefresher(automat.Automat):
         try:
             received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email'].lower()
         except:
-            received_registrant_email = self.target_domain.registrant.contact_email
-        if received_registrant_email != self.target_domain.registrant.contact_email:
+            received_registrant_email = self.target_domain.registrant.contact_email.lower()
+        if received_registrant_email != self.target_domain.registrant.contact_email.lower():
             existing_registrant = zcontacts.registrant_find(contact_email=received_registrant_email)
             if existing_registrant:
                 logger.error('registrant %r contact email changed to %r, but another registrant with same email already exist in local DB: %r',

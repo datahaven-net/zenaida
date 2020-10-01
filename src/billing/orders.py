@@ -16,7 +16,6 @@ from billing.models.order_item import OrderItem
 
 from zen import zdomains, zcontacts
 from zen import zmaster
-from billing.models import order_item
 
 #------------------------------------------------------------------------------
 

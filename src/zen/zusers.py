@@ -11,14 +11,14 @@ def is_exist(email):
     """
     Return `True` if domain exists, doing query in Domain table.
     """
-    return bool(Account.users.filter(email=email).first())
+    return bool(Account.users.filter(email=email.lower()).first())
 
 
 def find_account(email):
     """
     Return `Account` object created for that email address.
     """
-    return Account.users.filter(email=email).first()
+    return Account.users.filter(email=email.lower()).first()
 
 
 def create_account(email, account_password=None, also_profile=True, is_active=False, **kwargs):
@@ -27,7 +27,7 @@ def create_account(email, account_password=None, also_profile=True, is_active=Fa
     All `kwargs` will be passed as field values to the new Profile object. 
     """
     new_account = Account.users.create_user(
-        email=email,
+        email=email.lower(),
         password=account_password,
         is_active=is_active,
     )

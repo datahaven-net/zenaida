@@ -12,6 +12,7 @@ from billing.models.order import Order
 from billing.models.order_item import OrderItem
 from billing.models.payment import Payment
 from billing.payments import finish_payment
+from tests import testsupport
 from zen import zusers
 
 
@@ -580,6 +581,16 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
         # Order is removed but domain is still there.
         assert Domain.domains.all().count() == 1
         assert Order.orders.all().count() == 0
+
+    @pytest.mark.django_db
+    def test_cancel_order_for_non_existing_domain(self):
+        order = testsupport.prepare_tester_order(domain_name='test.ai')
+        assert Order.orders.all().count() == 1
+        assert Domain.domains.all().count() == 0
+
+        self.client.post(f'/billing/order/cancel/{order.id}/')
+        assert Order.orders.all().count() == 0
+        assert Domain.domains.all().count() == 0
 
     def test_unknown_order_returns_bad_request(self):
         """

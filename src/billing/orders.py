@@ -1,6 +1,7 @@
 import logging
 import os
 import calendar
+from datetime import timedelta
 
 import pdfkit  # @UnresolvedImport
 
@@ -29,6 +30,13 @@ def by_id(order_id):
     Return Order object by ID
     """
     return Order.orders.filter(id=order_id).first()
+
+
+def get_all_orders_by_status_and_older_than_days(status, older_than_days=1):
+    """
+    Return all orders in database for given status and older than given days.
+    """
+    return Order.orders.filter(status=status, started_at__lte=timezone.now()-timedelta(days=older_than_days))
 
 
 def get_order_by_id_and_owner(order_id, owner, log_action=None):

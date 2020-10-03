@@ -1,8 +1,13 @@
+import logging
+
 from django.utils import timezone
 
 from accounts.models.account import Account
 
 from billing import orders
+
+
+logger = logging.getLogger(__name__)
 
 
 def identify_domains_for_auto_renew():
@@ -56,3 +61,12 @@ def create_auto_renew_orders(domains_to_renew):
     Also email notification will be send to the user unless it is disabled in Profile settings.
     """
     # TODO: ...
+
+
+def remove_started_orders(older_than_days=1):
+    started_orders = orders.get_all_orders_by_status_and_older_than_days(
+        status='started', older_than_days=older_than_days
+    )
+    for order in started_orders:
+        order.delete()
+        logger.debug(f'Removed {order} because it was started "{older_than_days}" days ago and was not completed.')

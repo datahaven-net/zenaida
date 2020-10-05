@@ -47,6 +47,11 @@ class NewPaymentView(LoginRequiredMixin, FormView):
     error_message = 'Payment method is invalid'
     success_url = reverse_lazy('billing_new_payment')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['credit_card_payment_price'] = 100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE
+        return context
+
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()
         if 'data' not in kw:
@@ -69,16 +74,21 @@ class NewPaymentView(LoginRequiredMixin, FormView):
                     messages.info(self.request, 'Please wait few minutes and then try again.')
                     return shortcuts.redirect('billing_new_payment')
 
+        payment_method = form.cleaned_data['payment_method']
+        payment_amount = float(form.cleaned_data['amount'])
+        if payment_method == 'pay_4csonline':
+            payment_amount *= (100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0
+
         new_payment = payments.start_payment(
             owner=self.request.user,
-            amount=form.cleaned_data['amount'],
-            payment_method=form.cleaned_data['payment_method'],
+            amount=payment_amount,
+            payment_method=payment_method,
         )
 
         # TODO: for the future, if we need to implement other types of payments
         # https://www.dreamhost.com/blog/10-online-payment-gateways-compared/
 
-        if new_payment.method == 'pay_4csonline':
+        if payment_method == 'pay_4csonline':
             return shortcuts.render(
                 self.request,
                 'billing/4csonline/start_payment.html',
@@ -87,7 +97,7 @@ class NewPaymentView(LoginRequiredMixin, FormView):
                 }
             )
 
-        elif new_payment.method == 'pay_btcpay':
+        elif payment_method == 'pay_btcpay':
             return shortcuts.render(
                 self.request,
                 'billing/btcpay/start_payment.html',

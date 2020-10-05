@@ -20,16 +20,19 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
     """
     Tests successful scenario for processing the payment.
     """
-    @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60)
+    @override_settings(
+        ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60,
+        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=3.63
+    )
     @pytest.mark.django_db
     def test_successful_process_payment(self):
         # Call payment endpoint to create payment first
-        payment = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
+        payment = self.client.post('/billing/pay/', data=dict(amount=2000, payment_method='pay_4csonline'))
         transaction_id = payment.context['transaction_id']
         response = self.client.get(f'/billing/4csonline/process/{transaction_id}/')
         assert response.status_code == 200
         assert response.context['tran_id'] == transaction_id
-        assert response.context['price'] == '100.00'
+        assert response.context['price'] == '2072.60'
 
     @mock.patch('logging.critical')
     def test_payment_not_found(self, mock_logging_critical):

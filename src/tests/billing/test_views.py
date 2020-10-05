@@ -5,9 +5,10 @@ import pytest
 
 from django.test import TestCase, override_settings
 
-from back.models.contact import Registrant, Contact
+from back.models.contact import Registrant
 from back.models.domain import Domain
 from back.models.zone import Zone
+from billing import payments
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 from billing.models.payment import Payment
@@ -26,11 +27,26 @@ class BaseAuthTesterMixin(object):
 class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
     @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60)
     @pytest.mark.django_db
-    def test_create_new_payment_in_db(self):
+    def test_create_new_btc_payment_in_db(self):
         response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
-        # Payment is started, so that redirect to the starting 4csonline page.
+        # Payment is started, so that redirect to the starting btc payment page.
         assert response.status_code == 200
         assert response.context['transaction_id']
+
+    @override_settings(
+        ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60,
+        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=3.63
+    )
+    @pytest.mark.django_db
+    def test_create_new_credit_card_payment_in_db(self):
+        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
+        # Payment is started, so that redirect to the starting 4csonline page.
+        assert response.status_code == 200
+        transaction_id = response.context['transaction_id']
+        assert response.context['transaction_id']
+
+        payment = payments.by_transaction_id(transaction_id)
+        assert payment.amount == 103.63
 
     @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=3*60)
     @mock.patch('billing.payments.latest_payment')

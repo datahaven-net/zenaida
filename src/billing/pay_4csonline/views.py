@@ -36,7 +36,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
 
         return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
             'company_name': 'DATAHAVEN NET',
-            'price': '{}.00'.format(int(payment_object.amount)),
+            'price': '%.2f' % payment_object.amount,
             'merch_id': settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID,
             'merch_link': settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_LINK,
             'invoice': payment_object.transaction_id,

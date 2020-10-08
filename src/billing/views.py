@@ -76,8 +76,6 @@ class NewPaymentView(LoginRequiredMixin, FormView):
 
         payment_method = form.cleaned_data['payment_method']
         payment_amount = float(form.cleaned_data['amount'])
-        if payment_method == 'pay_4csonline':
-            payment_amount *= (100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0
 
         new_payment = payments.start_payment(
             owner=self.request.user,

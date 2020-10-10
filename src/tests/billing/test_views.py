@@ -46,7 +46,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.context['transaction_id']
 
         payment = payments.by_transaction_id(transaction_id)
-        assert payment.amount == 103.63
+        assert payment.amount == 100.0
 
     @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=3*60)
     @mock.patch('billing.payments.latest_payment')

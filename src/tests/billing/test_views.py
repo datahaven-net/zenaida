@@ -35,7 +35,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
 
     @override_settings(
         ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60,
-        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=3.63
+        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.2
     )
     @pytest.mark.django_db
     def test_create_new_credit_card_payment_in_db(self):
@@ -44,7 +44,6 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
         transaction_id = response.context['transaction_id']
         assert response.context['transaction_id']
-
         payment = payments.by_transaction_id(transaction_id)
         assert payment.amount == 100.0
 

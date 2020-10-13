@@ -22,7 +22,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
     """
     @override_settings(
         ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60,
-        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=3.63
+        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1
     )
     @pytest.mark.django_db
     def test_successful_process_payment(self):
@@ -32,7 +32,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         response = self.client.get(f'/billing/4csonline/process/{transaction_id}/')
         assert response.status_code == 200
         assert response.context['tran_id'] == transaction_id
-        assert response.context['price'] == '2072.60'
+        assert response.context['price'] == '2002.00'
 
     @mock.patch('logging.critical')
     def test_payment_not_found(self, mock_logging_critical):
@@ -86,6 +86,8 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
 
 
 class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
+
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1)
     @mock.patch('billing.payments.finish_payment')
     @mock.patch('billing.payments.update_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._is_payment_verified')
@@ -102,7 +104,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='
-            '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
+            '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.10')
         assert response.status_code == 200
         assert response.context['redirect_url'] == '/billing/payments/'
 
@@ -196,6 +198,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         mock_logging.assert_called_once_with('Invalid request, payment process raises SuspiciousOperation: '
                                              'payment transaction is already finished')
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1)
     @mock.patch('logging.critical')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
     @pytest.mark.django_db
@@ -213,7 +216,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='
-            '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
+            '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.10')
 
         assert response.status_code == 400
         mock_logging.assert_called_once_with('Invalid request, payment processing will raise SuspiciousOperation: '

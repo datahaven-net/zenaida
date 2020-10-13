@@ -104,7 +104,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
 
 def domain_synchronize_from_backend(domain_name,
                                     refresh_contacts=False,
-                                    rewrite_contacts=False,
+                                    rewrite_contacts=None,
                                     change_owner_allowed=False,
                                     create_new_owner_allowed=False,
                                     soft_delete=True,
@@ -118,7 +118,7 @@ def domain_synchronize_from_backend(domain_name,
     but only if `soft_delete=False`. Otherwise marked as INACTIVE.
     Skip any actions with domain contacts if `refresh_contacts=False`.
     If `rewrite_contacts=True` will actually first write current contact IDs is from DB to COCCA and
-    then do the full contacts details synchronization.
+    then do the full contacts details synchronization, thus actually rewrite contacts on back-end.
     """
     dr = domain_refresher.DomainRefresher(
         log_events=log_events,

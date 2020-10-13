@@ -82,7 +82,8 @@ class DomainRefresher(automat.Automat):
         at creation phase of `domain_refresher()` machine.
         """
         self.contacts_changed = False
-        self.refresh_contacts = False 
+        self.refresh_contacts = False  # when True, Zenaida will read contacts from back-end and update local DB
+        self.rewrite_contacts = False  # when True, Zenaida will write DB contacts to the back-end
         self.domain_info_response = None
         self.received_registrant_epp_id = None
         self.received_contacts = []
@@ -269,7 +270,7 @@ class DomainRefresher(automat.Automat):
         self.soft_delete = kwargs.get('soft_delete', True)
         self.domain_transferred_away = kwargs.get('domain_transferred_away', False)
         self.expected_owner = None
-        self.rewrite_contacts = kwargs.get('rewrite_contacts', False)
+        self.rewrite_contacts = kwargs.get('rewrite_contacts', None)
         pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
         if len(pending_order_items) > 1:
             logger.critical('found more than one pending order for domain %s transfer: %r', self.domain_name, pending_order_items)
@@ -277,7 +278,8 @@ class DomainRefresher(automat.Automat):
             related_order_item = pending_order_items[0]
             self.expected_owner = related_order_item.order.owner
             if 'rewrite_contacts' in related_order_item.details:
-                self.rewrite_contacts = related_order_item.details['rewrite_contacts']
+                if self.rewrite_contacts is None:
+                    self.rewrite_contacts = related_order_item.details['rewrite_contacts']
             logger.info('found expected owner from one pending order %r : %r rewrite_contacts=%r',
                          related_order_item, self.expected_owner, self.rewrite_contacts)
         else:
@@ -661,6 +663,15 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         if self.rewrite_contacts:
+            # that indicates that we actually want to overwrite domain contacts on back-end
+            if self.target_domain:
+                # when domain exists - skip
+                return
+            first_contact = self.known_registrant.owner.contacts.first()
+            if not first_contact:
+                first_contact = zcontacts.contact_create_from_profile(self.known_registrant.owner, self.known_registrant.owner.profile)
+            # only populate Admin contact from one of the existing contacts that must already exist!
+            self.new_domain_contacts = {'admin': first_contact.epp_id, }
             return
         received_contacts_info = args[0]
         # even if domain not exist yet make sure all contacts really exists in DB and in sync with back-end

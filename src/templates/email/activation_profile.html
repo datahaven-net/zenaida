@@ -14,7 +14,7 @@ To activate your AI domains registry profile, please follow this link:<br/>
 {% if request.is_secure %}
     <a href="https://{{ domain }}/accounts/activate/{{ code }}/">https://{{ domain }}/accounts/activate/{{ code }}/</a>
 {% else %}
-    <a href="http://{{ domain }}/accounts/activate/{{ code }}/">http://{{ domain }}/accounts/activate/{{ code }}/</a>
+    <a href="http://{{ domain }}/accounts/activate/{{ code }}/">https://{{ domain }}/accounts/activate/{{ code }}/</a>
 {% endif %}
 
 </body>

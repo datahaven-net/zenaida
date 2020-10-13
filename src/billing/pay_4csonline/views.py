@@ -16,6 +16,7 @@ _Debug = True
 
 
 class ProcessPaymentView(LoginRequiredMixin, View):
+
     def get(self, request, *args, **kwargs):
         transaction_id = kwargs.get('transaction_id', '')
         payment_object = payments.by_transaction_id(transaction_id=transaction_id)
@@ -50,6 +51,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
 
 
 class VerifyPaymentView(View):
+
     def _check_rc_usercan_is_incomplete(self, result, rc, fc, transaction_id):
         if result != 'pass' and rc == 'USERCAN' and fc == 'INCOMPLETE':
             self.message = 'Transaction was cancelled'
@@ -86,10 +88,16 @@ class VerifyPaymentView(View):
                              'payment transaction is already finished')
             raise exceptions.SuspiciousOperation()
 
-        if payment_obj.amount != float(amount.replace(',', '')):
+        expected_payment_amount = payment_obj.amount * (
+            100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0
+
+        if float(amount) < expected_payment_amount:
             logging.critical('Invalid request, payment processing will raise SuspiciousOperation: '
                              'transaction amount is not matching with existing record')
             raise exceptions.SuspiciousOperation()
+
+        if float(amount) > expected_payment_amount:
+            logging.warn('Payment %r is overpaid: %r', payment_obj, amount)
 
     def _is_payment_verified(self, transaction_id):
         verified = requests.get(f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
@@ -111,7 +119,7 @@ class VerifyPaymentView(View):
         fc = request_data.get('fc')
         reference = request_data.get('ref')
         transaction_id = request_data.get('tid')
-        amount = request_data.get('amt')
+        amount = request_data.get('amt', '').replace(',', '.')
 
         if _Debug:
             logging.debug('Verify payment request: %r', request_data)

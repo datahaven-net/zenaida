@@ -1,4 +1,5 @@
 import logging
+import re
 
 from automats import contact_synchronizer
 from automats import domains_checker
@@ -8,7 +9,8 @@ from automats import domain_resurrector
 from automats import domain_contacts_synchronizer
 
 from zen import zerrors
-
+from zen.exceptions import NameServerDoesNotExistException
+from zen.zerrors import EPPObjectNotExist
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +94,13 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     outputs = list(ds.outputs)
     del ds
     logger.info('domain_synchronizer(%r) finished with %d outputs', domain_object.name, len(outputs))
+
+    for output in outputs:
+        if isinstance(output, EPPObjectNotExist) and getattr(output, "message"):
+            invalid_nameservers = re.findall(r"Object does not exist; The host (.*) does not exist", output.message)
+            if invalid_nameservers:
+                invalid_nameservers = ', '.join(invalid_nameservers)
+                raise NameServerDoesNotExistException(f"{domain_object.name} has invalid nameserver(s): {invalid_nameservers}")
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if isinstance(outputs[-1], Exception):

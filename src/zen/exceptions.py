@@ -1,0 +1,4 @@
+
+
+class NameServerDoesNotExistException(Exception):
+    pass

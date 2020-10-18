@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core import exceptions
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
 from django.views.generic.edit import FormMixin
@@ -23,6 +24,7 @@ from billing import billing_errors
 from billing.decorators import create_or_update_single_order
 
 from zen import zdomains
+from zen.exceptions import NameServerDoesNotExistException
 
 
 @login_required
@@ -300,15 +302,25 @@ class OrderExecuteView(LoginRequiredMixin, View):
             messages.error(request, self.error_message_balance)
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(existing_order.total_price - existing_order.owner.balance)))
-
-        new_status = billing_orders.execute_order(existing_order)
-        if new_status == 'processed':
-            messages.success(request, self.success_message)
-        elif new_status == 'processing':
-            messages.success(request, self.processing_message)
-        else:
-            messages.error(request, self.error_message_technical)
-        return shortcuts.redirect('account_domains')
+        try:
+            new_status = billing_orders.execute_order(existing_order)
+            if new_status == 'processed':
+                messages.success(request, self.success_message)
+            elif new_status == 'processing':
+                messages.success(request, self.processing_message)
+            else:
+                messages.error(request, self.error_message_technical)
+            return shortcuts.redirect('account_domains')
+        except NameServerDoesNotExistException as exc:
+            exception_as_str = str(exc)
+            messages.warning(request, mark_safe(f"Your order is failed due to below problem:<br/> "
+                                                f"{exception_as_str}<br/> After editing domain details, "
+                                                f"please go from main menu to 'Billing -> My Orders' "
+                                                f"then click 'Confirm' to finish your order.")
+                             )
+            domain_name = exception_as_str.split()[0]
+            domain_object = zdomains.domain_find(domain_name=domain_name)
+            return shortcuts.redirect('account_domain_edit', domain_id=domain_object.id)
 
 
 class OrderCancelView(LoginRequiredMixin, View):

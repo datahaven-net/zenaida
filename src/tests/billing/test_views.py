@@ -397,7 +397,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         # It is still previous order as that one's status is started.
         assert orders[0].description == 'register 1 domain, restore 1 domain, renew 1 domain'
         assert len(orders[0].items.all()) == 3
-        assert orders[0].items.all()[0].name == 'test_not_registered.ai'
+        assert orders[0].items.filter(name='test_not_registered.ai').first().status == 'started'
         mock_messages_warning.assert_called_once()
 
     @pytest.mark.django_db

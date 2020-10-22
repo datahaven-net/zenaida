@@ -5,7 +5,8 @@ mock
 django-debug-toolbar
 
 # PyTest for running the tests.
-pytest<5.0.0
+importlib.metadata==2.0.0
+pytest==4.6.6
 pytest-mock
 pytest-cov
 pytest-django

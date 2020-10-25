@@ -10,6 +10,8 @@ from back.models import contact
 from back.models.contact import Contact, Registrant
 from back.models.domain import Domain
 from back.models.zone import Zone
+from tests.testsupport import prepare_tester_account, prepare_tester_contact, prepare_tester_registrant, \
+    prepare_tester_profile
 
 from zen import zusers
 
@@ -265,6 +267,25 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/domains/'
         mock_messages_error.assert_called_once()
 
+    @mock.patch('os.system')
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=True)
+    def test_nameserver_is_not_available(self, mock_ping):
+        mock_ping.return_value = -1
+        tester = prepare_tester_account()
+        contact_admin = prepare_tester_contact(tester=tester)
+        profile = prepare_tester_profile(tester=tester)
+        registrant = prepare_tester_registrant(tester=tester, profile_object=profile)
+
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='dns1.kuwaitnet.net',
+            contact_admin=contact_admin.id
+        ))
+
+        assert response.status_code == 200
+        assert response.context['errors'] == ['List of nameservers that are not valid or not reachable at this '
+                                              'moment: <br>dns1.kuwaitnet.net <br>Please try again later or '
+                                              'specify valid and available nameservers.']
+
 
 class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
 
@@ -332,13 +353,12 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/contacts/'
 
-    @mock.patch('django.contrib.messages.warning')
     @mock.patch('zen.zmaster.contact_create_update')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('os.system')
     @mock.patch('zen.zmaster.domain_check_create_update_renew')
     def test_nameserver_is_not_available(
-        self, mock_epp_call, mock_ping, mock_user_profile_complete, mock_contact_create_update, mock_messages_warning
+        self, mock_epp_call, mock_ping, mock_user_profile_complete, mock_contact_create_update
     ):
         mock_epp_call.return_value = True
         mock_ping.return_value = -1
@@ -364,8 +384,10 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             contact_tech=Contact.contacts.all()[0].id,
         ))
 
-        assert response.status_code == 302
-        mock_messages_warning.assert_called_once()
+        assert response.status_code == 200
+        assert response.context['errors'] == ['List of nameservers that are not valid or not reachable at this '
+                                              'moment: <br>dns1.kuwaitnet.net <br>Please try again later or '
+                                              'specify valid and available nameservers.']
 
     @mock.patch('zen.zmaster.contact_create_update')
     @mock.patch('back.models.profile.Profile.is_complete')

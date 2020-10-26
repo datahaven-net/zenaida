@@ -60,6 +60,21 @@ def prepare_tester_contact(tester=None, epp_id=None, create_new=False):
     return tester_contact
 
 
+def prepare_tester_profile(tester=None):
+    if not tester:
+        tester = prepare_tester_account()
+    tester.profile.person_name = 'Tester Tester'
+    tester.profile.address_street = 'TestStreet'
+    tester.profile.address_city = 'TestCity'
+    tester.profile.address_province = 'TestProvince'
+    tester.profile.address_postal_code = 'TestPostalCode'
+    tester.profile.address_country = 'AI'
+    tester.profile.contact_voice = '1234567890'
+    tester.profile.contact_email = 'tester@zenaida.ai'
+    tester.profile.save()
+    return tester.profile
+
+
 def prepare_tester_registrant(tester=None, epp_id=None, profile_object=None, create_new=False):
     if not tester:
         tester = prepare_tester_account()

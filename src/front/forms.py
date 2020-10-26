@@ -3,6 +3,8 @@ import re
 
 from django.conf import settings
 from django.forms import forms, models, fields
+from django.utils.safestring import mark_safe
+
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
 
@@ -41,12 +43,19 @@ class DomainDetailsForm(models.ModelForm):
         contact_tech = cleaned_data.get('contact_tech')
         if not any([contact_admin, contact_billing, contact_tech, ]):
             raise forms.ValidationError('At least one Contact Person must be specified for the domain.')
+
+        cleaned_data['nameserver1'] = cleaned_data.get('nameserver1').strip('.')
+        cleaned_data['nameserver2'] = cleaned_data.get('nameserver2').strip('.')
+        cleaned_data['nameserver3'] = cleaned_data.get('nameserver3').strip('.')
+        cleaned_data['nameserver4'] = cleaned_data.get('nameserver4').strip('.')
+
         ns_list = [
             cleaned_data.get('nameserver1'),
             cleaned_data.get('nameserver2'),
             cleaned_data.get('nameserver3'),
             cleaned_data.get('nameserver4'),
         ]
+
         if not any(ns_list):
             raise forms.ValidationError('At least one nameserver must be specified for the domain.')
         for nameserver in ns_list:
@@ -56,11 +65,23 @@ class DomainDetailsForm(models.ModelForm):
         filled_ns_list = list(filter(None, ns_list))
         if len(filled_ns_list) != len(set(filled_ns_list)):
             raise forms.ValidationError('Nameservers can not be duplicated.')
+
+        invalid_nameservers = []
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
                 if not os.system("ping -c 1 " + ns) == 0:
-                    cleaned_data['invalid_nameservers'] = True
-                    break
+                    invalid_nameservers.append(ns)
+
+        if invalid_nameservers:
+            invalid_nameservers = ', '.join(invalid_nameservers)
+            raise forms.ValidationError(
+                mark_safe(
+                    f"List of nameservers that are not valid or not reachable at this moment: <br>"
+                    f"{invalid_nameservers} <br>"
+                    f"Please try again later or specify valid and available nameservers."
+                )
+            )
+
         return cleaned_data
 
 

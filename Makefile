@@ -1,6 +1,6 @@
 # This Makefile requires the following commands to be available:
 # * virtualenv
-# * python3.6
+# * python3.8
 # * docker
 # * docker-compose
 
@@ -10,12 +10,12 @@ REQUIREMENTS_TXT:=requirements.txt
 
 DOCKER_COMPOSE=$(shell which docker-compose)
 
-PIP:="venv/bin/pip"
+PIP:="venv/bin/pip3"
 TOX="venv/bin/tox"
 PYTHON="venv/bin/python"
 UWSGI="venv/bin/uwsgi"
 TOX_PY_LIST="$(shell $(TOX) -l | grep ^py | xargs | sed -e 's/ /,/g')"
-TOX_LATEST_LIST="latest36"
+TOX_LATEST_LIST="latest38"
 
 # Empty files used to keep track of installed types of virtualenvs (see rules below)
 VENV_SYSTEM_SITE_PACKAGES=venv/.venv_system_site_packages
@@ -32,7 +32,7 @@ VSN:=$(shell git describe --tags --always)
 ARTIFACT:=zenaida-$(VSN).tgz
 PIP_CACHE:=.pip_cache
 PIP_DOWNLOAD:=.pip_download
-PYTHON_VERSION=python3.6
+PYTHON_VERSION=python3.8
 BRANCH=$(shell git branch | grep '*' | awk '{print $$2}')
 BUILD_PROPERTIES_FILE=build.properties
 BUILD_PROPERTIES_JSONFILE=build.properties.json
@@ -125,7 +125,7 @@ test/%: sanity_checks pyclean venv
 	$(TOX) -e $(TOX_PY_LIST) -- $*
 
 test_e2e: $(VENV_TOX)
-	E2E=1 PYTHONPATH=./src .tox/py36/bin/py.test -v -s --capture=no src/tests/
+	E2E=1 PYTHONPATH=./src .tox/py38/bin/py.test -v -s --capture=no src/tests/
 
 lint: $(VENV_TOX)
 	@$(TOX) -e lint
@@ -298,7 +298,7 @@ $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# VENV_TOX
 	@$(PIP) install --upgrade pip
-	@$(PIP) install tox
+	@$(PIP) install tox importlib.metadata==2.0.0
 	@touch $@
 
 $(VENV_DEV): $(VENV_TOX) $(VENV_BASE) $(VENV_TEST)

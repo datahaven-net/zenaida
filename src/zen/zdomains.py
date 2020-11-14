@@ -11,7 +11,6 @@ from django.core import exceptions
 from back.models.registrar import Registrar
 
 from zen import zzones
-from zen import zcontacts
 from zen import zusers
 
 logger = logging.getLogger(__name__)
@@ -331,6 +330,15 @@ def list_domains(registrant_email):
     if not existing_account:
         return []
     return list(existing_account.domains.all().order_by('expiry_date'))
+
+
+def list_domains_by_status(status):
+    """
+    List all domains for given domain status.
+    """
+    from back.models.domain import Domain
+
+    return Domain.domains.filter(status=status)
 
 
 def remove_inactive_domains(days=1):

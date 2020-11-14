@@ -2,7 +2,6 @@ import pytest
 import datetime
 
 from django.test import TestCase
-from django.test.utils import freeze_time
 
 from back.models.domain import Domain
 from zen import zdomains
@@ -45,6 +44,17 @@ def test_list_domains():
     assert zdomains.list_domains('tester@zenaida.ai')[1].id == tester_domain2.id
     assert zdomains.list_domains('tester@zenaida.ai')[2].id == tester_domain3.id
 
+
+@pytest.mark.django_db
+def test_list_domains_by_status():
+    testsupport.prepare_tester_domain(domain_name='abc.ai', expiry_date=datetime.datetime(2020, 1, 1))
+    testsupport.prepare_tester_domain(domain_name='xyz.ai', expiry_date=datetime.datetime(2020, 2, 1))
+    testsupport.prepare_tester_domain(
+        domain_name='www.ai', expiry_date=datetime.datetime(2020, 3, 1), domain_status='to_be_deleted'
+    )
+    domains = zdomains.list_domains_by_status(status='to_be_deleted')
+    assert len(domains) == 1
+    assert domains[0].name == 'www.ai'
 
 @pytest.mark.django_db
 def test_list_domains_by_status_and_epp_id():

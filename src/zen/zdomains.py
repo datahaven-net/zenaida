@@ -4,6 +4,7 @@ import datetime
 import random
 import string
 
+from django.db.models import Q
 from django.utils import timezone
 from django.conf import settings
 from django.core import exceptions
@@ -349,8 +350,11 @@ def remove_inactive_domains(days=1):
 
     given_days_before_create_date = timezone.now() - datetime.timedelta(days=days)
 
-    domains = Domain.domains.filter(status='inactive', epp_id=None, create_date__lt=given_days_before_create_date)
-    domains.all().delete()
+    inactive_domains = Domain.domains.filter(status='inactive', epp_id=None)
+    domains_to_delete = inactive_domains.filter(
+        Q(create_date__lt=given_days_before_create_date) | Q(create_date=None)
+    )
+    domains_to_delete.all().delete()
     return
 
 

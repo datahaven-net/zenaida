@@ -56,8 +56,9 @@ def test_list_domains_by_status():
     assert len(domains) == 1
     assert domains[0].name == 'www.ai'
 
+
 @pytest.mark.django_db
-def test_list_domains_by_status_and_epp_id():
+def test_remove_inactive_domains():
     time_now = datetime.datetime.now()
     testsupport.prepare_tester_domain(domain_name='abc.ai', create_date=(time_now-datetime.timedelta(hours=23)))
     testsupport.prepare_tester_domain(domain_name='xyz.ai', create_date=(time_now-datetime.timedelta(days=2)))
@@ -66,6 +67,22 @@ def test_list_domains_by_status_and_epp_id():
 
     zdomains.remove_inactive_domains(days=1)
     assert len(Domain.domains.all()) == 1
+
+
+@pytest.mark.django_db
+def test_remove_inactive_domains_without_create_date():
+    domain_1 = testsupport.prepare_tester_domain(domain_name='abc.ai')
+    domain_2 = testsupport.prepare_tester_domain(domain_name='xyz.ai')
+
+    domain_1.create_date = None
+    domain_1.save()
+
+    assert len(Domain.domains.all()) == 2
+
+    zdomains.remove_inactive_domains(days=1)
+    domains = Domain.domains.all()
+    assert len(domains) == 1
+    assert domains[0].name == 'xyz.ai'
 
 
 class TestDomainStatuses(TestCase):

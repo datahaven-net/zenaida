@@ -637,7 +637,8 @@ class DomainRefresher(automat.Automat):
             self.new_domain_contacts.pop('admin', None)
             self.new_domain_contacts.pop('billing', None)
             self.new_domain_contacts.pop('tech', None)
-        self.target_domain.refresh_from_db()
+        if self.target_domain:
+            self.target_domain.refresh_from_db()
 
     def doDBSetDomainContacts(self, *args, **kwargs):
         """

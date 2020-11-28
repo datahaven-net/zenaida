@@ -85,6 +85,7 @@ patterns = [
     path('billing/btcpay/redirect/', pay_btcpay_views.RedirectPaymentView.as_view(), name='billing_btcpay_redirect_payment'),
 
     path('board/financial-report/', board_views.FinancialReportView.as_view(), name='financial_report'),
+    path('board/domain-sync/', board_views.NotExistingDomainSyncView.as_view(), name='not_existing_domain_sync'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 

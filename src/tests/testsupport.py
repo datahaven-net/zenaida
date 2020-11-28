@@ -11,8 +11,8 @@ from zen import zdomains
 from zen import zusers
 
 
-def prepare_tester_account(email='tester@zenaida.ai', account_password='tester', account_balance=None,
-                           automatic_renewal_enabled=True, email_notifications_enabled=True, ):
+def prepare_tester_account(email='tester@zenaida.ai', account_password='tester', is_staff=False, account_balance=None,
+                           automatic_renewal_enabled=True, email_notifications_enabled=True, join_date=None):
     tester = zusers.find_account(email)
     if not tester:
         tester = zusers.create_account(
@@ -34,7 +34,11 @@ def prepare_tester_account(email='tester@zenaida.ai', account_password='tester',
         )
     if account_balance is not None:
         tester.balance = account_balance
-        tester.save()
+    if is_staff:
+        tester.is_staff = True
+    if join_date:
+        tester.date_joined = join_date
+    tester.save()
     return tester
 
 
@@ -189,15 +193,17 @@ def prepare_tester_order(
     order_type='domain_register',
     status='started',
     started_at=datetime.datetime.now(),
+    finished_at=datetime.datetime.now(),
     price=100.0,
-    tester=None,
+    owner=None,
 ):
-    if not tester:
-        tester = prepare_tester_account()
+    if not owner:
+        owner = prepare_tester_account()
 
     order = Order.orders.create(
-        owner=tester,
+        owner=owner,
         started_at=started_at,
+        finished_at=finished_at,
         status=status,
     )
 

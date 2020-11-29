@@ -1,0 +1,25 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+
+<div class="alert alert-secondary" role="alert">
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="row col-sm-10">
+        <div class="col-sm-4">
+          <fieldset>
+            {% bootstrap_field form.domain_name layout="horizontal" placeholder="Domain Name" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
+        </div>
+        <div class="col-sm-1">
+          <button class="btn btn-sm btn-success">Synchronize</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+
+{% endblock %}

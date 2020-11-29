@@ -142,7 +142,9 @@ class Domain(models.Model):
             return self.nameserver3
         if pos == 3:
             return self.nameserver4
-        raise ValueError('Invalid position for nameserver')
+        if pos > 3:
+            logger.warning(f'invalid position for nameserver, position: {pos}')
+            return
 
     def get_contact(self, role):
         """
@@ -177,20 +179,18 @@ class Domain(models.Model):
         if pos == 0:
             self.nameserver1 = nameserver
             logger.debug('nameserver %s set for %s at position 1', nameserver, self)
-            return True
         if pos == 1:
             self.nameserver2 = nameserver
             logger.debug('nameserver %s set for %s at position 2', nameserver, self)
-            return True
         if pos == 2:
             self.nameserver3 = nameserver
             logger.debug('nameserver %s set for %s at position 3', nameserver, self)
-            return True
         if pos == 3:
             self.nameserver4 = nameserver
             logger.debug('nameserver %s set for %s at position 4', nameserver, self)
-            return True
-        raise ValueError('Invalid position for nameserver')
+        if pos > 3:
+            logger.warning(f'nameserver {nameserver} was not added because DB do not accept more than 4 nameservers')
+        return True
 
     def clear_nameserver(self, pos):
         """
@@ -198,24 +198,21 @@ class Domain(models.Model):
         Counting `pos` from 0 to 3.
         """
         if pos not in list(range(4)):
-            raise ValueError('Invalid position for nameserver')
+            logger.warning(f'invalid position for nameserver, position: {pos}')
+            return
         if pos == 0 and self.nameserver1:
             logger.debug('nameserver %s to be erased for %s at position 1', self.nameserver1, self)
             self.nameserver1 = ''
-            return True
         if pos == 1 and self.nameserver2:
             logger.debug('nameserver %s to be erased for %s at position 2', self.nameserver2, self)
             self.nameserver2 = ''
-            return True
         if pos == 2 and self.nameserver3:
             logger.debug('nameserver %s to be erased for %s at position 3', self.nameserver3, self)
             self.nameserver3 = ''
-            return True
         if pos == 3 and self.nameserver4:
             logger.debug('nameserver %s to be erased for %s at position 4', self.nameserver4, self)
             self.nameserver4 = ''
-            return True
-        return False
+        return True
 
     @property
     def is_registered(self):

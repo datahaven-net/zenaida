@@ -5,13 +5,13 @@
 
 {% if result == 'not exist' %}
     <div class="alert alert-success text-center" role="alert">
-        <b>{{ domain_name }}</b> is available to register.
-        <br />
+        Domain <b>{{ domain_name }}</b> is available to register
       <h4><a href="{% url 'account_domain_create' domain_name %}" class="alert-link">Click here to register it!</a></h4>
     </div>
+
 {% elif result == 'exist' %}
     <div class="alert alert-warning text-center" role="alert">
-        <b>{{ domain_name }}</b> is already registered. <br />Search for another domain!
+        Domain <b>{{ domain_name }}</b> is already registered
     </div>
     <div class="text-center">
         <form method="post">
@@ -26,10 +26,17 @@
             </div>
         </form>
     </div>
+
+{% elif result == 'non-supported-zone' %}
+    <div class="alert alert-danger text-center" role="alert">
+        Service is unavailable at this moment, please try again later
+    </div>
+
 {% elif result == 'error' %}
     <div class="alert alert-danger text-center" role="alert">
-        Service is unavailable at this moment<br />Please try it later.
+        Non-supported Zone
     </div>
+
 {% else %}
     <div class="text-center">
         <form method="post">

@@ -69,6 +69,11 @@ class EPPRegistrantUnknown(EPPError):
 class EPPDomainNotExist(EPPError):
     pass
 
+
+class EPPNonSupportedZone(EPPError):
+    pass
+
+
 #------------------------------------------------------------------------------
 # those exceptions are based on EPP response code
 

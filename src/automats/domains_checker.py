@@ -332,6 +332,9 @@ class DomainsChecker(automat.Automat):
                 logger.error('unexpected EPP response, unknown domain name: %s' % response)
                 return [zerrors.EPPResponseEmpty(), ]
             if result.get('name', {}).get('@avail') == '0':
-                if not result.get('reason').lower().count('the domain exists'):
+                reason = result.get('reason').lower()
+                if reason.count('non-supported zone'):
+                    return [zerrors.EPPNonSupportedZone(), ]
+                if not reason.count('the domain exists'):
                     return [zerrors.exception_from_response(response=response), ]
         return []

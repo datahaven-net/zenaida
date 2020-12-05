@@ -63,6 +63,8 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):
             logger.error('domains_checker(%r) failed with: %r', domain_names, outputs[-1])
+        if isinstance(outputs[-1], zerrors.EPPNonSupportedZone):
+            return 'non-supported-zone'
         return None
 
     logger.info('domains_checker(%r) OK', domain_names)

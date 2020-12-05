@@ -420,6 +420,8 @@ class DomainLookupView(FormView):
                 check_result = zmaster.domains_check(domain_names=[domain_name, ], )
                 if check_result is None:
                     result = 'error'
+                elif check_result == 'non-supported-zone':
+                    result = 'non-supported-zone'
                 else:
                     if check_result.get(domain_name):
                         result = 'exist'

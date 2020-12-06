@@ -11,6 +11,7 @@ from django.shortcuts import render_to_response
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView, FormView
 
 from back.models.domain import Domain
@@ -419,14 +420,19 @@ class DomainLookupView(FormView):
             if domain_available:
                 check_result = zmaster.domains_check(domain_names=[domain_name, ], )
                 if check_result is None:
-                    result = 'error'
+                    messages.error(
+                        self.request,
+                        mark_safe('Service is unavailable at this moment. <br /> Please try it later.')
+                    )
+                elif check_result == 'non-supported-zone':
+                    messages.error(self.request, 'Domain zone is not supported')
                 else:
                     if check_result.get(domain_name):
-                        result = 'exist'
+                        messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
                     else:
                         result = 'not exist'
             else:
-                result = 'exist'
+                messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
         return self.render_to_response(self.get_context_data(form=form, domain_name=domain_name, result=result))
 
 

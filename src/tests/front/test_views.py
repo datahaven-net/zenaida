@@ -608,21 +608,23 @@ class TestDomainLookupView(TestCase):
         assert response.context['result'] == 'exist'
         assert response.context['domain_name'] == 'test.ai'
 
-    def test_domain_lookup_returns_error(self):
+    @mock.patch('django.contrib.messages.error')
+    def test_domain_lookup_returns_error(self, mock_messages_error):
         with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
             mock_domain_check.return_value = None
             response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 200
-        assert response.context['result'] == 'error'
         assert response.context['domain_name'] == 'bitdust.ai'
+        mock_messages_error.assert_called_once()
 
-    def test_domain_is_already_in_db(self):
+    @mock.patch('django.contrib.messages.warning')
+    def test_domain_is_already_in_db(self, mock_messages_warning):
         with mock.patch('zen.zdomains.is_domain_available') as mock_is_domain_available:
             mock_is_domain_available.return_value = False
             response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 200
-        assert response.context['result'] == 'exist'
         assert response.context['domain_name'] == 'bitdust.ai'
+        mock_messages_warning.assert_called_once()
 
     def test_domain_lookup_page_without_domain_name(self):
         response = self.client.post('/lookup/')
@@ -633,7 +635,6 @@ class TestDomainLookupView(TestCase):
         response = self.client.post('/lookup/', data=dict(domain_name='example'))
         assert response.status_code == 200
         assert response.context['domain_name'] == 'example'
-        assert response.context['result'] is None
         mock_messages_error.assert_called_once()
 
     @mock.patch('django.contrib.messages.error')

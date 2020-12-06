@@ -9,27 +9,6 @@
         <br />
       <h4><a href="{% url 'account_domain_create' domain_name %}" class="alert-link">Click here to register it!</a></h4>
     </div>
-{% elif result == 'exist' %}
-    <div class="alert alert-warning text-center" role="alert">
-        <b>{{ domain_name }}</b> is already registered. <br />Search for another domain!
-    </div>
-    <div class="text-center">
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-row justify-content-center">
-                <div class="col-lg-3">
-                    <input class="form-control form-control-lg" type="text" placeholder="Your domain name" aria-label="Search" name="domain_name" value="{{ domain_name }}" autofocus required>
-                </div>
-                <div class="col-lg-1">
-                    <button class="btn btn-success btn-lg btn-block" href="{% url 'domain_lookup' %}" type="submit">Register</button>
-                </div>
-            </div>
-        </form>
-    </div>
-{% elif result == 'error' %}
-    <div class="alert alert-danger text-center" role="alert">
-        Service is unavailable at this moment<br />Please try it later.
-    </div>
 {% else %}
     <div class="text-center">
         <form method="post">

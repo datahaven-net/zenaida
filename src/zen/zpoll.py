@@ -193,12 +193,14 @@ def do_domain_contacts_changed(domain):
 
 
 def do_domain_change_unknown(domain):
-    logger.info('domain %s change is unknown, doing lazy-synchronize', domain)
+    logger.info('domain %s change is unknown, doing hard-synchronize', domain)
     try:
         zmaster.domain_synchronize_from_backend(
             domain_name=domain,
-            refresh_contacts=False,
-            change_owner_allowed=False,
+            refresh_contacts=True,
+            rewrite_contacts=True,
+            change_owner_allowed=True,
+            create_new_owner_allowed=True,
         )
     except zerrors.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)

@@ -313,7 +313,7 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
 
 
 class AccountContactCreateView(LoginRequiredMixin, CreateView):
-    template_name = 'front/account_contact_create.html'
+    template_name = 'front/account_contact_create_update.html'
     form_class = forms.ContactPersonForm
     error_message = 'There is a technical problem with contact details processing. ' \
                     'Please try again later or contact site administrator'
@@ -333,7 +333,7 @@ class AccountContactCreateView(LoginRequiredMixin, CreateView):
 
 
 class AccountContactUpdateView(LoginRequiredMixin, UpdateView):
-    template_name = 'front/account_contact_edit.html'
+    template_name = 'front/account_contact_create_update.html'
     model = Contact
     form_class = forms.ContactPersonForm
     pk_url_kwarg = 'contact_id'

@@ -16,6 +16,15 @@ class ContactPersonForm(models.ModelForm):
         fields = ('person_name', 'organization_name', 'address_street', 'address_city', 'address_province',
                   'address_postal_code', 'address_country', 'contact_voice', 'contact_fax', 'contact_email', )
 
+    def clean(self):
+        cleaned_data = super(ContactPersonForm, self).clean()
+        for value in cleaned_data.values():
+            try:
+                value.encode('ascii')
+            except UnicodeEncodeError:
+                raise forms.ValidationError('Please use only English characters in your contact details.')
+        return cleaned_data
+
 
 class DomainDetailsForm(models.ModelForm):
 

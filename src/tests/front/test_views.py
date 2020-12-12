@@ -1,3 +1,4 @@
+# coding=utf-8
 import copy
 import datetime
 import os
@@ -510,6 +511,14 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             assert response.status_code == 200
             assert contact.Contact.contacts.filter(person_name='TesterA').first() is None
 
+    @pytest.mark.django_db
+    def test_contact_info_create_non_ascii_validation_error(self):
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            contact = copy.deepcopy(contact_person)
+            contact['address_city'] = 'Mońki'
+            response = self.client.post('/contacts/create/', data=contact, follow=True)
+            assert response.status_code == 200
+            assert response.context['errors'] == ['Please use only English characters in your contact details.']
 
 class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
 
@@ -536,6 +545,16 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
         # Check if contact person is updated successfully
         c = contact.Contact.contacts.all()[0]
         assert c.person_name == 'TesterB'
+
+    @pytest.mark.django_db
+    def test_contact_info_update_non_ascii_validation_error(self):
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            contact = copy.deepcopy(contact_person)
+            contact['address_city'] = 'Mońki'
+            response = self.client.post('/contacts/create/', data=contact, follow=True)
+            assert response.status_code == 200
+            assert response.context['errors'] == ['Please use only English characters in your contact details.']
+
 
     def test_contact_update_returns_404(self):
         response = self.client.put('/contacts/edit/1/')

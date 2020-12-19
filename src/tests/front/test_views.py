@@ -10,6 +10,7 @@ from django.test import TestCase, override_settings
 from back.models import contact
 from back.models.contact import Contact, Registrant
 from back.models.domain import Domain
+from back.models.profile import Profile
 from back.models.zone import Zone
 from tests.testsupport import prepare_tester_account, prepare_tester_contact, prepare_tester_registrant, \
     prepare_tester_profile
@@ -36,6 +37,8 @@ class BaseAuthTesterMixin(object):
     @pytest.mark.django_db
     def setUp(self):
         self.account = zusers.create_account('tester@zenaida.ai', account_password='123', is_active=True)
+        self.account.profile.contact_email = 'tester@zenaida.ai'
+        self.account.profile.save()
         registrant_info = copy.deepcopy(contact_person)
         registrant_info['owner'] = self.account
         Registrant.registrants.create(**registrant_info)
@@ -492,6 +495,53 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     pass
 
 
+class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    def test_get_profile(self):
+        response = self.client.get('/profile/')
+
+        assert response.status_code == 200
+        assert isinstance(response.context['object'], Profile) is True
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.contact_create_from_profile')
+    @mock.patch('zen.zmaster.contact_create_update')
+    @mock.patch('django.contrib.messages.success')
+    def test_create_profile_with_contact_person(
+        self, mock_messages_success, mock_contact_create_update, mock_contact_create_from_profile
+    ):
+        response = self.client.post('/profile/', data=contact_person, follow=True)
+
+        assert response.status_code == 200
+        assert mock_contact_create_update.call_count == 2
+        mock_contact_create_from_profile.assert_called_once()
+        mock_messages_success.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.contact_create_from_profile')
+    @mock.patch('zen.zmaster.contact_create_update')
+    @mock.patch('django.contrib.messages.error')
+    def test_create_profile_with_contact_person_returns_error(
+        self, mock_messages_error, mock_contact_create_update, mock_contact_create_from_profile
+    ):
+        mock_contact_create_update.return_value = False
+        response = self.client.post('/profile/', data=contact_person, follow=True)
+
+        assert response.status_code == 200
+        mock_contact_create_update.assert_called_once()
+        mock_contact_create_from_profile.assert_called_once()
+        mock_messages_error.assert_called_once()
+
+    @pytest.mark.django_db
+    def test_create_profile_non_ascii_validation_error(self):
+        contact = copy.deepcopy(contact_person)
+        contact['address_city'] = 'Mońki'
+        response = self.client.post('/profile/', data=contact, follow=True)
+
+        assert response.status_code == 200
+        assert response.context['errors'] == ['Please use only English characters in your details.']
+
+
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
@@ -518,7 +568,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             contact['address_city'] = 'Mońki'
             response = self.client.post('/contacts/create/', data=contact, follow=True)
             assert response.status_code == 200
-            assert response.context['errors'] == ['Please use only English characters in your contact details.']
+            assert response.context['errors'] == ['Please use only English characters in your details.']
 
 class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
 
@@ -553,7 +603,7 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
             contact['address_city'] = 'Mońki'
             response = self.client.post('/contacts/create/', data=contact, follow=True)
             assert response.status_code == 200
-            assert response.context['errors'] == ['Please use only English characters in your contact details.']
+            assert response.context['errors'] == ['Please use only English characters in your details.']
 
 
     def test_contact_update_returns_404(self):

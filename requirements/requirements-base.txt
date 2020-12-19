@@ -6,7 +6,7 @@ fqn-decorators
 requests
 psycopg2-binary
 uwsgi
-Django
+Django==2.2.13
 django-admin-ip-restrictor
 djangorestframework
 python-memcached
@@ -20,3 +20,4 @@ django-dbbackup
 qrcode
 pdfkit
 btcpay-python
+python-dateutil

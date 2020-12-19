@@ -1,6 +1,5 @@
 from django.db import models
 
-from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 
 from billing.models.order import Order
@@ -35,7 +34,7 @@ class OrderItem(models.Model):
 
     name = models.CharField(max_length=255, validators=[validate_domain_name, ])
 
-    details = JSONField(null=True, encoder=DjangoJSONEncoder)
+    details = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     status = models.CharField(
         choices=(

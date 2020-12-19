@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
@@ -55,7 +54,7 @@ class Notification(models.Model):
 
     domain_name = models.CharField(max_length=255)
 
-    details = JSONField(null=True, encoder=DjangoJSONEncoder)
+    details = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     def __str__(self):
         return 'Notification({}:{}:{})'.format(self.account.email, self.subject, self.status)

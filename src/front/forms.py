@@ -9,6 +9,16 @@ from back.models.profile import Profile
 from back.models.domain import Contact, Domain
 
 
+def encode_ascii_for_list_of_strings(values):
+    for value in values:
+        if isinstance(value, str):
+            try:
+                value.encode('ascii')
+            except UnicodeEncodeError:
+                raise forms.ValidationError('Please use only English characters in your details.')
+    return
+
+
 class ContactPersonForm(models.ModelForm):
 
     class Meta:
@@ -18,11 +28,7 @@ class ContactPersonForm(models.ModelForm):
 
     def clean(self):
         cleaned_data = super(ContactPersonForm, self).clean()
-        for value in cleaned_data.values():
-            try:
-                value.encode('ascii')
-            except UnicodeEncodeError:
-                raise forms.ValidationError('Please use only English characters in your contact details.')
+        encode_ascii_for_list_of_strings(cleaned_data.values())
         return cleaned_data
 
 
@@ -116,6 +122,11 @@ class AccountProfileForm(models.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AccountProfileForm, self).__init__(*args, **kwargs)
         self.fields['contact_email'].disabled = True
+
+    def clean(self):
+        cleaned_data = super(AccountProfileForm, self).clean()
+        encode_ascii_for_list_of_strings(cleaned_data.values())
+        return cleaned_data
 
 
 class DomainLookupForm(forms.Form):

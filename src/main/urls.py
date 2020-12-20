@@ -86,6 +86,7 @@ patterns = [
 
     path('board/financial-report/', board_views.FinancialReportView.as_view(), name='financial_report'),
     path('board/domain-sync/', board_views.NotExistingDomainSyncView.as_view(), name='not_existing_domain_sync'),
+    path('board/csv-file-sync/', board_views.CSVFileSyncView.as_view(), name='csv_file_sync'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 

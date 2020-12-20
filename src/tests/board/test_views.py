@@ -3,6 +3,7 @@ import mock
 import pytest
 
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from tests import testsupport
 
@@ -99,3 +100,22 @@ class TestNotExistingDomainSyncView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/'
         mock_sync_backend.assert_not_called()
         mock_messages_error.assert_called_once()
+
+
+class TestCSVFileSyncView(BaseAuthTesterMixin, TestCase):
+
+    @mock.patch('django.contrib.messages.error')
+    def test_access_denied_for_normal_user(self, mock_messages_error):
+        self.account.is_staff = False
+        self.account.save()
+        response = self.client.post('/board/csv-file-sync/', data=dict())
+        assert response.url == '/'
+        mock_messages_error.assert_called_once()
+
+    @mock.patch('board.views.load_from_csv')
+    def test_csv_file_upload_success(self, mock_load_from_csv):
+        mock_load_from_csv.return_value = 100
+        csv_file = SimpleUploadedFile("domains.csv", b"some_text_here", content_type="text/csv")
+        response = self.client.post('/board/csv-file-sync/', {'csv_file': csv_file, 'dry_run': True, })
+        mock_load_from_csv.assert_called_once()
+        assert response.content.count(b'total records processed: 100') == 1

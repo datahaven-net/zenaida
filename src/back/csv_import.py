@@ -197,13 +197,13 @@ def prepare_domain_epp_statuses(csv_domain_status, default_epp_statuses={'ok': '
     }.get(csv_domain_status, default_epp_statuses)
 
 
-def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_contact_id, real_owner):
+def check_contact_to_be_created(known_epp_contact_id, real_epp_contact_id, real_owner):
     errors = []
     to_be_created = False
     if known_epp_contact_id:
         if known_epp_contact_id != real_epp_contact_id:
     #--- contact epp ID is not matching
-            errors.append("epp registrant ID is not matching with csv record, known is %r, real is %r" % (
+            errors.append("epp contact ID is not matching with csv record, known is %r, real is %r" % (
                 known_epp_contact_id, real_epp_contact_id, ))
             to_be_created = True
         else:
@@ -212,8 +212,30 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
                 owner=real_owner,
             ):
     #--- contact info is not matching
-                errors.append("epp registrant ID is found, but known info is not matching with csv record, known is %r, real is %r" % (
-                    known_epp_contact_id, real_epp_contact_id, ))
+                errors.append("epp contact ID %r is found, but known info is not matching with csv record" % known_epp_contact_id)
+                to_be_created = True
+    else:
+    #--- contact not exist
+        to_be_created = True
+    return errors, to_be_created
+
+
+def check_registrant_to_be_created(known_epp_registrant_id, real_epp_registrant_id, real_owner):
+    errors = []
+    to_be_created = False
+    if known_epp_registrant_id:
+        if known_epp_registrant_id != real_epp_registrant_id:
+    #--- contact epp ID is not matching
+            errors.append("epp registrant ID is not matching with csv record, known is %r, real is %r" % (
+                known_epp_registrant_id, real_epp_registrant_id, ))
+            to_be_created = True
+        else:
+            if not zcontacts.verify_registrant(
+                epp_id=real_epp_registrant_id,
+                owner=real_owner,
+            ):
+    #--- contact info is not matching
+                errors.append("epp registrant ID %r is found, but known info is not matching with csv record" % known_epp_registrant_id)
                 to_be_created = True
     else:
     #--- contact not exist
@@ -321,15 +343,11 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         errors.append('no contacts (with epp ID) provided for the domain in csv record')
         return errors
 
-    # TODO: try to avoid creating multiple contacts for different domains.
-    # if two contacts have equal details we can re-use first contact and skip other one
-    # but this will require EPP call to update domain infor on COCCA...
     if real_registrant_contact_id:
     #--- registrant check
-        _errs, need_registrant = check_contact_to_be_created(
-            domain_name=domain,
-            known_epp_contact_id=known_registrant_contact_id,
-            real_epp_contact_id=real_registrant_contact_id,
+        _errs, need_registrant = check_registrant_to_be_created(
+            known_epp_registrant_id=known_registrant_contact_id,
+            real_epp_registrant_id=real_registrant_contact_id,
             real_owner=owner_account,
         )
         if dry_run:
@@ -338,7 +356,6 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     if real_admin_contact_id:
     #--- admin contact check
         _errs, need_admin_contact = check_contact_to_be_created(
-            domain_name=domain,
             known_epp_contact_id=known_admin_contact_id,
             real_epp_contact_id=real_admin_contact_id,
             real_owner=owner_account,
@@ -349,7 +366,6 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     if real_tech_contact_id:
     #--- tech contact check
         _errs, need_tech_contact = check_contact_to_be_created(
-            domain_name=domain,
             known_epp_contact_id=known_tech_contact_id,
             real_epp_contact_id=real_tech_contact_id,
             real_owner=owner_account,
@@ -360,7 +376,6 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     if real_billing_contact_id:
     #--- billing contact check
         _errs, need_billing_contact = check_contact_to_be_created(
-            domain_name=domain,
             known_epp_contact_id=known_billing_contact_id,
             real_epp_contact_id=real_billing_contact_id,
             real_owner=owner_account,

@@ -108,9 +108,6 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
         loggers = [root_logger, ] + [logging.getLogger(name) for name in logging.root.manager.loggerDict]
         for one_logger in loggers:
             one_logger.addHandler(string_handler)
-        # string_logger = logging.getLogger('')
-        # root_logger.setLevel(logging.DEBUG)
-        # string_logger.addHandler(string_handler)
 
         total_count = 0
 
@@ -129,7 +126,6 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
                 ret = load_from_csv(
                     filename=csv_file_path,
                     dry_run=bool(form.data.get('dry_run', False)),
-                    # log=string_logger,
                 )
             except:
                 root_logger.exception()

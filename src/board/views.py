@@ -123,7 +123,7 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
             try:
                 ret = load_from_csv(
                     filename=csv_file_path,
-                    dry_run=bool(form.data.get('dry_run', True)),
+                    dry_run=bool(form.data.get('dry_run', False)),
                     log=string_logger,
                 )
             except:

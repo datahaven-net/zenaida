@@ -218,14 +218,14 @@ def check_contact_to_be_created(domain_name, known_epp_contact_id, real_epp_cont
     else:
     #--- contact not exist
         to_be_created = True
-    logger.debug('check contact known:%s real:%s owner:%s : %s',
-                 known_epp_contact_id, real_epp_contact_id, real_owner, to_be_created)
     return errors, to_be_created
 
 
-def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', skip_failing_contacts=False, dry_run=True):
+def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', skip_failing_contacts=False, dry_run=True, log=None):
     """
     """
+    if log is None:
+        log = logger
     errors = []
     try:
         csv_record = split_csv_row(csv_row, headers)
@@ -246,7 +246,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
 
     if wanted_registrar and real_registrar_id != wanted_registrar:
     #--- belong to another registrar
-        errors.append('%s: csv record belongs to another registrar %s' % (domain, real_registrar_id, ))
+        errors.append('csv record belongs to another registrar: %s' % real_registrar_id)
         return errors
 
     real_expiry_date = csv_info['expiry_date']
@@ -298,7 +298,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             is_active=True,
             **csv_info['registrant'],
         )
-        logger.info('generated new account and password for %s : %s', real_registrant_email, new_password)
+        log.info('generated new account and password for %s : %s', real_registrant_email, new_password)
 
     if known_domain:
         known_expiry_date = known_domain.expiry_date
@@ -435,7 +435,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             need_admin_contact or need_billing_contact or need_tech_contact ) and (
             not new_billing_contact and not new_tech_contact and not new_admin_contact):
     #--- at least one contact exists
-            logger.info('no valid contacts found for domain %r, inactive "admin" contact will be created from registrant info', domain)
+            log.info('no valid contacts found for domain %r, inactive "admin" contact will be created from registrant info', domain)
             new_admin_contact = zcontacts.contact_create(
                 epp_id=None,  # TODO: run sync for those domains after all.
                 owner=owner_account,
@@ -480,7 +480,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
             known_domain.expiry_date = real_expiry_date
             known_domain.save()
-            logger.debug('known expiry date updated for %s : %s', known_domain, real_expiry_date)
+            log.debug('known expiry date updated for %s : %s', known_domain, real_expiry_date)
     else:
         if known_domain:
     #--- expiry date was not set
@@ -491,7 +491,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     return errors
                 known_domain.expiry_date = real_expiry_date
                 known_domain.save()
-                logger.debug('expiry date was not set, now updated for %s : %s', known_domain, real_expiry_date)
+                log.debug('expiry date was not set, now updated for %s : %s', known_domain, real_expiry_date)
 
     if known_create_date:
         dt = real_create_date - known_create_date
@@ -504,7 +504,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
             known_domain.create_date = real_create_date
             known_domain.save()
-            logger.debug('known create date updated for %s : %s', known_domain, real_create_date)
+            log.debug('known create date updated for %s : %s', known_domain, real_create_date)
     else:
         if known_domain:
             if real_create_date:
@@ -515,7 +515,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     return errors
                 known_domain.create_date = real_create_date
                 known_domain.save()
-                logger.debug('create date was not set, now updated for %s : %s', known_domain, real_create_date)
+                log.debug('create date was not set, now updated for %s : %s', known_domain, real_create_date)
 
     #--- check known epp_id
     if known_epp_id:
@@ -526,7 +526,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
             known_domain.epp_id = real_epp_id
             known_domain.save()
-            logger.debug('known epp_id for %s updated : %s', known_domain, real_epp_id)
+            log.debug('known epp_id for %s updated : %s', known_domain, real_epp_id)
     else:
         if real_epp_id:
             if known_domain:
@@ -536,7 +536,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     return errors
                 known_domain.epp_id = real_epp_id
                 known_domain.save()
-                logger.debug('epp_id was not set for %s, now updated : %s', known_domain, real_epp_id)
+                log.debug('epp_id was not set for %s, now updated : %s', known_domain, real_epp_id)
 
     #--- check auth_key
     if known_auth_key:
@@ -547,7 +547,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 return errors
             known_domain.auth_key = real_auth_key
             known_domain.save()
-            logger.debug('known auth_key for %s updated : %s', known_domain, real_auth_key)
+            log.debug('known auth_key for %s updated : %s', known_domain, real_auth_key)
     else:
         if real_auth_key:
             if known_domain:
@@ -557,7 +557,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     return errors
                 known_domain.auth_key = real_auth_key
                 known_domain.save()
-                logger.debug('auth_key was not set for %s, now updated : %s', known_domain, real_auth_key)
+                log.debug('auth_key was not set for %s, now updated : %s', known_domain, real_auth_key)
 
     #--- check nameservers
     for i in range(4):
@@ -578,7 +578,9 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     return errors
 
 
-def load_from_csv(filename, dry_run=True, registrar_epp_id=None):
+def load_from_csv(filename, dry_run=True, registrar_epp_id=None, log=None):
+    if log is None:
+        log = logger
     from back.models.registrar import Registrar
     epp_domains = csv.reader(open(filename))
     count = 0
@@ -593,15 +595,19 @@ def load_from_csv(filename, dry_run=True, registrar_epp_id=None):
         count += 1
         domain = row[1]
         try:
-            errors = domain_regenerate_from_csv_row(row, headers,
-                                                    wanted_registrar=registrar_epp_id,
-                                                    skip_failing_contacts=True,
-                                                    dry_run=dry_run)
+            errors = domain_regenerate_from_csv_row(
+                row,
+                headers,
+                wanted_registrar=registrar_epp_id,
+                skip_failing_contacts=True,
+                dry_run=dry_run,
+                log=log,
+            )
         except Exception:
-            logger.exception('failed processing %s' % domain)
+            log.exception('failed processing %s' % domain)
             return -1
         if errors:
-            logger.error('%s errors: %r', domain, errors)
+            log.error('%s errors: %r', domain, ';'.join(errors))
         else:
-            logger.info('%s processed', domain)
+            log.info('%s processed', domain)
     return count

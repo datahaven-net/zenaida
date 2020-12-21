@@ -123,54 +123,54 @@ def get_csv_domain_info(csv_row, headers):
     #--- registrant contact
         registrant=dict(
             person_name='',                                                         # -
-            organization_name=csv_record.get('registrant_organisation_27', ''),     # 3a.
-            address_street=csv_record.get('registrant_address_1_32', ''),           # 3b.
-            address_city=csv_record.get('registrant_city_35', ''),                  # 3c.
-            address_province=csv_record.get('registrant_state_province_36', ''),    # 3d.
-            address_postal_code=csv_record.get('registrant_postalcode_37', ''),     # 3e.
-            address_country=csv_record.get('registrant_countrycode_38', ''),        # 3f.
-            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('registrant_phone_28', ''))[:17],        # -
-            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('registrant_fax_30', ''))[:17],            # -
-            contact_email=csv_record.get('registrant_email_26', '').lower(),        # -
+            organization_name=csv_record.get('registrant_organisation_29', ''),     # 3a.
+            address_street=csv_record.get('registrant_address_1_34', ''),           # 3b.
+            address_city=csv_record.get('registrant_city_37', ''),                  # 3c.
+            address_province=csv_record.get('registrant_state_province_38', ''),    # 3d.
+            address_postal_code=csv_record.get('registrant_postalcode_39', ''),     # 3e.
+            address_country=csv_record.get('registrant_countrycode_40', ''),        # 3f.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('registrant_phone_30', ''))[:17],        # -
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('registrant_fax_32', ''))[:17],            # -
+            contact_email=csv_record.get('registrant_email_28', '').lower(),        # -
         ),
     #--- admin contact
         admin=dict(
-            person_name=csv_record.get('admin_name_55', ''),                        # -
-            organization_name=csv_record.get('admin_organisation_57', ''),          # 4d.
-            address_street=csv_record.get('admin_address_1_62', ''),                # 4e.
-            address_city=csv_record.get('admin_city_65', ''),                       # 4f.
-            address_province=csv_record.get('admin_state_province_66', ''),         # 4g.
-            address_postal_code=csv_record.get('admin_postalcode_67', ''),          # 4h.
-            address_country=csv_record.get('admin_countrycode_68', ''),             # 4i.
-            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('admin_phone_58', ''))[:17],             # 4j.
-            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('admin_fax_60', ''))[:17],                 # 4k.
-            contact_email=csv_record.get('admin_email_56', '').lower(),             # 4l.
+            person_name=csv_record.get('admin_name_61', ''),                        # -
+            organization_name=csv_record.get('admin_organisation_63', ''),          # 4d.
+            address_street=csv_record.get('admin_address_1_68', ''),                # 4e.
+            address_city=csv_record.get('admin_city_71', ''),                       # 4f.
+            address_province=csv_record.get('admin_state_province_72', ''),         # 4g.
+            address_postal_code=csv_record.get('admin_postalcode_73', ''),          # 4h.
+            address_country=csv_record.get('admin_countrycode_74', ''),             # 4i.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('admin_phone_64', ''))[:17],             # 4j.
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('admin_fax_66', ''))[:17],                 # 4k.
+            contact_email=csv_record.get('admin_email_62', '').lower(),             # 4l.
         ),
     #--- tech contact
         tech=dict(
-            person_name=csv_record.get('technical_name_70', ''),                    # -
-            organization_name=csv_record.get('technical_organisation_72', ''),      # 5d.
-            address_street=csv_record.get('technical_address_1_77', ''),            # 5e.
-            address_city=csv_record.get('technical_city_80', ''),                   # 5f.
-            address_province=csv_record.get('technical_state_province_81', ''),     # 5g.
-            address_postal_code=csv_record.get('technical_postalcode_82', ''),      # 5h.
-            address_country=csv_record.get('technical_countrycode_83', ''),         # 5i.
-            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('technical_phone_73', ''))[:17],         # 5j.
-            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('technical_fax_75', ''))[:17],             # 5k.
-            contact_email=csv_record.get('technical_email_71', '').lower(),         # 5l.
+            person_name=csv_record.get('technical_name_78', ''),                    # -
+            organization_name=csv_record.get('technical_organisation_80', ''),      # 5d.
+            address_street=csv_record.get('technical_address_1_85', ''),            # 5e.
+            address_city=csv_record.get('technical_city_88', ''),                   # 5f.
+            address_province=csv_record.get('technical_state_province_89', ''),     # 5g.
+            address_postal_code=csv_record.get('technical_postalcode_90', ''),      # 5h.
+            address_country=csv_record.get('technical_countrycode_91', ''),         # 5i.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('technical_phone_81', ''))[:17],         # 5j.
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('technical_fax_83', ''))[:17],             # 5k.
+            contact_email=csv_record.get('technical_email_79', '').lower(),         # 5l.
         ),
     #--- billing contact
         billing=dict(
-            person_name=csv_record.get('billing_name_40', ''),                      # -
-            organization_name=csv_record.get('billing_organisation_42', ''),        # 6d.
-            address_street=csv_record.get('billing_address_1_47', ''),              # 6e.
-            address_city=csv_record.get('billing_city_50', ''),                     # 6f.
-            address_province=csv_record.get('billing_state_province_51', ''),       # 6g.
-            address_postal_code=csv_record.get('billing_postalcode_52', ''),        # 6h.
-            address_country=csv_record.get('billing_countrycode_53', ''),           # 6i.
-            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('billing_phone_43', ''))[:17],           # 6j.
-            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('billing_fax_45', ''))[:17],               # 6k.
-            contact_email=csv_record.get('billing_email_41', '').lower(),           # 6l.
+            person_name=csv_record.get('billing_name_44', ''),                      # -
+            organization_name=csv_record.get('billing_organisation_46', ''),        # 6d.
+            address_street=csv_record.get('billing_address_1_51', ''),              # 6e.
+            address_city=csv_record.get('billing_city_54', ''),                     # 6f.
+            address_province=csv_record.get('billing_state_province_55', ''),       # 6g.
+            address_postal_code=csv_record.get('billing_postalcode_56', ''),        # 6h.
+            address_country=csv_record.get('billing_countrycode_57', ''),           # 6i.
+            contact_voice=re.sub('[^\d^\+^\.]', '', csv_record.get('billing_phone_47', ''))[:17],           # 6j.
+            contact_fax=re.sub('[^\d^\+^\.]', '', csv_record.get('billing_fax_49', ''))[:17],               # 6k.
+            contact_email=csv_record.get('billing_email_45', '').lower(),           # 6l.
         ),
     #--- nameservers
         nameservers=[
@@ -277,9 +277,9 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     real_status = csv_record.get('status_5')
     real_auth_key = csv_record.get('auth_info_password_2')
     real_registrant_contact_id = csv_record.get('registrant_contact_id_24')
-    real_admin_contact_id = csv_record.get('admin_contact_id_54')
-    real_tech_contact_id = csv_record.get('tech_contact_id_69')
-    real_billing_contact_id = csv_record.get('billing_contact_id_39')
+    real_admin_contact_id = csv_record.get('admin_contact_id_58')
+    real_tech_contact_id = csv_record.get('tech_contact_id_75')
+    real_billing_contact_id = csv_record.get('billing_contact_id_41')
     real_registrant_email = csv_info['registrant']['contact_email']
     real_admin_email = csv_info['admin']['contact_email']
     real_tech_email = csv_info['tech']['contact_email']

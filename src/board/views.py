@@ -103,15 +103,17 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
 
         log_stream = StringIO()
         string_handler = logging.StreamHandler(log_stream)
-        string_logger = logging.getLogger('')
-        string_logger.setLevel(logging.DEBUG)
-        string_logger.addHandler(string_handler)
+        root_logger = logging.getLogger()
+
+        loggers = [root_logger, ] + [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+        for one_logger in loggers:
+            one_logger.addHandler(string_handler)
 
         total_count = 0
 
         for f in files:
             fout, csv_file_path = tempfile.mkstemp(suffix='.csv', prefix='domains', dir='/tmp')
-            string_logger.info('processing {}\n'.format(csv_file_path))
+            root_logger.info('processing {}\n'.format(csv_file_path))
 
             while True:
                 chunk = f.file.read(100000)
@@ -124,10 +126,9 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
                 ret = load_from_csv(
                     filename=csv_file_path,
                     dry_run=bool(form.data.get('dry_run', False)),
-                    log=string_logger,
                 )
             except:
-                string_logger.exception()
+                root_logger.exception()
                 ret = -1
 
             os.remove(csv_file_path)
@@ -136,7 +137,10 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
                 continue
             total_count += ret
 
-        string_logger.info('total records processed: %d', total_count)
+        root_logger.info('total records processed: %d', total_count)
+
+        for one_logger in loggers:
+            one_logger.removeHandler(string_handler)
 
         self.output_result = log_stream.getvalue()
         return self.form_valid(form)

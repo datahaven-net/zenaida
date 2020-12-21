@@ -46,11 +46,31 @@ def verify(epp_id, email=None, owner=None):
     Make sure that existing contact with given epp_id have same info.
     """
     if not exists(epp_id):
+        logger.warn('contact with epp ID %r is not found in local DB', epp_id)
         return False
     cont = Contact.contacts.get(epp_id=epp_id)
     if email and cont.owner.email.lower() != email.lower():
+        logger.warn('known contact email %r is not matching with %r', cont.owner.email, email)
         return False
     if owner and cont.owner.pk != owner.pk:
+        logger.warn('known contact owner is %r, but it is not matching with real owner %r', cont.owner, owner)
+        return False
+    return True
+
+
+def verify_registrant(epp_id, email=None, owner=None):
+    """
+    Make sure that existing registrant with given epp_id have same info.
+    """
+    if not registrant_exists(epp_id):
+        logger.warn('registrant with epp ID %r is not found in local DB', epp_id)
+        return False
+    reg = Registrant.registrants.get(epp_id=epp_id)
+    if email and reg.owner.email.lower() != email.lower():
+        logger.warn('known registrant email %r is not matching with %r', reg.owner.email, email)
+        return False
+    if owner and reg.owner.pk != owner.pk:
+        logger.warn('known registrant owner is %r, but it is not matching with real owner %r', reg.owner, owner)
         return False
     return True
 
@@ -421,6 +441,8 @@ def registrant_exists(epp_id):
     """
     Return `True` if Registrant with given epp_id exists, doing query in Registrant table.
     """
+    if not epp_id:
+        return False
     return registrant_find(epp_id=epp_id) is not None
 
 

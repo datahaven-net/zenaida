@@ -62,7 +62,6 @@ patterns = [
     path('domains/transfer/', front_views.AccountDomainTransferTakeoverView.as_view(), name='account_domain_transfer_takeover'),
     path('domains/edit/<int:domain_id>/', front_views.AccountDomainUpdateView.as_view(), name='account_domain_edit'),
     path('domains/<str:domain_id>/transfer-code/', front_views.AccountDomainTransferCodeView.as_view(), name='account_domain_transfer_code'),
-    # path('domains/history', front_views.account_domain_history, name='account_domain_renew'),
 
     path('billing/', billing_views.billing_overview, name='billing_overview'),
     path('billing/orders/', billing_views.OrdersListView.as_view(), name='billing_orders'),
@@ -86,6 +85,7 @@ patterns = [
 
     path('board/financial-report/', board_views.FinancialReportView.as_view(), name='financial_report'),
     path('board/domain-sync/', board_views.NotExistingDomainSyncView.as_view(), name='not_existing_domain_sync'),
+    path('board/csv-file-sync/<str:record_id>/', board_views.CSVFileSyncRecordView.as_view(), name='csv_file_sync_record'),
     path('board/csv-file-sync/', board_views.CSVFileSyncView.as_view(), name='csv_file_sync'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),

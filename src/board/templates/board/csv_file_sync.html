@@ -23,7 +23,34 @@
     <div class="row">
       <div class="row col-sm-12">
         <div class="col-sm-12">
-          <textarea rows="25" cols="120" disabled >{{ output_result }}</textarea>
+
+        <a href='' class="btn btn-primary">refresh</a>
+
+		{% if csv_file_sync_records %}
+		  <table class="table table-hover">
+		    <tr>
+		      <th>started date & time</th>
+		      <th>input filename</th>
+		      <th>mode</th>
+		      <th>processed count</th>
+		      <th>status</th>
+		    </tr>
+
+		    {% for csv_file_sync_record in csv_file_sync_records %}
+
+		      <tr>
+		        <td><a href="{% url 'csv_file_sync_record' csv_file_sync_record.id %}">{{ csv_file_sync_record.created_at }}</a></td>
+		        <td>{{ csv_file_sync_record.filename }}</td>
+		        <td>{{ csv_file_sync_record.dry_run|yesno:"dry run,sync," }}</td>
+		        <td>{{ csv_file_sync_record.processed_count }}</td>
+		        <td>{{ csv_file_sync_record.status }}</td>
+		      </tr>
+
+		    {% endfor %}
+
+		  </table>
+		{% endif %}
+
         </div>
       </div>
     </div>

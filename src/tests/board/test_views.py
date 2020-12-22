@@ -130,11 +130,9 @@ class TestCSVFileSyncView(BaseAuthTesterMixin, TestCase):
         csv_file = SimpleUploadedFile("domains.csv", b"some_text_here", content_type="text/csv")
         self.client.post('/board/csv-file-sync/', {'csv_file': csv_file, 'dry_run': True, })
         latest_record = CSVFileSync.executions.latest('id')
-        mock_popen.assert_called_once_with(
-            './venv/bin/python src/manage.py csv_import --record_id=%d --dry_run' % latest_record.id,
-            close_fds=True,
-            shell=True,
-        )
+        popen_cmd = mock_popen.call_args_list[0][0][0]
+        assert popen_cmd.count('src/manage.py csv_import')
+        assert popen_cmd.count('--record_id=%d --dry_run' % latest_record.id)
         os.remove(latest_record.input_filename)
 
     @mock.patch('subprocess.Popen')
@@ -144,9 +142,7 @@ class TestCSVFileSyncView(BaseAuthTesterMixin, TestCase):
         self.client.post('/board/csv-file-sync/', {'csv_file': csv_file})
         latest_record = CSVFileSync.executions.latest('id')
         assert os.path.isfile(latest_record.input_filename)
-        mock_popen.assert_called_once_with(
-            './venv/bin/python src/manage.py csv_import --record_id=%d ' % latest_record.id,
-            close_fds=True,
-            shell=True,
-        )
+        popen_cmd = mock_popen.call_args_list[0][0][0]
+        assert popen_cmd.count('src/manage.py csv_import')
+        assert popen_cmd.count('--record_id=%d ' % latest_record.id)
         os.remove(latest_record.input_filename)

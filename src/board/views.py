@@ -1,19 +1,22 @@
 import os
+import sys
 import logging
 import tempfile
+import subprocess
 
-from io import StringIO
-
+from django import shortcuts
+from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
+from django.views.generic import DetailView
 
 from accounts.users import list_all_users_by_date
 from base.mixins import StaffRequiredMixin
 from billing import forms as billing_forms
 from billing.orders import list_all_processed_orders_by_date
 from board.forms import DomainSyncForm, CSVFileSyncForm
-from back.csv_import import load_from_csv
+from board.models import CSVFileSync
 from zen import zmaster, zdomains
 
 logger = logging.getLogger(__name__)
@@ -80,38 +83,52 @@ class NotExistingDomainSyncView(StaffRequiredMixin, FormView):
         return super().form_valid(form)
 
 
+class CSVFileSyncRecordView(StaffRequiredMixin, DetailView):
+    template_name = 'board/csv_file_sync_record.html'
+
+    def get_object(self, queryset=None):
+        return shortcuts.get_object_or_404(CSVFileSync, pk=self.kwargs.get('record_id'))
+
+
 class CSVFileSyncView(StaffRequiredMixin, FormView):
     template_name = 'board/csv_file_sync.html'
     form_class = CSVFileSyncForm
     success_url = reverse_lazy('csv_file_sync')
-    output_result = ''
 
-    def form_valid(self, form):
-        return self.render_to_response(
-            self.get_context_data(
-                form=form,
-                output_result=self.output_result,
-            )
-        )
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['csv_file_sync_records'] = CSVFileSync.executions.all().order_by('-pk')
+        return context
 
     def post(self, request, *args, **kwargs):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         files = request.FILES.getlist('csv_file')
+
         if not form.is_valid():
             return self.form_invalid(form)
 
-        log_stream = StringIO()
-        string_handler = logging.StreamHandler(log_stream)
-        string_logger = logging.getLogger('')
-        string_logger.setLevel(logging.DEBUG)
-        string_logger.addHandler(string_handler)
+        if CSVFileSync.executions.filter(status='started').exists():
+            messages.warning(self.request, 'Another background process is currently running, please wait before starting a new one.')
+            return self.form_invalid(form)
 
-        total_count = 0
+        started_records = []
 
         for f in files:
-            fout, csv_file_path = tempfile.mkstemp(suffix='.csv', prefix='domains', dir='/tmp')
-            string_logger.info('processing {}\n'.format(csv_file_path))
+            csv_sync_record = CSVFileSync.executions.create(
+                input_filename='',
+                dry_run=bool(form.data.get('dry_run', False)),
+            )
+
+            fout, csv_file_path = tempfile.mkstemp(
+                suffix='.csv',
+                prefix='domains-%d-' % csv_sync_record.id,
+                dir=settings.ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH,
+            )
+            csv_sync_record.input_filename = csv_file_path
+            csv_sync_record.save()
+
+            logger.info('reading {}\n'.format(csv_file_path))
 
             while True:
                 chunk = f.file.read(100000)
@@ -120,23 +137,20 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
                 os.write(fout, chunk)
             os.close(fout)
 
-            try:
-                ret = load_from_csv(
-                    filename=csv_file_path,
-                    dry_run=bool(form.data.get('dry_run', False)),
-                    log=string_logger,
-                )
-            except:
-                string_logger.exception()
-                ret = -1
+            logger.info('file uploaded, new DB record created: %r', csv_sync_record)
 
-            os.remove(csv_file_path)
+            subprocess.Popen(
+                '{} {} csv_import --record_id={} {}'.format(
+                    os.path.join(os.path.dirname(sys.executable), 'python'),
+                    os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'manage.py')),
+                    csv_sync_record.id,
+                    '--dry_run' if form.data.get('dry_run', False) else '',
+                ),
+                close_fds=True,
+                shell=True,
+            )
 
-            if ret < 0:
-                continue
-            total_count += ret
+            started_records.append(csv_sync_record)
 
-        string_logger.info('total records processed: %d', total_count)
-
-        self.output_result = log_stream.getvalue()
+        messages.success(self.request, f'New background process started: {started_records}')
         return self.form_valid(form)

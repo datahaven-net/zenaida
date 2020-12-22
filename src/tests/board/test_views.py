@@ -1,3 +1,5 @@
+import os
+import time
 import datetime
 import mock
 import pytest
@@ -6,6 +8,8 @@ from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from tests import testsupport
+
+from board.models.csv_file_sync import CSVFileSync
 
 
 class BaseAuthTesterMixin(object):
@@ -112,10 +116,33 @@ class TestCSVFileSyncView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/'
         mock_messages_error.assert_called_once()
 
-    @mock.patch('board.views.load_from_csv')
-    def test_csv_file_upload_success(self, mock_load_from_csv):
-        mock_load_from_csv.return_value = 100
+    @mock.patch('subprocess.Popen')
+    def test_another_process_already_started(self, mock_popen):
+        CSVFileSync.executions.create(input_filename='abc.csv', dry_run=True, status='started')
         csv_file = SimpleUploadedFile("domains.csv", b"some_text_here", content_type="text/csv")
-        response = self.client.post('/board/csv-file-sync/', {'csv_file': csv_file, 'dry_run': True, })
-        mock_load_from_csv.assert_called_once()
-        assert response.content.count(b'total records processed: 100') == 1
+        response = self.client.post('/board/csv-file-sync/', {'csv_file': csv_file, 'dry_run': False, })
+        assert response.status_code == 200
+        assert [m for m in response.context['messages']][0].message == 'Another background process is currently running, please wait before starting a new one.'
+        mock_popen.assert_not_called()
+
+    @mock.patch('subprocess.Popen')
+    def test_dry_run(self, mock_popen):
+        csv_file = SimpleUploadedFile("domains.csv", b"some_text_here", content_type="text/csv")
+        self.client.post('/board/csv-file-sync/', {'csv_file': csv_file, 'dry_run': True, })
+        latest_record = CSVFileSync.executions.latest('id')
+        popen_cmd = mock_popen.call_args_list[0][0][0]
+        assert popen_cmd.count('src/manage.py csv_import')
+        assert popen_cmd.count('--record_id=%d --dry_run' % latest_record.id)
+        os.remove(latest_record.input_filename)
+
+    @mock.patch('subprocess.Popen')
+    def test_file_uploaded(self, mock_popen):
+        raw_csv_data = open(os.path.abspath(os.path.join(os.path.dirname(__file__), 'domains_sample.csv')), 'rb').read()
+        csv_file = SimpleUploadedFile("domains.csv", raw_csv_data, content_type="text/csv")
+        self.client.post('/board/csv-file-sync/', {'csv_file': csv_file})
+        latest_record = CSVFileSync.executions.latest('id')
+        assert os.path.isfile(latest_record.input_filename)
+        popen_cmd = mock_popen.call_args_list[0][0][0]
+        assert popen_cmd.count('src/manage.py csv_import')
+        assert popen_cmd.count('--record_id=%d ' % latest_record.id)
+        os.remove(latest_record.input_filename)

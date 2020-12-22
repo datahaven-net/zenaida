@@ -69,6 +69,7 @@ os.umask(0o002)
 
 # ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys/rabbitmq_client_credentials.txt'
 # ZENAIDA_GATE_HEALTH_FILENAME = '/home/zenaida/health'
+# ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH = '/home/zenaida/csv_files/'
 
 # ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS = 5
 # ZENAIDA_DOMAIN_PRICE = 100.0

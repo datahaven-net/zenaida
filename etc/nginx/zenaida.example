@@ -23,6 +23,8 @@ server {
     listen [::]:80 default_server;
     server_name buy-my-domain.com www.buy-my-domain.com;
     return 301 https://$server_name$request_uri;
+
+    client_max_body_size 100M;
 }
 
 
@@ -52,4 +54,6 @@ server {
         autoindex on;    
         alias /home/zenaida/zenaida/src/static/;
     }
+
+    client_max_body_size 100M;
 }

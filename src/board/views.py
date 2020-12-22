@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import tempfile
 import subprocess
@@ -16,7 +17,6 @@ from billing import forms as billing_forms
 from billing.orders import list_all_processed_orders_by_date
 from board.forms import DomainSyncForm, CSVFileSyncForm
 from board.models import CSVFileSync
-# from back.csv_import import load_from_csv
 from zen import zmaster, zdomains
 
 logger = logging.getLogger(__name__)
@@ -140,8 +140,11 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
             logger.info('file uploaded, new DB record created: %r', csv_sync_record)
 
             subprocess.Popen(
-                './venv/bin/python src/manage.py csv_import --record_id={} {}'.format(
-                    csv_sync_record.id, '--dry_run' if form.data.get('dry_run', False) else '',
+                '{} {} csv_import --record_id={} {}'.format(
+                    os.path.join(os.path.dirname(sys.executable), 'python'),
+                    os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'manage.py')),
+                    csv_sync_record.id,
+                    '--dry_run' if form.data.get('dry_run', False) else '',
                 ),
                 close_fds=True,
                 shell=True,

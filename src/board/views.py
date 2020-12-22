@@ -4,6 +4,7 @@ import tempfile
 import subprocess
 
 from django import shortcuts
+from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
@@ -119,7 +120,11 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
                 dry_run=bool(form.data.get('dry_run', False)),
             )
 
-            fout, csv_file_path = tempfile.mkstemp(suffix='.csv', prefix='domains-%d-' % csv_sync_record.id, dir='./csv_sync')
+            fout, csv_file_path = tempfile.mkstemp(
+                suffix='.csv',
+                prefix='domains-%d-' % csv_sync_record.id,
+                dir=settings.ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH,
+            )
             csv_sync_record.input_filename = csv_file_path
             csv_sync_record.save()
 

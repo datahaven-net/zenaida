@@ -406,18 +406,14 @@ ALLOWED_ADMIN_IP_RANGES = getattr(params, 'ALLOWED_ADMIN_IP_RANGES', ['127.0.0.0
 RESTRICTED_APP_NAMES = ['admin']
 TRUST_PRIVATE_IP = getattr(params, 'TRUST_PRIVATE_IP', False)
 
-
 #------------------------------------------------------------------------------
-#--- Last line is just for testing purposes, in the unit test it will make sure all settings are actually loaded
-LOADED_OK = 'OK'
-
-# DJANGO SETTINGS
+#--- LOGIN SETTINGS
 LOGIN_URL = '/accounts/login/'
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
-
 ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '/home/zenaida/health')
+ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH = getattr(params, 'ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH', '/tmp/')
 
 ZENAIDA_EPP_POLL_INTERVAL_SECONDS = getattr(params, 'ZENAIDA_EPP_POLL_INTERVAL_SECONDS', 20)
 
@@ -447,3 +443,7 @@ ZENAIDA_BILLING_BTCPAY_ENABLED = getattr(params, 'ZENAIDA_BILLING_BTCPAY_ENABLED
 ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY = getattr(params, 'ZENAIDA_BTCPAY_CLIENT_PRIVATE_KEY', '')
 ZENAIDA_BTCPAY_MERCHANT = getattr(params, 'ZENAIDA_BTCPAY_MERCHANT', '')
 ZENAIDA_BTCPAY_HOST = getattr(params, 'ZENAIDA_BTCPAY_HOST', '')
+
+#------------------------------------------
+#--- Last line is just for testing purposes
+LOADED_OK = 'OK'

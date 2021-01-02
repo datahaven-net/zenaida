@@ -119,7 +119,7 @@ class VerifyPaymentView(View):
         fc = request_data.get('fc')
         reference = request_data.get('ref')
         transaction_id = request_data.get('tid')
-        amount = request_data.get('amt', '').replace(',', '.')
+        amount = request_data.get('amt', '').replace(',', '')
 
         if _Debug:
             logging.debug('Verify payment request: %r', request_data)

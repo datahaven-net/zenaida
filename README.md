@@ -62,7 +62,7 @@ To be able to run same code on production machine as well as locally on your lap
 Set those settings in your `params.py` file if you starting a new production machine:
 
         ENV = 'production'
-        DATABASES_ENGINE = 'django.db.backends.postgresql_psycopg2'
+        DATABASES_ENGINE = 'django.db.backends.postgresql'
         DATABASES_NAME = 'zenaida_db_01'
         DATABASES_USER = 'zenaida_db_user'
         DATABASES_PASSWORD = '<password>'

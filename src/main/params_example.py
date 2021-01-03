@@ -29,7 +29,7 @@ os.umask(0o002)
 # DATABASES_CONN_MAX_AGE = 0
 
 #--- Postgres
-# DATABASES_ENGINE = 'django.db.backends.postgresql_psycopg2'
+# DATABASES_ENGINE = 'django.db.backends.postgresql'
 # DATABASES_NAME = 'zenaida_db_01'
 # DATABASES_USER = 'zenaida_db_user'
 # DATABASES_PASSWORD = '<password>'

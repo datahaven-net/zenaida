@@ -1,6 +1,5 @@
 import logging
 
-from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
@@ -31,7 +30,7 @@ class Domain(models.Model):
     create_date = models.DateTimeField(null=True, blank=True, default=None)
 
     epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
-    epp_statuses = JSONField(null=True, encoder=DjangoJSONEncoder)
+    epp_statuses = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     status = models.CharField(
         max_length=32,

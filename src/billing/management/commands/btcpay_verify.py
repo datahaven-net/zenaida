@@ -4,13 +4,9 @@ import time
 from btcpay import BTCPayClient
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from django.utils import timezone
-
-from base.push_notifications import PushNotificationService
-from base.email import send_email
 
 from billing import payments
 from billing.pay_btcpay.models import BTCPayInvoice

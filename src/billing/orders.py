@@ -432,12 +432,12 @@ def execute_one_item(order_item):
 
     target_domain = zdomains.domain_find(order_item.name)
     if not target_domain:
-        logger.critical('Domain not exist', order_item.name)
+        logger.critical('domain %r not exists', order_item.name)
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
     if target_domain.owner != order_item.order.owner:
-        logger.critical('user %s tried to execute an order with domain from another owner' % order_item.order.owner)
+        logger.critical('user %r tried to execute an order with domain from another owner' % order_item.order.owner)
         raise exceptions.SuspiciousOperation()
 
     if order_item.type == 'domain_register':
@@ -449,7 +449,7 @@ def execute_one_item(order_item):
     if order_item.type == 'domain_restore':
         return execute_domain_restore(order_item, target_domain)
 
-    logger.critical('order item %s has a wrong type' % order_item)
+    logger.critical('order item %r has a wrong type' % order_item)
     return False
 
 

@@ -4,7 +4,7 @@ from accounts.models.account import Account
 
 
 class Payment(models.Model):
-    
+
     payments = models.Manager()
 
     class Meta:
@@ -48,3 +48,9 @@ class Payment(models.Model):
     )
 
     merchant_reference = models.CharField(max_length=16, null=True, blank=True, default=None)
+
+    def __str__(self):
+        return 'Payment(${} {} to {} [{}] {})'.format(self.amount, self.status, self.owner.email, self.started_at, self.transaction_id)
+
+    def __repr__(self):
+        return 'Payment(${} {} to {} [{}] {})'.format(self.amount, self.status, self.owner.email, self.started_at, self.transaction_id)

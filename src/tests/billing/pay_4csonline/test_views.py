@@ -43,7 +43,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
         response = self.client.get(f'/billing/4csonline/process/1234567890/')
         assert response.status_code == 400
-        mock_logging_critical.assert_called_once_with(f'Payment not found, transaction_id is 1234567890')
+        mock_logging_critical.assert_called_once_with(f'payment not found, transaction_id is 1234567890')
 
     @mock.patch('logging.critical')
     def test_payment_is_from_other_user(self, mock_logging_critical):
@@ -62,7 +62,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         )
         response = self.client.get(f'/billing/4csonline/process/12345/')
         assert response.status_code == 400
-        mock_logging_critical.assert_called_once_with('Invalid request, payment process raises SuspiciousOperation: '
+        mock_logging_critical.assert_called_once_with('invalid request, payment process raises SuspiciousOperation: '
                                                       'payment owner is not matching to request')
 
     @mock.patch('logging.critical')
@@ -82,7 +82,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         )
         response = self.client.get(f'/billing/4csonline/process/12345/')
         assert response.status_code == 400
-        mock_logging_critical.assert_called_once_with('Invalid request, payment process raises SuspiciousOperation: '
+        mock_logging_critical.assert_called_once_with('invalid request, payment process raises SuspiciousOperation: '
                                                       'payment transaction is already finished')
 
 
@@ -174,7 +174,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
     @mock.patch('billing.payments.finish_payment')
     def test_check_rc_usercan_is_incomplete_transaction_cancelled(self, mock_finish_payment):
@@ -195,7 +195,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
     @mock.patch('logging.critical')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
@@ -218,7 +218,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Invalid request, payment process raises SuspiciousOperation: '
+        mock_logging.assert_called_once_with('invalid request, payment process raises SuspiciousOperation: '
                                              'payment transaction is already finished')
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1)
@@ -242,7 +242,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.10')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Invalid request, payment processing will raise SuspiciousOperation: '
+        mock_logging.assert_called_once_with('invalid request, payment processing will raise SuspiciousOperation: '
                                              'transaction amount is not matching with existing record')
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
@@ -260,7 +260,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
@@ -277,7 +277,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
@@ -330,7 +330,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment not found, transaction_id is BPXKV4LXWQHA8RJH')
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
@@ -355,7 +355,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         assert response.status_code == 200
         assert response.context['message'] == 'Transaction verification failed, please contact site administrator'
-        mock_logging.assert_called_once_with('Payment confirmation failed, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment confirmation failed, transaction_id is BPXKV4LXWQHA8RJH')
 
     @mock.patch('logging.critical')
     @mock.patch('billing.payments.update_payment')
@@ -376,4 +376,4 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 400
-        mock_logging.assert_called_once_with('Payment not found, transaction_id is BPXKV4LXWQHA8RJH')
+        mock_logging.assert_called_once_with('payment not found, transaction_id is BPXKV4LXWQHA8RJH')

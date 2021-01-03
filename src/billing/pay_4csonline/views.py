@@ -22,16 +22,16 @@ class ProcessPaymentView(LoginRequiredMixin, View):
         payment_object = payments.by_transaction_id(transaction_id=transaction_id)
 
         if not payment_object:
-            logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+            logging.critical(f'payment not found, transaction_id is {transaction_id}')
             raise exceptions.SuspiciousOperation()
 
         if not payment_object.owner == request.user:
-            logging.critical('Invalid request, payment process raises SuspiciousOperation: '
+            logging.critical('invalid request, payment process raises SuspiciousOperation: '
                              'payment owner is not matching to request')
             raise exceptions.SuspiciousOperation()
 
         if payment_object.finished_at:
-            logging.critical('Invalid request, payment process raises SuspiciousOperation: '
+            logging.critical('invalid request, payment process raises SuspiciousOperation: '
                              'payment transaction is already finished')
             raise exceptions.SuspiciousOperation()
 
@@ -56,7 +56,7 @@ class VerifyPaymentView(View):
         if result != 'pass' and rc == 'USERCAN' and fc == 'INCOMPLETE':
             self.message = 'Transaction was cancelled'
             if not payments.finish_payment(transaction_id=transaction_id, status='cancelled'):
-                logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+                logging.critical(f'payment not found, transaction_id is {transaction_id}')
                 raise exceptions.SuspiciousOperation()
             return True
         return False
@@ -66,13 +66,13 @@ class VerifyPaymentView(View):
             if fc == 'INCOMPLETE':
                 self.message = 'Transaction was cancelled'
                 if not payments.finish_payment(transaction_id=transaction_id, status='cancelled'):
-                    logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+                    logging.critical(f'payment not found, transaction_id is {transaction_id}')
                     raise exceptions.SuspiciousOperation()
             else:
                 self.message = 'Transaction was declined'
                 if not payments.finish_payment(transaction_id=transaction_id, status='declined',
                                                merchant_reference=reference):
-                    logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+                    logging.critical(f'payment not found, transaction_id is {transaction_id}')
                     raise exceptions.SuspiciousOperation()
             return True
         return False
@@ -80,11 +80,11 @@ class VerifyPaymentView(View):
     @staticmethod
     def _check_payment(payment_obj, transaction_id, amount):
         if not payment_obj:
-            logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+            logging.critical(f'payment not found, transaction_id is {transaction_id}')
             raise exceptions.SuspiciousOperation()
 
         if payment_obj.finished_at:
-            logging.critical('Invalid request, payment process raises SuspiciousOperation: '
+            logging.critical('invalid request, payment process raises SuspiciousOperation: '
                              'payment transaction is already finished')
             raise exceptions.SuspiciousOperation()
 
@@ -92,23 +92,27 @@ class VerifyPaymentView(View):
             100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0
 
         if float(amount) < expected_payment_amount:
-            logging.critical('Invalid request, payment processing will raise SuspiciousOperation: '
+            logging.critical('invalid request, payment processing will raise SuspiciousOperation: '
                              'transaction amount is not matching with existing record')
             raise exceptions.SuspiciousOperation()
 
         if float(amount) > expected_payment_amount:
-            logging.warn('Payment %r is overpaid: %r', payment_obj, amount)
+            logging.warn('payment %r is overpaid: %r', payment_obj, amount)
 
     def _is_payment_verified(self, transaction_id):
-        verified = requests.get(f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
-                                f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
-
+        try:
+            verified = requests.get(f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
+                                    f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
+        except Exception as exc:
+            self.message = 'Transaction verification failed because of network connection failure with the payment gateway'
+            logging.critical(f'payment confirmation failed, transaction_id is {transaction_id} : {exc}')
+            return False
         if verified.text != 'YES':
             if not payments.finish_payment(transaction_id=transaction_id, status='unconfirmed'):
-                logging.critical(f'Payment not found, transaction_id is {transaction_id}')
+                logging.critical(f'payment not found, transaction_id is {transaction_id}')
                 raise exceptions.SuspiciousOperation()
             self.message = 'Transaction verification failed, please contact site administrator'
-            logging.critical(f'Payment confirmation failed, transaction_id is {transaction_id}')
+            logging.critical(f'payment confirmation failed, transaction_id is {transaction_id}')
             return False
         return True
 
@@ -122,7 +126,7 @@ class VerifyPaymentView(View):
         amount = request_data.get('amt', '').replace(',', '')
 
         if _Debug:
-            logging.debug('Verify payment request: %r', request_data)
+            logging.debug('verify payment request: %r', request_data)
 
         if self._check_rc_usercan_is_incomplete(result, rc, fc, transaction_id):
             return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
@@ -147,7 +151,7 @@ class VerifyPaymentView(View):
                 })
 
         if not payments.finish_payment(transaction_id=transaction_id, status='processed'):
-            logging.critical(f'Payment not found, transaction_id is {transaction_id}')  # TODO Use Django messages
+            logging.critical(f'payment not found, transaction_id is {transaction_id}')  # TODO Use Django messages
             raise exceptions.SuspiciousOperation()
 
         redirect_url = '/billing/payments/'

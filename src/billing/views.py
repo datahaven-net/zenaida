@@ -253,7 +253,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
             if not domain_object:
                 raise Http404
             if domain_object.owner != request.user:
-                logging.critical('User %s tried to make an order with domain from another owner' % request.user)
+                logging.critical('user %r tried to make an order with domain from another owner' % request.user)
                 raise exceptions.SuspiciousOperation()
             try:
                 item_type, item_price, item_name = billing_orders.prepare_register_renew_restore_item(domain_object)

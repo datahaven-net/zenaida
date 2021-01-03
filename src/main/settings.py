@@ -99,6 +99,12 @@ LOGGING = {
             'formatter': 'timestamped',
             'stream': sys.stdout,
         },
+        'verify_4cs': {
+            'level': LOG_LEVEL,
+            'class':'logging.StreamHandler',
+            'formatter': 'simple',
+            'stream': sys.stdout,
+        },
         'background_service': {
             'level': LOG_LEVEL,
             'class':'logging.StreamHandler',
@@ -126,6 +132,11 @@ LOGGING = {
             'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['btcpay_verify', ],
+        },
+        'billing.management.commands.verify_4cs': {
+            'level': LOG_LEVEL,
+            'propagate': False,
+            'handlers': ['verify_4cs', ],
         },
         'back.management.commands.background_worker': {
             'level': LOG_LEVEL,

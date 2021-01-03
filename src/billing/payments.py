@@ -36,6 +36,13 @@ def list_payments(owner, statuses=None):
     return list(Payment.payments.filter(owner=owner, status__in=statuses).all().order_by('-started_at'))
 
 
+def iterate_payments(**kwargs):
+    """
+    Just an alias-method to iterate payments.
+    """
+    return Payment.payments.filter(**kwargs).all()
+
+
 def by_transaction_id(transaction_id):
     """
     Find payment by `transaction_id`.

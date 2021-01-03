@@ -42,6 +42,9 @@ class Order(models.Model):
     def __str__(self):
         return 'Order({} #{} : {})'.format(self.description, self.id, self.status)
 
+    def __repr__(self):
+        return 'Order({} #{} : {})'.format(self.description, self.id, self.status)
+
     @property
     def total_price(self):
         return sum([i.price for i in self.items.all()])

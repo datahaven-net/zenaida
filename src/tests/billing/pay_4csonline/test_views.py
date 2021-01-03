@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from billing.models.order import Order
 from billing.models.payment import Payment
+from tests import testsupport
 from zen import zusers
 
 
@@ -105,6 +106,28 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.10')
+        assert response.status_code == 200
+        assert response.context['redirect_url'] == '/billing/payments/'
+
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1)
+    @mock.patch('billing.payments.finish_payment')
+    @mock.patch('billing.payments.update_payment')
+    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._is_payment_verified')
+    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_ok_is_incomplete')
+    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
+    def test_success_payment_verify_amount_with_comma(
+        self, mock_usercan_is_incomplete, mock_rc_ok_is_incomplete,
+        mock_is_payment_verified, mock_update_payment, mock_finish_payment
+    ):
+        payment_object = testsupport.prepare_tester_payment(tester=self.account, amount=1000)
+        transaction_id = payment_object.transaction_id
+        mock_usercan_is_incomplete.return_value = False
+        mock_rc_ok_is_incomplete.return_value = False
+        mock_is_payment_verified.return_value = True
+
+        response = self.client.get(
+            f'/billing/4csonline/verify/?result=miss&tid={transaction_id}&rc=OK&fc=APPROVED&app=&ref='
+            f'1909569671030425&invoice={transaction_id}&tran_id={transaction_id}&err=&av=&amt=1,001.00')
         assert response.status_code == 200
         assert response.context['redirect_url'] == '/billing/payments/'
 

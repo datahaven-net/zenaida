@@ -36,12 +36,13 @@ def single_smoke_test(host, method='ping'):
     """
     if method in ['http', 'https', ]:
         try:
-            req = requests.get('%s://%s' % (method, host, ),  verify=False)
+            req = requests.get('%s://%s' % (method, host, ),  verify=False, timeout=10)
             req.raise_for_status()
         except:
             return False
         return True
-    if method == 'dns':
+
+    if method == 'dnstcp':
         captive_dns_addr = ""
         try:
             captive_dns_addr = socket.gethostbyname("ThisDomainMustNotExist1234.notexist")
@@ -52,14 +53,36 @@ def single_smoke_test(host, method='ping'):
             if captive_dns_addr and captive_dns_addr == host_addr:
                 return False
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
+            s.settimeout(10)
             s.connect((host, 53))
             s.close()
         except:
             return False
         return True
-    ret_code = os.system(f'ping -c 1 {host} 1>/dev/null')
-    return ret_code == 0
+
+    if method == 'dns':
+        captive_dns_addr = ""
+        try:
+            captive_dns_addr = socket.gethostbyname("ThisDomainMustNotExist1234.notexist")
+        except:
+            pass
+        try:
+            host_addr = socket.gethostbyname(host)
+            if captive_dns_addr and captive_dns_addr == host_addr:
+                return False
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(10)
+            s.sendto(b'', (host, 53))
+            s.close()
+        except:
+            return False
+        return True
+
+    if method == 'ping':
+        ret_code = os.system(f'ping -c 1 {host} 1>/dev/null')
+        return ret_code == 0
+
+    return False
 
 
 def get_method_host(host):
@@ -79,6 +102,9 @@ def get_method_host(host):
     elif host.startswith('dns://'):
         method = 'dns'
         host = host.replace('dns://', '')
+    elif host.startswith('dnstcp://'):
+        method = 'dnstcp'
+        host = host.replace('dnstcp://', '')
     return method, host
 
 

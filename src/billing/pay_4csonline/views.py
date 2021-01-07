@@ -12,9 +12,13 @@ from django.views import View
 from billing import payments
 from billing import orders as billing_orders
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_exempt
+
 _Debug = True
 
 
+@method_decorator(xframe_options_exempt, name='dispatch')
 class ProcessPaymentView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):

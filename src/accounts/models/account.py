@@ -82,7 +82,12 @@ class Account(AbstractUser):
     )
 
     balance = models.FloatField(null=False, blank=False, default=0.0)
-
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text='any note regarding this account such as manual balance changes.'
+    )
 
     def __str__(self):
         return 'Account({} {})'.format(self.email, self.balance)

@@ -15,6 +15,9 @@ make migrate
 # update FAQ pages on the web-site
 cp -r /home/zenaida/static_html/*.html /home/zenaida/zenaida/src/front/templates/faq/
 
+# update Billling templates (e,g: receipt PDF)
+cp -r /home/zenaida/static_html/billing/*.html /home/zenaida/zenaida/src/billing/templates/billing/
+
 # restart Zenaida UWSGI application
 touch /home/zenaida/zenaida/etc/uwsgi/vassals/zenaida.ini
 

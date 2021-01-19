@@ -7,19 +7,60 @@ import subprocess
 from django import shortcuts
 from django.conf import settings
 from django.contrib import messages
+from django.db import transaction
 from django.urls import reverse_lazy
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, FormMixin
 from django.views.generic import DetailView
 
+from accounts.models import Account
 from accounts.users import list_all_users_by_date
 from base.mixins import StaffRequiredMixin
-from billing import forms as billing_forms
+from billing import forms as billing_forms, payments
 from billing.orders import list_all_processed_orders_by_date
-from board.forms import DomainSyncForm, CSVFileSyncForm
+from board.forms import DomainSyncForm, CSVFileSyncForm, BalanceAdjustmentForm
 from board.models import CSVFileSync
 from zen import zmaster, zdomains
 
 logger = logging.getLogger(__name__)
+
+
+class BalanceAdjustmentView(StaffRequiredMixin, FormView, FormMixin):
+    template_name = 'board/balance_adjustment.html'
+    form_class = BalanceAdjustmentForm
+    success_url = reverse_lazy('balance_adjustment')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        admin_payments = payments.list_all_payments_of_specific_method(method='pay_by_admin')
+        context['payments'] = admin_payments.order_by('-finished_at')
+        return context
+
+    @transaction.atomic
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email')
+        amount = form.cleaned_data.get('amount')
+        payment_reason = form.cleaned_data.get('reason')
+
+        account = Account.objects.filter(email=email).first()
+        if not Account.objects.filter(email=email).first():
+            messages.warning(self.request, 'This user does not exist.')
+            return super().form_valid(form)
+
+        payment = payments.start_payment(
+            owner=account,
+            amount=amount,
+            payment_method='pay_by_admin',
+        )
+
+        payments.finish_payment(
+            transaction_id=payment.transaction_id,
+            status='processed',
+            notes=f'{payment_reason} (by {self.request.user.email})',
+        )
+
+        messages.success(self.request, f'You successfully added {amount} USD to the balance of {email}')
+
+        return super().form_valid(form)
 
 
 class FinancialReportView(StaffRequiredMixin, FormView):

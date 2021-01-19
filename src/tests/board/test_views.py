@@ -1,5 +1,4 @@
 import os
-import time
 import datetime
 import mock
 import pytest
@@ -7,6 +6,8 @@ import pytest
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from accounts.models import Account
+from billing import payments
 from tests import testsupport
 
 from board.models.csv_file_sync import CSVFileSync
@@ -20,6 +21,93 @@ class BaseAuthTesterMixin(object):
             join_date=datetime.datetime(2019, 1, 1, 1, 0, 0)
         )
         self.client.login(email='tester@zenaida.ai', password='tester')
+
+
+class TestBalanceAdjustmentView(BaseAuthTesterMixin, TestCase):
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.success')
+    def test_successful_balance_update(self, mock_messages_success):
+        assert self.account.balance == 0
+
+        form_data = dict(
+            email='tester@zenaida.ai',
+            amount=100,
+            reason='we owe this guy'
+        )
+
+        response = self.client.post('/board/balance-adjustment/', data=form_data)
+        assert response.status_code == 302
+
+        account = Account.objects.filter(email='tester@zenaida.ai').first()
+        assert account.balance == 100.0
+
+        all_payments = payments.list_payments(owner=account)
+        assert len(all_payments) == 1
+        assert all_payments[0].status == 'processed'
+        assert all_payments[0].method == 'pay_by_admin'
+        assert all_payments[0].amount == 100
+        assert all_payments[0].notes == 'we owe this guy (by tester@zenaida.ai)'
+
+        mock_messages_success.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.success')
+    def test_successful_balance_update_minus(self, mock_messages_success):
+        assert self.account.balance == 0
+
+        form_data = dict(
+            email='tester@zenaida.ai',
+            amount=-100,
+            reason='this guy owe us'
+        )
+
+        response = self.client.post('/board/balance-adjustment/', data=form_data)
+        assert response.status_code == 302
+
+        account = Account.objects.filter(email='tester@zenaida.ai').first()
+        assert account.balance == -100.0
+
+        all_payments = payments.list_payments(owner=account)
+        assert len(all_payments) == 1
+        assert all_payments[0].status == 'processed'
+        assert all_payments[0].method == 'pay_by_admin'
+        assert all_payments[0].amount == -100
+        assert all_payments[0].notes == 'this guy owe us (by tester@zenaida.ai)'
+
+        mock_messages_success.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.warning')
+    def test_balance_update_for_non_existing_user(self, mock_messages_warning):
+
+        form_data = dict(
+            email='noone@zenaida.ai',
+            amount=100,
+            reason='i have done a mistake'
+        )
+
+        response = self.client.post('/board/balance-adjustment/', data=form_data)
+        assert response.status_code == 302
+
+        mock_messages_warning.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.error')
+    def test_balance_adjustment_access_denied_for_normal_user(self, mock_messages_error):
+        self.account.is_staff = False
+        self.account.save()
+
+        form_data = dict(
+            email='tester@zenaida.ai',
+            amount=100,
+            reason='i want to hack the system'
+        )
+
+        response = self.client.post('/board/balance-adjustment/', data=form_data)
+
+        assert response.status_code == 302
+        assert response.url == '/'
+        mock_messages_error.assert_called_once()
 
 
 class TestFinancialReportView(BaseAuthTesterMixin, TestCase):

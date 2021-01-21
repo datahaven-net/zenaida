@@ -88,7 +88,7 @@ class AccountDomainCreateView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'domain_name': self.kwargs.get('domain_name')})
+        context.update({'domain_name': self.kwargs.get('domain_name', '').strip().lower()})
         context.update({'person_name': self.request.user.registrants.all()[0].person_name})
         return context
 
@@ -110,8 +110,8 @@ class AccountDomainCreateView(FormView):
         return form_kwargs
 
     def form_valid(self, form):
-        domain_name = self.kwargs.get('domain_name')
-        domain_tld = domain_name.split('.')[-1].lower()
+        domain_name = self.kwargs.get('domain_name', '').strip().lower()
+        domain_tld = domain_name.split('.')[-1]
 
         if not zzones.is_supported(domain_tld):
             messages.error(self.request, f'Domain zone "{domain_tld}" is not supported')
@@ -212,7 +212,7 @@ class AccountDomainTransferCodeView(TemplateView):
             messages.error(self.request, 'There is a technical problem with domain transfer code processing. '
                                          'Please try again later or contact site administrator')
             return shortcuts.redirect('account_domains')
-        return self.render_to_response(self.get_context_data(transfer_code=domain.auth_key, domain_name=domain.name))
+        return self.render_to_response(self.get_context_data(transfer_code=domain.auth_key, domain_name=domain.name.strip().lower()))
 
 
 class AccountDomainTransferTakeoverView(FormView):
@@ -227,7 +227,7 @@ class AccountDomainTransferTakeoverView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        domain_name = form.cleaned_data.get('domain_name').strip()
+        domain_name = form.cleaned_data.get('domain_name').strip().lower()
         transfer_code = form.cleaned_data.get('transfer_code').strip()
         internal = False  # defines if transfer within same registrar
         info = zmaster.domain_read_info(
@@ -406,7 +406,7 @@ class DomainLookupView(FormView):
                 messages.error(self.request, 'Too many attempts made, please try again later')
                 return super().form_valid(form)
 
-        domain_name = form.cleaned_data.get('domain_name').lower()
+        domain_name = form.cleaned_data.get('domain_name').strip().lower()
 
         if domain_name:
             if not zdomains.is_valid(domain_name):

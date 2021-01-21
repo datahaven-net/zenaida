@@ -107,7 +107,7 @@ def domain_find(domain_name='', epp_id=None, domain_id=None):
         return Domain.domains.filter(id=domain_id).first()
     if epp_id:
         return Domain.domains.filter(epp_id=epp_id).first()
-    return Domain.domains.filter(name=domain_name).first()
+    return Domain.domains.filter(name=domain_name.strip().lower()).first()
 
 
 def domain_create(

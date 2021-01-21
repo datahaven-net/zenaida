@@ -60,9 +60,9 @@ class NotExistingDomainSyncView(StaffRequiredMixin, FormView):
     success_url = reverse_lazy('not_existing_domain_sync')
 
     def form_valid(self, form):
-        domain_name = form.cleaned_data.get('domain_name')
+        domain_name = form.cleaned_data.get('domain_name', '').strip().lower()
         zmaster.domain_synchronize_from_backend(
-            domain_name=form.cleaned_data.get('domain_name'),
+            domain_name=domain_name,
             refresh_contacts=True,
             rewrite_contacts=False,
             change_owner_allowed=True,
@@ -75,10 +75,10 @@ class NotExistingDomainSyncView(StaffRequiredMixin, FormView):
 
         domain_in_db = zdomains.domain_find(domain_name=domain_name)
         if domain_in_db:
-            logger.info(f'{domain_name} is successfully synced.')
-            messages.success(self.request, f'{domain_name} is successfully synced.')
+            logger.info(f'domain {domain_name} is successfully synchronized')
+            messages.success(self.request, f'Domain {domain_name} is successfully synchronized')
         else:
-            messages.warning(self.request, f'Something went wrong during sync of {domain_name}')
+            messages.warning(self.request, f'Something went wrong during synchronization of {domain_name}')
 
         return super().form_valid(form)
 

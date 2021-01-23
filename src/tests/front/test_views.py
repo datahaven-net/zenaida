@@ -541,9 +541,21 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
         mock_messages_error.assert_called_once()
 
 
+@override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_MAX_ATTEMPTS=15, BRUTE_FORCE_PROTECTION_ENABLED=True)
 class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
-    # TODO: Add these tests
-    pass
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('django.contrib.messages.error')
+    @mock.patch('django.core.cache.cache.get')
+    def test_domain_transfer_too_many_attempts(self, mock_cache_get, mock_messages_error, mock_user_profile_complete, mock_list_contacts):
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_cache_get.return_value = 15
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    # TODO: Add more tests for this class
 
 
 class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
@@ -710,6 +722,7 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
         assert len(contact.Contact.contacts.all()) == 0
 
 
+@override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS=15, BRUTE_FORCE_PROTECTION_ENABLED=True)
 class TestDomainLookupView(TestCase):
 
     def test_e2e_successful(self):
@@ -765,11 +778,10 @@ class TestDomainLookupView(TestCase):
         assert response.context['result'] is None
         mock_messages_error.assert_called_once()
 
-    @override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS=2, BRUTE_FORCE_PROTECTION_ENABLED=True)
     @mock.patch('django.contrib.messages.error')
     @mock.patch('django.core.cache.cache.get')
     def test_domain_lookup_too_many_attempts(self, mock_cache_get, mock_messages_error):
-        mock_cache_get.return_value = 2
+        mock_cache_get.return_value = 15
         response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 302
         assert response.url == '/lookup/'

@@ -11,7 +11,7 @@ from billing.pay_btcpay.models import BTCPayInvoice
 
 
 class PaymentAdmin(NestedModelAdmin):
-    list_display = ('transaction_id', 'amount', 'account', 'method', 'started_at', 'finished_at', 'status', )
+    list_display = ('transaction_id', 'amount', 'account', 'method', 'started_at', 'finished_at', 'status', 'notes', )
     search_fields = ('owner__email', )
     list_filter = ('status', 'method', )
 

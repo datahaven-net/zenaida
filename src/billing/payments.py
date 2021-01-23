@@ -36,6 +36,10 @@ def list_payments(owner, statuses=None):
     return list(Payment.payments.filter(owner=owner, status__in=statuses).all().order_by('-started_at'))
 
 
+def list_all_payments_of_specific_method(method):
+    return Payment.payments.filter(method=method)
+
+
 def iterate_payments(**kwargs):
     """
     Just an alias-method to iterate payments.
@@ -79,7 +83,7 @@ def update_payment(payment_object, status=None, merchant_reference=None):
     return payment_object
 
 
-def finish_payment(transaction_id, status, merchant_reference=None):
+def finish_payment(transaction_id, status, merchant_reference=None, notes=None):
     """
     Finish already started payment.
     Also fill up user account balance if payment status is "processed".
@@ -93,6 +97,8 @@ def finish_payment(transaction_id, status, merchant_reference=None):
     payment_object.finished_at = timezone.now()
     if merchant_reference is not None:
         payment_object.merchant_reference = merchant_reference
+    if notes:
+        payment_object.notes = notes
     payment_object.save()
     if old_status != new_status and new_status == 'processed':
         payment_object.owner.balance += payment_object.amount

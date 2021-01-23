@@ -83,6 +83,7 @@ patterns = [
     path('billing/btcpay/process/<str:transaction_id>/', pay_btcpay_views.ProcessPaymentView.as_view(), name='billing_btcpay_process_payment'),
     path('billing/btcpay/redirect/', pay_btcpay_views.RedirectPaymentView.as_view(), name='billing_btcpay_redirect_payment'),
 
+    path('board/balance-adjustment/', board_views.BalanceAdjustmentView.as_view(), name='balance_adjustment'),
     path('board/financial-report/', board_views.FinancialReportView.as_view(), name='financial_report'),
     path('board/domain-sync/', board_views.NotExistingDomainSyncView.as_view(), name='not_existing_domain_sync'),
     path('board/csv-file-sync/<str:record_id>/', board_views.CSVFileSyncRecordView.as_view(), name='csv_file_sync_record'),

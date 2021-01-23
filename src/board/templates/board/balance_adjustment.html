@@ -1,0 +1,58 @@
+{% extends 'base/index.html' %}
+
+{% block main_content %}
+
+
+<div class="alert alert-secondary text-center" role="alert">
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="row col-sm-10">
+        <div class="col-sm-3">
+          <fieldset>
+            {% bootstrap_field form.email layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
+        </div>
+        <div class="col-sm-3">
+          <fieldset>
+            {% bootstrap_field form.amount layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
+        </div>
+        <div class="col-sm-4">
+          <fieldset>
+            {% bootstrap_field form.reason layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-4 text-left" horizontal_field_class="col-sm-8" %}
+          </fieldset>
+        </div>
+        <div class="col-sm-1">
+          <button class="btn btn-sm btn-success">Update Balance</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<h3>Previous balance changes</h3>
+
+<table class="table table-hover">
+  <tr>
+    <th>Email</th>
+    <th>Amount</th>
+    <th>Date</th>
+    <th>Reason</th>
+  </tr>
+
+  {% for payment in payments %}
+
+  <tr>
+    <td>{{ payment.owner.email }}</a></td>
+    <td>{{ payment.amount }}</td>
+    <td>{{ payment.finished_at|date:'d N Y' }}</td>
+    <td>{{ payment.notes }}</td>
+  </tr>
+
+  {% endfor %}
+
+</table>
+
+
+{% endblock %}

@@ -290,6 +290,22 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
                                               'moment: <br>dns1.kuwaitnet.net <br>Please try again later or '
                                               'specify valid and available nameservers.']
 
+    @mock.patch('django.contrib.messages.error')
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
+    def test_glue_record_not_supported(self, mock_messages_error):
+        tester = prepare_tester_account()
+        contact_admin = prepare_tester_contact(tester=tester)
+        profile = prepare_tester_profile(tester=tester)
+        registrant = prepare_tester_registrant(tester=tester, profile_object=profile)
+
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='ns1.test.ai',
+            contact_admin=contact_admin.id
+        ))
+
+        assert response.status_code == 302
+        mock_messages_error.assert_called_once()
+
 
 class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
 
@@ -434,6 +450,41 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         ))
 
         assert response.status_code == 200
+        domain = Domain.domains.all()[0]
+        assert domain.nameserver1 == 'ns1.example.com'
+
+    @mock.patch('zen.zmaster.contact_create_update')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    def test_glue_record(
+        self, mock_epp_call, mock_user_profile_complete, mock_contact_create_update
+    ):
+        mock_epp_call.return_value = True
+        mock_user_profile_complete.return_value = True
+
+        # Create a contact person to have a domain.
+        mock_contact_create_update.return_value = True
+        self.client.post('/contacts/create/', data=contact_person, follow=True)
+
+        # Create a domain.
+        created_domain = Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            nameserver1='ns1.example.com'
+        )
+
+        # Update the domain with a "glue" record
+        response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
+            nameserver1='ns1.test.ai',
+            contact_tech=Contact.contacts.all()[0].id,
+        ))
+
+        assert response.status_code == 200
+        assert response.context['errors'] == ['Please use another nameserver instead of ns1.test.ai, "glue" records are not supported yet.']
         domain = Domain.domains.all()[0]
         assert domain.nameserver1 == 'ns1.example.com'
 

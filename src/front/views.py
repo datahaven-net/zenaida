@@ -102,6 +102,7 @@ class AccountDomainCreateView(FormView):
             form_kwargs['initial']['nameserver1'] = last_registered_domain.nameserver1
             form_kwargs['initial']['nameserver2'] = last_registered_domain.nameserver2
             form_kwargs['initial']['nameserver3'] = last_registered_domain.nameserver3
+            form_kwargs['initial']['nameserver4'] = last_registered_domain.nameserver4
         else:
             form_kwargs['initial']['contact_admin'] = self.request.user.contacts.all()[0]
             form_kwargs['initial']['contact_billing'] = self.request.user.contacts.all()[0]
@@ -134,6 +135,11 @@ class AccountDomainCreateView(FormView):
 
         domain_obj = form.save(commit=False)
 
+        for nameserver in domain_obj.list_nameservers():
+            if nameserver.strip().lower().endswith(domain_name):
+                messages.error(self.request, f'Please use another nameserver instead of {nameserver}, "glue" records are not supported yet.')
+                return super().form_valid(form)
+
         domain_creation_date = timezone.now()
 
         zdomains.domain_create(
@@ -149,6 +155,7 @@ class AccountDomainCreateView(FormView):
                 domain_obj.nameserver1,
                 domain_obj.nameserver2,
                 domain_obj.nameserver3,
+                domain_obj.nameserver4,
             ],
             save=True,
         )

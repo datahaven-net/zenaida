@@ -17,34 +17,16 @@ from django.views.generic import UpdateView, CreateView, DeleteView, ListView, T
 from back.models.domain import Domain
 from back.models.contact import Contact
 from back.models.profile import Profile
-from base.exceptions import ExceededMaxAttemptsException
-from base.bruteforceprotection import BruteForceProtection
 
 from front import forms
+from front.decorators import validate_profile_and_contacts, brute_force_protection
 
 from zen import zdomains
 from zen import zcontacts
-from zen import zusers
 from zen import zzones
 from zen import zmaster
 
 from billing import orders
-
-
-def validate_profile_and_contacts(dispatch_func):
-    def dispatch_wrapper(self, request, *args, **kwargs):
-        if self.request.user.is_authenticated:
-            if not hasattr(request.user, 'profile'):
-                zusers.create_profile(request.user, contact_email=request.user.email)
-            if not request.user.profile.is_complete() or not request.user.registrants.count():
-                messages.info(request, 'Please provide your contact information to be able to register new domains')
-                return shortcuts.redirect('account_profile')
-            if len(zcontacts.list_contacts(request.user)) == 0:
-                messages.info(request, 'Please create your first contact person and provide your contact information '
-                                       'to be able to register new domains')
-                return shortcuts.redirect('account_contacts')
-        return dispatch_func(self, request, *args, **kwargs)
-    return dispatch_wrapper
 
 
 class IndexPageView(TemplateView):
@@ -226,7 +208,15 @@ class AccountDomainTransferTakeoverView(FormView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    @brute_force_protection(
+        cache_key_prefix=settings.BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_KEY_PREFIX,
+        max_attempts=settings.BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_MAX_ATTEMPTS,
+        timeout=settings.BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_TIMEOUT
+    )
     def form_valid(self, form):
+        if self.request.temporarily_blocked:
+            messages.error(self.request, 'Too many attempts made, please try again later')
+            return self.render_to_response(self.get_context_data(form=form))
         domain_name = form.cleaned_data.get('domain_name').strip().lower()
         transfer_code = form.cleaned_data.get('transfer_code').strip()
         internal = False  # defines if transfer within same registrar
@@ -243,8 +233,13 @@ class AccountDomainTransferTakeoverView(FormView):
         current_statuses = info['epp']['response']['resData']['infData']['status']
         current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
         current_statuses = [s['@s'] for s in current_statuses]
+
+        if info['epp']['response']['resData']['infData']['authInfo']['pw'] != 'Authinfo Correct':
+            messages.error(self.request, 'Given transfer code is not correct.')
+            return super().form_invalid(form)
+
         if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
-            messages.error(self.request, 'Domain transfer is not possible at the moment. ' \
+            messages.error(self.request, 'Domain transfer is not possible at the moment. '
                                          'Please contact site administrator')
             return super().form_invalid(form)
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):
@@ -382,29 +377,16 @@ class DomainLookupView(FormView):
     form_class = forms.DomainLookupForm
     success_url = reverse_lazy('domain_lookup')
 
-    def _get_client_ip(self):
-        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = self.request.META.get('REMOTE_ADDR')
-        return ip
-
+    @brute_force_protection(
+        cache_key_prefix=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX,
+        max_attempts=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS,
+        timeout=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT
+    )
     def form_valid(self, form):
+        if self.request.temporarily_blocked:
+            messages.error(self.request, 'Too many attempts made, please try again later')
+            return super().form_valid(form)
         result = None
-        if settings.BRUTE_FORCE_PROTECTION_ENABLED:
-            client_ip = self._get_client_ip()
-            brute_force = BruteForceProtection(
-                cache_key_prefix=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_KEY_PREFIX,
-                key=client_ip,
-                max_attempts=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS,
-                timeout=settings.BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_TIMEOUT
-            )
-            try:
-                brute_force.register_attempt()
-            except ExceededMaxAttemptsException:
-                messages.error(self.request, 'Too many attempts made, please try again later')
-                return super().form_valid(form)
 
         domain_name = form.cleaned_data.get('domain_name').strip().lower()
 

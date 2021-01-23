@@ -141,9 +141,8 @@ class Domain(models.Model):
             return self.nameserver3
         if pos == 3:
             return self.nameserver4
-        if pos > 3:
-            logger.warning(f'invalid position for nameserver, position: {pos}')
-            return
+        logger.warning(f'invalid position for nameserver, position: {pos}')
+        return ''
 
     def get_contact(self, role):
         """
@@ -178,17 +177,18 @@ class Domain(models.Model):
         if pos == 0:
             self.nameserver1 = nameserver
             logger.debug('nameserver %s set for %s at position 1', nameserver, self)
-        if pos == 1:
+        elif pos == 1:
             self.nameserver2 = nameserver
             logger.debug('nameserver %s set for %s at position 2', nameserver, self)
-        if pos == 2:
+        elif pos == 2:
             self.nameserver3 = nameserver
             logger.debug('nameserver %s set for %s at position 3', nameserver, self)
-        if pos == 3:
+        elif pos == 3:
             self.nameserver4 = nameserver
             logger.debug('nameserver %s set for %s at position 4', nameserver, self)
-        if pos > 3:
+        else:
             logger.warning(f'nameserver {nameserver} was not added because DB do not accept more than 4 nameservers')
+            return False
         return True
 
     def clear_nameserver(self, pos):
@@ -198,7 +198,7 @@ class Domain(models.Model):
         """
         if pos not in list(range(4)):
             logger.warning(f'invalid position for nameserver, position: {pos}')
-            return
+            return False
         if pos == 0 and self.nameserver1:
             logger.debug('nameserver %s to be erased for %s at position 1', self.nameserver1, self)
             self.nameserver1 = ''

@@ -43,13 +43,13 @@ class DomainDetailsForm(models.ModelForm):
         super(DomainDetailsForm, self).__init__(*args, **kwargs)
         self.fields['contact_admin'].queryset = self.fields['contact_admin'].queryset.filter(owner=current_user.id)
         self.fields['contact_admin'].label_from_instance = lambda c: c.label
-        self.fields['contact_admin'].empty_label = ' ' 
+        self.fields['contact_admin'].empty_label = ' '
         self.fields['contact_billing'].queryset = self.fields['contact_billing'].queryset.filter(owner=current_user.id)
         self.fields['contact_billing'].label_from_instance = lambda c: c.label
-        self.fields['contact_billing'].empty_label = ' ' 
+        self.fields['contact_billing'].empty_label = ' '
         self.fields['contact_tech'].queryset = self.fields['contact_tech'].queryset.filter(owner=current_user.id)
         self.fields['contact_tech'].label_from_instance = lambda c: c.label
-        self.fields['contact_tech'].empty_label = ' ' 
+        self.fields['contact_tech'].empty_label = ' '
 
     def clean(self):
         cleaned_data = super(DomainDetailsForm, self).clean()
@@ -57,12 +57,12 @@ class DomainDetailsForm(models.ModelForm):
         contact_billing = cleaned_data.get('contact_billing')
         contact_tech = cleaned_data.get('contact_tech')
         if not any([contact_admin, contact_billing, contact_tech, ]):
-            raise forms.ValidationError('At least one Contact Person must be specified for the domain.')
+            raise forms.ValidationError('At least one contact person must be specified for the domain.')
 
-        cleaned_data['nameserver1'] = cleaned_data.get('nameserver1').strip('.')
-        cleaned_data['nameserver2'] = cleaned_data.get('nameserver2').strip('.')
-        cleaned_data['nameserver3'] = cleaned_data.get('nameserver3').strip('.')
-        cleaned_data['nameserver4'] = cleaned_data.get('nameserver4').strip('.')
+        cleaned_data['nameserver1'] = cleaned_data.get('nameserver1').strip('.').lower()
+        cleaned_data['nameserver2'] = cleaned_data.get('nameserver2').strip('.').lower()
+        cleaned_data['nameserver3'] = cleaned_data.get('nameserver3').strip('.').lower()
+        cleaned_data['nameserver4'] = cleaned_data.get('nameserver4').strip('.').lower()
 
         ns_list = [
             cleaned_data.get('nameserver1'),
@@ -75,11 +75,13 @@ class DomainDetailsForm(models.ModelForm):
             raise forms.ValidationError('At least one nameserver must be specified for the domain.')
         for nameserver in ns_list:
             if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", nameserver):
-                raise forms.ValidationError('Nameserver can not be an IP address.')
+                raise forms.ValidationError('Please use DNS name instead of IP address for the nameservers.')
+            if self.instance.name and nameserver.endswith(self.instance.name.strip().lower()):
+                raise forms.ValidationError(f'Please use another nameserver instead of {nameserver}, "glue" records are not supported yet.')
 
         filled_ns_list = list(filter(None, ns_list))
         if len(filled_ns_list) != len(set(filled_ns_list)):
-            raise forms.ValidationError('Nameservers can not be duplicated.')
+            raise forms.ValidationError('Found duplicated nameservers.')
 
         invalid_nameservers = []
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:

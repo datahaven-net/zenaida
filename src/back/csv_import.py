@@ -115,8 +115,8 @@ def check_contact_to_be_created(known_epp_contact_id, real_epp_contact_id, real_
     if known_epp_contact_id:
         if known_epp_contact_id != real_epp_contact_id:
     #--- contact epp ID is not matching
-            errors.append("epp contact ID is not matching with csv record, known is %r, real is %r" % (
-                known_epp_contact_id, real_epp_contact_id, ))
+            errors.append("epp contact ID is not matching with csv record for %r, known record is %r, master record is %r" % (
+                real_owner, known_epp_contact_id, real_epp_contact_id, ))
             to_be_created = True
         else:
             if not zcontacts.verify(
@@ -138,8 +138,8 @@ def check_registrant_to_be_created(known_epp_registrant_id, real_epp_registrant_
     if known_epp_registrant_id:
         if known_epp_registrant_id != real_epp_registrant_id:
     #--- contact epp ID is not matching
-            errors.append("epp registrant ID is not matching with csv record, known is %r, real is %r" % (
-                known_epp_registrant_id, real_epp_registrant_id, ))
+            errors.append("epp registrant ID is not matching with csv record for %r, known is %r, master record is %r" % (
+                real_owner, known_epp_registrant_id, real_epp_registrant_id, ))
             to_be_created = True
         else:
             if not zcontacts.verify_registrant(
@@ -402,7 +402,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         if dt_hours >= 24:
     #--- domain expiry date not in sync
             if dry_run:
-                errors.append('expiry date not in sync - known is %r, real date is %r' % (
+                errors.append('expiry date not in sync - known is %r, master record is %r' % (
                     known_expiry_date, real_expiry_date, ))
                 return errors
             known_domain.expiry_date = real_expiry_date
@@ -413,7 +413,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     #--- expiry date was not set
             if real_expiry_date:
                 if dry_run:
-                    errors.append('expiry date was not set, real is %r' % real_expiry_date)
+                    errors.append('expiry date was not set, master record is %r' % real_expiry_date)
                     return errors
                 known_domain.expiry_date = real_expiry_date
                 known_domain.save()
@@ -425,7 +425,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         if dt_hours >= 24:
     #--- domain create date not in sync
             if dry_run:
-                errors.append('create date not in sync - known is %r, real date is %r' % (
+                errors.append('create date not in sync - known is %r, master record is %r' % (
                     known_create_date, real_create_date, ))
                 return errors
             known_domain.create_date = real_create_date
@@ -436,7 +436,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             if real_create_date:
     #--- create date was not set
                 if dry_run:
-                    errors.append('create date was not set, real date is %r' % real_create_date)
+                    errors.append('create date was not set, master record is %r' % real_create_date)
                     return errors
                 known_domain.create_date = real_create_date
                 known_domain.save()
@@ -446,7 +446,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     if known_epp_id:
         if known_epp_id != real_epp_id:
             if dry_run:
-                errors.append('epp ID not in sync - known is %r, real is %r' % (
+                errors.append('epp ID not in sync - known is %r, master record is %r' % (
                     known_epp_id, real_epp_id, ))
                 return errors
             known_domain.epp_id = real_epp_id
@@ -456,7 +456,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         if real_epp_id:
             if known_domain:
                 if dry_run:
-                    errors.append('epp ID was not set, real value is %s' % real_epp_id)
+                    errors.append('epp ID was not set, master record is %s' % real_epp_id)
                     return errors
                 known_domain.epp_id = real_epp_id
                 known_domain.save()
@@ -464,9 +464,9 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
 
     #--- check auth_key
     if known_auth_key:
-        if known_auth_key != real_auth_key:
+        if real_auth_key and known_auth_key != real_auth_key:
             if dry_run:
-                errors.append('auth_key not in sync - known is %r, but real value is %r' % (
+                errors.append('auth_key not in sync - known is %r, but master record is %r' % (
                     known_auth_key, real_auth_key, ))
                 return errors
             known_domain.auth_key = real_auth_key
@@ -476,7 +476,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         if real_auth_key:
             if known_domain:
                 if dry_run:
-                    errors.append('auth_key was not set, real value is %r' % (
+                    errors.append('auth_key was not set, master record is %r' % (
                         real_auth_key, ))
                     return errors
                 known_domain.auth_key = real_auth_key
@@ -487,7 +487,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     for i in range(4):
         if real_nameservers[i] != known_nameservers[i]:
             if dry_run:
-                errors.append('nameserver at position %d not in sync, known is %r, real value is %r' % (
+                errors.append('nameserver at position %d not in sync, known is %r, master record is %r' % (
                     i, known_nameservers[i], real_nameservers[i], ))
                 return errors
 

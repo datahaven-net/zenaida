@@ -22,7 +22,7 @@ class Payment(models.Model):
         choices=(
             ('pay_4csonline', 'Credit Card', ),
             ('pay_btcpay', 'BitCoin'),
-            ('pay_by_admin', 'Pay by Admin'),
+            ('pay_by_admin', 'Balance adjustment by admin'),
         ),
         max_length=32,
         null=False,

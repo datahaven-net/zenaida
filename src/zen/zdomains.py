@@ -62,7 +62,7 @@ def is_valid(domain_name, idn=False):
 
 def validate_domain_name(domain):
     """
-    Raise `ValidationError()` if domain 
+    Will raise `ValidationError` exception if domain name is not valid.
     """
     if is_valid(domain):
         return True

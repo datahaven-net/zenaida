@@ -71,6 +71,10 @@ class DomainAdmin(NestedModelAdmin):
         ('get_contact_admin_link', ),
         ('get_contact_billing_link', ),
         ('get_contact_tech_link', ),
+        ('nameserver1', ),
+        ('nameserver2', ),
+        ('nameserver3', ),
+        ('nameserver4', ),
     )
     actions = (
         'domain_synchronize_from_backend',

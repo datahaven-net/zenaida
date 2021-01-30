@@ -390,6 +390,8 @@ class DomainRefresher(automat.Automat):
         if self.expected_owner:
             # if pending order exists, select registrant from the owner of that order
             self.known_registrant = self.expected_owner.registrants.first()
+            if self.known_registrant and self.known_registrant.epp_id:
+                self.received_registrant_epp_id = self.known_registrant.epp_id
             logger.info('trying to use registrant from existing owner: %r', self.known_registrant)
         else:
             # find registrant in local DB
@@ -728,7 +730,7 @@ class DomainRefresher(automat.Automat):
         if not self.target_domain:
             return
         # update registrant of the domain if it is known
-        if self.target_domain.registrant != self.known_registrant:
+        if self.target_domain.registrant and self.known_registrant and self.target_domain.registrant != self.known_registrant:
             if not self.change_owner_allowed:
                 logger.error('domain registrant changed, but domain already have another owner in local DB')
                 raise zerrors.EPPRegistrantAuthFailed('domain registrant changed, but domain already have another owner in local DB')
@@ -741,7 +743,7 @@ class DomainRefresher(automat.Automat):
             self.target_domain.refresh_from_db()
             return
         # make sure owner of the domain is correct
-        if self.target_domain.owner != self.known_registrant.owner:
+        if self.known_registrant and self.target_domain.owner != self.known_registrant.owner:
             # just in case given user have multiple registrant contacts... 
             if not self.change_owner_allowed:
                 logger.error('domain already have another owner in local DB')

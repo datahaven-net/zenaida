@@ -252,7 +252,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     errors.append('no contacts present for the known domain in csv record')
                     return errors
     else:
-        errors.append('no contacts (with epp ID) provided for the domain in csv record')
+        errors.append('no contacts found for the domain in csv record')
         return errors
 
     if real_registrant_contact_id:
@@ -309,7 +309,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 epp_id=real_registrant_contact_id,
                 **csv_info['registrant'],
             )
-    
+
         if need_admin_contact:
     #--- admin contact create
             new_admin_contact = zcontacts.contact_create(
@@ -341,7 +341,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                     epp_id=real_tech_contact_id,
                     **csv_info['tech'],
                 )
-    
+
         if need_billing_contact:
     #--- billing contact create
             new_billing_contact = zcontacts.contact_create(

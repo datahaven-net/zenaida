@@ -15,8 +15,6 @@ from billing import orders as billing_orders
 from django.utils.decorators import method_decorator
 from django.views.decorators.clickjacking import xframe_options_exempt
 
-_Debug = True
-
 
 @method_decorator(xframe_options_exempt, name='dispatch')
 class ProcessPaymentView(LoginRequiredMixin, View):
@@ -129,8 +127,7 @@ class VerifyPaymentView(View):
         transaction_id = request_data.get('tid')
         amount = request_data.get('amt', '').replace(',', '')
 
-        if _Debug:
-            logging.debug('verify payment request: %r', request_data)
+        logging.info('verifying payment request: %r', request_data)
 
         if self._check_rc_usercan_is_incomplete(result, rc, fc, transaction_id):
             return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {

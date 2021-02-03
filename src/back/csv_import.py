@@ -187,6 +187,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     real_create_date = csv_info['create_date']
     real_epp_id = csv_record.get('roid_0')
     real_status = csv_record.get('status_5')
+    real_status_short = prepare_domain_status(real_status, default_status=None)
     real_auth_key = csv_record.get('auth_info_password_2')
     real_registrant_contact_id = csv_record.get('registrant_contact_id_24')
     real_admin_contact_id = csv_record.get('admin_contact_id_58')
@@ -201,6 +202,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
     known_expiry_date = None
     known_create_date = None
     known_epp_id = None
+    known_status = None
     known_auth_key = None
     known_registrant_contact_id = None 
     known_admin_contact_id = None
@@ -238,6 +240,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         known_expiry_date = known_domain.expiry_date
         known_create_date = known_domain.create_date
         known_epp_id = known_domain.epp_id
+        known_status = known_domain.status
         known_auth_key = known_domain.auth_key
         known_registrant_contact_id = None if not known_domain.registrant else known_domain.registrant.epp_id
         known_admin_contact_id = None if not known_domain.contact_admin else known_domain.contact_admin.epp_id
@@ -381,7 +384,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
             expiry_date=real_expiry_date,
             create_date=real_create_date,
             epp_id=real_epp_id,
-            status=prepare_domain_status(real_status),
+            status=real_status_short,
             epp_statuses=prepare_domain_epp_statuses(real_status),
             auth_key=real_auth_key,
             registrar=real_registrar_id,
@@ -461,6 +464,26 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
                 known_domain.epp_id = real_epp_id
                 known_domain.save()
                 log.debug('epp ID was not set, now updated with a new value %r', real_epp_id)
+
+    #--- check known domain status
+    if known_status:
+        if known_status != real_status_short:
+            if dry_run:
+                errors.append('domain status not in sync - known is %r, master record is %r' % (
+                    known_status, real_status_short, ))
+                return errors
+            known_domain.status = real_status_short
+            known_domain.save()
+            log.debug('known domain status updated with new value %r', real_status_short)
+    else:
+        if real_status_short:
+            if known_domain:
+                if dry_run:
+                    errors.append('domain status was not set, master record is %s' % real_status_short)
+                    return errors
+                known_domain.status = real_status_short
+                known_domain.save()
+                log.debug('domain status was not set, now updated with a new value %r', real_status_short)
 
     #--- check auth_key
     if known_auth_key:

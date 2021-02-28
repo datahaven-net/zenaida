@@ -252,7 +252,7 @@ class AccountDomainTransferTakeoverView(FormView):
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):
             messages.warning(self.request, 'Domain transfer is already in progress')
             return super().form_invalid(form)
-        current_registrar = info['epp']['response']['resData']['infData']['clID']
+
         if current_registrar in [settings.ZENAIDA_AUCTION_REGISTRAR_ID, settings.ZENAIDA_REGISTRAR_ID]:
             price = 0.0
         else:

@@ -12,6 +12,7 @@ from back.models.contact import Contact, Registrant
 from back.models.domain import Domain
 from back.models.profile import Profile
 from back.models.zone import Zone
+from billing import orders as billing_orders
 from tests.testsupport import prepare_tester_account, prepare_tester_contact, prepare_tester_registrant, \
     prepare_tester_profile
 
@@ -545,8 +546,214 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
 class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @pytest.mark.django_db
+    def test_domain_transfer_takeover_successful(
+        self, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        mock_domain_info.return_value = {
+            "epp": {
+                "response": {
+                    "resData": {
+                        "infData": {
+                            "clID": "12345",
+                            "status": {
+                                "@s": "Good"
+                            },
+                            "authInfo": {
+                                "pw": "Authinfo Correct"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+
+        order = billing_orders.list_orders(owner=self.account)[0]
+        assert order.owner == self.account
+
+        assert response.status_code == 302
+        assert response.url == f'/billing/order/{order.id}/'
+
+        order = billing_orders.list_orders(owner=self.account)[0]
+        assert order.owner == self.account
+
+        order_item = order.items.all()[0]
+        assert order_item.type == 'domain_transfer'
+        assert order_item.price == 100.0
+        assert order_item.name == 'bitdust.ai'
+        assert order_item.details == {'transfer_code': '12345', 'rewrite_contacts': True, 'internal': False}
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @override_settings(ZENAIDA_REGISTRAR_ID='test_registrar')
+    @pytest.mark.django_db
+    def test_domain_transfer_takeover_internal_successful(
+        self, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        mock_domain_info.return_value = {
+            "epp": {
+                "response": {
+                    "resData": {
+                        "infData": {
+                            "clID": "test_registrar",
+                            "status": {
+                                "@s": "Good"
+                            },
+                            "authInfo": {
+                                "pw": "Authinfo Correct"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+
+        order = billing_orders.list_orders(owner=self.account)[0]
+        assert order.owner == self.account
+
+        assert response.status_code == 302
+        assert response.url == f'/billing/order/{order.id}/'
+
+        order_item = order.items.all()[0]
+        assert order_item.type == 'domain_transfer'
+        assert order_item.price == 0.0
+        assert order_item.name == 'bitdust.ai'
+        assert order_item.details == {'transfer_code': '12345', 'rewrite_contacts': True, 'internal': True}
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.warning')
+    @pytest.mark.django_db
+    def test_domain_transfer_not_possible_backend_down(
+        self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        mock_domain_info.return_value = None
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_warning.assert_called_once()
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.error')
+    @pytest.mark.django_db
+    def test_domain_transfer_auth_info_wrong(
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        mock_domain_info.return_value = {
+            "epp": {
+                "response": {
+                    "resData": {
+                        "infData": {
+                            "clID": "12345",
+                            "status": {
+                                "@s": "Good"
+                            },
+                            "authInfo": {
+                                "pw": "Authinfo Not Correct"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.error')
+    @pytest.mark.django_db
+    def test_domain_transfer_is_prohibited(
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        mock_domain_info.return_value = {
+            "epp": {
+                "response": {
+                    "resData": {
+                        "infData": {
+                            "clID": "12345",
+                            "status": {
+                                "@s": "serverTransferProhibited"
+                            },
+                            "authInfo": {
+                                "pw": "Authinfo Correct"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.warning')
+    @pytest.mark.django_db
+    def test_domain_transfer_takeover_already_in_progress(
+        self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        started_order = billing_orders.order_single_item(
+            owner=self.account,
+            item_type="domain_transfer",
+            item_price=100.0,
+            item_name="bitdust.ai"
+        )
+        started_order_item = started_order.items.all()[0]
+        billing_orders.update_order_item(order_item=started_order_item, new_status='pending')
+
+        mock_domain_info.return_value = {
+            "epp": {
+                "response": {
+                    "resData": {
+                        "infData": {
+                            "clID": "12345",
+                            "status": {
+                                "@s": "Good"
+                            },
+                            "authInfo": {
+                                "pw": "Authinfo Correct"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_warning.assert_called_once()
+
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('django.contrib.messages.error')
     @mock.patch('django.core.cache.cache.get')
+    @pytest.mark.django_db
     def test_domain_transfer_too_many_attempts(self, mock_cache_get, mock_messages_error, mock_user_profile_complete, mock_list_contacts):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
@@ -554,8 +761,6 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
-
-    # TODO: Add more tests for this class
 
 
 class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
@@ -632,6 +837,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/contacts/create/', data=contact, follow=True)
             assert response.status_code == 200
             assert response.context['errors'] == ['Please use only English characters in your details.']
+
 
 class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
 

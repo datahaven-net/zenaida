@@ -162,15 +162,21 @@ class OrderSingleReceiptDownloadView(View):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        pdf_info = None
-        if kwargs.get('order_id'):
-            pdf_info = billing_orders.build_receipt(
-                owner=request.user,
-                order_id=kwargs.get('order_id'),
-            )
-        if not pdf_info:
-            messages.warning(request, 'Order not found')
-            return shortcuts.redirect('billing_orders')
+        order_id = kwargs.get('order_id')
+        if order_id:
+            try:
+                billing_orders.get_order_by_id_and_owner(
+                    order_id=order_id, owner=request.user, log_action="download a receipt for"
+                )
+            except exceptions.SuspiciousOperation:
+                messages.warning(request, "You can't download this receipt.")
+                return shortcuts.redirect('billing_orders')
+
+        pdf_info = billing_orders.build_receipt(
+            owner=request.user,
+            order_id=order_id,
+        )
+
         response = HttpResponse(pdf_info['body'], content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
         return response

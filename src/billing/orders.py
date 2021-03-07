@@ -549,7 +549,6 @@ def build_receipt(owner, year=None, month=None, order_id=None):
     Optionally selects orders for given period.
     """
     order_objects = []
-    receipt_period = ''
     if order_id:
         order_object = by_id(order_id)
         if not order_object:

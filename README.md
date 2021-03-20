@@ -228,7 +228,7 @@ Installing Perl modules is easy, but takes some time:
 If that fails you can also try to use `cpanminus` to do the same:
 
         sudo apt-get install cpanminus
-        sudo cpanm -i AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
+        sudo cpanm -i --notest AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
 
 
 

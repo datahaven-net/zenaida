@@ -7,8 +7,8 @@ from base.bruteforceprotection import BruteForceProtection
 
 
 class TestBruteForceProtection(TestCase):
-    def setUp(self):
 
+    def setUp(self):
         self.brute_force_protection = BruteForceProtection(
             cache_key_prefix="test_hashkey_prefix",
             key="192.168.1.1",

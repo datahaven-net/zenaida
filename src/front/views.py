@@ -19,7 +19,7 @@ from back.models.contact import Contact
 from back.models.profile import Profile
 
 from front import forms
-from front.decorators import validate_profile_and_contacts, brute_force_protection
+from front.decorators import validate_profile_exists, brute_force_protection
 
 from zen import zdomains
 from zen import zcontacts
@@ -32,7 +32,7 @@ from billing import orders
 class IndexPageView(TemplateView):
     template_name = 'base/index.html'
 
-    @validate_profile_and_contacts
+    @validate_profile_exists
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
@@ -47,7 +47,7 @@ class AccountDomainsListView(ListView):
     template_name = 'front/account_domains.html'
     paginate_by = 10
 
-    @validate_profile_and_contacts
+    @validate_profile_exists
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -63,7 +63,7 @@ class AccountDomainCreateView(FormView):
     success_message = 'Please confirm the payment to finish registering your domain.'
     success_url = reverse_lazy('account_domains')
 
-    @validate_profile_and_contacts
+    @validate_profile_exists
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -86,9 +86,10 @@ class AccountDomainCreateView(FormView):
             form_kwargs['initial']['nameserver3'] = last_registered_domain.nameserver3
             form_kwargs['initial']['nameserver4'] = last_registered_domain.nameserver4
         else:
-            form_kwargs['initial']['contact_admin'] = self.request.user.contacts.all()[0]
-            form_kwargs['initial']['contact_billing'] = self.request.user.contacts.all()[0]
-            form_kwargs['initial']['contact_tech'] = self.request.user.contacts.all()[0]
+            if self.request.user.contacts.first():
+                form_kwargs['initial']['contact_admin'] = self.request.user.contacts.all()[0]
+                form_kwargs['initial']['contact_billing'] = self.request.user.contacts.all()[0]
+                form_kwargs['initial']['contact_tech'] = self.request.user.contacts.all()[0]
         form_kwargs['current_user'] = self.request.user
         return form_kwargs
 
@@ -153,7 +154,7 @@ class AccountDomainUpdateView(UpdateView):
     success_message = 'Domain details successfully updated'
     success_url = reverse_lazy('account_domains')
 
-    @validate_profile_and_contacts
+    @validate_profile_exists
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -190,7 +191,7 @@ class AccountDomainUpdateView(UpdateView):
 class AccountDomainTransferCodeView(TemplateView):
     template_name = 'front/account_domain_transfer_code.html'
 
-    @validate_profile_and_contacts
+    @validate_profile_exists
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -210,7 +211,7 @@ class AccountDomainTransferTakeoverView(FormView):
     form_class = forms.DomainTransferTakeoverForm
     success_message = 'New domain will be added to your account after confirmation'
 
-    @validate_profile_and_contacts
+    @validate_profile_exists
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -304,7 +305,7 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
                 messages.error(self.request, self.error_message)
                 return HttpResponseRedirect(self.request.path_info)
 
-        if existing_registrant and existing_contacts:
+        if existing_registrant:
             messages.success(self.request, 'Your profile information was successfully updated')
         else:
             messages.success(

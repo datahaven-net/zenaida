@@ -6,6 +6,7 @@ import mock
 import pytest
 
 from django.test import TestCase, override_settings
+from django.conf import settings
 
 from back.models import contact
 from back.models.contact import Contact, Registrant
@@ -13,8 +14,10 @@ from back.models.domain import Domain
 from back.models.profile import Profile
 from back.models.zone import Zone
 from billing import orders as billing_orders
-from tests.testsupport import prepare_tester_account, prepare_tester_contact, prepare_tester_registrant, \
-    prepare_tester_profile
+from tests.testsupport import (
+    prepare_tester_account, prepare_tester_contact, prepare_tester_registrant, prepare_tester_profile,
+)
+
 
 from zen import zusers
 
@@ -84,8 +87,8 @@ class TestAccountDomainsListView(BaseAuthTesterMixin, TestCase):
     def test_contact_info_is_not_complete(self, mock_user_profile_complete):
         mock_user_profile_complete.return_value = True
         response = self.client.get('/domains/')
-        assert response.status_code == 302
-        assert response.url == '/contacts/'
+        assert response.status_code == 200
+        assert len(response.context['object_list']) == 0
 
 
 class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
@@ -104,11 +107,14 @@ class TestIndexViewForLoggedInUser(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/profile/'
 
-    def test_index_page_redirects_to_contacts_page(self):
-        with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:
-            response = self.client.get('')
-        assert response.status_code == 302
-        assert response.url == '/contacts/'
+    @mock.patch('back.models.profile.Profile.is_complete')
+    def test_index_page_not_redirects_to_contacts_page(self, mock_user_profile_complete):
+        mock_user_profile_complete.return_value = True
+        with mock.patch('zen.zcontacts.list_contacts') as mock_list_contacts:
+            mock_list_contacts.return_value = []
+        response = self.client.get('')
+        assert response.status_code == 200
+        assert response.context['total_domains'] == 0
 
 
 class TestIndexViewForUnknownUser(TestCase):
@@ -137,10 +143,26 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id
             ))
-
             assert response.status_code == 302
             assert response.url == '/billing/order/create/register/test.ai/'
             assert len(Domain.domains.all()) == 1
+
+    @pytest.mark.django_db
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zzones.is_supported')
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
+    def test_create_domain_successful_without_contacts(self, mock_zone_is_supported, mock_user_profile_complete):
+        mock_zone_is_supported.return_value = True
+        mock_user_profile_complete.return_value = True
+        registrant_info = copy.deepcopy(contact_person)
+        registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+        Registrant.registrants.create(**registrant_info)
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='ns1.google.com',
+        ))
+        assert response.status_code == 302
+        assert response.url == '/billing/order/create/register/test.ai/'
+        assert len(Domain.domains.all()) == 1
 
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
@@ -151,20 +173,16 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         mock_domain_find.return_value = mock.MagicMock(
             epp_id='12345'
         )
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person, follow=True)
-
             registrant_info = copy.deepcopy(contact_person)
             registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
             Registrant.registrants.create(**registrant_info)
-
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id
             ))
-
             assert response.status_code == 302
             assert response.url == '/domains/'
             assert len(Domain.domains.all()) == 0
@@ -214,20 +232,16 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime.utcnow() - datetime.timedelta(hours=1),
             id=1
         )
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person, follow=True)
-
             registrant_info = copy.deepcopy(contact_person)
             registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
             Registrant.registrants.create(**registrant_info)
-
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id
             ))
-
             assert response.status_code == 302
             assert response.url == '/billing/order/create/register/test.ai/'
             assert len(Domain.domains.all()) == 1
@@ -236,18 +250,17 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='https://ns1.google.com'
         ))
-
         assert response.status_code == 302
         assert response.url == '/profile/'
 
     @mock.patch('back.models.profile.Profile.is_complete')
     def test_contact_info_is_not_complete(self, mock_user_profile_complete):
+        mock_user_profile_complete.return_value = True
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='https://ns1.google.com'
         ))
-
-        assert response.status_code == 302
-        assert response.url == '/contacts/'
+        assert response.status_code == 200
+        assert response.context_data['domain_name'] == 'test.ai'
 
     @pytest.mark.django_db
     @mock.patch('django.contrib.messages.error')
@@ -258,16 +271,13 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person)
-
             registrant_info = copy.deepcopy(contact_person)
             registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
             Registrant.registrants.create(**registrant_info)
-
             response = self.client.post('/domains/create/test.ax/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id
             ))
-
         assert response.status_code == 302
         assert response.url == '/domains/'
         mock_messages_error.assert_called_once()
@@ -279,13 +289,11 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         tester = prepare_tester_account()
         contact_admin = prepare_tester_contact(tester=tester)
         profile = prepare_tester_profile(tester=tester)
-        registrant = prepare_tester_registrant(tester=tester, profile_object=profile)
-
+        prepare_tester_registrant(tester=tester, profile_object=profile)
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='dns1.kuwaitnet.net',
             contact_admin=contact_admin.id
         ))
-
         assert response.status_code == 200
         assert response.context['errors'] == ['List of nameservers that are not valid or not reachable at this '
                                               'moment: <br>dns1.kuwaitnet.net <br>Please try again later or '
@@ -297,13 +305,11 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         tester = prepare_tester_account()
         contact_admin = prepare_tester_contact(tester=tester)
         profile = prepare_tester_profile(tester=tester)
-        registrant = prepare_tester_registrant(tester=tester, profile_object=profile)
-
+        prepare_tester_registrant(tester=tester, profile_object=profile)
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='ns1.test.ai',
             contact_admin=contact_admin.id
         ))
-
         assert response.status_code == 302
         mock_messages_error.assert_called_once()
 
@@ -315,12 +321,10 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         if os.environ.get('E2E', '0') != '1':
             return pytest.skip('skip E2E')  # @UndefinedVariable
         mock_user_profile_complete.return_value = True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             # First create a contact person for the owner
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person, follow=True)
-
             # 2nd create a domain
             created_domain = Domain.domains.create(
                 owner=self.account,
@@ -330,49 +334,40 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
                 zone=Zone.zones.create(name='ai'),
                 epp_id='12345'
             )
-
             # 3rd update the domain
             response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
                 nameserver1='ns2.google.com',
                 contact_tech=Contact.contacts.all()[0].id,
             ))
-
             assert response.status_code == 302
             assert response.url == '/domains/'
 
     @mock.patch('back.models.profile.Profile.is_complete')
     def test_update_domain_of_other_user(self, mock_user_profile_complete):
         mock_user_profile_complete.return_value = True
-
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person, follow=True)
-
             response = self.client.post('/domains/edit/3/', data=dict(
                 nameserver1='ns2.google.com',
                 contact_tech=Contact.contacts.all()[0].id,
             ))
-
             assert response.status_code == 404
 
     def test_profile_is_not_complete(self):
         response = self.client.post('/domains/edit/1/', data=dict(
             nameserver1='https://ns1.google.com'
         ))
-
         assert response.status_code == 302
         assert response.url == '/profile/'
 
     @mock.patch('back.models.profile.Profile.is_complete')
     def test_contact_info_is_not_complete(self, mock_user_profile_complete):
         mock_user_profile_complete.return_value = True
-
         response = self.client.post('/domains/edit/1/', data=dict(
             nameserver1='https://ns1.google.com'
         ))
-
-        assert response.status_code == 302
-        assert response.url == '/contacts/'
+        assert response.status_code == 404
 
     @mock.patch('zen.zmaster.contact_create_update')
     @mock.patch('back.models.profile.Profile.is_complete')
@@ -384,11 +379,9 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         mock_epp_call.return_value = True
         mock_ping.return_value = -1
         mock_user_profile_complete.return_value = True
-
         # Create a contact person to have a domain.
         mock_contact_create_update.return_value = True
         self.client.post('/contacts/create/', data=contact_person, follow=True)
-
         # Create a domain.
         created_domain = Domain.domains.create(
             owner=self.account,
@@ -398,13 +391,11 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             zone=Zone.zones.create(name='ai'),
             epp_id='12345'
         )
-
         # Update the domain.
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
             nameserver1='dns1.kuwaitnet.net',
             contact_tech=Contact.contacts.all()[0].id,
         ))
-
         assert response.status_code == 200
         assert response.context['errors'] == ['List of nameservers that are not valid or not reachable at this '
                                               'moment: <br>dns1.kuwaitnet.net <br>Please try again later or '
@@ -418,11 +409,9 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
     ):
         mock_epp_call.return_value = True
         mock_user_profile_complete.return_value = True
-
         # Create a contact person to have a domain.
         mock_contact_create_update.return_value = True
         self.client.post('/contacts/create/', data=contact_person, follow=True)
-
         # Create a domain.
         created_domain = Domain.domains.create(
             owner=self.account,
@@ -433,23 +422,19 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             epp_id='12345',
             nameserver1='ns1.example.com'
         )
-
         # Update the domain with an ip address.
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
             nameserver1='8.8.8.8',
             contact_tech=Contact.contacts.all()[0].id,
         ))
-
         assert response.status_code == 200
         domain = Domain.domains.all()[0]
         assert domain.nameserver1 == 'ns1.example.com'
-
         # Update the domain with an ip address with spaces.
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
             nameserver1=' 8.8.8.8 ',
             contact_tech=Contact.contacts.all()[0].id,
         ))
-
         assert response.status_code == 200
         domain = Domain.domains.all()[0]
         assert domain.nameserver1 == 'ns1.example.com'
@@ -462,11 +447,9 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
     ):
         mock_epp_call.return_value = True
         mock_user_profile_complete.return_value = True
-
         # Create a contact person to have a domain.
         mock_contact_create_update.return_value = True
         self.client.post('/contacts/create/', data=contact_person, follow=True)
-
         # Create a domain.
         created_domain = Domain.domains.create(
             owner=self.account,
@@ -477,13 +460,11 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             epp_id='12345',
             nameserver1='ns1.example.com'
         )
-
         # Update the domain with a "glue" record
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
             nameserver1='ns1.test.ai',
             contact_tech=Contact.contacts.all()[0].id,
         ))
-
         assert response.status_code == 200
         assert response.context['errors'] == ['Please use another nameserver instead of ns1.test.ai, "glue" records are not supported yet.']
         domain = Domain.domains.all()[0]
@@ -497,7 +478,6 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
     def test_get_successful_transfer_code(self, mock_set_auth_info, mock_user_profile_complete, mock_list_contacts):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
-
         domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
@@ -507,9 +487,7 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
             epp_id='12345',
             auth_key='transfer_me'
         )
-
         response = self.client.get(f'/domains/{domain.id}/transfer-code/')
-
         assert response.status_code == 200
         assert response.context_data['transfer_code'] == 'transfer_me'
         assert response.context_data['domain_name'] == 'test.ai'
@@ -524,7 +502,6 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
         mock_set_auth_info.return_value = False
-
         domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
@@ -534,20 +511,19 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
             epp_id='12345',
             auth_key='transfer_me'
         )
-
         response = self.client.get(f'/domains/{domain.id}/transfer-code/')
-
         assert response.status_code == 302
         assert response.url == '/domains/'
         mock_messages_error.assert_called_once()
 
 
-@override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_MAX_ATTEMPTS=15, BRUTE_FORCE_PROTECTION_ENABLED=True)
 class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_takeover_successful(
         self, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
@@ -571,27 +547,24 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
-
         order = billing_orders.list_orders(owner=self.account)[0]
         assert order.owner == self.account
-
         assert response.status_code == 302
         assert response.url == f'/billing/order/{order.id}/'
-
         order = billing_orders.list_orders(owner=self.account)[0]
         assert order.owner == self.account
-
         order_item = order.items.all()[0]
         assert order_item.type == 'domain_transfer'
         assert order_item.price == 100.0
         assert order_item.name == 'bitdust.ai'
         assert order_item.details == {'transfer_code': '12345', 'rewrite_contacts': True, 'internal': False}
 
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
     @override_settings(ZENAIDA_REGISTRAR_ID='test_registrar')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_takeover_internal_successful(
         self, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
@@ -615,40 +588,38 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
-
         order = billing_orders.list_orders(owner=self.account)[0]
         assert order.owner == self.account
-
         assert response.status_code == 302
         assert response.url == f'/billing/order/{order.id}/'
-
         order_item = order.items.all()[0]
         assert order_item.type == 'domain_transfer'
         assert order_item.price == 0.0
         assert order_item.name == 'bitdust.ai'
         assert order_item.details == {'transfer_code': '12345', 'rewrite_contacts': True, 'internal': True}
 
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
     @mock.patch('django.contrib.messages.warning')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_not_possible_backend_down(
         self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
         mock_domain_info.return_value = None
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
-
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_warning.assert_called_once()
 
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
     @mock.patch('django.contrib.messages.error')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_auth_info_wrong(
         self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
@@ -671,16 +642,16 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         }
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
-
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
 
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
     @mock.patch('django.contrib.messages.error')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_is_prohibited(
         self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
@@ -703,16 +674,16 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         }
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
-
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
 
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
     @mock.patch('django.contrib.messages.warning')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_takeover_already_in_progress(
         self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
@@ -724,7 +695,6 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         )
         started_order_item = started_order.items.all()[0]
         billing_orders.update_order_item(order_item=started_order_item, new_status='pending')
-
         mock_domain_info.return_value = {
             "epp": {
                 "response": {
@@ -744,20 +714,20 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         }
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
-
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_warning.assert_called_once()
 
+    @pytest.mark.django_db
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('django.contrib.messages.error')
     @mock.patch('django.core.cache.cache.get')
-    @pytest.mark.django_db
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=True)
     def test_domain_transfer_too_many_attempts(self, mock_cache_get, mock_messages_error, mock_user_profile_complete, mock_list_contacts):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
-        mock_cache_get.return_value = 15
+        mock_cache_get.return_value = settings.BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_MAX_ATTEMPTS
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
@@ -767,7 +737,6 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_get_profile(self):
         response = self.client.get('/profile/')
-
         assert response.status_code == 200
         assert isinstance(response.context['object'], Profile) is True
 
@@ -779,7 +748,6 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
         self, mock_messages_success, mock_contact_create_update, mock_contact_create_from_profile
     ):
         response = self.client.post('/profile/', data=contact_person, follow=True)
-
         assert response.status_code == 200
         assert mock_contact_create_update.call_count == 2
         mock_contact_create_from_profile.assert_called_once()
@@ -794,7 +762,6 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
     ):
         mock_contact_create_update.return_value = False
         response = self.client.post('/profile/', data=contact_person, follow=True)
-
         assert response.status_code == 200
         mock_contact_create_update.assert_called_once()
         mock_contact_create_from_profile.assert_called_once()
@@ -805,7 +772,6 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
         contact = copy.deepcopy(contact_person)
         contact['address_city'] = 'Mońki'
         response = self.client.post('/profile/', data=contact, follow=True)
-
         assert response.status_code == 200
         assert response.context['errors'] == ['Please use only English characters in your details.']
 
@@ -847,18 +813,15 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
             mock_contact_create_update.return_value = True
             # First create contact person
             self.client.post('/contacts/create/', data=contact_person)
-
         # Check if contact person is created successfully with given data
         c = contact.Contact.contacts.filter(person_name='TesterA').first()
         assert c.person_name == 'TesterA'
-
         # Update the contact person
         updated_contact_person = copy.deepcopy(contact_person)
         updated_contact_person['person_name'] = 'TesterB'
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             response = self.client.post('/contacts/edit/%d/' % c.id, data=updated_contact_person)
-
         assert response.status_code == 302
         assert response.url == '/contacts/'
         # Check if contact person is updated successfully
@@ -874,7 +837,6 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
             assert response.status_code == 200
             assert response.context['errors'] == ['Please use only English characters in your details.']
 
-
     def test_contact_update_returns_404(self):
         response = self.client.put('/contacts/edit/1/')
         assert response.status_code == 404
@@ -888,11 +850,9 @@ class TestAccountContactDeleteView(BaseAuthTesterMixin, TestCase):
             mock_contact_create_update.return_value = True
             # First create contact person
             self.client.post('/contacts/create/', data=contact_person)
-
         # Check if contact person is created successfully with given data
         c = contact.Contact.contacts.filter(person_name='TesterA').first()
         assert c.person_name == 'TesterA'
-
         # Check if contact list is empty after deletion
         response = self.client.delete('/contacts/delete/%d/' % c.id)
         assert response.status_code == 302
@@ -913,7 +873,6 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
             mock_contact_create_update.return_value = True
             # First create contact_person
             self.client.post('/contacts/create/', data=contact_person)
-
         response = self.client.get('/contacts/')
         assert response.status_code == 200
         assert len(contact.Contact.contacts.all()) == 1
@@ -922,15 +881,14 @@ class TestAccountContactsListView(BaseAuthTesterMixin, TestCase):
     def test_contact_list_empty(self):
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
-
         response = self.client.get('/contacts/')
         assert response.status_code == 200
         assert len(contact.Contact.contacts.all()) == 0
 
 
-@override_settings(BRUTE_FORCE_PROTECTION_DOMAIN_LOOKUP_MAX_ATTEMPTS=15, BRUTE_FORCE_PROTECTION_ENABLED=True)
 class TestDomainLookupView(TestCase):
 
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_e2e_successful(self):
         if os.environ.get('E2E', '0') != '1':
             return pytest.skip('skip E2E')  # @UndefinedVariable
@@ -939,6 +897,7 @@ class TestDomainLookupView(TestCase):
         assert response.context['result'] == 'not exist'
         assert response.context['domain_name'] == 'bitdust123.ai'
 
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_e2e_domain_exists(self):
         if os.environ.get('E2E', '0') != '1':
             return pytest.skip('skip E2E')  # @UndefinedVariable
@@ -948,6 +907,7 @@ class TestDomainLookupView(TestCase):
         assert response.context['domain_name'] == 'test.ai'
 
     @mock.patch('django.contrib.messages.error')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_lookup_returns_error(self, mock_messages_error):
         with mock.patch('zen.zmaster.domains_check') as mock_domain_check:
             mock_domain_check.return_value = None
@@ -957,6 +917,7 @@ class TestDomainLookupView(TestCase):
         mock_messages_error.assert_called_once()
 
     @mock.patch('django.contrib.messages.warning')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_is_already_in_db(self, mock_messages_warning):
         with mock.patch('zen.zdomains.is_domain_available') as mock_is_domain_available:
             mock_is_domain_available.return_value = False
@@ -965,11 +926,13 @@ class TestDomainLookupView(TestCase):
         assert response.context['domain_name'] == 'bitdust.ai'
         mock_messages_warning.assert_called_once()
 
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_lookup_page_without_domain_name(self):
         response = self.client.post('/lookup/')
         assert response.status_code == 200
 
     @mock.patch('django.contrib.messages.error')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_lookup_with_invalid_domain_name(self, mock_messages_error):
         response = self.client.post('/lookup/', data=dict(domain_name='example'))
         assert response.status_code == 200
@@ -977,6 +940,7 @@ class TestDomainLookupView(TestCase):
         mock_messages_error.assert_called_once()
 
     @mock.patch('django.contrib.messages.error')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_lookup_with_invalid_domain_extension(self, mock_messages_error):
         response = self.client.post('/lookup/', data=dict(domain_name='example.xyz'))
         assert response.status_code == 200
@@ -986,8 +950,9 @@ class TestDomainLookupView(TestCase):
 
     @mock.patch('django.contrib.messages.error')
     @mock.patch('django.core.cache.cache.get')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=True)
     def test_domain_lookup_too_many_attempts(self, mock_cache_get, mock_messages_error):
-        mock_cache_get.return_value = 15
+        mock_cache_get.return_value = settings.BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_MAX_ATTEMPTS
         response = self.client.post('/lookup/', data=dict(domain_name='bitdust.ai'))
         assert response.status_code == 302
         assert response.url == '/lookup/'

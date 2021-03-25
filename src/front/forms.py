@@ -53,12 +53,6 @@ class DomainDetailsForm(models.ModelForm):
 
     def clean(self):
         cleaned_data = super(DomainDetailsForm, self).clean()
-        contact_admin = cleaned_data.get('contact_admin')
-        contact_billing = cleaned_data.get('contact_billing')
-        contact_tech = cleaned_data.get('contact_tech')
-        if not any([contact_admin, contact_billing, contact_tech, ]):
-            raise forms.ValidationError('At least one contact person must be specified for the domain.')
-
         cleaned_data['nameserver1'] = cleaned_data.get('nameserver1').strip('.').lower()
         cleaned_data['nameserver2'] = cleaned_data.get('nameserver2').strip('.').lower()
         cleaned_data['nameserver3'] = cleaned_data.get('nameserver3').strip('.').lower()
@@ -70,7 +64,6 @@ class DomainDetailsForm(models.ModelForm):
             cleaned_data.get('nameserver3'),
             cleaned_data.get('nameserver4'),
         ]
-
         if not any(ns_list):
             raise forms.ValidationError('At least one nameserver must be specified for the domain.')
         for nameserver in ns_list:

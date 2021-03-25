@@ -136,10 +136,12 @@ def domain_create(
         raise ValueError('Domain already exists')
     if not create_date:
         create_date = timezone.now()
-    if not contact_admin and not contact_tech and not contact_billing:
-        raise ValueError('Must be set at least one of the domain contacts')
     if not registrant:
-        registrant = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])][0]
+        input_contacts = [c for c in filter(None, [contact_admin, contact_tech, contact_billing, ])]
+        if input_contacts:
+            registrant = input_contacts[0]
+    if not registrant:
+        raise ValueError('Registrant info is required, also no contact info was found')
     if not registrar or not isinstance(registrar, Registrar):
         registrar = Registrar.registrars.get_or_create(
             epp_id=(registrar or settings.ZENAIDA_REGISTRAR_ID),

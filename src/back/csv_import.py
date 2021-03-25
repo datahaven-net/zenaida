@@ -248,16 +248,6 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai'
         known_tech_contact_id = None if not known_domain.contact_tech else known_domain.contact_tech.epp_id
         known_nameservers = known_domain.list_nameservers()
 
-    if real_admin_contact_id or real_tech_contact_id or real_billing_contact_id:
-        if known_domain:
-            if not known_tech_contact_id and not known_admin_contact_id and not known_billing_contact_id:
-                if dry_run:
-                    errors.append('no contacts present for the known domain in csv record')
-                    return errors
-    else:
-        errors.append('no contacts found for the domain in csv record')
-        return errors
-
     if real_registrant_contact_id:
     #--- registrant check
         _errs, need_registrant = check_registrant_to_be_created(

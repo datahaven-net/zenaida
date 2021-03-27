@@ -10,16 +10,16 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
-from django.core import exceptions
+from django.core.exceptions import SuspiciousOperation
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView, FormView, DetailView, CreateView, ListView
 from django.views.generic.edit import FormMixin
 
-from billing import forms as billing_forms
-from billing import orders as billing_orders
+from billing import forms
+from billing import orders
 from billing import payments
-from billing import billing_errors
+from billing import exceptions
 from billing.decorators import create_or_update_single_order
 
 from zen import zdomains
@@ -41,9 +41,27 @@ class PaymentsListView(LoginRequiredMixin, ListView):
         return payments.list_payments(owner=self.request.user)
 
 
+class PaymentInvoiceDownloadView(View):
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        transaction_id = kwargs.get('transaction_id')
+        payment_obj = payments.by_transaction_id(transaction_id)
+        if not payment_obj:
+            messages.warning(request, "Invalid request, not possible to prepare invoice")
+            return shortcuts.redirect('billing_payments')
+        if payment_obj.owner != request.user:
+            messages.warning(request, "Invalid request, not possible to prepare invoice")
+            return shortcuts.redirect('billing_payments')
+        pdf_info = payments.build_invoice(payment_obj)
+        response = HttpResponse(pdf_info['body'], content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'
+        return response
+
+
 class NewPaymentView(LoginRequiredMixin, FormView):
     template_name = 'billing/new_payment.html'
-    form_class = billing_forms.NewPaymentForm
+    form_class = forms.NewPaymentForm
     error_message = 'Payment method is invalid'
     success_url = reverse_lazy('billing_new_payment')
 
@@ -112,20 +130,20 @@ class NewPaymentView(LoginRequiredMixin, FormView):
 class OrdersListView(LoginRequiredMixin, ListView, FormMixin):
     template_name = 'billing/account_orders.html'
     paginate_by = 10
-    form_class = billing_forms.FilterOrdersByDateForm
+    form_class = forms.FilterOrdersByDateForm
     success_url = reverse_lazy('billing_orders')
 
     def get_queryset(self):
         if self.request.method == 'POST':
             form = self.form_class(self.request.POST)
             if form.is_valid():
-                return billing_orders.list_orders_by_date(
+                return orders.list_orders_by_date(
                     owner=self.request.user,
                     year=form.data.get('year'),
                     month=form.data.get('month'),
                     exclude_cancelled=True,
                 )
-        return billing_orders.list_orders(owner=self.request.user, exclude_cancelled=True)
+        return orders.list_orders(owner=self.request.user, exclude_cancelled=True)
 
     def post(self, request, *args, **kwargs):
         return shortcuts.render(request, self.template_name, {'form': self.form_class, 'object_list': self.get_queryset()})
@@ -133,14 +151,14 @@ class OrdersListView(LoginRequiredMixin, ListView, FormMixin):
 
 class OrderReceiptsDownloadView(LoginRequiredMixin, FormView):
     template_name = 'billing/account_invoices.html'
-    form_class = billing_forms.FilterOrdersByDateForm
+    form_class = forms.FilterOrdersByDateForm
     success_url = reverse_lazy('billing_receipts_download')
 
     def form_valid(self, form):
         year = form.cleaned_data.get('year')
         month = form.cleaned_data.get('month')
         if year or (year and month):
-            pdf_info = billing_orders.build_receipt(
+            pdf_info = orders.build_receipt(
                 owner=self.request.user,
                 year=form.data.get('year'),
                 month=form.data.get('month'),
@@ -165,14 +183,14 @@ class OrderSingleReceiptDownloadView(View):
         order_id = kwargs.get('order_id')
         if order_id:
             try:
-                billing_orders.get_order_by_id_and_owner(
+                orders.get_order_by_id_and_owner(
                     order_id=order_id, owner=request.user, log_action="download a receipt for"
                 )
-            except exceptions.SuspiciousOperation:
+            except SuspiciousOperation:
                 messages.warning(request, "You can't download this receipt.")
                 return shortcuts.redirect('billing_orders')
 
-        pdf_info = billing_orders.build_receipt(
+        pdf_info = orders.build_receipt(
             owner=request.user,
             order_id=order_id,
         )
@@ -241,7 +259,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
 
     def post(self, request, *args, **kwargs):
         # Check if there is already an order that started. If so, redirect user to that order.
-        started_orders = billing_orders.list_orders(
+        started_orders = orders.list_orders(
             owner=self.request.user,
             exclude_cancelled=True,
             include_statuses=['started']
@@ -260,10 +278,10 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
                 raise Http404
             if domain_object.owner != request.user:
                 logging.critical('user %r tried to make an order with domain from another owner' % request.user)
-                raise exceptions.SuspiciousOperation()
+                raise SuspiciousOperation()
             try:
-                item_type, item_price, item_name = billing_orders.prepare_register_renew_restore_item(domain_object)
-            except billing_errors.DomainBlockedError as err:
+                item_type, item_price, item_name = orders.prepare_register_renew_restore_item(domain_object)
+            except exceptions.DomainBlockedError as err:
                 messages.error(request, str(err))
                 return shortcuts.redirect('account_domains')
             to_be_ordered.append(dict(
@@ -274,7 +292,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
         if not to_be_ordered:
             messages.error(request, self.error_message)
             return shortcuts.redirect('account_domains')
-        new_order = billing_orders.order_multiple_items(
+        new_order = orders.order_multiple_items(
             owner=request.user,
             order_items=to_be_ordered,
         )
@@ -285,7 +303,7 @@ class OrderDetailsView(LoginRequiredMixin, DetailView):
     template_name = 'billing/order_details.html'
 
     def get_object(self, queryset=None):
-        return billing_orders.get_order_by_id_and_owner(
+        return orders.get_order_by_id_and_owner(
             order_id=self.kwargs.get('order_id'), owner=self.request.user, log_action='check'
         )
 
@@ -294,12 +312,12 @@ class OrderExecuteView(LoginRequiredMixin, View):
     error_message_balance = 'Not enough funds on your balance to complete order. ' \
                             'Please buy more credits to be able to register/renew domains'
     error_message_technical = 'There is technical problem with order processing. ' \
-                              'Please try again later or contact site administrator'
+                              'Please try again later.'
     success_message = 'Order processed successfully'
     processing_message = 'Order is processing, please wait'
 
     def post(self, request, *args, **kwargs):
-        existing_order = billing_orders.get_order_by_id_and_owner(
+        existing_order = orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
         )
         if existing_order.total_price > existing_order.owner.balance:
@@ -307,7 +325,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(existing_order.total_price - existing_order.owner.balance)))
 
-        new_status = billing_orders.execute_order(existing_order)
+        new_status = orders.execute_order(existing_order)
         if new_status == 'processed':
             messages.success(request, self.success_message)
         elif new_status == 'processing':
@@ -320,7 +338,7 @@ class OrderExecuteView(LoginRequiredMixin, View):
 class OrderCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
-        existing_order = billing_orders.get_order_by_id_and_owner(
+        existing_order = orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
         )
         for order_item in existing_order.items.all():
@@ -328,6 +346,6 @@ class OrderCancelView(LoginRequiredMixin, View):
                 domain = zdomains.domain_find(domain_name=order_item.name)
                 if domain and domain.status == 'inactive' and not domain.epp_id:
                     zdomains.domain_delete(domain_name=order_item.name)
-        billing_orders.cancel_and_remove_order(existing_order)
+        orders.cancel_and_remove_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')

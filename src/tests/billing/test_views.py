@@ -18,6 +18,7 @@ from zen import zusers
 
 
 class BaseAuthTesterMixin(object):
+
     @pytest.mark.django_db
     def setUp(self):
         self.account = zusers.create_account('tester@zenaida.ai', account_password='123', is_active=True)
@@ -25,6 +26,7 @@ class BaseAuthTesterMixin(object):
 
 
 class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
+
     @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60)
     @pytest.mark.django_db
     def test_create_new_btc_payment_in_db(self):
@@ -70,6 +72,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrdersListView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def create_order(self):
         # Create an order
@@ -105,6 +108,7 @@ class TestOrdersListView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_download_receipts(self):
         Order.orders.create(
@@ -127,6 +131,7 @@ class TestOrderReceiptsDownloadView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_download_single_receipt(self):
         order = Order.orders.create(
@@ -159,7 +164,48 @@ class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
         mock_messages_warning.assert_called_once()
 
 
+class TestPaymentInvoiceDownloadView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    def test_download_invoice(self):
+        payment = Payment.payments.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            finished_at=datetime.datetime(2019, 3, 23, 13, 34, 5),
+            transaction_id='abcd',
+            amount=100.0,
+            status='processed',
+        )
+        with mock.patch('billing.payments.build_invoice') as mock_build_invoice:
+            self.client.get(f'/billing/payment/invoice/download/{payment.transaction_id}/')
+            mock_build_invoice.assert_called_once()
+
+    @mock.patch('django.contrib.messages.warning')
+    def test_download_invoice_for_another_user(self, mock_messages_warning):
+        test_account = testsupport.prepare_tester_account(email='baduser@zenaida.ai')
+        payment = Payment.payments.create(
+            owner=test_account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            finished_at=datetime.datetime(2019, 3, 23, 13, 34, 5),
+            transaction_id='abcd',
+            amount=100.0,
+            status='processed',
+        )
+        response = self.client.get(f'/billing/payment/invoice/download/{payment.transaction_id}/')
+        assert response.status_code == 302
+        assert response.url == '/billing/payments/'
+        mock_messages_warning.assert_called_once()
+
+    @mock.patch('django.contrib.messages.warning')
+    def test_download_invoice_for_non_existing_payment(self, mock_messages_warning):
+        response = self.client.get(f'/billing/payment/invoice/download/fake_id/')
+        assert response.status_code == 302
+        assert response.url == '/billing/payments/'
+        mock_messages_warning.assert_called_once()
+
+
 class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_show_paid_payments(self):
         # Create new payment with status paid
@@ -177,6 +223,7 @@ class TestPaymentsListView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
     def test_domain_renew_order_successful(self, mock_domain_search):
@@ -219,6 +266,7 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
     def test_domain_register_order_successful(self, mock_domain_search):
@@ -262,6 +310,7 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
     def test_domain_restore_order_successful(self, mock_domain_search):
@@ -509,6 +558,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_order_cancel_successful(self):
         # First, create a domain in database without epp_id as there was no payment yet.
@@ -643,6 +693,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
 
 
 class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     def test_order_execute_successful(self):
         order = Order.orders.create(

@@ -8,10 +8,10 @@ import pdfkit  # @UnresolvedImport
 from django import shortcuts
 from django.conf import settings
 from django.utils import timezone
-from django.core import exceptions
+from django.core.exceptions import SuspiciousOperation
 from django.template.loader import get_template
 
-from billing import billing_errors
+from billing import exceptions
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
 
@@ -46,10 +46,10 @@ def get_order_by_id_and_owner(order_id, owner, log_action=None):
     order = by_id(order_id)
     if not order:
         logger.critical(f'user {owner} tried to {log_action} non-existing order')
-        raise exceptions.SuspiciousOperation()
+        raise SuspiciousOperation()
     if order.owner != owner:
         logger.critical(f'user {owner} tried to {log_action} an order for another user')
-        raise exceptions.SuspiciousOperation()
+        raise SuspiciousOperation()
     return order
 
 
@@ -168,7 +168,7 @@ def prepare_register_renew_restore_item(domain_object):
     Prepare required info to be able to construct OrderItem object from given Domain object.
     """
     if domain_object.is_blocked:
-        raise billing_errors.DomainBlockedError()
+        raise exceptions.DomainBlockedError()
     item_type = 'domain_register'
     item_price = settings.ZENAIDA_DOMAIN_PRICE
     item_name = domain_object.name
@@ -438,7 +438,7 @@ def execute_one_item(order_item):
 
     if target_domain.owner != order_item.order.owner:
         logger.critical('user %r tried to execute an order with domain from another owner' % order_item.order.owner)
-        raise exceptions.SuspiciousOperation()
+        raise SuspiciousOperation()
 
     if order_item.type == 'domain_register':
         return execute_domain_register(order_item, target_domain)

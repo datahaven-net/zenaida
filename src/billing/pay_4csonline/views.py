@@ -113,7 +113,7 @@ class VerifyPaymentView(View):
             if not payments.finish_payment(transaction_id=transaction_id, status='unconfirmed'):
                 logging.critical(f'payment not found, transaction_id is {transaction_id}')
                 raise exceptions.SuspiciousOperation()
-            self.message = 'Transaction verification failed, please contact site administrator'
+            self.message = 'Transaction verification failed'
             logging.critical(f'payment confirmation failed, transaction_id is {transaction_id}')
             return False
         return True

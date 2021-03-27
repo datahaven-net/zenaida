@@ -20,7 +20,23 @@
                     <td>{{ payment.amount }}</td>
                     <td>{{ payment.get_method_display }}</td>
                     <td>{{ payment.started_at|date:'d N Y' }}</td>
+
+                    {% if payment.status == "processed" %}
+                    <td>
+			            <div>
+			              <form action="{% url 'billing_invoice_download' payment.transaction_id %}" method="post">
+			                {% csrf_token %}
+			                <button type="submit" class="btn btn-sm btn-info" name="action_invoice_download">Invoice</button>
+			              </form>
+			            </div>
+			        </td>
+			        {% else %}
                     <td>{{ payment.status }}</td>
+                    {% endif %}
+
+
+
+
                 </tr>
 
             {% endfor %}

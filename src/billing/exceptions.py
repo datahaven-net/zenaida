@@ -13,4 +13,4 @@ class BillingError(Exception):
 
 class DomainBlockedError(BillingError):
 
-    message = 'Domain is blocked and can not be registered/renewed. Please contact site administrator for more details.'
+    message = 'Domain is blocked and can not be registered/renewed at the moment.'

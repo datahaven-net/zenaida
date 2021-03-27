@@ -354,7 +354,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
             '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
 
         assert response.status_code == 200
-        assert response.context['message'] == 'Transaction verification failed, please contact site administrator'
+        assert response.context['message'] == 'Transaction verification failed'
         mock_logging.assert_called_once_with('payment confirmation failed, transaction_id is BPXKV4LXWQHA8RJH')
 
     @mock.patch('logging.critical')

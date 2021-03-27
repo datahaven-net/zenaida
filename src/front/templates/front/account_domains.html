@@ -61,7 +61,7 @@
                     <td>{{ domain.create_date|date:'d N Y' }}</td>
                     <td>
                         {% if domain.is_blocked %}
-                            <p>contact site administrator</p>
+                            <font color="red"><p>blocked</p></font>
                         {% elif not domain.is_registered %}
                             <a class="btn btn-sm btn-success" href="{% url 'billing_order_register' domain.name %}" role="button">Register</a>
                         {% elif domain.can_be_restored  %}

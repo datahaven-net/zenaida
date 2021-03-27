@@ -75,6 +75,7 @@ patterns = [
     path('billing/order/create/restore/<str:domain_name>/', billing_views.OrderDomainRestoreView.as_view(), name='billing_order_restore'),
     path('billing/order/create/', billing_views.OrderCreateView.as_view(), name='billing_order_create'),
     path('billing/payments/', billing_views.PaymentsListView.as_view(), name='billing_payments'),
+    path('billing/payment/invoice/download/<str:transaction_id>/', billing_views.PaymentInvoiceDownloadView.as_view(), name='billing_invoice_download'),
     path('billing/pay/', billing_views.NewPaymentView.as_view(), name='billing_new_payment'),
 
     path('billing/4csonline/process/<str:transaction_id>/', pay_4csonline_views.ProcessPaymentView.as_view(), name='billing_4csonline_process_payment'),

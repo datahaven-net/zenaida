@@ -1,8 +1,12 @@
+import os
 import string
 import random
 
+import pdfkit  # @UnresolvedImport
+
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+from django.template.loader import get_template
 
 from billing.models.payment import Payment
 
@@ -104,3 +108,24 @@ def finish_payment(transaction_id, status, merchant_reference=None, notes=None):
         payment_object.owner.balance += payment_object.amount
         payment_object.owner.save()
     return payment_object
+
+
+def build_invoice(payment_object):
+    """
+    Generates PDF document with invoice representing single payment record.
+    """
+    # Fill html template with the domain orders and user profile info
+    html_template = get_template('billing/billing_invoice.html')
+    rendered_html = html_template.render({
+        'payment': payment_object,
+        'user_profile': payment_object.owner.profile,
+    })
+    # Create pdf file from a html file
+    pdfkit.from_string(rendered_html, '/tmp/out.pdf')
+    with open("/tmp/out.pdf", "rb") as pdf_file:
+        pdf_raw = pdf_file.read()
+    os.remove("/tmp/out.pdf")
+    return {
+        'body': pdf_raw,
+        'filename': 'invoice_{}.pdf'.format(payment_object.transaction_id),
+    }

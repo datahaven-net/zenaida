@@ -24,6 +24,21 @@ if os.environ.get('DOCKER_ENV'):
 else:
     from main import params
 
+
+#------------------------------------------------------------------------------
+#--- Sentry config
+SENTRY_ENABLED = getattr(params, 'SENTRY_ENABLED', False)
+if SENTRY_ENABLED:
+    SENTRY_DSN = getattr(params, 'SENTRY_DSN', '')
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration(), ],
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+    )
+
 #------------------------------------------------------------------------------
 #--- Basic Django settings
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)

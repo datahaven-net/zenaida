@@ -13,6 +13,10 @@ ENV = 'development'
 import os
 os.umask(0o002)
 
+#--- Sentry
+# SENTRY_ENABLED = False
+# SENTRY_DSN = ''
+
 #--- SQlite3
 # DATABASES_ENGINE = 'django.db.backends.sqlite3'
 # DATABASES_NAME = 'db.sqlite'

@@ -32,5 +32,5 @@ six==1.15.0
 soupsieve==2.1
 sqlparse==0.4.1
 transliterate==1.10.2
-urllib3==1.26.3
+urllib3==1.26.4
 uWSGI==2.0.19.1

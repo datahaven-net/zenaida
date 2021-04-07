@@ -6,18 +6,9 @@ from django.conf import settings
 
 class NewPaymentForm(forms.Form):
 
-    amount = forms.fields.ChoiceField(
-        label='Amount',
-        required=True,
-        choices=(
-            ('100', '100$', ),
-            ('200', '200$', ),
-            ('500', '500$', ),
-            ('1000', '1000$', ),
-            ('1500', '1500$', ),
-            ('2000', '2000$', ),
-            ('5000', '5000$', ),
-        ),
+    amount = forms.fields.IntegerField(
+        max_value=int(50 * settings.ZENAIDA_DOMAIN_PRICE),
+        min_value=int(settings.ZENAIDA_DOMAIN_PRICE),
     )
 
     @staticmethod

@@ -37,8 +37,8 @@ class ProcessPaymentView(LoginRequiredMixin, View):
                              'payment transaction is already finished')
             raise exceptions.SuspiciousOperation()
 
-        payment_amount = payment_object.amount * (
-            100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0
+        payment_amount = round(payment_object.amount * (
+            100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0, 2)
 
         return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
             'company_name': 'DATAHAVEN NET',
@@ -90,8 +90,8 @@ class VerifyPaymentView(View):
                              'payment transaction is already finished')
             raise exceptions.SuspiciousOperation()
 
-        expected_payment_amount = payment_obj.amount * (
-            100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0
+        expected_payment_amount = round(payment_obj.amount * (
+            100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0, 2)
 
         if float(amount) < expected_payment_amount:
             logging.critical('invalid request, payment processing will raise SuspiciousOperation: '
@@ -100,6 +100,8 @@ class VerifyPaymentView(View):
 
         if float(amount) > expected_payment_amount:
             logging.warn('payment %r is overpaid: %r', payment_obj, amount)
+        else:
+            logging.info('payment %r is valid', payment_obj)
 
     def _is_payment_verified(self, transaction_id):
         try:
@@ -157,14 +159,15 @@ class VerifyPaymentView(View):
 
         redirect_url = '/billing/payments/'
 
-        started_orders = billing_orders.list_orders(
-            owner=self.request.user,
-            exclude_cancelled=True,
-            include_statuses=['started']
-        )
-        if started_orders:
-            messages.warning(self.request, 'You have an ongoing order. Please click the "Confirm" button '
-                                           'to complete the order.')
-            redirect_url = '/billing/order/' + str(started_orders[0].id)
+        if not request.user.is_anonymous:
+            started_orders = billing_orders.list_orders(
+                owner=self.request.user,
+                exclude_cancelled=True,
+                include_statuses=['started']
+            )
+            if started_orders:
+                messages.warning(self.request, 'You have an ongoing order. Please click the "Confirm" button '
+                                               'to complete the order.')
+                redirect_url = '/billing/order/' + str(started_orders[0].id)
 
         return shortcuts.render(request, 'billing/4csonline/success_payment.html', {'redirect_url': redirect_url})

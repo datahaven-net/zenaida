@@ -303,6 +303,9 @@ def on_queue_message(msgQ):
         if change == 'STATE_CHANGE':
             if details.lower() == 'domain deleted':
                 return do_domain_deleted(domain)
+            if details.lower().count('addperiod_grace'):
+                logger.info('SKIP message: %r', json_input)
+                return True
 
         if change == 'UNKNOWN':
             if details.lower().count('domain epp statuses updated'):
@@ -314,7 +317,7 @@ def on_queue_message(msgQ):
                 # for now we can try to do a simple domain sync to at least try to solve the most issues
                 return do_domain_change_unknown(domain)
 
-    logger.error('UNKNOWN message: %s' % json_input)
+    logger.error('UNKNOWN message: %r', json_input)
     return False
 
 

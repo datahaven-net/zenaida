@@ -67,14 +67,16 @@ class NewPaymentView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['credit_card_payment_price'] = 100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE
+        context['credit_card_payment_price'] = round(settings.ZENAIDA_DOMAIN_PRICE * (
+            (100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0), 2)
+        context['credit_card_payment_base_price'] = settings.ZENAIDA_DOMAIN_PRICE
         return context
 
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()
         if 'data' not in kw:
             kw['data'] = {
-                'amount': self.request.GET.get('amount', '100'),
+                'amount': self.request.GET.get('amount', str(int(settings.ZENAIDA_DOMAIN_PRICE))),
                 'payment_method': self.form_class._get_payment_method_choices()[0][0]
             }
         return kw

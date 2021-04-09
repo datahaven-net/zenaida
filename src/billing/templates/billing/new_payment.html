@@ -12,7 +12,10 @@
 </div>
 
 <br />
-Your current balance is <b>${{ user.balance }} US</b><br />
+Your current balance is <b>${{ user.balance }} US</b>
+<br />
+<br />
+
 <form method="post">
   {% csrf_token %}
   {% bootstrap_form form %}

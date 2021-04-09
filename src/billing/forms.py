@@ -7,6 +7,7 @@ from django.conf import settings
 class NewPaymentForm(forms.Form):
 
     amount = forms.fields.IntegerField(
+        label='Amount to pay',
         max_value=int(50 * settings.ZENAIDA_DOMAIN_PRICE),
         min_value=int(settings.ZENAIDA_DOMAIN_PRICE),
     )
@@ -21,7 +22,7 @@ class NewPaymentForm(forms.Form):
         return tuple(payment_method_choices)
 
     payment_method = forms.fields.ChoiceField(
-        label='Payment Method',
+        label='Payment method',
         required=True,
         choices=_get_payment_method_choices.__func__,
     )

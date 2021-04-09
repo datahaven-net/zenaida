@@ -17,6 +17,7 @@ djangorestframework==3.12.2
 ecdsa==0.16.1
 fqn-decorators==2.0.0
 idna==2.10
+lxml==4.6.3
 pdfkit==0.6.1
 pika==1.1.0
 pkgversion==3.0.2

@@ -21,3 +21,5 @@ qrcode
 pdfkit
 btcpay-python
 python-dateutil
+lxml
+beautifulsoup4

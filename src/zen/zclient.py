@@ -197,7 +197,7 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                 raise zerrors.EPPBadResponse('bad formatted response, response code not found')
             good_response_codes = ['1000', ]
             if True:  # just to be able to debug poll script packets
-                good_response_codes.extend([ '1300', '1301', ])
+                good_response_codes.extend(['1300', '1301', ])
             if code not in good_response_codes:
                 if logs:
                     logger.error('response code failed: ' + json.dumps(json_output, indent=2))
@@ -220,6 +220,69 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             logger.info('        <<< EPP: %s', code)
 
     return json_output or out
+
+#------------------------------------------------------------------------------
+
+def run_new(json_request, raise_for_result=True, logs=True):
+    try:
+        json.dumps(json_request)
+    except Exception as exc:
+        logger.error('epp request failed, invalid json input')
+        raise zerrors.EPPBadResponse('epp request failed, invalid json input')
+
+    if logs:
+        if settings.DEBUG:
+            logger.debug('        >>> EPP: %s' % json_request)
+        else:
+            logger.info('        >>> EPP: %s' % json_request.get('cmd', 'unknown'))
+
+    try:
+        rpc_response = do_rpc_request(json_request)
+    except zerrors.EPPError as exc:
+        logger.error('epp request failed with known error: %s' % exc)
+        raise exc
+    except Exception as exc:
+        logger.error('epp request failed, unexpected error: %s' % traceback.format_exc())
+        raise zerrors.EPPBadResponse('epp request failed: %s' % exc)
+
+    if not rpc_response:
+        logger.error('empty response from epp_gate, connection error')
+        raise zerrors.EPPBadResponse('epp request failed: empty response, connection error')
+
+    try:
+        json_output = json.loads(rpc_response)
+    except Exception as exc:
+        logger.error('epp request failed, response is not readable: %s' % traceback.format_exc())
+        raise zerrors.EPPBadResponse('epp request failed: %s' % exc)
+
+    if raise_for_result:
+        try:
+            code = json_output['epp']['response']['result']['@code']
+            msg = json_output['epp']['response']['result']['msg'].replace('Command failed;', '')
+        except:
+            if logs:
+                logger.error('bad formatted response: ' + json_output)
+            raise zerrors.EPPBadResponse('bad formatted response, response code not found')
+        good_response_codes = ['1000', ]
+        if True:  # just to be able to debug poll script packets
+            good_response_codes.extend(['1300', '1301', ])
+        if code not in good_response_codes:
+            if logs:
+                logger.error('response code failed: ' + json.dumps(json_output, indent=2))
+            epp_exc = zerrors.exception_from_response(response=json_output, message=msg, code=code)
+            raise epp_exc
+
+    if logs:
+        if settings.DEBUG:
+            logger.debug('        <<< EPP: %s' % json_output)
+        else:
+            try:
+                code = json_output['epp']['response']['result']['@code']
+            except:
+                code = 'unknown'
+            logger.info('        <<< EPP: %s', code)
+
+    return json_output
 
 #------------------------------------------------------------------------------
 

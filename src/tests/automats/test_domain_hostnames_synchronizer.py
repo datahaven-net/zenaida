@@ -5,7 +5,7 @@ from django.conf import settings
 
 from automats import domain_hostnames_synchronizer
 
-from zen import zclient
+from epp import rpc_client
 
 from tests import testsupport
 
@@ -18,7 +18,7 @@ def test_update_hostnames():
     tester_domain = testsupport.prepare_tester_domain(
         domain_name='test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
         tester=tester,
-        domain_epp_id=zclient.make_epp_id(tester.email),
+        domain_epp_id=rpc_client.make_epp_id(tester.email),
         add_contacts=['registrant', 'admin', ],
         nameservers=['ns1.google.com', 'ns2.google.com', 'ns3.google.com', ]
     )
@@ -34,10 +34,10 @@ def test_update_hostnames():
             (oldstate, newstate, event, )
         ),
     )
-    cs1.event('run', target_domain=tester_domain, known_domain_info=zclient.cmd_domain_info(domain=tester_domain.name), )
+    cs1.event('run', target_domain=tester_domain, known_domain_info=rpc_client.cmd_domain_info(domain=tester_domain.name), )
     outputs1 = list(cs1.outputs)
     del cs1
-    
+
     tester_domain.nameserver4 = 'ns4.google.com'
     tester_domain.save()
     scenario2 = []
@@ -52,10 +52,10 @@ def test_update_hostnames():
             (oldstate, newstate, event, )
         ),
     )
-    cs2.event('run', target_domain=tester_domain, known_domain_info=zclient.cmd_domain_info(domain=tester_domain.name), )
+    cs2.event('run', target_domain=tester_domain, known_domain_info=rpc_client.cmd_domain_info(domain=tester_domain.name), )
     outputs2 = list(cs2.outputs)
     del cs2
-    
+
     # one nameserver should be removed
     assert scenario1 == [
         ('AT_STARTUP', 'DOMAIN_INFO?', 'run'),

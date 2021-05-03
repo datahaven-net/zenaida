@@ -5,6 +5,8 @@ from django.conf import settings
 
 from automats import domains_checker
 
+from epp import rpc_error
+
 from zen import zerrors
 
 from tests import testsupport
@@ -128,7 +130,7 @@ def test_single_domain_another_registrar():
     assert len(outputs) == 3
     assert outputs[0] == [test_domain_name, ]
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
-    assert isinstance(outputs[2], zerrors.EPPResponseEmpty)
+    assert isinstance(outputs[2], rpc_error.EPPResponseEmpty)
 
 
 @pytest.mark.django_db
@@ -165,7 +167,7 @@ def test_single_domain_another_registrant():
     assert len(outputs) == 3
     assert outputs[0] == [tester_domain.name, ]
     assert outputs[1]['epp']['response']['result']['@code'] == '1000'
-    assert isinstance(outputs[2], zerrors.EPPRegistrantAuthFailed)
+    assert isinstance(outputs[2], zerrors.RegistrantAuthFailed)
 
 
 @pytest.mark.django_db
@@ -190,7 +192,7 @@ def test_no_domains():
         ('CHECK_MANY', 'FAILED', 'error'),
     ]
     assert len(outputs) == 1
-    assert isinstance(outputs[0], zerrors.EPPCommandInvalid)
+    assert isinstance(outputs[0], zerrors.CommandInvalid)
 
 
 @pytest.mark.django_db

@@ -4,7 +4,8 @@ import pytest
 
 from automats import contact_synchronizer
 
-from zen import zclient
+from epp import rpc_client
+
 from zen import zcontacts
 
 from tests import testsupport
@@ -29,7 +30,7 @@ def test_contact_create():
     outputs = list(cs.outputs)
     del cs
     assert tester_contact.epp_id != ''
-    delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
+    delete_response = rpc_client.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
     tester_contact.epp_id = None
     tester_contact.save()
@@ -63,7 +64,7 @@ def test_contact_recreate():
     outputs = list(cs.outputs)
     del cs
     assert tester_contact.epp_id != ''
-    delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
+    delete_response = rpc_client.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
     tester_contact.epp_id = None
     tester_contact.save()
@@ -81,9 +82,9 @@ def test_contact_update():
     if os.environ.get('E2E', '0') != '1':
         return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_contact = testsupport.prepare_tester_contact()
-    existing_contact_id = zclient.make_epp_id(tester_contact.contact_email)
+    existing_contact_id = rpc_client.make_epp_id(tester_contact.contact_email)
     existing_contact_info = zcontacts.to_dict(tester_contact)
-    create_response = zclient.cmd_contact_create(
+    create_response = rpc_client.cmd_contact_create(
         contact_id=existing_contact_id,
         email=existing_contact_info['email'],
         voice=existing_contact_info['voice'],
@@ -110,7 +111,7 @@ def test_contact_update():
     outputs = list(cs.outputs)
     del cs
     assert tester_contact.epp_id != ''
-    delete_response = zclient.cmd_contact_delete(tester_contact.epp_id)
+    delete_response = rpc_client.cmd_contact_delete(tester_contact.epp_id)
     assert delete_response['epp']['response']['result']['@code'] == '1000'
     tester_contact.epp_id = None
     tester_contact.save()

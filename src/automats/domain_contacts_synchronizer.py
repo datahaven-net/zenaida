@@ -23,8 +23,9 @@ from django.conf import settings
 from automats import automat
 from automats import contact_synchronizer
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
 from zen import zcontacts
 
@@ -227,10 +228,10 @@ class DomainContactsSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.target_domain.name,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -254,13 +255,13 @@ class DomainContactsSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_update(
+            response = rpc_client.cmd_domain_update(
                 domain=self.target_domain.name,
                 add_contacts_list=self.add_contacts,
                 remove_contacts_list=self.remove_contacts,
                 change_registrant=self.change_registrant,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
         else:
@@ -285,7 +286,7 @@ class DomainContactsSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

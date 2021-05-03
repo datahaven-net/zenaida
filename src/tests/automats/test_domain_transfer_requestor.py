@@ -5,7 +5,8 @@ from django.conf import settings
 
 from automats import domain_transfer_requestor
 
-from zen import zerrors
+from epp import rpc_error
+
 from zen import zdomains
 
 from tests import testsupport
@@ -35,7 +36,7 @@ def test_domain_not_exist():
     ]
     assert len(outputs) == 1
     assert outputs[0]
-    assert isinstance(outputs[0], zerrors.EPPUnexpectedResponse)
+    assert isinstance(outputs[0], rpc_error.EPPUnexpectedResponse)
 
 
 @pytest.mark.django_db
@@ -61,7 +62,7 @@ def test_domain_same_registrar():
     ]
     assert len(outputs) == 1
     assert outputs[0]
-    assert isinstance(outputs[0], zerrors.EPPRegistrarAuthFailed)
+    assert isinstance(outputs[0], rpc_error.EPPRegistrarAuthFailed)
 
 
 @pytest.mark.django_db
@@ -89,4 +90,4 @@ def test_transfer_request_sent():
     ]
     assert len(outputs) == 1
     assert outputs[0]
-    assert isinstance(outputs[0], zerrors.EPPRegistrarAuthFailed)
+    assert isinstance(outputs[0], rpc_error.EPPRegistrarAuthFailed)

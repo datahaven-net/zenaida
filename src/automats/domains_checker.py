@@ -25,9 +25,11 @@ from django.conf import settings
 
 from automats import automat
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
+from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -192,7 +194,7 @@ class DomainsChecker(automat.Automat):
         for result in results:
             name = result.get('name', {}).get('#text')
             if not name:
-                logger.error('invalid EPP response, unknown domain name: %s' % args[0])
+                logger.error('invalid EPP response, unknown domain name: %s', args[0])
                 continue
             if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('the domain exists'):
                 self.available_domain_names.append(name)
@@ -212,14 +214,14 @@ class DomainsChecker(automat.Automat):
             self.event('skip-check')
             return
         if not self.target_domain_names:
-            self.event('error', zerrors.EPPCommandInvalid('No domains specified'))
+            self.event('error', zerrors.CommandInvalid('No domains specified'))
             return
         try:
-            response = zclient.cmd_domain_check(
+            response = rpc_client.cmd_domain_check(
                 domains=self.target_domain_names,
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainCheckMany: %s' % exc)
             self.event('error', exc)
         else:
@@ -238,11 +240,11 @@ class DomainsChecker(automat.Automat):
             self.event('skip-info')
             return
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.current_domain_name,
                 auth_info=self.auth_info or None,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -253,7 +255,7 @@ class DomainsChecker(automat.Automat):
                 if real_registrant_epp_id and known_registrant_epp_id and known_registrant_epp_id != real_registrant_epp_id:
                     logger.warn('domain %s suppose to belong to another registrant: %r, but received another id: %r', 
                                  self.current_domain_name, known_registrant_epp_id, real_registrant_epp_id)
-                    self.event('error', zerrors.EPPRegistrantAuthFailed(response=response))
+                    self.event('error', zerrors.RegistrantAuthFailed(response=response))
                     return
             self.check_results[self.current_domain_name] = True
             self.event('response', response)
@@ -267,21 +269,21 @@ class DomainsChecker(automat.Automat):
         existing_domains = []
         results = args[0]['epp']['response']['resData']['chkData']['cd']
         if not results:
-            self.outputs.append(zerrors.EPPResponseEmpty())
+            self.outputs.append(rpc_error.EPPResponseEmpty())
             return
         if not isinstance(results, list):
             results = [results, ]
         for result in results:
             name = result.get('name', {}).get('#text')
             if not name:
-                logger.error('unexpected EPP response, unknown domain name: %s' % args[0])
+                logger.error('unexpected EPP response, unknown domain name: %s', args[0])
                 continue
             if result.get('name', {}).get('@avail') == '0':
                 if result.get('reason').lower().count('the domain exists'):
                     existing_domains.append(name)
                     self.check_results[name] = True
                 else:
-                    self.check_results[name] = zerrors.exception_from_response(response=args[0])
+                    self.check_results[name] = rpc_error.exception_from_response(response=args[0])
             else:
                 self.check_results[name] = False
         self.outputs.append(existing_domains)
@@ -307,7 +309,7 @@ class DomainsChecker(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """
@@ -324,17 +326,17 @@ class DomainsChecker(automat.Automat):
         results = response['epp']['response']['resData']['chkData']['cd']
         if not results:
             logger.error('unexpected EPP response, no results')
-            return [zerrors.EPPResponseEmpty(), ]
+            return [rpc_error.EPPResponseEmpty(), ]
         if not isinstance(results, list):
             results = [results, ]
         for result in results:
             if not result.get('name', {}).get('#text'):
-                logger.error('unexpected EPP response, unknown domain name: %s' % response)
-                return [zerrors.EPPResponseEmpty(), ]
+                logger.error('unexpected EPP response, unknown domain name: %s', response)
+                return [rpc_error.EPPResponseEmpty(), ]
             if result.get('name', {}).get('@avail') == '0':
                 reason = result.get('reason').lower()
                 if reason.count('non-supported zone'):
-                    return [zerrors.EPPNonSupportedZone(), ]
+                    return [zerrors.NonSupportedZone(), ]
                 if not reason.count('the domain exists'):
-                    return [zerrors.exception_from_response(response=response), ]
+                    return [rpc_error.exception_from_response(response=response), ]
         return []

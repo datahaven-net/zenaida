@@ -259,6 +259,8 @@ $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	@$(PIP) install -r $(REQUIREMENTS_BASE)
 	@rm -vf $(REQUIREMENTS_TXT)
 	@$(PIP) freeze > $(REQUIREMENTS_TXT)
+	@sed -i -E "s/epp-python-client==.+//" $(REQUIREMENTS_TXT)
+	@echo "https://github.com/datahaven-net/epp-python-client/archive/master.zip" >> $(REQUIREMENTS_TXT)
 	@echo "Successfully Updated requirements.txt"
 
 # these two are the main venvs

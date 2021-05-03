@@ -7,8 +7,9 @@ from automats import domain_refresher
 from automats import domain_resurrector
 from automats import domain_contacts_synchronizer
 
-from zen import zerrors
+from epp import rpc_error
 
+from zen import zerrors
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):
             logger.error('domains_checker(%r) failed with: %r', domain_names, outputs[-1])
-        if isinstance(outputs[-1], zerrors.EPPNonSupportedZone):
+        if outputs and isinstance(outputs[-1], zerrors.NonSupportedZone):
             return 'non-supported-zone'
         return None
 
@@ -96,7 +97,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     logger.info('domain_synchronizer(%r) finished with %d outputs', domain_object.name, len(outputs))
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        if isinstance(outputs[-1], Exception):
+        if outputs and isinstance(outputs[-1], Exception):
             logger.error('domain_synchronizer(%r) failed with: %r', domain_object.name, outputs[-1])
         return False
 
@@ -139,7 +140,7 @@ def domain_synchronize_from_backend(domain_name,
             domain_transferred_away=domain_transferred_away,
         )
         outputs = list(dr.outputs)
-    except zerrors.EPPError as exc:
+    except rpc_error.EPPError as exc:
         dr.destroy()
         outputs = [exc, ]
     del dr
@@ -288,23 +289,23 @@ def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True
             logger.error('domains_checker(%r) unexpectedly failed with: %r', domain, outputs)
         if raise_errors:
             if not outputs or not outputs[-1]:
-                raise zerrors.EPPResponseEmpty()
-            elif isinstance(outputs[-1], Exception):
+                raise Exception('empty response')
+            elif outputs and isinstance(outputs[-1], Exception):
                 raise outputs[-1]
             else:
-                raise zerrors.EPPCommandFailed(outputs[-1])
+                raise Exception(outputs)
         return None
-    
+
     if not outputs[-1].get(domain):
         logger.error('domains_checker(%r) failed because domain not exist', domain)
         if raise_errors:
-            raise zerrors.EPPDomainNotExist()
+            raise zerrors.DomainNotExist()
         return None
 
     if len(outputs) < 2:
         logger.error('domains_checker(%r) failed with: %r', domain, outputs[-1])
         if raise_errors:
-            raise zerrors.EPPUnexpectedResponse(outputs)
+            raise zerrors.UnexpectedEPPResponse(outputs)
         return None
 
     logger.info('domains_checker(%r) OK', domain)

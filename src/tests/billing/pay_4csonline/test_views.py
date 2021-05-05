@@ -40,7 +40,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         """
         Tests process payment with wrong transaction id and check if SuspiciousOperation is logged.
         """
-        self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
+        self.client.post('/billing/pay/', data=dict(amount=120, payment_method='pay_4csonline'))
         response = self.client.get(f'/billing/4csonline/process/1234567890/')
         assert response.status_code == 400
         mock_logging_critical.assert_called_once_with(f'payment not found, transaction_id is 1234567890')
@@ -54,7 +54,7 @@ class TestProcessPaymentView(BaseAuthTesterMixin, TestCase):
         account = zusers.create_account('other_user@zenaida.ai', account_password='123', is_active=True)
         Payment.payments.create(
             owner=account,
-            amount=100,
+            amount=120,
             method='pay_4csonline',
             transaction_id='12345',
             started_at=datetime.datetime(2019, 3, 23),

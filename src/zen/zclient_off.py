@@ -18,7 +18,7 @@ from django.conf import settings
 
 from lib import xml2json
 
-from zen import zerrors
+from epp import rpc_error
 
 #------------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ class RPCClient(object):
                 )
             )
         except pika.exceptions.ConnectionClosed as exc:
-            raise zerrors.EPPConnectionFailed(str(exc))
+            raise rpc_error.EPPConnectionFailed(str(exc))
 
         self.connection.call_later(5, self.on_timeout)
 
@@ -82,9 +82,12 @@ class RPCClient(object):
             auto_ack=True,
         )
 
-    def on_timeout(self):
+    def on_timeout(self, *a, **kw):
         logger.info('RPCClient on_timeout !!!!!!!!!!!!!!')
-        self.connection.close()
+        try:
+            self.connection.close()
+        except Exception as exc:
+            logger.error('connection close finished unclean: %r', repr(exc))
 
     def on_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
@@ -122,7 +125,7 @@ def do_rpc_request(json_request):
 
         1. `zenaida-gate.service` : service which execute Perl script and keep it running all the time
         2. `zenaida-gate-watcher.service` : background service which is able to "restart" `zenaida-gate.service` when needed
-        3. `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications 
+        3. `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications
 
     To indicate that connection is currently down we can print a new line in the local file `/home/zenaida/health`.
     Perl script then will be restarted automatically and Zenaida Gate suppose to become healthy again.
@@ -149,12 +152,12 @@ def do_rpc_request(json_request):
 
 #------------------------------------------------------------------------------
 
-def run(json_request, raise_for_result=True, unserialize=True, logs=True):
+def run_old(json_request, raise_for_result=True, unserialize=True, logs=True):
     try:
         json.dumps(json_request)
     except Exception as exc:
         logger.error('epp request failed, invalid json input')
-        raise zerrors.EPPBadResponse('epp request failed, invalid json input')
+        raise rpc_error.EPPBadResponse('epp request failed, invalid json input')
 
     if logs:
         if settings.DEBUG:
@@ -164,16 +167,16 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
 
     try:
         out = do_rpc_request(json_request)
-    except zerrors.EPPError as exc:
+    except rpc_error.EPPError as exc:
         logger.error('epp request failed with known error: %s' % exc)
         raise exc
     except Exception as exc:
         logger.error('epp request failed, unexpected error: %s' % traceback.format_exc())
-        raise zerrors.EPPBadResponse('epp request failed: %s' % exc)
+        raise rpc_error.EPPBadResponse('epp request failed: %s' % exc)
 
     if not out:
         logger.error('empty response from epp_gate, connection error')
-        raise zerrors.EPPBadResponse('epp request failed: empty response, connection error')
+        raise rpc_error.EPPBadResponse('epp request failed: empty response, connection error')
 
     json_output = None
     if unserialize:
@@ -184,7 +187,7 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
                 json_output = json.loads(xml2json.xml2json(out.encode('ascii', errors='ignore'), XML2JsonOptions(), strip_ns=1, strip=1))
         except Exception as exc:
             logger.error('epp response unserialize failed: %s' % traceback.format_exc())
-            raise zerrors.EPPBadResponse('epp response unserialize failed: %s' % exc)
+            raise rpc_error.EPPBadResponse('epp response unserialize failed: %s' % exc)
 
     if raise_for_result:
         if json_output:
@@ -194,20 +197,20 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             except:
                 if logs:
                     logger.error('bad formatted response: ' + json_output)
-                raise zerrors.EPPBadResponse('bad formatted response, response code not found')
+                raise rpc_error.EPPBadResponse('bad formatted response, response code not found')
             good_response_codes = ['1000', ]
             if True:  # just to be able to debug poll script packets
-                good_response_codes.extend([ '1300', '1301', ])
+                good_response_codes.extend(['1300', '1301', ])
             if code not in good_response_codes:
                 if logs:
                     logger.error('response code failed: ' + json.dumps(json_output, indent=2))
-                epp_exc = zerrors.exception_from_response(response=json_output, message=msg, code=code)
+                epp_exc = rpc_error.exception_from_response(response=json_output, message=msg, code=code)
                 raise epp_exc
         else:
             if out.count('Command completed successfully') == 0:
                 if logs:
                     logger.error('response message failed: ' + json.dumps(json_output, indent=2))
-                raise zerrors.EPPResponseFailed('Command failed')
+                raise rpc_error.EPPResponseFailed('Command failed')
 
     if logs:
         if settings.DEBUG:
@@ -220,6 +223,73 @@ def run(json_request, raise_for_result=True, unserialize=True, logs=True):
             logger.info('        <<< EPP: %s', code)
 
     return json_output or out
+
+#------------------------------------------------------------------------------
+
+def run(json_request, raise_for_result=True, logs=True):
+    try:
+        json.dumps(json_request)
+    except Exception as exc:
+        logger.error('epp request failed, invalid json input')
+        raise rpc_error.EPPBadResponse('epp request failed, invalid json input')
+
+    if logs:
+        if settings.DEBUG:
+            logger.debug('        >>> EPP: %s' % json_request)
+        else:
+            logger.info('        >>> EPP: %s' % json_request.get('cmd', 'unknown'))
+
+    try:
+        rpc_response = do_rpc_request(json_request)
+    except rpc_error.EPPError as exc:
+        logger.error('epp request failed with known error: %s' % exc)
+        raise exc
+    except Exception as exc:
+        logger.error('epp request failed, unexpected error: %s' % traceback.format_exc())
+        raise rpc_error.EPPBadResponse('epp request failed: %s' % exc)
+
+    if not rpc_response:
+        logger.error('empty response from epp_gate, connection error')
+        raise rpc_error.EPPBadResponse('epp request failed: empty response, connection error')
+
+    try:
+        json_output = json.loads(rpc_response)
+    except Exception as exc:
+        logger.error('epp request failed, response is not readable: %s' % traceback.format_exc())
+        raise rpc_error.EPPBadResponse('epp request failed: %s' % exc)
+
+    output_error = json_output.get('error')
+    if output_error:
+        raise rpc_error.EPPBadResponse('epp request processing finished with error: %s' % output_error)
+
+    if raise_for_result:
+        try:
+            code = json_output['epp']['response']['result']['@code']
+            msg = json_output['epp']['response']['result']['msg'].replace('Command failed;', '')
+        except:
+            if logs:
+                logger.error('bad formatted response: ' + json_output)
+            raise rpc_error.EPPBadResponse('bad formatted response, response code not found')
+        good_response_codes = ['1000', ]
+        if True:  # just to be able to debug poll script packets
+            good_response_codes.extend(['1300', '1301', ])
+        if code not in good_response_codes:
+            if logs:
+                logger.error('response code failed: ' + json.dumps(json_output, indent=2))
+            epp_exc = rpc_error.exception_from_response(response=json_output, message=msg, code=code)
+            raise epp_exc
+
+    if logs:
+        if settings.DEBUG:
+            logger.debug('        <<< EPP: %s' % json_output)
+        else:
+            try:
+                code = json_output['epp']['response']['result']['@code']
+            except:
+                code = 'unknown'
+            logger.info('        <<< EPP: %s', code)
+
+    return json_output
 
 #------------------------------------------------------------------------------
 
@@ -348,6 +418,8 @@ def cmd_domain_transfer(domain, op, auth_info=None, period_years=None, **args):
         cmd['args']['auth_info'] = auth_info
     if period_years is not None:
         cmd['args']['period_years'] = period_years
+        cmd['args']['period'] = period_years
+        cmd['args']['period_units'] = 'y'
     return run(cmd, **args)
 
 #------------------------------------------------------------------------------
@@ -400,8 +472,6 @@ def cmd_contact_create(contact_id, email=None, voice=None, fax=None, auth_info=N
         cmd['args']['email'] = email
     if auth_info is not None:
         cmd['args']['auth_info'] = auth_info
-    if email is not None:
-        cmd['args']['email'] = email
     for cont in contacts_list[:]:
         international = copy.deepcopy(cont)
         international['type'] = 'int'

@@ -21,8 +21,9 @@ from django.conf import settings
 
 from automats import automat
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
 
 #------------------------------------------------------------------------------
@@ -127,10 +128,10 @@ class DomainAuthChanger(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.target_domain.name,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -141,11 +142,11 @@ class DomainAuthChanger(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_update(
+            response = rpc_client.cmd_domain_update(
                 domain=self.target_domain.name,
                 auth_info=self.new_auth_info,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdateAuthCode: %s' % exc)
             self.event('error', exc)
         else:
@@ -170,7 +171,7 @@ class DomainAuthChanger(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         elif event == 'response':
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

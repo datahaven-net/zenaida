@@ -31,11 +31,13 @@ from django.conf import settings
 from automats import automat
 from automats import domain_contacts_synchronizer
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
 from zen import zusers
 from zen import zcontacts
+from zen import zerrors
 
 from billing import orders
 
@@ -292,11 +294,11 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_check(
+            response = rpc_client.cmd_domain_check(
                 domains=[self.domain_name, ],
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainCheck: %s' % exc)
             self.event('error', exc)
         else:
@@ -307,11 +309,11 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.domain_name,
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
             return
@@ -341,7 +343,7 @@ class DomainRefresher(automat.Automat):
             )
         except Exception as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
-            raise zerrors.EPPBadResponse('response field not recognized')
+            raise rpc_error.EPPBadResponse('response field not recognized')
 
         # detect current nameservers
         try:
@@ -382,7 +384,7 @@ class DomainRefresher(automat.Automat):
             self.received_registrant_epp_id = response['epp']['response']['resData']['infData']['registrant']
         except Exception as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
-            self.event('error', zerrors.EPPRegistrantUnknown(response=response))
+            self.event('error', zerrors.RegistrantUnknown(response=response))
             return
 
         self.domain_info_response = response
@@ -418,7 +420,7 @@ class DomainRefresher(automat.Automat):
                 # that means owner of the domain changed, or his contact is not in sync with back-end
                 # this also happens when domain is transferred to Zenaida, but user account not exist yet
                 logger.error('registrant %r not exist in local DB', self.received_registrant_epp_id)
-                self.event('error', zerrors.EPPRegistrantAuthFailed('registrant not exist in local DB'))
+                self.event('error', zerrors.RegistrantAuthFailed('registrant not exist in local DB'))
             return
 
         # currently registrant not exist in local DB, user account needs to be checked and created first
@@ -433,11 +435,11 @@ class DomainRefresher(automat.Automat):
         # request info about contacts
         for received_contact in self.received_contacts:
             try:
-                response = zclient.cmd_contact_info(
+                response = rpc_client.cmd_contact_info(
                     contact_id=received_contact['id'],
                     raise_for_result=True,
                 )
-            except zerrors.EPPError as exc:
+            except rpc_error.EPPError as exc:
                 self.log(self.debug_level, 'Exception in doEPPContactsInfoMany: %s' % exc)
                 self.event('error', exc)
                 return
@@ -447,11 +449,11 @@ class DomainRefresher(automat.Automat):
             }
         # request registrant info
         try:
-            response = zclient.cmd_contact_info(
+            response = rpc_client.cmd_contact_info(
                 contact_id=self.received_registrant_epp_id,
                 raise_for_result=True,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEPPContactsInfoMany: %s' % exc)
             self.event('error', exc)
         else:
@@ -467,11 +469,11 @@ class DomainRefresher(automat.Automat):
         """
         # request current registrant info
         try:
-            response = zclient.cmd_contact_info(
+            response = rpc_client.cmd_contact_info(
                 contact_id=self.received_registrant_epp_id,
                 raise_for_result=True,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppCurrentRegistrantInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -486,18 +488,18 @@ class DomainRefresher(automat.Automat):
                 to_be_added = self.contacts_to_add or [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
                 to_be_removed = self.contacts_to_remove or self.received_contacts
                 add_contacts_list, remove_contacts_list = zcontacts.clear_contacts_change(to_be_added, to_be_removed)
-                response = zclient.cmd_domain_update(
+                response = rpc_client.cmd_domain_update(
                     domain=self.domain_name,
                     change_registrant=self.new_registrant_epp_id,
                     remove_contacts_list=remove_contacts_list,
                     add_contacts_list=add_contacts_list,
                 )
             else:
-                response = zclient.cmd_domain_update(
+                response = rpc_client.cmd_domain_update(
                     domain=self.domain_name,
                     change_registrant=self.new_registrant_epp_id,
                 )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
         else:
@@ -568,18 +570,18 @@ class DomainRefresher(automat.Automat):
         outputs = list(dcs.outputs)
         del dcs
         if not outputs:
-            logger.error('empty result from DomainContactsSynchronizer: %s' % exc)
+            logger.error('empty result from DomainContactsSynchronizer: %s', exc)
             self.event('contacts-rewrite-error', Exception('Empty result from DomainContactsSynchronizer'))
             return
         if isinstance(outputs[-1], Exception):
-            logger.error('found exception in DomainContactsSynchronizer outputs: %s' % outputs[-1])
+            logger.error('found exception in DomainContactsSynchronizer outputs: %s', outputs[-1])
             self.event('contacts-rewrite-error', outputs[-1])
             return
         for out in outputs:
             if not isinstance(out, tuple):
                 continue
             if not out[0] in ['admin', 'billing', 'tech', 'registrant', ]:
-                logger.warn('unexpected output from DomainContactsSynchronizer: %r' % out[0])
+                logger.warn('unexpected output from DomainContactsSynchronizer: %r', out[0])
                 continue
         self.outputs.extend(outputs)
         self.event('contacts-replaced', self.latest_registrant_response)
@@ -688,7 +690,7 @@ class DomainRefresher(automat.Automat):
                     if self.change_owner_allowed:
                         continue
                     logger.error('existing contact have another owner in local DB')
-                    self.event('error', zerrors.EPPRegistrantAuthFailed('existing contact have another owner in local DB'))
+                    self.event('error', zerrors.RegistrantAuthFailed('existing contact have another owner in local DB'))
                     return
                 zcontacts.contact_refresh(
                     epp_id=received_contact_id,
@@ -733,7 +735,7 @@ class DomainRefresher(automat.Automat):
         if self.target_domain.registrant and self.known_registrant and self.target_domain.registrant != self.known_registrant:
             if not self.change_owner_allowed:
                 logger.error('domain registrant changed, but domain already have another owner in local DB')
-                raise zerrors.EPPRegistrantAuthFailed('domain registrant changed, but domain already have another owner in local DB')
+                raise zerrors.RegistrantAuthFailed('domain registrant changed, but domain already have another owner in local DB')
             logger.info('domain %r going to switch registrant %r to %r',
                         self.target_domain, self.target_domain.registrant, self.known_registrant)
             self.target_domain = zdomains.domain_change_registrant(self.target_domain, self.known_registrant)
@@ -747,7 +749,7 @@ class DomainRefresher(automat.Automat):
             # just in case given user have multiple registrant contacts... 
             if not self.change_owner_allowed:
                 logger.error('domain already have another owner in local DB')
-                raise zerrors.EPPRegistrantAuthFailed('domain already have another owner in local DB')
+                raise zerrors.RegistrantAuthFailed('domain already have another owner in local DB')
             logger.info('domain %r going to switch owner %r to %r because of different registrant found',
                         self.target_domain, self.target_domain.owner, self.known_registrant.owner)
             self.target_domain = zdomains.domain_change_owner(self.target_domain, self.known_registrant.owner)
@@ -768,14 +770,14 @@ class DomainRefresher(automat.Automat):
             if existing_registrant:
                 logger.error('registrant %r contact email changed to %r, but another registrant with same email already exist in local DB: %r',
                              self.target_domain.registrant, received_registrant_email, existing_registrant)
-                raise zerrors.EPPRegistrantAuthFailed('registrant contact email changed, but another registrant with same email already exist in local DB')
+                raise zerrors.RegistrantAuthFailed('registrant contact email changed, but another registrant with same email already exist in local DB')
             existing_account = zusers.find_account(email=received_registrant_email)
             if existing_account:
                 logger.error('registrant %r contact email changed to %r, but another account already exist in local DB with same email: %r',
                              self.target_domain.registrant, received_registrant_email, existing_registrant)
-                raise zerrors.EPPRegistrantAuthFailed('registrant contact email changed, but another account already exist in local DB with same email')
+                raise zerrors.RegistrantAuthFailed('registrant contact email changed, but another account already exist in local DB with same email')
             logger.error('registrant %r contact email changed to %s and needs to be synchronized', self.target_domain.registrant, received_registrant_email)
-            raise zerrors.EPPRegistrantAuthFailed('registrant contact email changed and needs to be synchronized')
+            raise zerrors.RegistrantAuthFailed('registrant contact email changed and needs to be synchronized')
 
     def doDBCheckChangeContacts(self, *args, **kwargs):
         """
@@ -801,7 +803,7 @@ class DomainRefresher(automat.Automat):
                 continue
             new_contact = zcontacts.by_epp_id(received_contact_id)
             if not new_contact:
-                raise zerrors.EPPCommandFailed('can not assign contact to domain, epp_id not found')
+                raise Exception('can not assign contact to domain, epp_id not found')
             if not known_contact_id:
                 logger.info('domain %r going to add new contact %s : %r',
                             self.target_domain, role, self.known_registrant.owner)
@@ -874,7 +876,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportInfoFailed(self, event, *args, **kwargs):
         """
@@ -883,7 +885,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportDomainInfo(self, *args, **kwargs):
         """
@@ -904,7 +906,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportCurRegistrantFailed(self, event, *args, **kwargs):
         """
@@ -913,7 +915,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportNewRegistrantFailed(self, event, *args, **kwargs):
         """
@@ -922,7 +924,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportDomainUpdateFailed(self, event, *args, **kwargs):
         """
@@ -931,7 +933,7 @@ class DomainRefresher(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportContactsInfo(self, *args, **kwargs):
         """

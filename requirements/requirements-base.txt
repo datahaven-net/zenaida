@@ -21,3 +21,6 @@ qrcode
 pdfkit
 btcpay-python
 python-dateutil
+lxml
+beautifulsoup4
+https://github.com/datahaven-net/epp-python-client/archive/master.zip

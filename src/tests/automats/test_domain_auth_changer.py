@@ -5,7 +5,8 @@ from django.conf import settings
 
 from automats import domain_auth_changer
 
-from zen import zerrors
+from epp import rpc_error
+
 from zen import zdomains
 
 from tests import testsupport
@@ -78,4 +79,4 @@ def test_authorization_error():
         ('INFO?', 'FAILED', 'error'),
     ]
     assert len(outputs) == 1
-    assert isinstance(outputs[0], zerrors.EPPAuthorizationError)
+    assert isinstance(outputs[0], rpc_error.EPPAuthorizationError)

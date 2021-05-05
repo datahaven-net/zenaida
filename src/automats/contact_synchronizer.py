@@ -21,8 +21,9 @@ from django.conf import settings
 
 from automats import automat
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zcontacts
 
 #------------------------------------------------------------------------------
@@ -156,7 +157,7 @@ class ContactSynchronizer(automat.Automat):
         Action method.
         """
         self.contact_info = zcontacts.to_dict(self.target_contact)
-        self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email'])
+        self.contact_info['id'] = rpc_client.make_epp_id(self.contact_info['email'])
 
     def doPrepareUpdate(self, *args, **kwargs):
         """
@@ -171,14 +172,14 @@ class ContactSynchronizer(automat.Automat):
         """
         # small workaround for situations when that contact already exists on the server,
         # epp_id is generated randomly so there is a chance you hit already existing object
-        self.contact_info['id'] = zclient.make_epp_id(self.contact_info['email']) + 'a'
+        self.contact_info['id'] = rpc_client.make_epp_id(self.contact_info['email']) + 'a'
 
     def doEppContactCreate(self, *args, **kwargs):
         """
         Action method.
         """
         try:
-            response = zclient.cmd_contact_create(
+            response = rpc_client.cmd_contact_create(
                 contact_id=self.contact_info['id'],
                 email=self.contact_info['email'],
                 voice=self.contact_info['voice'],
@@ -187,7 +188,7 @@ class ContactSynchronizer(automat.Automat):
                 contacts_list=self.contact_info['contacts'],
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppContactCreate: %s' % exc)
             self.event('error', exc)
         else:
@@ -198,7 +199,7 @@ class ContactSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_contact_update(
+            response = rpc_client.cmd_contact_update(
                 contact_id=self.contact_info['id'],
                 email=self.contact_info['email'],
                 voice=self.contact_info['voice'],
@@ -207,7 +208,7 @@ class ContactSynchronizer(automat.Automat):
                 contacts_list=self.contact_info['contacts'],
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppContactUpdate: %s' % exc)
             self.event('error', exc)
         else:
@@ -235,7 +236,7 @@ class ContactSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

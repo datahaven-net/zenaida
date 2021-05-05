@@ -6,7 +6,7 @@ from django.utils.timezone import now
 
 from automats import domain_synchronizer
 
-from zen import zerrors
+from epp import rpc_error
 
 from tests import testsupport
 
@@ -39,7 +39,7 @@ def test_domain_another_registrar():
         ('OWNER?', 'FAILED', 'response'),
     ]
     assert len(outputs) == 1
-    assert isinstance(outputs[0], zerrors.EPPRegistrarAuthFailed)
+    assert isinstance(outputs[0], rpc_error.EPPRegistrarAuthFailed)
 
 
 @pytest.mark.django_db

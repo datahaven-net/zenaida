@@ -6,9 +6,22 @@ logger = logging.getLogger(__name__)
 
 #------------------------------------------------------------------------------
 
-class EPPError(Exception):
-    code = -1
+class ZenaidaError(Exception):
     message = 'Unknown error'
+
+    def __init__(self, message='', *args, **kwargs):
+        if message:
+            self.message = message
+        super(ZenaidaEPPError).__init__(*args, **kwargs)
+
+    def __str__(self):
+        return '%s' % self.message
+
+#------------------------------------------------------------------------------
+
+class ZenaidaEPPError(ZenaidaError):
+    code = -1
+    message = 'Unknown EPP error'
 
     def __init__(self, message='', code=-1, response=None, *args, **kwargs):
         if response:
@@ -19,93 +32,37 @@ class EPPError(Exception):
             self.code = code
         if message:
             self.message = message
-        super(EPPError).__init__(*args, **kwargs)
+        super(ZenaidaEPPError).__init__(*args, **kwargs)
 
     def __str__(self):
         return '[%s] %s' % (self.code, self.message)
 
 #------------------------------------------------------------------------------
 
-class EPPConnectionFailed(EPPError):
+class UnexpectedEPPResponse(ZenaidaError):
     pass
 
 
-class EPPResponseFailed(EPPError):
+class CommandInvalid(ZenaidaError):
     pass
 
 
-class EPPResponseEmpty(EPPError):
+class DomainNotExist(ZenaidaError):
     pass
 
 
-class EPPBadResponse(EPPError):
+class NonSupportedZone(ZenaidaError):
     pass
-
-
-class EPPCommandFailed(EPPError):
-    pass
-
-
-class EPPCommandInvalid(EPPError):
-    pass
-
-
-class EPPUnexpectedResponse(EPPError):
-    pass
-
-
-class EPPRegistrarAuthFailed(EPPError):
-    pass
-
-
-class EPPRegistrantAuthFailed(EPPError):
-    pass
-
-
-class EPPRegistrantUnknown(EPPError):
-    pass
-
-
-class EPPDomainNotExist(EPPError):
-    pass
-
-
-class EPPNonSupportedZone(EPPError):
-    pass
-
-
-#------------------------------------------------------------------------------
-# those exceptions are based on EPP response code
-
-class EPPObjectNotExist(EPPError):
-    code = 2303
-
-
-class EPPObjectStatusProhibitsOperation(EPPError):
-    code = 2304
-
-
-class EPPAuthorizationError(EPPError):
-    code = 2201
 
 #------------------------------------------------------------------------------
 
-def exception_from_response(response, message=None, code=None):
-    try:
-        code = code or response['epp']['response']['result']['@code']
-        code = int(code)
-    except:
-        return EPPBadResponse(response=response, message=message)
-    try:
-        message = message or response['epp']['response']['result']['msg']
-    except:
-        return EPPBadResponse(response=response)
-    if code == 2201: 
-        return EPPAuthorizationError(response=response, message=message)
-    if code == 2303:
-        return EPPObjectNotExist(response=response, message=message)
-    if code == 2304:
-        return EPPObjectStatusProhibitsOperation(response=response, message=message)
-    # TODO: create and add other exceptions here
-    logger.warn('response code %d do not have mapped exception yet' % code)
-    return EPPUnexpectedResponse(response=response, message=message, code=code) 
+class RegistrarAuthFailed(ZenaidaEPPError):
+    pass
+
+
+class RegistrantAuthFailed(ZenaidaEPPError):
+    pass
+
+
+class RegistrantUnknown(ZenaidaEPPError):
+    pass

@@ -12,7 +12,7 @@ def is_supported(tld_zone_name):
     Return `True` if given zone is supported by this Zenaida host.
     """
     return tld_zone_name in settings.ZENAIDA_SUPPORTED_ZONES
-    
+
 
 def is_exist(tld_zone_name):
     """

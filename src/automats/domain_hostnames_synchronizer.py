@@ -28,9 +28,10 @@ from django.conf import settings
 
 from automats import automat
 
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
-from zen import zclient
-from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -205,10 +206,10 @@ class DomainHostnamesSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.target_domain.name,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -234,8 +235,8 @@ class DomainHostnamesSynchronizer(automat.Automat):
             self.event('no-hosts-to-be-added')
             return
         try:
-            check_host = zclient.cmd_host_check(self.hosts_to_be_added)
-        except zerrors.EPPError as exc:
+            check_host = rpc_client.cmd_host_check(self.hosts_to_be_added)
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppHostCheckMany: %s' % exc)
             self.event('error', exc)
         else:
@@ -251,8 +252,8 @@ class DomainHostnamesSynchronizer(automat.Automat):
         for host_avail in check_host_results:
             if host_avail['name']['@avail'] == '1':
                 try:
-                    create_host = zclient.cmd_host_create(host_avail['name']['#text'])
-                except zerrors.EPPError as exc:
+                    create_host = rpc_client.cmd_host_create(host_avail['name']['#text'])
+                except rpc_error.EPPError as exc:
                     self.log(self.debug_level, 'Exception in doEppHostCreateMany: %s' % exc)
                     self.event('error', exc)
                     return
@@ -261,7 +262,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 # if create_host['epp']['response']['result']['@code'] == '2303':
                 #     return False
                 if create_host['epp']['response']['result']['@code'] != '1000':
-                    logger.error('bad result code from host_create: %s' % create_host['epp']['response']['result']['@code'])
+                    logger.error('bad result code from host_create: %s', create_host['epp']['response']['result']['@code'])
                     self.event('error')
                     return
                 self.outputs.append(create_host)
@@ -272,12 +273,12 @@ class DomainHostnamesSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            domain_update = zclient.cmd_domain_update(
+            domain_update = rpc_client.cmd_domain_update(
                 self.target_domain.name,
                 add_nameservers_list=self.hosts_to_be_added,
                 remove_nameservers_list=self.hosts_to_be_removed,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
         else:
@@ -297,7 +298,7 @@ class DomainHostnamesSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

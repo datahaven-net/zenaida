@@ -24,8 +24,8 @@ from django.conf import settings
 
 from automats import automat
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
 
 #------------------------------------------------------------------------------
 
@@ -156,12 +156,12 @@ class DomainTransferRequestor(automat.Automat):
             self.event('skip-info')
             return
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.target_domain_name,
                 auth_info=self.auth_info or None,
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -173,12 +173,12 @@ class DomainTransferRequestor(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_transfer(
+            response = rpc_client.cmd_domain_transfer(
                 domain=self.target_domain_name,
                 op='request',
                 auth_info=self.auth_info,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainTransfer: %s' % exc)
             self.event('error', exc)
         else:
@@ -191,7 +191,7 @@ class DomainTransferRequestor(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportTransferFailed(self, event, *args, **kwargs):
         """
@@ -200,13 +200,13 @@ class DomainTransferRequestor(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doReportTransferNotPossible(self, *args, **kwargs):
         """
         Action method.
         """
-        self.outputs.append(zerrors.EPPRegistrarAuthFailed(message='Domain already belong to the registrar'))
+        self.outputs.append(rpc_error.EPPRegistrarAuthFailed(message='Domain already belong to the registrar'))
 
     def doReportDone(self, *args, **kwargs):
         """

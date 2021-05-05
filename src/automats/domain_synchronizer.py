@@ -30,9 +30,11 @@ from automats import automat
 from automats import domain_contacts_synchronizer
 from automats import domain_hostnames_synchronizer
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
+from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -238,11 +240,11 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_check(
+            response = rpc_client.cmd_domain_check(
                 domains=[self.target_domain.name, ],
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainCheck: %s' % exc)
             self.event('error', exc)
         else:
@@ -253,12 +255,12 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.target_domain.name,
                 auth_info=self.target_domain.auth_key or None,
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -275,7 +277,7 @@ class DomainSynchronizer(automat.Automat):
         else:
             days_difference = 365 * self.renew_years
         if days_difference > 365 * 10 - 1:
-            logger.error('extension period must be no more than 10 years: %s' % self.target_domain)
+            logger.error('extension period must be no more than 10 years: %s', self.target_domain)
             self.event('error', Exception('extension period must be no more than 10 years'))
             return
         if days_difference % 365 == 0:
@@ -289,7 +291,7 @@ class DomainSynchronizer(automat.Automat):
             if contact_object:
                 contacts_dict[role] = contact_object.epp_id
         try:
-            response = zclient.cmd_domain_create(
+            response = rpc_client.cmd_domain_create(
                 domain=self.target_domain.name,
                 nameservers=self.target_domain.list_nameservers(),
                 contacts_dict=contacts_dict,
@@ -301,7 +303,7 @@ class DomainSynchronizer(automat.Automat):
             # epp_domain_info['svTRID'] = create['epp']['response']['trID']['svTRID']
             # epp_domain_info['crDate'] = create['epp']['response']['resData']['creData']['crDate']
             # epp_domain_info['exDate'] = create['epp']['response']['resData']['creData']['exDate']
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainCreate: %s' % exc)
             self.event('error', exc)
         else:
@@ -323,7 +325,7 @@ class DomainSynchronizer(automat.Automat):
             self.event('no-updates')
             return
         try:
-            response = zclient.cmd_domain_update(
+            response = rpc_client.cmd_domain_update(
                 domain=self.target_domain.name,
                 change_registrant=change_registrant,
                 add_contacts_list=add_contacts,
@@ -331,7 +333,7 @@ class DomainSynchronizer(automat.Automat):
                 add_nameservers_list=add_nameservers,
                 remove_nameservers_list=remove_nameservers,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
         else:
@@ -347,7 +349,7 @@ class DomainSynchronizer(automat.Automat):
         else:
             days_difference = 365 * self.renew_years
         if days_difference > 365 * 10 - 1:
-            logger.error('extension period must be no more than 10 years: %s' % self.target_domain)
+            logger.error('extension period must be no more than 10 years: %s', self.target_domain)
             self.event('error', Exception('extension period must be no more than 10 years'))
             return
         if days_difference % 365 == 0:
@@ -357,13 +359,13 @@ class DomainSynchronizer(automat.Automat):
             period_units = 'd'
             period_value = str(days_difference)
         try:
-            response = zclient.cmd_domain_renew(
+            response = rpc_client.cmd_domain_renew(
                 domain=self.target_domain.name,
                 cur_exp_date=self.latest_domain_info['epp']['response']['resData']['infData']['exDate'],
                 period=period_value,
                 period_units=period_units,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainRenew: %s' % exc)
             self.event('error', exc)
         else:
@@ -393,18 +395,18 @@ class DomainSynchronizer(automat.Automat):
         outputs = list(dcs.outputs)
         del dcs
         if not outputs:
-            logger.error('empty result from DomainContactsSynchronizer: %s' % exc)
+            logger.error('empty result from DomainContactsSynchronizer: %s', exc)
             self.event('error', Exception('Empty result from DomainContactsSynchronizer'))
             return
         if isinstance(outputs[-1], Exception):
-            logger.error('found exception in DomainContactsSynchronizer outputs: %s' % outputs[-1])
+            logger.error('found exception in DomainContactsSynchronizer outputs: %s', outputs[-1])
             self.event('error', outputs[-1])
             return
         for out in outputs:
             if not isinstance(out, tuple):
                 continue
             if not out[0] in ['admin', 'billing', 'tech', 'registrant', ]:
-                logger.warn('unexpected output from DomainContactsSynchronizer: %r' % out[0])
+                logger.warn('unexpected output from DomainContactsSynchronizer: %r', out[0])
                 continue
         self.outputs.extend(outputs)
         self.event('contacts-ok')
@@ -489,7 +491,7 @@ class DomainSynchronizer(automat.Automat):
         """
         Action method.
         """
-        self.outputs.append(zerrors.EPPRegistrarAuthFailed(response=args[0]))
+        self.outputs.append(zerrors.RegistrarAuthFailed(response=args[0]))
 
     def doReportFailed(self, event, *args, **kwargs):
         """
@@ -498,7 +500,7 @@ class DomainSynchronizer(automat.Automat):
         if event == 'error':
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

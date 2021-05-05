@@ -5,7 +5,7 @@ from django.conf import settings
 
 from automats import domain_contacts_synchronizer
 
-from zen import zclient
+from epp import rpc_client
 
 from tests import testsupport
 
@@ -17,7 +17,7 @@ def test_domain_update():
     tester = testsupport.prepare_tester_account()
     tester_domain = testsupport.prepare_tester_domain(
         domain_name='test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
-        domain_epp_id=zclient.make_epp_id(tester.email),
+        domain_epp_id=rpc_client.make_epp_id(tester.email),
         tester=tester,
     )
     scenario = []

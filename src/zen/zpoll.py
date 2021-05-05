@@ -6,9 +6,10 @@ import json
 
 from lib import xml2json
 
-from zen import zclient
+from epp import rpc_client
+
 from zen import zmaster
-from zen import zerrors
+from epp import rpc_error
 from zen import zdomains
 
 #------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ def do_domain_transfer_in(domain):
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain %s from back-end' % domain)
         return False
     if not outputs:
@@ -62,7 +63,7 @@ def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=Fal
             soft_delete=True,
             domain_transferred_away=True,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -77,7 +78,7 @@ def do_domain_deleted(domain, soft_delete=True, notify=False):
             change_owner_allowed=True,
             soft_delete=soft_delete,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -91,7 +92,7 @@ def do_domain_status_changed(domain, notify=False):
             refresh_contacts=False,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -105,7 +106,7 @@ def do_domain_renewal(domain, notify=False):
             refresh_contacts=False,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -119,7 +120,7 @@ def do_domain_expiry_date_updated(domain):
             refresh_contacts=False,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -133,7 +134,7 @@ def do_domain_create_date_updated(domain):
             refresh_contacts=False,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -147,7 +148,7 @@ def do_domain_nameservers_changed(domain):
             refresh_contacts=False,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -164,7 +165,7 @@ def do_domain_contacts_changed(domain):
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     # step 2: write changes to back-end
@@ -175,7 +176,7 @@ def do_domain_contacts_changed(domain):
             rewrite_contacts=True,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to re-write domain info on back-end: %s' % domain)
         return False
     # step 3: read again latest info from back-end and make sure all contacts are refreshed
@@ -186,7 +187,7 @@ def do_domain_contacts_changed(domain):
             rewrite_contacts=False,
             change_owner_allowed=False,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain contacts from back-end: %s' % domain)
         return False
     return True
@@ -202,7 +203,7 @@ def do_domain_change_unknown(domain):
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
-    except zerrors.EPPError:
+    except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
     return True
@@ -304,7 +305,10 @@ def on_queue_message(msgQ):
             if details.lower() == 'domain deleted':
                 return do_domain_deleted(domain)
             if details.lower().count('addperiod_grace'):
-                logger.info('SKIP message: %r', json_input)
+                logger.debug('SKIP message: %r', json_input)
+                return True
+            if details.lower().count('redemption_period'):
+                logger.debug('SKIP message: %r', json_input)
                 return True
 
         if change == 'UNKNOWN':
@@ -317,7 +321,7 @@ def on_queue_message(msgQ):
                 # for now we can try to do a simple domain sync to at least try to solve the most issues
                 return do_domain_change_unknown(domain)
 
-    logger.error('UNKNOWN message: %r', json_input)
+    logger.error('UNKNOWN poll message: %s' % json_input)
     return False
 
 
@@ -352,7 +356,7 @@ def main():
         result = False
         while True:
             try:
-                req = zclient.cmd_poll_req()
+                req = rpc_client.cmd_poll_req()
                 resp_code = req['epp']['response']['result']['@code']
             except:
                 logger.exception('ERROR in cmd_poll_req()')
@@ -370,7 +374,7 @@ def main():
             try:
                 msg_id = req['epp']['response']['msgQ']['@id']
                 logger.info('msg_id: %r', msg_id)
-                zclient.cmd_poll_ack(msg_id)
+                rpc_client.cmd_poll_ack(msg_id)
             except:
                 logger.exception('ERROR in cmd_poll_ack()')
                 break

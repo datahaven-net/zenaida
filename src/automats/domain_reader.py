@@ -28,9 +28,11 @@ from email.utils import formatdate
 
 from automats import automat
 
-from zen import zclient
-from zen import zerrors
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
+from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -156,16 +158,16 @@ class DomainReader(automat.Automat):
             return
         self.registrant_epp_id = args[0]['epp']['response']['resData']['infData'].get('registrant', None)
         if not self.registrant_epp_id:
-            logger.error('domain registrant unknown from response: %s' % self.target_domain.name)
-            self.event('error', zerrors.EPPRegistrantUnknown(response=args[0]))
+            logger.error('domain registrant unknown from response: %s', self.target_domain.name)
+            self.event('error', zerrors.RegistrantUnknown(response=args[0]))
             return
         known_domain = zdomains.domain_find(domain_name=self.target_domain.name)
         if not known_domain:
             return
         if known_domain.registrant.epp_id == self.registrant_epp_id:
             return
-        logger.error('domain known to belong to another registrant: %s' % self.current_domain_name)
-        self.event('error', zerrors.EPPRegistrantAuthFailed(response=args[0]))
+        logger.error('domain known to belong to another registrant: %s', self.current_domain_name)
+        self.event('error', zerrors.RegistrantAuthFailed(response=args[0]))
 
     def doPrepareContactsList(self, *args, **kwargs):
         """
@@ -196,12 +198,12 @@ class DomainReader(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_domain_info(
+            response = rpc_client.cmd_domain_info(
                 domain=self.target_domain.name,
                 auth_info=self.target_domain.auth_key or None,
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', exc)
         else:
@@ -213,12 +215,12 @@ class DomainReader(automat.Automat):
         """
         for contact in self.domain_contacts:
             try:
-                response = zclient.cmd_contact_info(
+                response = rpc_client.cmd_contact_info(
                     contact_id=contact['id'],
                     raise_for_result=False,
                 )
                 response_code = int(args[1]['epp']['response']['result']['@code'])
-            except zerrors.EPPError as exc:
+            except rpc_error.EPPError as exc:
                 self.log(self.debug_level, 'Exception in doEppContactInfoMany: %s' % exc)
                 self.event('error', exc)
                 return
@@ -249,11 +251,11 @@ class DomainReader(automat.Automat):
         Action method.
         """
         try:
-            response = zclient.cmd_contact_info(
+            response = rpc_client.cmd_contact_info(
                 contact_id=self.registrant_epp_id,
                 raise_for_result=False,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppContactInfoRegistrant: %s' % exc)
             self.event('error', exc)
         else:

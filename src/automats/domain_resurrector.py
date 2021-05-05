@@ -34,9 +34,10 @@ from automats import domains_checker
 from automats import domain_refresher
 from automats import domain_synchronizer
 
-from zen import zclient
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zdomains
-from zen import zerrors
 
 #------------------------------------------------------------------------------
 
@@ -229,12 +230,12 @@ class DomainResurrector(automat.Automat):
             rgp_restore = True
 
         try:
-            response = zclient.cmd_domain_update(
+            response = rpc_client.cmd_domain_update(
                 domain=self.target_domain.name,
                 rgp_restore=rgp_restore,
                 rgp_restore_report=rgp_restore_report,
             )
-        except zerrors.EPPError as exc:
+        except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
             self.event('error', exc)
         else:
@@ -304,7 +305,7 @@ class DomainResurrector(automat.Automat):
         if event in ['error', 'verify-failed', ]:
             self.outputs.append(args[0])
         else:
-            self.outputs.append(zerrors.exception_from_response(response=args[0]))
+            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
     def doDestroyMe(self, *args, **kwargs):
         """

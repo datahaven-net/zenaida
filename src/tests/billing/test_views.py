@@ -30,7 +30,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
     @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60)
     @pytest.mark.django_db
     def test_create_new_btc_payment_in_db(self):
-        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
+        response = self.client.post('/billing/pay/', data=dict(amount=120, payment_method='pay_btcpay'))
         # Payment is started, so that redirect to the starting btc payment page.
         assert response.status_code == 200
         assert response.context['transaction_id']
@@ -41,13 +41,13 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
     )
     @pytest.mark.django_db
     def test_create_new_credit_card_payment_in_db(self):
-        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_4csonline'))
+        response = self.client.post('/billing/pay/', data=dict(amount=120, payment_method='pay_4csonline'))
         # Payment is started, so that redirect to the starting 4csonline page.
         assert response.status_code == 200
         transaction_id = response.context['transaction_id']
         assert response.context['transaction_id']
         payment = payments.by_transaction_id(transaction_id)
-        assert payment.amount == 100.0
+        assert payment.amount == 120.0
 
     @override_settings(ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=3*60)
     @mock.patch('billing.payments.latest_payment')
@@ -57,7 +57,7 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         mock_latest_payment.return_value = mock.MagicMock(
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
         )
-        response = self.client.post('/billing/pay/', data=dict(amount=100, payment_method='pay_btcpay'))
+        response = self.client.post('/billing/pay/', data=dict(amount=120, payment_method='pay_btcpay'))
         # There was a payment a minute ago, so that redirect back to the payment page with an error message.
         assert response.status_code == 302
         assert response.url == '/billing/pay/'

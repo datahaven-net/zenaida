@@ -30,8 +30,8 @@ else:
 SENTRY_ENABLED = getattr(params, 'SENTRY_ENABLED', False)
 if SENTRY_ENABLED:
     SENTRY_DSN = getattr(params, 'SENTRY_DSN', '')
-    import sentry_sdk
-    from sentry_sdk.integrations.django import DjangoIntegration
+    import sentry_sdk  # @UnresolvedImport
+    from sentry_sdk.integrations.django import DjangoIntegration  # @UnresolvedImport
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), ],
@@ -168,7 +168,7 @@ LOGGING = {
             'propagate': False,
             'handlers': ['console', ],
         },
-        'zen.zclient': {
+        'epp': {
             'level': LOG_LEVEL,
             'propagate': False,
             'handlers': ['console', ]
@@ -332,6 +332,8 @@ DATABASES = {
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = getattr(params, 'DBBACKUP_STORAGE_OPTIONS', {'location': '/tmp'})
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 # overwrite live settings if something was set in src/main/params.py
 for key in ('ENGINE', 'HOST', 'PORT', 'USER', 'PASSWORD'):
     try:
@@ -439,9 +441,35 @@ TRUST_PRIVATE_IP = getattr(params, 'TRUST_PRIVATE_IP', False)
 #--- LOGIN SETTINGS
 LOGIN_URL = '/accounts/login/'
 
+
+#------------------------------------------------------------------------------
+#--- EPP RPC CONFIG
+# those are connection parameters for RabbitMQ "pika" client
+ZENAIDA_EPP_RPC_HOST = getattr(params, 'ZENAIDA_EPP_RPC_HOST', '127.0.0.1')
+ZENAIDA_EPP_RPC_PORT = getattr(params, 'ZENAIDA_EPP_RPC_PORT', '5672')
+ZENAIDA_EPP_RPC_USERNAME = getattr(params, 'ZENAIDA_EPP_RPC_USERNAME', '')
+ZENAIDA_EPP_RPC_PASSWORD = getattr(params, 'ZENAIDA_EPP_RPC_PASSWORD', '')
+ZENAIDA_EPP_RPC_TIMEOUT = getattr(params, 'ZENAIDA_EPP_RPC_TIMEOUT', '10')
+ZENAIDA_EPP_RPC_QUEUE_NAME = getattr(params, 'ZENAIDA_EPP_RPC_QUEUE_NAME', 'epp_rpc_messages')
+ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '/home/zenaida/health')
+
+if 'RPC_CLIENT_CONF' not in os.environ:
+    import json
+    os.environ['RPC_CLIENT_CONF'] = json.dumps({
+        "host": ZENAIDA_EPP_RPC_HOST,
+        "port": int(ZENAIDA_EPP_RPC_PORT),
+        "username": ZENAIDA_EPP_RPC_USERNAME,
+        "password": ZENAIDA_EPP_RPC_PASSWORD,
+        "timeout": int(ZENAIDA_EPP_RPC_TIMEOUT),
+        "queue_name": ZENAIDA_EPP_RPC_QUEUE_NAME,
+    })
+
+if 'RPC_CLIENT_HEALTH_FILE' not in os.environ:
+    os.environ['RPC_CLIENT_HEALTH_FILE'] = ZENAIDA_GATE_HEALTH_FILENAME
+
+
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
-ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '/home/zenaida/health')
 ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH = getattr(params, 'ZENAIDA_CSV_FILES_SYNC_FOLDER_PATH', '/tmp/')
 
 ZENAIDA_EPP_POLL_INTERVAL_SECONDS = getattr(params, 'ZENAIDA_EPP_POLL_INTERVAL_SECONDS', 20)

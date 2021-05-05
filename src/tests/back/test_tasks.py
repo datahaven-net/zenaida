@@ -4,6 +4,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from django.conf import settings
 
 from tests import testsupport
 
@@ -29,8 +30,7 @@ class TestSyncExpiredDomains(TestCase):
         report = tasks.sync_expired_domains(dry_run=True)
         assert len(report) == 1
         assert report[0] == (tester_domain, [], )
-    
-    
+
     @pytest.mark.django_db
     @mock.patch('zen.zmaster.domain_synchronize_from_backend')
     def test_ok(self, mock_domain_synchronize_from_backend):
@@ -47,8 +47,7 @@ class TestSyncExpiredDomains(TestCase):
         report = tasks.sync_expired_domains(dry_run=False)
         assert len(report) == 1
         assert report[0] == (tester_domain, ['ok', ], )
-    
-    
+
     @pytest.mark.django_db
     def test_skip_not_expired(self):
         tester = testsupport.prepare_tester_account()
@@ -62,8 +61,7 @@ class TestSyncExpiredDomains(TestCase):
         tester_domain.save()
         report = tasks.sync_expired_domains(dry_run=False)
         assert len(report) == 0
-    
-    
+
     @pytest.mark.django_db
     def test_skip_not_active(self):
         tester = testsupport.prepare_tester_account()
@@ -100,7 +98,7 @@ class TestAutoRenewExpiringDomains(TestCase):
         assert len(report) == 1
         assert report[0][0] == tester_domain.name
         tester.refresh_from_db()
-        assert tester.balance == 900.0
+        assert tester.balance == 1000.0 - settings.ZENAIDA_DOMAIN_PRICE
         process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
         new_notification = Notification.notifications.first()
         assert new_notification.domain_name == 'abcd.ai'
@@ -183,7 +181,6 @@ class TestAutoRenewExpiringDomains(TestCase):
             domain_status='active',
             expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
             auto_renew_enabled=True,
-            
         )
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 1

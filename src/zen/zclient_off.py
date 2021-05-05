@@ -125,7 +125,7 @@ def do_rpc_request(json_request):
 
         1. `zenaida-gate.service` : service which execute Perl script and keep it running all the time
         2. `zenaida-gate-watcher.service` : background service which is able to "restart" `zenaida-gate.service` when needed
-        3. `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications 
+        3. `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications
 
     To indicate that connection is currently down we can print a new line in the local file `/home/zenaida/health`.
     Perl script then will be restarted automatically and Zenaida Gate suppose to become healthy again.

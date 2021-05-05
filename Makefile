@@ -14,6 +14,7 @@ PIP:="venv/bin/pip3"
 TOX="venv/bin/tox"
 PYTHON="venv/bin/python"
 UWSGI="venv/bin/uwsgi"
+EPPGATE="venv/bin/epp-gate"
 TOX_PY_LIST="$(shell $(TOX) -l | grep ^py | xargs | sed -e 's/ /,/g')"
 TOX_LATEST_LIST="latest38"
 
@@ -229,7 +230,7 @@ graph_models: $(VENV_DEPLOY)
 
 epp_gate_dev: $(VENV_DEPLOY)
 	@echo "Starting epp gate with local credentials"
-	@perl bin/epp_gate.pl ./keys.local/epp_credentials.txt ./keys.local/rabbitmq_gate_credentials.txt
+	@$(EPPGATE) --verbose --reconnect --epp=./keys.local/epp_credentials.txt --rabbitmq=./keys.local/rabbitmq_gate_credentials.txt --queue=epp_rpc_messages
 
 
 epp_poll_dev: $(VENV_DEPLOY)

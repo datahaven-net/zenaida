@@ -121,7 +121,7 @@ class TestActivationsCleanup(TestCase):
         """
         Payment.payments.create(
             owner=self.account,
-            amount=100,
+            amount=120,
             method="pay_btcpay",
             transaction_id="12345",
             started_at=datetime.datetime(2019, 3, 23),

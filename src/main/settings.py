@@ -444,29 +444,14 @@ LOGIN_URL = '/accounts/login/'
 
 #------------------------------------------------------------------------------
 #--- EPP RPC CONFIG
-# those are connection parameters for RabbitMQ "pika" client
-ZENAIDA_EPP_RPC_HOST = getattr(params, 'ZENAIDA_EPP_RPC_HOST', '127.0.0.1')
-ZENAIDA_EPP_RPC_PORT = getattr(params, 'ZENAIDA_EPP_RPC_PORT', '5672')
-ZENAIDA_EPP_RPC_USERNAME = getattr(params, 'ZENAIDA_EPP_RPC_USERNAME', '')
-ZENAIDA_EPP_RPC_PASSWORD = getattr(params, 'ZENAIDA_EPP_RPC_PASSWORD', '')
-ZENAIDA_EPP_RPC_TIMEOUT = getattr(params, 'ZENAIDA_EPP_RPC_TIMEOUT', '10')
-ZENAIDA_EPP_RPC_QUEUE_NAME = getattr(params, 'ZENAIDA_EPP_RPC_QUEUE_NAME', 'epp_rpc_messages')
+ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_conf.json')
+if 'RPC_CLIENT_CONF_PATH' not in os.environ and ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME:
+    # those are connection parameters for RabbitMQ "pika" client
+    os.environ['RPC_CLIENT_CONF_PATH'] = ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME
+
 ZENAIDA_GATE_HEALTH_FILENAME = getattr(params, 'ZENAIDA_GATE_HEALTH_FILENAME', '/home/zenaida/health')
-
-if 'RPC_CLIENT_CONF' not in os.environ:
-    import json
-    os.environ['RPC_CLIENT_CONF'] = json.dumps({
-        "host": ZENAIDA_EPP_RPC_HOST,
-        "port": int(ZENAIDA_EPP_RPC_PORT),
-        "username": ZENAIDA_EPP_RPC_USERNAME,
-        "password": ZENAIDA_EPP_RPC_PASSWORD,
-        "timeout": int(ZENAIDA_EPP_RPC_TIMEOUT),
-        "queue_name": ZENAIDA_EPP_RPC_QUEUE_NAME,
-    })
-
-if 'RPC_CLIENT_HEALTH_FILE' not in os.environ:
+if 'RPC_CLIENT_HEALTH_FILE' not in os.environ and ZENAIDA_GATE_HEALTH_FILENAME:
     os.environ['RPC_CLIENT_HEALTH_FILE'] = ZENAIDA_GATE_HEALTH_FILENAME
-
 
 #------------------------------------------------------------------------------
 #--- ZENAIDA RELATED CONFIGS
@@ -477,8 +462,6 @@ ZENAIDA_EPP_POLL_INTERVAL_SECONDS = getattr(params, 'ZENAIDA_EPP_POLL_INTERVAL_S
 ZENAIDA_REGISTRAR_ID = getattr(params, 'ZENAIDA_REGISTRAR_ID', 'zenaida_registrar')
 ZENAIDA_SUPPORTED_ZONES = getattr(params, 'ZENAIDA_SUPPORTED_ZONES', [])
 ZENAIDA_AUCTION_REGISTRAR_ID = getattr(params, 'ZENAIDA_AUCTION_REGISTRAR_ID', '')
-
-ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = getattr(params, 'ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME', '/tmp/rabbitmq_client_credentials.txt')
 
 ZENAIDA_PING_NAMESERVERS_ENABLED = getattr(params, 'ZENAIDA_PING_NAMESERVERS_ENABLED', True)
 

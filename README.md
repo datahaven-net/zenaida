@@ -394,16 +394,30 @@ First place your RabbitMQ client credentials in another file in your `/home/zena
 Here is a small exception, because those credentials must be accessable from django software running on behalf of www-data user and nginx+uwsgi process ... 
 In a previous step credentials for `zenaida-gate` service must be only accessable by `zenaida` user so we store them in `/home/zenaida/keys` folder with more restrictive permissions.
 
-To mitigate risks you can put those credentials in a separate folder with dedicated access from your Django application :
+First you create a new JSON-formatted file like that to hold your RabbitMQ client credentials:
+
+###### /tmp/rabbitmq_client_conf.json
+
+    {
+        "host": "localhost",
+        "port": "5672",
+        "username": "zenaida",
+        "password": "<password 1>,
+        "timeout": 20,
+        "queue_name": "epp_rpc_messages"
+    }
+
+
+To mitigate risks you can put those credentials in a separate folder with dedicated access from your Django application.
 
         mkdir /home/zenaida/keys-www-data/
-        echo "localhost 5672 zenaida <password 1>" > /home/zenaida/keys-www-data/rabbitmq_client_credentials.txt
+        mv /tmp/rabbitmq_client_conf.json /home/zenaida/keys-www-data/
         sudo chown www-data -R /home/zenaida/keys-www-data/
 
 
 Edit file `src/main/params.py` and add such line:
 
-        ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys-www-data/rabbitmq_client_credentials.txt'
+        ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME = '/home/zenaida/keys-www-data/rabbitmq_client_conf.json'
 
 
 You know, you can try to play with multiple console terminals running in parallel to see all stuff connected and run smoothly.

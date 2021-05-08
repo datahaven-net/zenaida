@@ -180,9 +180,8 @@ class AccountDomainUpdateView(UpdateView):
                 log_transitions=True,
             )
             if not domain_update:
-                messages.error(self.request, 'There is a technical problem with domain processing. '
-                                             'Please try again later.')
-                return super().form_valid(form)
+                messages.error(self.request, 'Domain details was not updated due to incorrect field input or technical problem.')
+                return super().form_invalid(form)
 
         messages.success(self.request, self.success_message)
         return super().form_valid(form)

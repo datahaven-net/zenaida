@@ -253,15 +253,6 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/profile/'
 
-    @mock.patch('back.models.profile.Profile.is_complete')
-    def test_contact_info_is_not_complete(self, mock_user_profile_complete):
-        mock_user_profile_complete.return_value = True
-        response = self.client.post('/domains/create/test.ai/', data=dict(
-            nameserver1='https://ns1.google.com'
-        ))
-        assert response.status_code == 200
-        assert response.context_data['domain_name'] == 'test.ai'
-
     @pytest.mark.django_db
     @mock.patch('django.contrib.messages.error')
     @mock.patch('back.models.profile.Profile.is_complete')

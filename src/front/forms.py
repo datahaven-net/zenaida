@@ -51,19 +51,22 @@ class DomainDetailsForm(models.ModelForm):
         self.fields['contact_tech'].label_from_instance = lambda c: c.label
         self.fields['contact_tech'].empty_label = ' '
 
+    def clean_ns(self, v):
+        return v.lower().replace('http:', '').replace('https:', '').strip('.').strip('/')
+
     def clean(self):
         cleaned_data = super(DomainDetailsForm, self).clean()
-        cleaned_data['nameserver1'] = cleaned_data.get('nameserver1').strip('.').lower()
-        cleaned_data['nameserver2'] = cleaned_data.get('nameserver2').strip('.').lower()
-        cleaned_data['nameserver3'] = cleaned_data.get('nameserver3').strip('.').lower()
-        cleaned_data['nameserver4'] = cleaned_data.get('nameserver4').strip('.').lower()
-
+        cleaned_data['nameserver1'] = self.clean_ns(cleaned_data.get('nameserver1', ''))
+        cleaned_data['nameserver2'] = self.clean_ns(cleaned_data.get('nameserver2', ''))
+        cleaned_data['nameserver3'] = self.clean_ns(cleaned_data.get('nameserver3', ''))
+        cleaned_data['nameserver4'] = self.clean_ns(cleaned_data.get('nameserver4', ''))
         ns_list = [
             cleaned_data.get('nameserver1'),
             cleaned_data.get('nameserver2'),
             cleaned_data.get('nameserver3'),
             cleaned_data.get('nameserver4'),
         ]
+
         if not any(ns_list):
             raise forms.ValidationError('At least one nameserver must be specified for the domain.')
         for nameserver in ns_list:

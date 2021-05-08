@@ -5,7 +5,8 @@ from django.contrib import messages
 from base import utils as base_utils
 from base.bruteforceprotection import BruteForceProtection
 from base.exceptions import ExceededMaxAttemptsException
-from zen import zusers, zcontacts
+
+from zen import zusers
 
 
 def validate_profile_exists(dispatch_func):

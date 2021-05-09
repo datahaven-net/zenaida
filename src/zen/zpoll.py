@@ -357,7 +357,7 @@ def main():
         while True:
             try:
                 req = rpc_client.cmd_poll_req()
-                resp_code = req['epp']['response']['result']['@code']
+                resp_code = str(req['epp']['response']['result']['@code'])
             except:
                 logger.exception('ERROR in cmd_poll_req()')
                 break

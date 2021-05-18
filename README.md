@@ -156,7 +156,7 @@ The main uwsgi emperor process will be starting as systemd service:
 
         cp etc/systemd/system/uwsgi-emperor.service.example etc/systemd/system/uwsgi-emperor.service
         sudo ln -s /home/zenaida/zenaida/etc/systemd/system/uwsgi-emperor.service /etc/systemd/system/
-        
+
 
 Now start uwsgi emperor service:
 
@@ -186,7 +186,8 @@ But you will need a to do a bit more configurations on Production server later o
 
 ## Django settings
 
-In the file `src/main/params.py` you will have to set few important variables. Those settings are specific for your host machine and can not be stored in the source code. Also this file is a place to store keys, passwords, etc.
+In the file `src/main/params.py` you will have to set few important variables.
+Those settings are specific for your host machine and can not be stored in the source code. Also this file is a place to store keys, passwords, etc.
 
 Other settings in `params.py` file also described in that document, but here is a list of most important settings:
 
@@ -196,39 +197,6 @@ Other settings in `params.py` file also described in that document, but here is 
 * `SECRET_KEY = 'xxxx'` : django key to be used to encrypt user sessions, must be 50 bytes long
 * `ZENAIDA_REGISTRAR_ID = 'registrar_abc'` : name of your registrar to be used to connect to CoCCA back-end
 * `ZENAIDA_SUPPORTED_ZONES = ['net', 'com', 'org', ]` : list of supported domain zones
-
-
-
-## Install Perl and required modules
-
-To establish connection between Zenaida and EPP registry system we use couple more components:
-
-* RabbitMQ server to run messaging queue and exchange EPP commands
-* Perl script which runs in background and keep alive connection with EPP server
-* Python Polling job which periodically request updates from EPP server for backward synchronization   
-
-
-Lets start from installing Perl and required modules on Zenaida machine.
-Few binary dependencies are required to running Perl modules:
-
-        sudo apt-get install build-essential libxml2-dev libnet-ssleay-perl libssl-dev libdigest-sha1-perl
-
-
-Then we need to check if CPAN Perl package manager is installed and configured on your OS - it should be
-present on most Linux systems by default after installing `build-essential` package:
-
-        cpan
-
-
-Installing Perl modules is easy, but takes some time:
-
-        sudo cpan install AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
-
-
-If that fails you can also try to use `cpanminus` to do the same:
-
-        sudo apt-get install cpanminus
-        sudo cpanm -i --notest AnyEvent TryCatch JSON XML::LibXML Method::Signatures Digest::MD5 Data::Dumper HTTP::Daemon  Net::RabbitFoot Net::Server::PreFork Net::EPP::Simple
 
 
 
@@ -284,44 +252,10 @@ In that case you just run a local server from Makefile and then you can open Rab
 ## Establish connection with EPP registry
 
 To run real-time connection between Zenaida and EPP registry system a separate process was developed which is called "EPP Gate".
-You will find this Perl script in `bin/epp_gate.pl` file.
 
-To be able to start EPP Gate process you need to provide it with required credentials for EPP registry and RabbitMQ - example files you can find in `etc/` folder.
-You can place those files in a safe place on your server and fill with correct credentials:
+Read more about how to configure it and run on your server here: https://github.com/datahaven-net/epp-python-client
 
-        mkdir /home/zenaida/keys/
-        echo "localhost 5672 zenaida_epp <password 2>" > /home/zenaida/keys/rabbitmq_gate_credentials.txt
-
-
-EPP regisrty will have to also provide you with credentials to access EPP server remotely.
-Place them in another file in your `keys` folder:
-
-        echo "epp.yourdomain.com 700 <epp_user> <epp_password>" > /home/zenaida/keys/epp_credentials.txt
-
-
-Before continue further make sure you decreased access permissions to your secrets:
-
-        chmod go-rwx -R /home/zenaida/keys/
-
-
-Now we need to be sure that EPP connection is configured correctly. First read bellow about how to configure `ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME` setting in your `src/main/params.py` file. This is necessary to be able to connect Django with RabbitMQ.
-
-Now lets execute Perl script directly:
-
-        perl bin/epp_gate.pl /home/zenaida/keys/epp_credentials.txt /home/zenaida/keys/rabbitmq_gate_credentials.txt
-        ...
-        Sat May 19 20:49:17 2018: Connecting to RabbitMQ server at localhost:5672 with username: <rabbitmq_user>
-        Sat May 19 20:49:17 2018:  [x] Awaiting RPC requests
-
-
-Keep it running in the current terminal and open another console window to be able to fire real-time EPP requests towards given EPP server:
-
-        venv/bin/python -c 'import sys, os, django; sys.path.append("src/"); os.environ.setdefault("DJANGO_SETTINGS_MODULE", "main.settings"); django.setup(); import zen.zclient; print(zen.zclient.cmd_domain_check(["testdomain.com", ]))'
-
-
-If RabbitMQ and Zenaida Gate process was configured correctly you should see a json response from EPP Gate like that:
-
-        {'epp': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd', 'response': {'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'resData': {'chkData': {'@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'urn:ietf:params:xml:ns:domain-1.0 domain-1.0.xsd', 'cd': {'name': {'@avail': '1', '#text': 'testdomain.com'}}}}, 'trID': {'clTRID': '103513f75a176e56038b2244258357f7', 'svTRID': '1526756418267'}}}}
+See file `src/main/params.example.py` to find out correct fields for RPC server and client separately.
 
 
 
@@ -331,11 +265,12 @@ To be able to easily manage Zenaida Gate process on your host system you can add
 
 Zenaida Gate service consist of 3 units:
 
-* `zenaida-gate.service` : service which executes Perl script and keep it running non-stop
+* `zenaida-gate.service` : service which executes RPC server and keep it running non-stop
 * `zenaida-gate-watcher.service` : background service which is able to "restart" `zenaida-gate.service` when required
 * `zenaida-gate-health.path` : systemd trigger which is monitoring `/home/zenaida/health` file for any modifications and notify `zenaida-gate-watcher.service`
 
-Those three units are required to have Zenaida Gate auto-healing mechanism running all the time. When CoCCA back-end drops connection on server-side Zenaida Gate needs to be "restarted". We must re-login to be able to send EPP messages again - this is done inside Perl script and login flow will be initiated automatically.
+Those three units are required to have Zenaida Gate auto-healing mechanism running all the time. When CoCCA back-end drops connection on server-side Zenaida Gate needs to be "restarted".
+We must re-login to be able to send EPP messages again - this is done inside RPC server and login flow will be initiated automatically.
 
 You can configure systemd Zenaida Gate service this way:
 

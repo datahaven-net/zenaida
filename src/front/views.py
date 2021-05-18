@@ -198,8 +198,8 @@ class AccountDomainTransferCodeView(TemplateView):
     def get(self, request, *args, **kwargs):
         domain = shortcuts.get_object_or_404(Domain, pk=self.kwargs.get('domain_id'), owner=self.request.user)
         if not zmaster.domain_set_auth_info(domain):
-            messages.error(self.request, 'There is a technical problem with domain transfer code processing. '
-                                         'Please try again later.')
+            messages.error(self.request, 'There is a technical problem with domain transfer code processing, '
+                                         'please try again later')
             return shortcuts.redirect('account_domains')
         return self.render_to_response(self.get_context_data(transfer_code=domain.auth_key, domain_name=domain.name.strip().lower()))
 
@@ -242,11 +242,11 @@ class AccountDomainTransferTakeoverView(FormView):
         current_statuses = [s['@s'] for s in current_statuses]
 
         if info['epp']['response']['resData']['infData']['authInfo']['pw'] != 'Authinfo Correct':
-            messages.error(self.request, 'Given transfer code is not correct.')
+            messages.error(self.request, 'Given transfer code is not correct')
             return super().form_invalid(form)
 
         if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
-            messages.error(self.request, 'Domain transfer is not possible at the moment.')
+            messages.error(self.request, 'Transfer failed. Probably the domain is locked or the Auth Code was wrong')
             return super().form_invalid(form)
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):
             messages.warning(self.request, 'Domain transfer is already in progress')
@@ -276,8 +276,8 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
     template_name = 'front/account_profile.html'
     model = Profile
     form_class = forms.AccountProfileForm
-    error_message = 'There is a technical problem with contact details processing. ' \
-                    'Please try again later.'
+    error_message = 'There is a technical problem with contact details processing, ' \
+                    'please try again later'
     success_url = reverse_lazy('account_profile')
 
     def get_object(self, queryset=None):
@@ -316,8 +316,8 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
 class AccountContactCreateView(LoginRequiredMixin, CreateView):
     template_name = 'front/account_contact_create_update.html'
     form_class = forms.ContactPersonForm
-    error_message = 'There is a technical problem with contact details processing. ' \
-                    'Please try again later.'
+    error_message = 'There is a technical problem with contact details processing, ' \
+                    'please try again later'
     success_message = 'New contact person successfully created'
     success_url = reverse_lazy('account_contacts')
 
@@ -338,8 +338,8 @@ class AccountContactUpdateView(LoginRequiredMixin, UpdateView):
     model = Contact
     form_class = forms.ContactPersonForm
     pk_url_kwarg = 'contact_id'
-    error_message = 'There is a technical problem with contact details processing. ' \
-                    'Please try again later.'
+    error_message = 'There is a technical problem with contact details processing, ' \
+                    'please try again later'
     success_message = 'Contact person details successfully updated'
     success_url = reverse_lazy('account_contacts')
 

@@ -74,7 +74,8 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.2
     )
     @pytest.mark.django_db
-    def test_pending_payment_already_exist(self):
+    @mock.patch('django.contrib.messages.info')
+    def test_pending_payment_already_exist(self, mock_messages_info):
         Payment.payments.create(
             owner=self.account,
             started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
@@ -84,12 +85,8 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
             status='paid',
         )
         response = self.client.post('/billing/pay/', data=dict(amount=120, payment_method='pay_4csonline'))
-        # Payment is started, so that redirect to the starting 4csonline page.
-        assert response.status_code == 200
-        transaction_id = response.context['transaction_id']
-        assert response.context['transaction_id']
-        payment = payments.by_transaction_id(transaction_id)
-        assert payment.amount == 120.0
+        assert response.status_code == 302
+        mock_messages_info.assert_called_once()
 
 
 class TestOrdersListView(BaseAuthTesterMixin, TestCase):

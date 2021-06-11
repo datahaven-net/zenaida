@@ -101,7 +101,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
     ):
         mock_usercan_is_incomplete.return_value = False
         mock_rc_ok_is_incomplete.return_value = False
-        mock_is_payment_verified.return_value = True
+        mock_is_payment_verified.return_value = 'verified'
 
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='
@@ -123,7 +123,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         transaction_id = payment_object.transaction_id
         mock_usercan_is_incomplete.return_value = False
         mock_rc_ok_is_incomplete.return_value = False
-        mock_is_payment_verified.return_value = True
+        mock_is_payment_verified.return_value = 'verified'
 
         response = self.client.get(
             f'/billing/4csonline/verify/?result=miss&tid={transaction_id}&rc=OK&fc=APPROVED&app=&ref='
@@ -156,7 +156,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         mock_usercan_is_incomplete.return_value = False
         mock_rc_ok_is_incomplete.return_value = False
-        mock_is_payment_verified.return_value = True
+        mock_is_payment_verified.return_value = 'verified'
 
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='
@@ -357,6 +357,31 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
         assert response.context['message'] == 'Transaction verification failed'
         mock_logging.assert_called_once_with('payment confirmation failed, transaction_id is BPXKV4LXWQHA8RJH')
 
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
+    @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)
+    @mock.patch('logging.critical')
+    @mock.patch('requests.get')
+    @mock.patch('billing.payments.finish_payment')
+    @mock.patch('billing.payments.update_payment')
+    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_ok_is_incomplete')
+    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_payment')
+    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
+    def test_payment_verification_pending(
+        self, mock_usercan_is_incomplete, mock_check_payment, mock_rc_ok_is_incomplete,
+        mock_finish_payment, mock_payment_update, mock_get_response, mock_logging
+    ):
+        mock_usercan_is_incomplete.return_value = False
+        mock_rc_ok_is_incomplete.return_value = False
+        mock_get_response.side_effect = Exception('network error')
+
+        response = self.client.get(
+            '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='
+            '1909569671030425&invoice=BPXKV4LXWQHA8RJH&tran_id=BPXKV4LXWQHA8RJH&err=&av=&amt=100.00')
+
+        assert response.status_code == 200
+        assert response.context['message'] == 'Payment verification is pending, your balance will be updated within few minutes.'
+        mock_logging.assert_called_once_with('payment confirmation failed, transaction_id is BPXKV4LXWQHA8RJH : network error')
+
     @mock.patch('logging.critical')
     @mock.patch('billing.payments.update_payment')
     @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._is_payment_verified')
@@ -369,7 +394,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
     ):
         mock_usercan_is_incomplete.return_value = False
         mock_rc_ok_is_incomplete.return_value = False
-        mock_is_payment_verified.return_value = True
+        mock_is_payment_verified.return_value = 'verified'
 
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJH&rc=OK&fc=APPROVED&app=&ref='

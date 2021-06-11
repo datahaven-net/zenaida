@@ -100,7 +100,7 @@ class NewPaymentView(LoginRequiredMixin, FormView):
         )
         if my_pending_payment:
             messages.info(self.request, 'Your previous payment is pending for verification. Please wait few minutes before starting a new transaction.')
-            return shortcuts.redirect('billing_new_payment')
+            return shortcuts.redirect('billing_payments')
 
         payment_method = form.cleaned_data['payment_method']
         payment_amount = float(form.cleaned_data['amount'])

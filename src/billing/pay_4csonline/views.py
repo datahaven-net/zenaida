@@ -108,17 +108,17 @@ class VerifyPaymentView(View):
             verified = requests.get(f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
                                     f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
         except Exception as exc:
-            self.message = 'Transaction verification failed because of network connection failure with the payment gateway'
+            self.message = 'Payment verification is pending, your balance will be updated within few minutes.'
             logging.critical(f'payment confirmation failed, transaction_id is {transaction_id} : {exc}')
-            return False
+            return 'pending'
         if verified.text != 'YES':
             if not payments.finish_payment(transaction_id=transaction_id, status='unconfirmed'):
                 logging.critical(f'payment not found, transaction_id is {transaction_id}')
                 raise exceptions.SuspiciousOperation()
             self.message = 'Transaction verification failed'
             logging.critical(f'payment confirmation failed, transaction_id is {transaction_id}')
-            return False
-        return True
+            return 'failed'
+        return 'verified'
 
     def get(self, request, *args, **kwargs):
         request_data = request.GET
@@ -148,7 +148,12 @@ class VerifyPaymentView(View):
         payments.update_payment(payment_object, status='paid', merchant_reference=reference)
 
         if not settings.ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION:
-            if not self._is_payment_verified(transaction_id):
+            result = self._is_payment_verified(transaction_id)
+            if result == 'pending':
+                return shortcuts.render(request, 'billing/4csonline/pending_payment.html', {
+                    'message': self.message,
+                })
+            if result == 'failed':
                 return shortcuts.render(request, 'billing/4csonline/failed_payment.html', {
                     'message': self.message,
                 })

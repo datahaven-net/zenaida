@@ -1,4 +1,3 @@
-import copy
 import datetime
 import mock
 import pytest
@@ -69,6 +68,28 @@ class TestNewPaymentView(BaseAuthTesterMixin, TestCase):
         # When payment method is invalid, it returns back to the same page.
         assert response.status_code == 200
         assert response.template_name == ['billing/new_payment.html']
+
+    @override_settings(
+        ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS=60,
+        ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.2
+    )
+    @pytest.mark.django_db
+    def test_pending_payment_already_exist(self):
+        Payment.payments.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            finished_at=datetime.datetime(2019, 3, 23, 13, 34, 5),
+            transaction_id='abcd',
+            amount=120.0,
+            status='paid',
+        )
+        response = self.client.post('/billing/pay/', data=dict(amount=120, payment_method='pay_4csonline'))
+        # Payment is started, so that redirect to the starting 4csonline page.
+        assert response.status_code == 200
+        transaction_id = response.context['transaction_id']
+        assert response.context['transaction_id']
+        payment = payments.by_transaction_id(transaction_id)
+        assert payment.amount == 120.0
 
 
 class TestOrdersListView(BaseAuthTesterMixin, TestCase):
@@ -713,7 +734,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         account_to_transfer = zusers.create_account('new_user@zenaida.ai', account_password='123', is_active=True)
         self.client.login(email='new_user@zenaida.ai', password='123')
 
-        registrant = Registrant.registrants.create(
+        Registrant.registrants.create(
             person_name='TesterA',
             organization_name='TestingCorporation',
             address_street='Testers Boulevard 123',

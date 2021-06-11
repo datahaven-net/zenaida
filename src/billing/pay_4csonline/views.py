@@ -108,7 +108,7 @@ class VerifyPaymentView(View):
             verified = requests.get(f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_VERIFY_LINK}?m='
                                     f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={transaction_id}')
         except Exception as exc:
-            self.message = 'Transaction verification failed because of network connection failure with the payment gateway'
+            self.message = 'Payment verification is pending,  your balance will be updated with few minutes.'
             logging.critical(f'payment confirmation failed, transaction_id is {transaction_id} : {exc}')
             return False
         if verified.text != 'YES':

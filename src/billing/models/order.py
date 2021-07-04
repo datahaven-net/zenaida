@@ -4,7 +4,7 @@ from accounts.models.account import Account
 
 
 class Order(models.Model):
-    
+
     orders = models.Manager()
 
     class Meta:

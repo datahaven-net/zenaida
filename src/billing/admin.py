@@ -12,7 +12,7 @@ from billing.pay_btcpay.models import BTCPayInvoice
 
 class PaymentAdmin(NestedModelAdmin):
     list_display = ('transaction_id', 'amount', 'account', 'method', 'started_at', 'finished_at', 'status', 'notes', )
-    search_fields = ('owner__email', )
+    search_fields = ('owner__email', 'transaction_id', )
     list_filter = ('status', 'method', )
 
     def account(self, payment_instance):
@@ -23,6 +23,7 @@ class PaymentAdmin(NestedModelAdmin):
 class BTCPayInvoiceAdmin(NestedModelAdmin):
     list_display = ('invoice_id', 'transaction_id', 'amount', 'started_at', 'finished_at', 'status', )
     list_filter = ('status', )
+    search_fields = ('invoice_id', 'transaction_id', )
 
 
 class OrderAdmin(NestedModelAdmin):
@@ -44,8 +45,13 @@ class OrderAdmin(NestedModelAdmin):
 
 
 class OrderItemAdmin(NestedModelAdmin):
-    list_display = ('name', 'type', 'price', 'status', 'order', )
+    list_display = ('order', 'description', 'name', 'type', 'price', 'status', )
     list_filter = ('status', 'type', )
+    search_fields = ('name', 'order__owner__email', 'order__id')
+
+    def description(self, order_item_instance):
+        return mark_safe('<a href="{}?q={}">{}</a>'.format(
+            reverse("admin:billing_orderitem_changelist"), order_item_instance.order.id, order_item_instance.order.description))
 
 
 admin.site.register(Payment, PaymentAdmin)

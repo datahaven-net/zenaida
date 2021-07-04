@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from nested_admin import NestedModelAdmin  # @UnresolvedImport
@@ -27,10 +28,15 @@ class BTCPayInvoiceAdmin(NestedModelAdmin):
 
 
 class OrderAdmin(NestedModelAdmin):
-    list_display = ('description', 'total_price', 'account', 'started_at', 'finished_at', 'status', )
+    list_display = ('description', 'order_items', 'total_price', 'account', 'started_at', 'finished_at', 'status', )
     search_fields = ('owner__email', 'description', )
     list_filter = ('status', )
     actions = ('order_retry', )
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(_all_items_count=Count("items", distinct=True))
+        return queryset
 
     def order_retry(self, request, queryset):
         results = []
@@ -38,6 +44,10 @@ class OrderAdmin(NestedModelAdmin):
             results.append('{}: {}'.format(order_object, orders.execute_order(order_object)))
         self.message_user(request, ', '.join(results))
     order_retry.short_description = "Re-try selected orders"
+
+    def order_items(self, order_instance):
+        return mark_safe('<a href="{}?q={}">[ {} items ]</a>'.format(
+            reverse("admin:billing_orderitem_changelist"), order_instance.id, order_instance._all_items_count))
 
     def account(self, order_instance):
         return mark_safe('<a href="{}?q={}">{}</a>'.format(

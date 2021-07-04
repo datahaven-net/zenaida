@@ -8,7 +8,7 @@ from zen.zdomains import validate_domain_name
 
 
 class OrderItem(models.Model):
-    
+
     order_items = models.Manager()
 
     class Meta:

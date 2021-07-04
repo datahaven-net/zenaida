@@ -47,6 +47,7 @@ class ProfileAdmin(NestedModelAdmin):
                     'contact_voice', 'contact_fax', 'contact_email',
                     'email_notifications_enabled', 'automatic_renewal_enabled', )
     readonly_fields = ('get_owner_link', 'contact_email', )
+    search_fields = ('account__email', 'contact_email', 'person_name', 'organization_name', )
 
     def get_owner_link(self, profile_instance):
         link = reverse("admin:accounts_account_change", args=[profile_instance.account.pk])

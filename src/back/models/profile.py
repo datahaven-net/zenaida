@@ -42,10 +42,10 @@ class Profile(models.Model):
     )
 
     def __str__(self):
-        return 'Profile({})'.format(self.account.email)
+        return 'Profile({}:{})'.format(self.person_name, self.organization_name)
 
     def __repr__(self):
-        return 'Profile({})'.format(self.account.email)
+        return 'Profile({}:{})'.format(self.person_name, self.organization_name)
 
     def is_complete(self):
         # TODO: extra regex validators to be added later

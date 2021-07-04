@@ -57,4 +57,4 @@ class Notification(models.Model):
     details = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     def __str__(self):
-        return 'Notification({}:{}:{})'.format(self.account.email, self.subject, self.status)
+        return 'Notification({}->{}:{}:{}:{})'.format(self.account.email, self.recipient, self.subject, self.type, self.status)

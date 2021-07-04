@@ -11,11 +11,16 @@ from accounts.models.notification import Notification
 class AccountAdmin(NestedModelAdmin):
 
     list_display = (
-        'email', 'balance', 'is_active', 'is_staff', 'known_registrants',
+        'email', 'profile_link', 'balance', 'is_active', 'is_staff', 'known_registrants',
         'known_contacts', 'total_domains', 'total_payments', 'total_orders', 'notes'
     )
     search_fields = ('email', )
     readonly_fields = ('email', )
+
+    def profile_link(self, account_instance):
+        return mark_safe('<a href="{}?q={}">{}</a>'.format(
+            reverse("admin:back_profile_changelist"), account_instance.email, account_instance.profile))
+    profile_link.short_description = 'Profile'
 
     def known_registrants(self, account_instance):
         return mark_safe('<br>'.join([
@@ -48,10 +53,12 @@ class AccountAdmin(NestedModelAdmin):
 
 class ActivationAdmin(NestedModelAdmin):
     list_display = ('account', 'code', 'created_at', )
+    search_fields = ('account__email', )
 
 
 class NotificationAdmin(NestedModelAdmin):
     list_display = ('account', 'recipient', 'subject', 'type', 'status', 'created_at',  )
+    search_fields = ('account__email', 'recipient', )
 
 
 admin.site.register(Account, AccountAdmin)

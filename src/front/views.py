@@ -1,18 +1,21 @@
 import datetime
 
 from dateutil.relativedelta import relativedelta
+
 from django import shortcuts
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.core.cache import cache
+from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView, FormView
+
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -422,6 +425,37 @@ class DomainLookupView(FormView):
             else:
                 messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
         return self.render_to_response(self.get_context_data(form=form, domain_name=domain_name, result=result))
+
+
+class EPPStatusView(TemplateView):
+    template_name = 'base/epp_status.html'
+    cache_key = 'zenaida-epp-health-status'
+
+    def check_epp_status(self):
+        try:
+            from epp import rpc_client
+            rpc_client.cmd_domain_check(
+                domains=[settings.ZENAIDA_GATE_HEALTH_CHECK_DOMAIN_NAME, ],
+                raise_for_result=True,
+                request_time_limit=5,
+            )
+        except Exception as exc:
+            return str(exc)
+        return 'OK'
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        try:
+            latest_status = cache.get(self.cache_key)
+        except:
+            latest_status = None
+        if not latest_status:
+            latest_status = self.check_epp_status()
+            cache.set(self.cache_key, latest_status, timeout=settings.ZENAIDA_GATE_HEALTH_CHECK_PERIOD)
+        context.update({'epp': latest_status, })
+        if latest_status != 'OK':
+            return HttpResponseServerError(content=latest_status)
+        return self.render_to_response(context)
 
 
 def handler404(request, exception, template_name="front/404_error.html"):

@@ -950,6 +950,41 @@ class TestDomainLookupView(TestCase):
         mock_messages_error.assert_called_once()
 
 
+class TestEPPStatusViewView(BaseAuthTesterMixin, TestCase):
+
+    @mock.patch('front.views.EPPStatusView.check_epp_status')
+    @mock.patch('django.core.cache.cache.get')
+    def test_healthy(self, mock_cache_get, mock_check_epp_status):
+        mock_cache_get.return_value = None
+        mock_check_epp_status.return_value = 'OK'
+        response = self.client.get(f'/epp-status/')
+        assert response.status_code == 200
+
+    @mock.patch('front.views.EPPStatusView.check_epp_status')
+    @mock.patch('django.core.cache.cache.get')
+    def test_healthy_cached(self, mock_cache_get, mock_check_epp_status):
+        mock_cache_get.return_value = 'OK'
+        mock_check_epp_status.assert_not_called()
+        response = self.client.get(f'/epp-status/')
+        assert response.status_code == 200
+
+    @mock.patch('front.views.EPPStatusView.check_epp_status')
+    @mock.patch('django.core.cache.cache.get')
+    def test_unhealthy(self, mock_cache_get, mock_check_epp_status):
+        mock_cache_get.return_value = None
+        mock_check_epp_status.return_value = 'some error'
+        response = self.client.get(f'/epp-status/')
+        assert response.status_code == 500
+
+    @mock.patch('front.views.EPPStatusView.check_epp_status')
+    @mock.patch('django.core.cache.cache.get')
+    def test_unhealthy_cached(self, mock_cache_get, mock_check_epp_status):
+        mock_cache_get.return_value = 'previous'
+        mock_check_epp_status.assert_not_called()
+        response = self.client.get(f'/epp-status/')
+        assert response.status_code == 500
+
+
 class TestFAQViews(TestCase):
 
     def test_faq_successful(self):

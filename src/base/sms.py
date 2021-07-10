@@ -32,7 +32,7 @@ class SMSSender(BaseSMSGateway):
                 headers=self.request_headers
             )
         except:
-            logger.critical(f"sending a SMS is failed to {self.phone_numbers} with this message: {self.text_message}")
+            logger.exception(f"sending SMS is failed to {self.phone_numbers}")
             return False
 
         if resp.status_code != 202:

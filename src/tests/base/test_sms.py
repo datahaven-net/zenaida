@@ -31,14 +31,14 @@ class TestSMSSender(object):
             "sending a SMS to [31612345678] with this message: 'test sms' returned an error. "
             "Error code: 105, Error description: Invalid Destination Address")
 
-    @mock.patch("logging.Logger.critical")
+    @mock.patch("logging.Logger.exception")
     @mock.patch("requests.post")
     def test_sms_gateway_returns_exception(self, mock_post_request, mock_log_error):
         mock_post_request.side_effect = Exception
         sms_sender = SMSSender(text_message="test sms", phone_numbers=[31612345678])
 
         assert sms_sender.send_sms() is False
-        mock_log_error.assert_called_once_with("sending a SMS is failed to [31612345678] with this message: test sms")
+        mock_log_error.assert_called_once_with("sending SMS is failed to [31612345678]")
 
 
 class TestSMSStatus(object):

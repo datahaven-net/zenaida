@@ -25,7 +25,7 @@ def prepare_report(history_filename):
     with open(history_filename, 'r') as health_check_file:
         lines_of_files = health_check_file.readlines()
         for index, line in enumerate(settings.SMOKETEST_HOSTS):
-            report_text += f"{settings.SMOKETEST_HOSTS[index]}   {lines_of_files[index]}"
+            report_text += f"{settings.SMOKETEST_HOSTS[index].replace('://', ':  ')}   {lines_of_files[index]}"
 
     return report_text
 

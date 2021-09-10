@@ -1,0 +1,22 @@
+version: 2.1
+jobs:
+  build:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: "Use Python v3.6.5"
+          command: |
+            pyenv versions
+            pyenv global 3.6.5
+      - run:
+          name: "Build"
+          command: |
+            python -m pip install -r requirements.txt
+            python3 -m pip install -r requirements.txt
+            make test
+          environment:
+            DOCKER_COMPOSE_VERSION: 1.25.5
+            REGRESSION_PY_VER: 3.6.5
+            VENV_PYTHON_VERSION: python3.6

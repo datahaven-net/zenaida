@@ -6,7 +6,7 @@ from back.validators import CountryField, phone_regex
 
 
 class Contact(models.Model):
-    
+
     contacts = models.Manager()
 
     class Meta:

@@ -6,17 +6,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "Use Python v3.6.5"
+          name: "Use Python v3.8"
           command: |
             pyenv versions
-            pyenv global 3.6.5
+            pyenv global 3.8
       - run:
           name: "Build"
           command: |
             python -m pip install -r requirements.txt
             python3 -m pip install -r requirements.txt
             make test
-          environment:
-            DOCKER_COMPOSE_VERSION: 1.25.5
-            REGRESSION_PY_VER: 3.6.5
-            VENV_PYTHON_VERSION: python3.6

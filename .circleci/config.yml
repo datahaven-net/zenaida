@@ -13,6 +13,8 @@ jobs:
       - run:
           name: "Build"
           command: |
-            python -m pip install -r requirements.txt
-            python3 -m pip install -r requirements.txt
-            make test
+            make docker/test
+          environment:
+            DOCKER_COMPOSE_VERSION: 1.25.5
+            REGRESSION_PY_VER: 3.8
+            VENV_PYTHON_VERSION: python3.8

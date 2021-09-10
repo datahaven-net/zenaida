@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: circleci/classic:201808-01
+      image: cimg/python:3.8.12
     steps:
       - checkout
       - run:

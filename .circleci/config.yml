@@ -2,19 +2,15 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: cimg/python:3.8.12
+      image: ubuntu-1604:202101-01
     steps:
       - checkout
       - run:
-          name: "Use Python v3.8"
+          name: "Use Python v3.8.7"
           command: |
             pyenv versions
-            pyenv global 3.8
+            pyenv global 3.8.7
       - run:
           name: "Build"
           command: |
             make docker/test
-          environment:
-            DOCKER_COMPOSE_VERSION: 1.25.5
-            REGRESSION_PY_VER: 3.8
-            VENV_PYTHON_VERSION: python3.8

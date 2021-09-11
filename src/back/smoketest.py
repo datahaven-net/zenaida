@@ -79,7 +79,7 @@ def single_smoke_test(host, method='ping'):
         return True
 
     if method == 'ping':
-        ret_code = os.system(f'ping -c 1 {host} 1>/dev/null')
+        ret_code = os.system(f'/bin/ping -c 1 {host} 1>/dev/null')
         return ret_code == 0
 
     return False

@@ -106,6 +106,8 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         )
         # step 2: execute the order
         new_status = billing_orders.execute_order(renewal_order)
+        expiring_domain.refresh_from_db()
+
         if new_status != 'processed':
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
             logger.info('for account %r renew order status is %r', expiring_domain.owner, new_status)

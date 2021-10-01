@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from dateutil.relativedelta import relativedelta
 
@@ -30,6 +31,8 @@ from zen import zzones
 from zen import zmaster
 
 from billing import orders
+
+logger = logging.getLogger(__name__)
 
 
 class IndexPageView(TemplateView):
@@ -440,6 +443,7 @@ class EPPStatusView(TemplateView):
                 request_time_limit=5,
             )
         except Exception as exc:
+            logger.exception('EPP health check failed')
             return str(exc)
         return 'OK'
 
@@ -454,6 +458,7 @@ class EPPStatusView(TemplateView):
             cache.set(self.cache_key, latest_status, timeout=settings.ZENAIDA_GATE_HEALTH_CHECK_PERIOD)
         context.update({'epp': latest_status, })
         if latest_status != 'OK':
+            logger.critical('EPP status is: %r', latest_status)
             return HttpResponseServerError(content=latest_status)
         return self.render_to_response(context)
 

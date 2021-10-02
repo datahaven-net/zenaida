@@ -440,7 +440,7 @@ class EPPStatusView(TemplateView):
             rpc_client.cmd_domain_check(
                 domains=[settings.ZENAIDA_GATE_HEALTH_CHECK_DOMAIN_NAME, ],
                 raise_for_result=True,
-                request_time_limit=5,
+                request_time_limit=15,
             )
         except Exception as exc:
             logger.exception('EPP health check failed')
@@ -455,7 +455,8 @@ class EPPStatusView(TemplateView):
             latest_status = None
         if not latest_status:
             latest_status = self.check_epp_status()
-            cache.set(self.cache_key, latest_status, timeout=settings.ZENAIDA_GATE_HEALTH_CHECK_PERIOD)
+            if latest_status == 'OK':
+                cache.set(self.cache_key, latest_status, timeout=settings.ZENAIDA_GATE_HEALTH_CHECK_PERIOD)
         context.update({'epp': latest_status, })
         if latest_status != 'OK':
             logger.critical('EPP status is: %r', latest_status)

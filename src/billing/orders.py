@@ -377,7 +377,7 @@ def execute_domain_transfer(order_item):
         zdomains.domain_join_contact(domain, 'admin', order_item.order.owner.contacts.first())
         domain.refresh_from_db()
 
-        # Override info on backend
+        # Override info on back-end
         zmaster.domain_synchronize_from_backend(
             domain_name=domain.name,
             refresh_contacts=True,
@@ -390,7 +390,7 @@ def execute_domain_transfer(order_item):
         )
         domain.refresh_from_db()
 
-        # Override registrant on backend
+        # Override registrant on back-end
         zmaster.domain_synchronize_contacts(
             domain,
             merge_duplicated_contacts=True,

@@ -133,6 +133,6 @@ class DomainLookupForm(forms.Form):
 
 
 class DomainTransferTakeoverForm(forms.Form):
-    
+
     domain_name = fields.CharField()
     transfer_code = fields.CharField()

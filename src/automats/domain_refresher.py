@@ -271,7 +271,7 @@ class DomainRefresher(automat.Automat):
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
         self.soft_delete = kwargs.get('soft_delete', True)
         self.domain_transferred_away = kwargs.get('domain_transferred_away', False)
-        self.expected_owner = None
+        self.expected_owner = kwargs.get('expected_owner', None)
         self.rewrite_contacts = kwargs.get('rewrite_contacts', None)
         pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
         if len(pending_order_items) > 1:
@@ -484,7 +484,7 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         try:
-            if self.rewrite_contacts and self.new_domain_contacts:
+            if self.rewrite_contacts and (self.new_domain_contacts or self.contacts_to_add or self.contacts_to_remove):
                 to_be_added = self.contacts_to_add or [{'type': role, 'id': epp_id, } for role, epp_id in self.new_domain_contacts.items()]
                 to_be_removed = self.contacts_to_remove or self.received_contacts
                 add_contacts_list, remove_contacts_list = zcontacts.clear_contacts_change(to_be_added, to_be_removed)
@@ -538,15 +538,28 @@ class DomainRefresher(automat.Automat):
             if not self.new_domain_contacts.get('admin'):
                 self.new_domain_contacts['admin'] = first_contact.epp_id
         if self.target_domain:
-            self.contacts_to_add, self.contacts_to_remove, _ = zdomains.compare_contacts(
-                domain_object=self.target_domain,
-                domain_info_response=self.domain_info_response,
-                target_contacts=list({
+            self.target_domain.refresh_from_db()
+            target_contacts = None
+            if not self.target_domain.list_contacts():
+                target_contacts = list({
                     'admin': first_contact,
                     'billing': first_contact,
                     'tech': first_contact,
                 }.items()),
+            self.contacts_to_add, self.contacts_to_remove, change_registrant = zdomains.compare_contacts(
+                domain_object=self.target_domain,
+                domain_info_response=self.domain_info_response,
+                target_contacts=target_contacts,
             )
+            if change_registrant and self.rewrite_contacts:
+                self.new_registrant_epp_id = change_registrant
+                self.received_contacts.clear()
+                for role, cont in self.target_domain.list_contacts():
+                    if cont and cont.epp_id:
+                        self.received_contacts.append({
+                            'type': role,
+                            'id': cont.epp_id,
+                        })
 
     def doRewriteDomainContacts(self, *args, **kwargs):
         """
@@ -939,7 +952,7 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
-        received_contacts_info = args[0] 
+        received_contacts_info = args[0]
         for role, response in received_contacts_info.items():
             self.outputs.append(response['response'])
 

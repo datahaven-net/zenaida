@@ -380,9 +380,10 @@ def execute_domain_transfer(order_item):
         # Override info on back-end
         zmaster.domain_synchronize_from_backend(
             domain_name=domain.name,
-            refresh_contacts=True,
+            refresh_contacts=False,
             rewrite_contacts=True,
             change_owner_allowed=False,
+            expected_owner=order_item.order.owner,
             soft_delete=True,
             raise_errors=True,
             log_events=True,

@@ -232,7 +232,7 @@ class AccountDomainTransferTakeoverView(FormView):
             return self.render_to_response(self.get_context_data(form=form))
         domain_name = form.cleaned_data.get('domain_name').strip().lower()
         transfer_code = form.cleaned_data.get('transfer_code').strip()
-        internal = False  # defines if transfer within same registrar
+        internal = False  # detects if transfer is going to happen within same registrar
         info = zmaster.domain_read_info(
             domain=domain_name,
             auth_info=transfer_code,

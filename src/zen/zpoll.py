@@ -50,10 +50,6 @@ def do_domain_transfer_in(domain):
     if not domain_object:
         logger.critical('synchronize domain %s failed, no domain object found' % domain)
         return False
-    try:
-        zmaster.domain_set_auth_info(domain_object)
-    except:
-        logger.exception('failed changing auth code for %r' % domain_object)
     return True
 
 

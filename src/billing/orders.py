@@ -402,6 +402,12 @@ def execute_domain_transfer(order_item):
         )
         domain.refresh_from_db()
 
+        try:
+            zmaster.domain_set_auth_info(domain)
+        except:
+            logger.exception('failed changing auth code for %r after internal transfer' % domain)
+        domain.refresh_from_db()
+
         # Auth key shouldn't be used anymore as transfer is done.
         domain.auth_key = ''
         domain.save()

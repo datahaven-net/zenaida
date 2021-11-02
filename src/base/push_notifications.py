@@ -7,12 +7,13 @@ class PushNotificationService(object):
         self.notification_message = notification_message
 
     def push(self):
-        requests.post(
-            url=settings.PUSH_NOTIFICATION_SERVICE_POST_URL,
-            json=dict(
-                token=settings.PUSH_NOTIFICATION_SERVICE_API_TOKEN,
-                user=settings.PUSH_NOTIFICATION_SERVICE_USER_TOKEN,
-                message=self.notification_message
+        for token_info in settings.PUSH_NOTIFICATION_SERVICE_SUBSCRIBERS_TOKENS:
+            requests.post(
+                url=settings.PUSH_NOTIFICATION_SERVICE_POST_URL,
+                json=dict(
+                    token=token_info[0],
+                    user=token_info[1],
+                    message=self.notification_message
+                )
             )
-        )
         return True

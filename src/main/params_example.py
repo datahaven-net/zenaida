@@ -106,8 +106,10 @@ os.umask(0o002)
 
 #--- Push notification service configuration
 # PUSH_NOTIFICATION_SERVICE_POST_URL = 'https://api.pushover.net/1/messages.json'
-# PUSH_NOTIFICATION_SERVICE_API_TOKEN = ''
-# PUSH_NOTIFICATION_SERVICE_USER_TOKEN = ''
+# PUSH_NOTIFICATION_SERVICE_SUBSCRIBERS_TOKENS = [
+#     ('<API_TOKEN for user 1>', '<USER_TOKEN for user 1>', ),
+#     ('<API_TOKEN for user 2>', '<USER_TOKEN for user 2>', ),
+# ]
 
 #--- Alerts
 # ALERT_SMS_PHONE_NUMBERS = []

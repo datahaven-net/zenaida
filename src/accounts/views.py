@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.views import SuccessURLAllowedHostsMixin
+from django.contrib.auth.views import SuccessURLAllowedHostsMixin, PasswordResetView
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
@@ -13,14 +13,14 @@ from django.views.generic.edit import FormView
 from django.conf import settings
 
 from accounts.decorators import check_recaptcha
-from accounts.forms import SignInViaEmailForm
-from accounts.forms import SignUpForm
+from accounts.forms import SignUpForm, SignInViaEmailForm, CustomPasswordResetForm
 from accounts.models.activation import Activation
 
 from zen.zusers import create_profile
 
 
 class SignInView(SuccessURLAllowedHostsMixin, FormView):
+
     template_name = 'accounts/login.html'
     if hasattr(settings, 'LOGIN_VIA_EMAIL') and settings.LOGIN_VIA_EMAIL:
         form_class = SignInViaEmailForm
@@ -67,6 +67,7 @@ class SignInView(SuccessURLAllowedHostsMixin, FormView):
 
 
 class SignUpView(FormView):
+
     template_name = 'accounts/register.html'
     form_class = SignUpForm
     success_url = '/'
@@ -81,23 +82,19 @@ class SignUpView(FormView):
         if self.request.recaptcha_is_valid or not settings.GOOGLE_RECAPTCHA_SITE_KEY:
             if settings.ENABLE_USER_ACTIVATION:
                 user = form.save(commit=False)
+                user.email = user.email.lower()
                 user.is_active = False
                 user.save()
-
                 form.send_activation_email(self.request, user)
-
                 messages.add_message(self.request, messages.SUCCESS,
                                      'You are registered. To activate the account, follow the link sent to the mail.')
             else:
                 form.save()
-
-                email = form.cleaned_data.get('email')
+                email = (form.cleaned_data.get('email') or '').lower()
                 raw_password = form.cleaned_data.get('password1')
-
                 user = authenticate(username=email, password=raw_password)
                 login(self.request, user)
                 create_profile(user, contact_email=email)
-
                 messages.add_message(self.request, messages.SUCCESS, 'You are successfully registered!')
             return super().form_valid(form)
         else:
@@ -105,6 +102,7 @@ class SignUpView(FormView):
 
 
 class ActivateView(RedirectView):
+
     permanent = False
     query_string = True
     pattern_name = 'index'
@@ -114,31 +112,29 @@ class ActivateView(RedirectView):
         if not activation_obj:
             messages.error(self.request, 'Activation code is not correct')
             return super().get_redirect_url()
-
         # Remove activation code if it's created more than 24 hours ago.
         activation_code_time_passed = datetime.now(timezone.utc) - activation_obj.created_at
         if activation_code_time_passed.total_seconds() > 60 * 60 * 24:
             activation_obj.delete()
             messages.error(self.request, 'Activation code is not valid anymore')
             return super().get_redirect_url()
-
         # Activate user's profile if it's not already activated.
         user = activation_obj.account
-
         if user.is_active:
             messages.warning(self.request, 'Your account is already activated')
             return super().get_redirect_url()
-
         user.is_active = True
         user.save()
-
         messages.success(self.request, 'You have successfully activated your account')
         login(self.request, user)
-
         # If user do not have a profile yet need to create it for him.
         try:
             user.profile
         except ObjectDoesNotExist:
             create_profile(user, contact_email=user.email)
-
         return super().get_redirect_url()
+
+
+class CustomPasswordResetView(PasswordResetView):
+
+    form_class = CustomPasswordResetForm

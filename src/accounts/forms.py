@@ -2,7 +2,7 @@ import logging
 
 from django import forms
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -16,6 +16,7 @@ from accounts.models.account import Account
 
 
 class SignInViaEmailForm(forms.Form):
+
     redirect_field_name = REDIRECT_FIELD_NAME
 
     email = forms.EmailField(
@@ -44,18 +45,15 @@ class SignInViaEmailForm(forms.Form):
     def clean(self):
         email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
-
         if email is not None and password:
             email = email.lower()
             self.user_cache = Account.objects.filter(email=email).first()
             if self.user_cache:
                 self.confirm_login_allowed(self.user_cache)
-
                 if not self.user_cache.check_password(password):
                     self.invalid_login(email)
             else:
                 self.invalid_login(email)
-
         return self.cleaned_data
 
     def invalid_login(self, email):
@@ -77,6 +75,7 @@ class SignInViaEmailForm(forms.Form):
 
 
 class SignUpForm(UserCreationForm):
+
     class Meta:
         model = Account
         fields = ('email', 'password1', 'password2',)
@@ -90,17 +89,14 @@ class SignUpForm(UserCreationForm):
 
     def clean(self):
         email = self.cleaned_data.get('email')
-
         if email is not None:
             email = email.lower()
             num_users = Account.objects.filter(email=email).count()
-
             if num_users > 0:
                 raise forms.ValidationError(
                     self.error_messages['unique_email'],
                     code='unique_email',
                 )
-
         return self.cleaned_data
 
     @staticmethod
@@ -130,3 +126,11 @@ class SignUpForm(UserCreationForm):
             msg.send()
         except:
             logging.exception('Failed to send email')
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+
+    def clean(self):
+        if 'email' in self.cleaned_data:
+            self.cleaned_data['email'] = self.cleaned_data['email'].lower()
+        return self.cleaned_data

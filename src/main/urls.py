@@ -39,7 +39,7 @@ auth_patterns = [
         template_name='accounts/password_change_form.html'), name='password_change'),
     path('accounts/password/change/done/', auth_views.PasswordChangeDoneView.as_view(
         template_name='accounts/password_change_done.html'), name='password_change_done'),
-    path('accounts/password/reset/', auth_views.PasswordResetView.as_view(
+    path('accounts/password/reset/', accounts_views.CustomPasswordResetView.as_view(
         template_name='accounts/password_reset.html'), name='password_reset'),
     path('accounts/password/reset/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='accounts/password_reset_done.html'), name='password_reset_done'),

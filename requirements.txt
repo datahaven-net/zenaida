@@ -18,7 +18,7 @@ ecdsa==0.16.1
 
 fqn-decorators==2.0.0
 idna==2.10
-lxml==4.6.3
+lxml==4.6.5
 pdfkit==0.6.1
 pika==1.2.0
 pkgversion==3.0.2

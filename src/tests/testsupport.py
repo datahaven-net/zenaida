@@ -191,6 +191,7 @@ def prepare_tester_payment(tester=None, amount=100, payment_method='pay_4csonlin
 def prepare_tester_order(
     domain_name,
     order_type='domain_register',
+    item_status='started',
     status='started',
     started_at=datetime.datetime.now(),
     finished_at=datetime.datetime.now(),
@@ -211,7 +212,8 @@ def prepare_tester_order(
         order=order,
         type=order_type,
         price=price,
-        name=domain_name
+        name=domain_name,
+        status=item_status,
     )
 
     return order

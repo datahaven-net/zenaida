@@ -40,6 +40,7 @@ class OrderItem(models.Model):
         choices=(
             ('started', 'Started', ),
             ('pending', 'Pending', ),
+            ('executing', 'Executing', ),
             ('failed', 'Failed', ),
             ('processed', 'Processed', ),
         ),

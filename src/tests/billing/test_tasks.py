@@ -9,6 +9,7 @@ from tests import testsupport
 
 from billing import tasks
 from billing.models.order import Order
+from billing.models.order_item import OrderItem
 
 
 @pytest.mark.django_db
@@ -74,3 +75,106 @@ class TestOrderRemovalTasks(TestCase):
         tasks.remove_started_orders(1)
         assert Order.orders.all().count() == 0
         mock_log_debug.assert_called_once()
+
+
+
+class TestRetryFailedOrdersTask(TestCase):
+
+    @pytest.mark.django_db
+    def test_order_failed_to_incomplete(self):
+        time_now = datetime.datetime.now()
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_renew',
+            status='failed',
+            item_status='executing',
+            started_at=time_now-datetime.timedelta(minutes=20)
+        )
+        assert Order.orders.first().status == 'failed'
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'incomplete'
+
+    @pytest.mark.django_db
+    def test_order_started_to_incomplete(self):
+        time_now = datetime.datetime.now()
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_transfer',
+            status='started',
+            item_status='executing',
+            started_at=time_now-datetime.timedelta(minutes=20)
+        )
+        assert Order.orders.first().status == 'started'
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'incomplete'
+
+    @pytest.mark.django_db
+    def test_order_item_failed_to_incomplete(self):
+        time_now = datetime.datetime.now()
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_register',
+            status='failed',
+            item_status='failed',
+            started_at=time_now-datetime.timedelta(minutes=20)
+        )
+        assert Order.orders.first().status == 'failed'
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'incomplete'
+
+    @pytest.mark.django_db
+    def test_order_created_recently(self):
+        time_now = datetime.datetime.now()
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_register',
+            status='failed',
+            item_status='failed',
+            started_at=time_now-datetime.timedelta(minutes=4)
+        )
+        assert Order.orders.first().status == 'failed'
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'failed'
+
+    @pytest.mark.django_db
+    def test_order_incomplete_but_retried(self):
+        time_now = datetime.datetime.now()
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_renew',
+            status='incomplete',
+            item_status='executing',
+            started_at=time_now-datetime.timedelta(minutes=20)
+        )
+        assert Order.orders.first().status == 'incomplete'
+        assert OrderItem.order_items.first().status == 'executing'
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'incomplete'
+        assert OrderItem.order_items.first().status == 'failed'
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    def test_order_incomplete_failed_retried(self, mock_domain_check_create_update_renew):
+        time_now = datetime.datetime.now()
+        tester = testsupport.prepare_tester_account(account_balance=200)
+        testsupport.prepare_tester_domain(
+            domain_name='test.ai',
+            tester=tester,
+            domain_status='active',
+        )
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_renew',
+            status='incomplete',
+            item_status='failed',
+            started_at=time_now-datetime.timedelta(minutes=20)
+        )
+        assert Order.orders.first().status == 'incomplete'
+        assert OrderItem.order_items.first().status == 'failed'
+        mock_domain_check_create_update_renew.return_value = True
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'processed'
+        assert OrderItem.order_items.first().status == 'processed'
+        mock_domain_check_create_update_renew.assert_called_once()
+        tester.refresh_from_db()
+        assert tester.balance == 100

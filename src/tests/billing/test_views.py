@@ -713,6 +713,7 @@ class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
 class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
 
     @pytest.mark.django_db
+    @override_settings(ZENAIDA_RABBITMQ_CLIENT_CREDENTIALS_FILENAME=None)
     def test_order_execute_successful(self):
         order = Order.orders.create(
             owner=self.account,
@@ -725,9 +726,10 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/domains/'
 
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_set_auth_info')
     @mock.patch('zen.zmaster.domain_synchronize_from_backend')
     @mock.patch('zen.zmaster.domain_synchronize_contacts')
-    def test_order_execute_within_same_registrar(self, mock_sync_contacts, mock_sync_backend):
+    def test_order_execute_within_same_registrar(self, mock_sync_contacts, mock_sync_backend, mock_domain_set_auth_info):
         account_to_transfer = zusers.create_account('new_user@zenaida.ai', account_password='123', is_active=True)
         self.client.login(email='new_user@zenaida.ai', password='123')
 
@@ -775,6 +777,8 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             auth_key='abcd1234'
         )
 
+        # mock_sync_backend.return_value = []
+
         response = self.client.post(f'/billing/order/process/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/domains/'
@@ -782,6 +786,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         # Check if backends is called to sync the domain info
         mock_sync_contacts.assert_called_once()
         mock_sync_backend.assert_called_once()
+        mock_domain_set_auth_info.assert_called_once()
 
         # Check if domain is transfered to the new owner in database
         transfered_domain = Domain.domains.filter(name='test.ai')[0]
@@ -818,7 +823,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         User tries to reach a domain which is not existing.
         Test if user will get 400 bad request error.
         """
-        response = self.client.post('/billing/order/process/1/')
+        response = self.client.post('/billing/order/process/123456789/')
         assert response.status_code == 400
 
     def test_order_execute_error_not_enough_balance(self):

@@ -69,4 +69,11 @@ def remove_started_orders(older_than_days=1):
     )
     for order in started_orders:
         order.delete()
-        logger.debug(f'Removed {order} because it was started "{older_than_days}" days ago and was not completed.')
+        logger.debug(f'Removed {order} because it was started "{older_than_days}" days ago and was not completed')
+
+
+def retry_failed_orders():
+    failed_orders = orders.list_orders_with_failed_items()
+    for order in failed_orders:
+        logger.info(f'Going to retry failed {order}')
+        orders.execute_order(order)

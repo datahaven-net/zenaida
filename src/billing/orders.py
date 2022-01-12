@@ -7,6 +7,7 @@ import pdfkit  # @UnresolvedImport
 
 from django import shortcuts
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
 from django.template.loader import get_template
@@ -140,6 +141,14 @@ def list_all_processed_orders_by_date(year, month=None):
         ).order_by('-finished_at')
 
 
+def list_orders_with_failed_items(order_item_statuses=['executing', 'failed', ]):
+    return Order.orders.filter(
+        Q(items__status__in=order_item_statuses) &
+        Q(status__in=('started', 'processing', 'failed', 'incomplete', )) &
+        Q(started_at__lte=timezone.now() - timedelta(minutes=5))
+    ).order_by('-finished_at').distinct()
+
+
 def find_pending_domain_renew_order_items(domain_name):
     """
     Find OrderItem objects for domain transfer order for given domain.
@@ -241,7 +250,7 @@ def order_multiple_items(owner, order_items):
     return new_order
 
 
-def update_order_item(order_item, new_status=None, charge_user=False, save=True):
+def update_order_item(order_item, new_status=None, charge_user=False, save=True, details=None):
     """
     Update given OrderItem object with new info.
     Optionally can charge user balance if order fulfillment was successful.
@@ -249,7 +258,7 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
     """
     if charge_user:
         if order_item.order.owner.balance < order_item.price:
-            logger.critical('not enough account balance on %r', order_item.order.owner)
+            logger.critical('not enough account balance to execute order item for %r', order_item.order.owner)
             return False
         order_item.order.owner.balance -= order_item.price
         if save:
@@ -263,7 +272,13 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True)
         order_item.status = new_status
         if save:
             order_item.save()
-        logger.info('updated status of %s from "%s" to "%s"' % (order_item, old_status, new_status))
+        logger.info('updated status of %r from "%s" to "%s"' % (order_item, old_status, new_status))
+    if details is not None and save:
+        d = order_item.details or {}
+        d.update(details)
+        order_item.details = d
+        order_item.save()
+        logger.info('updated details of %r : %r' % (order_item, d, ))
     return True
 
 
@@ -279,7 +294,7 @@ def update_order_with_order_item(owner, order, order_item, item_type, item_price
     order_item.name = item_name
     order_item.details = item_details
     order_item.save()
-    logger.info('updated order item %s in %s order' % (order_item, order))
+    logger.info('updated order item %s in %s order' % (order_item, order, ))
     return order
 
 
@@ -405,8 +420,11 @@ def execute_domain_transfer(order_item):
 
         try:
             zmaster.domain_set_auth_info(domain)
-        except:
+        except Exception as e:
             logger.exception('failed changing auth code for %r after internal transfer' % domain)
+            update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': str(e), })
+            return False
+
         domain.refresh_from_db()
 
         # Auth key shouldn't be used anymore as transfer is done.
@@ -434,27 +452,36 @@ def execute_one_item(order_item):
     """
     logger.info('executing %r with %r', order_item, order_item.details)
 
-    if order_item.type == 'domain_transfer':
-        return execute_domain_transfer(order_item)
+    update_order_item(order_item, new_status='executing', charge_user=False, save=True)
 
-    target_domain = zdomains.domain_find(order_item.name)
-    if not target_domain:
-        logger.critical('domain %r not exists', order_item.name)
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+    try:
+
+        if order_item.type == 'domain_transfer':
+            return execute_domain_transfer(order_item)
+
+        target_domain = zdomains.domain_find(order_item.name)
+        if not target_domain:
+            logger.critical('domain %r not exists in local db', order_item.name)
+            update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': 'domain was not prepared', })
+            return False
+
+        if target_domain.owner != order_item.order.owner:
+            logger.critical('user %r tried to execute an order with domain from another owner' % order_item.order.owner)
+            raise SuspiciousOperation()
+
+        if order_item.type == 'domain_register':
+            return execute_domain_register(order_item, target_domain)
+
+        if order_item.type == 'domain_renew':
+            return execute_domain_renew(order_item, target_domain)
+
+        if order_item.type == 'domain_restore':
+            return execute_domain_restore(order_item, target_domain)
+
+    except Exception as e:
+        logger.critical('order item %r execution has failed: %r' % (order_item, e, ))
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': str(e), })
         return False
-
-    if target_domain.owner != order_item.order.owner:
-        logger.critical('user %r tried to execute an order with domain from another owner' % order_item.order.owner)
-        raise SuspiciousOperation()
-
-    if order_item.type == 'domain_register':
-        return execute_domain_register(order_item, target_domain)
-
-    if order_item.type == 'domain_renew':
-        return execute_domain_renew(order_item, target_domain)
-
-    if order_item.type == 'domain_restore':
-        return execute_domain_restore(order_item, target_domain)
 
     logger.critical('order item %r has a wrong type' % order_item)
     return False
@@ -499,7 +526,7 @@ def execute_order(order_object):
             new_status = 'incomplete'
     order_object.status = new_status
     order_object.save()
-    logger.info('updated status for %s : "%s" -> "%s"' % (order_object, current_status, new_status))
+    logger.info('updated status for %r : "%s" -> "%s"' % (order_object, current_status, new_status))
     return new_status
 
 
@@ -535,7 +562,7 @@ def refresh_order(order_object):
             new_status = 'incomplete'
     order_object.status = new_status
     order_object.save()
-    logger.debug('refreshed status for %s from "%s" to "%s"' % (order_object, current_status, new_status))
+    logger.debug('refreshed status for %r from "%s" to "%s"' % (order_object, current_status, new_status))
     return new_status
 
 
@@ -546,7 +573,7 @@ def cancel_and_remove_order(order_object):
     new_status = 'cancelled'
     old_status = order_object.status
     order_object.delete()
-    logger.debug('updated status for %s from "%s" to "%s" and removed it' % (order_object, old_status, new_status))
+    logger.debug('updated status for %r from "%s" to "%s" and removed it' % (order_object, old_status, new_status))
     return new_status
 
 

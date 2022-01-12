@@ -25,6 +25,8 @@ class Command(BaseCommand):
             iteration += 1
             logger.info('# %d', iteration)
 
+            billing_tasks.retry_failed_orders()
+
             back_tasks.sync_expired_domains(dry_run=dry_run)
 
             account_tasks.check_notify_domain_expiring(

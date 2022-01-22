@@ -141,7 +141,7 @@ def list_all_processed_orders_by_date(year, month=None):
         ).order_by('-finished_at')
 
 
-def list_orders_with_failed_items(order_item_statuses=['executing', 'failed', ], order_statuses=['started', 'processing', 'failed', 'incomplete', ]):
+def list_orders_with_failed_items(order_item_statuses=['executing', 'failed', ], order_statuses=['failed', 'incomplete', ]):
     return Order.orders.filter(
         Q(items__status__in=order_item_statuses) &
         Q(status__in=order_statuses) &

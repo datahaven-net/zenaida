@@ -25,7 +25,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/home/zenaida/zenaida/
-ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py btcpay_verify 1>>/home/zenaida/logs/btcpay 2>>/home/zenaida/logs/btcpay"
+ExecStart=/bin/sh -c "/home/zenaida/zenaida/venv/bin/python /home/zenaida/zenaida/src/manage.py btcpay_verify 1>>/home/zenaida/logs/btcpay 2>/home/zenaida/logs/btcpay.err"
 
 [Install]
 WantedBy=multi-user.target

@@ -37,6 +37,8 @@ class Order(models.Model):
         blank=False,
     )
 
+    retries = models.IntegerField(default=0)
+
     description = models.CharField(max_length=255, blank=True, null=False, default='')
 
     def __str__(self):

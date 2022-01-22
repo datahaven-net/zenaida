@@ -95,7 +95,7 @@ class TestRetryFailedOrdersTask(TestCase):
         assert Order.orders.first().status == 'incomplete'
 
     @pytest.mark.django_db
-    def test_order_started_to_incomplete(self):
+    def test_order_started_and_executing(self):
         time_now = datetime.datetime.now()
         testsupport.prepare_tester_order(
             domain_name='test.ai',
@@ -106,7 +106,7 @@ class TestRetryFailedOrdersTask(TestCase):
         )
         assert Order.orders.first().status == 'started'
         tasks.retry_failed_orders()
-        assert Order.orders.first().status == 'incomplete'
+        assert Order.orders.first().status == 'started'
 
     @pytest.mark.django_db
     def test_order_item_failed_to_incomplete(self):
@@ -150,7 +150,7 @@ class TestRetryFailedOrdersTask(TestCase):
         assert OrderItem.order_items.first().status == 'executing'
         tasks.retry_failed_orders()
         assert Order.orders.first().status == 'incomplete'
-        assert OrderItem.order_items.first().status == 'failed'
+        assert OrderItem.order_items.first().status == 'blocked'
 
     @pytest.mark.django_db
     @mock.patch('zen.zmaster.domain_check_create_update_renew')

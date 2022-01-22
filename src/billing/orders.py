@@ -141,10 +141,10 @@ def list_all_processed_orders_by_date(year, month=None):
         ).order_by('-finished_at')
 
 
-def list_orders_with_failed_items(order_item_statuses=['executing', 'failed', ]):
+def list_orders_with_failed_items(order_item_statuses=['executing', 'failed', ], order_statuses=['failed', 'incomplete', ]):
     return Order.orders.filter(
         Q(items__status__in=order_item_statuses) &
-        Q(status__in=('started', 'processing', 'failed', 'incomplete', )) &
+        Q(status__in=order_statuses) &
         Q(started_at__lte=timezone.now() - timedelta(minutes=5))
     ).order_by('-finished_at').distinct()
 
@@ -462,7 +462,7 @@ def execute_one_item(order_item):
         target_domain = zdomains.domain_find(order_item.name)
         if not target_domain:
             logger.critical('domain %r not exists in local db', order_item.name)
-            update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': 'domain was not prepared', })
+            update_order_item(order_item, new_status='blocked', charge_user=False, save=True, details={'error': 'domain was not prepared or not exist', })
             return False
 
         if target_domain.owner != order_item.order.owner:
@@ -502,7 +502,7 @@ def execute_order(order_object):
     total_failed = 0
     # TODO: check/verify every item against Back-end before start processing
     for order_item in order_object.items.all():
-        if order_item.status in ['processed', 'pending', ]:
+        if order_item.status in ['processed', 'pending', 'blocked', ]:
             # only take actions with items that are not yet finished or in pending state
             continue
         total_executed += 1

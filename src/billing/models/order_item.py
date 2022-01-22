@@ -42,6 +42,7 @@ class OrderItem(models.Model):
             ('pending', 'Pending', ),
             ('executing', 'Executing', ),
             ('failed', 'Failed', ),
+            ('blocked', 'Blocked', ),
             ('processed', 'Processed', ),
         ),
         default='started',

@@ -150,7 +150,7 @@ class TestRetryFailedOrdersTask(TestCase):
         assert OrderItem.order_items.first().status == 'executing'
         tasks.retry_failed_orders()
         assert Order.orders.first().status == 'incomplete'
-        assert OrderItem.order_items.first().status == 'failed'
+        assert OrderItem.order_items.first().status == 'blocked'
 
     @pytest.mark.django_db
     @mock.patch('zen.zmaster.domain_check_create_update_renew')

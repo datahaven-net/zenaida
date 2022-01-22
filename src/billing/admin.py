@@ -28,9 +28,9 @@ class BTCPayInvoiceAdmin(NestedModelAdmin):
 
 
 class OrderAdmin(NestedModelAdmin):
-    list_display = ('description', 'order_items', 'total_price', 'account', 'started_at', 'finished_at', 'status', )
+    list_display = ('description', 'order_items', 'total_price', 'account', 'started_at', 'finished_at', 'retries' , 'status', )
     search_fields = ('owner__email', 'description', )
-    list_filter = ('status', )
+    list_filter = ('status', 'retries', )
     actions = ('order_retry', )
 
     def get_queryset(self, request):

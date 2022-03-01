@@ -52,7 +52,7 @@ class DomainDetailsForm(models.ModelForm):
         self.fields['contact_tech'].empty_label = ' '
 
     def clean_ns(self, v):
-        return v.lower().replace('http:', '').replace('https:', '').strip('.').strip('/')
+        return v.lower().replace(' ', '').replace('http:', '').replace('https:', '').strip('.').strip('/')
 
     def clean(self):
         cleaned_data = super(DomainDetailsForm, self).clean()

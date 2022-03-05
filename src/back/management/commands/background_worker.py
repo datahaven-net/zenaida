@@ -55,7 +55,7 @@ class Command(BaseCommand):
             zdomains.remove_inactive_domains(days=1)
 
             # Remove started but not completed orders after a day.
-            billing_tasks.remove_started_orders(older_than_days=1)
+            billing_tasks.remove_started_orders(older_than_days=365)
 
             # TODO: other background periodical jobs to be placed here
 

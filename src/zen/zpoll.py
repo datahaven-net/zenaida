@@ -46,6 +46,7 @@ def do_domain_transfer_in(domain):
     if not outputs[-1] or isinstance(outputs[-1], Exception):
         logger.critical('synchronize domain %s failed with result: %r', domain, outputs[-1])
         return False
+    logger.info('outputs: %r', outputs)
     domain_object = zdomains.domain_find(domain_name=domain)
     if not domain_object:
         logger.critical('synchronize domain %s failed, no domain object found' % domain)
@@ -56,7 +57,7 @@ def do_domain_transfer_in(domain):
 def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=False):
     logger.info('domain %s transferred away', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=True,
@@ -66,13 +67,14 @@ def do_domain_transfer_away(domain, from_client=None, to_client=None, notify=Fal
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 
 def do_domain_deleted(domain, soft_delete=True, notify=False):
     logger.info('domain %s deleted', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=True,
@@ -81,13 +83,14 @@ def do_domain_deleted(domain, soft_delete=True, notify=False):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 
 def do_domain_status_changed(domain, notify=False):
     logger.info('domain %s status changed', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=False,
@@ -95,27 +98,43 @@ def do_domain_status_changed(domain, notify=False):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 
 def do_domain_renewal(domain, notify=False):
     logger.info('domain %s renewal', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
-            refresh_contacts=False,
-            change_owner_allowed=False,
+            refresh_contacts=True,
+            rewrite_contacts=True,
+            change_owner_allowed=True,
+            create_new_owner_allowed=True,
         )
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    if not outputs:
+        logger.critical('synchronize domain %s failed with empty result' % domain)
+        return False
+    if not outputs[-1] or isinstance(outputs[-1], Exception):
+        logger.critical('synchronize domain %s failed with result: %r', domain, outputs[-1])
+        return False
+    logger.info('outputs: %r', outputs)
+    domain_object = zdomains.domain_find(domain_name=domain)
+    if not domain_object:
+        logger.critical('synchronize domain %s failed, no domain object found' % domain)
+        return False
+    logger.info('domain_object: %r', domain_object)
     return True
+
 
 
 def do_domain_expiry_date_updated(domain):
     logger.info('domain %s expiry date updated', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=False,
@@ -123,13 +142,14 @@ def do_domain_expiry_date_updated(domain):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 
 def do_domain_create_date_updated(domain):
     logger.info('domain %s create date updated', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=False,
@@ -137,13 +157,14 @@ def do_domain_create_date_updated(domain):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 
 def do_domain_nameservers_changed(domain):
     logger.info('domain %s nameservers changed', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=False,
             change_owner_allowed=False,
@@ -151,6 +172,7 @@ def do_domain_nameservers_changed(domain):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 
@@ -158,7 +180,7 @@ def do_domain_contacts_changed(domain):
     logger.info('domain %s contacts changed', domain)
     # step 1: read info from back-end and make changes in local DB
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs1 = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             rewrite_contacts=False,
@@ -168,9 +190,10 @@ def do_domain_contacts_changed(domain):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs1: %r', outputs1)
     # step 2: write changes to back-end
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs2 = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             rewrite_contacts=True,
@@ -179,9 +202,10 @@ def do_domain_contacts_changed(domain):
     except rpc_error.EPPError:
         logger.exception('failed to re-write domain info on back-end: %s' % domain)
         return False
+    logger.info('outputs2: %r', outputs2)
     # step 3: read again latest info from back-end and make sure all contacts are refreshed
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs3 = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             rewrite_contacts=False,
@@ -190,13 +214,14 @@ def do_domain_contacts_changed(domain):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain contacts from back-end: %s' % domain)
         return False
+    logger.info('outputs3: %r', outputs3)
     return True
 
 
 def do_domain_change_unknown(domain):
     logger.info('domain %s change is unknown, doing hard-synchronize', domain)
     try:
-        zmaster.domain_synchronize_from_backend(
+        outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
             rewrite_contacts=True,
@@ -206,6 +231,7 @@ def do_domain_change_unknown(domain):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         return False
+    logger.info('outputs: %r', outputs)
     return True
 
 #------------------------------------------------------------------------------

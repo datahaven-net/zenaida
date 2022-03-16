@@ -47,6 +47,7 @@ class TestSmoketest(TestCase):
     @mock.patch('back.smoketest.PushNotificationService.push')
     @mock.patch('back.smoketest.SMSSender.send_sms')
     @mock.patch('back.smoketest.send_email')
+    @override_settings(SMOKETEST_HOSTS_CONFIG={'*': {'notify_once': True, }})
     def test_run_one_alert_with_history(self, mock_send_email, mock_send_sms, mock_push_notification_alert):
         with open('/tmp/testsmoke', 'w') as f:
             f.write('++-+--\n--')

@@ -136,9 +136,11 @@ def run(history_filename, email_alert=False, push_notification_alert=False, sms_
     unhealthy_hosts = []
     hosts_to_be_notified = []
     updated_lines_of_file = ""
+    all_hosts_conf = settings.SMOKETEST_HOSTS_CONFIG.get('*', {}) or {}
     with open(history_filename, 'r') as health_check_file:
         lines_of_files = health_check_file.readlines()
         for index, host in enumerate(settings.SMOKETEST_HOSTS):
+            host_conf = settings.SMOKETEST_HOSTS_CONFIG.get(host, {}) or {}
             if index < len(lines_of_files):
                 # Add health of the host to its line.
                 updated_line = lines_of_files[index].strip()+f"{health_results[index]}\n"
@@ -153,9 +155,10 @@ def run(history_filename, email_alert=False, push_notification_alert=False, sms_
             # If last X amount of health checks are negative, add that host to the unhealthy hosts group.
             if updated_line.split('\n')[0].endswith(settings.SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT * '-'):
                 unhealthy_hosts.append(settings.SMOKETEST_HOSTS[index])
-                # Raise an alert only one time
-                if updated_line.split('\n')[0].endswith('+' + settings.SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT * '-'):
-                    hosts_to_be_notified.append(settings.SMOKETEST_HOSTS[index])
+                if host_conf.get('notify_once') or all_hosts_conf.get('notify_once'):
+                    # Raise an alert only one time
+                    if updated_line.split('\n')[0].endswith('+' + settings.SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT * '-'):
+                        hosts_to_be_notified.append(settings.SMOKETEST_HOSTS[index])
 
     # Update the file with the new values.
     with open(history_filename, "w") as health_check_file:

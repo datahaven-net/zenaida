@@ -55,6 +55,9 @@ os.umask(0o002)
 
 #--- Smoketest settings
 # SMOKETEST_HOSTS = ["http://example.com"]
+# SMOKETEST_HOSTS_CONFIG = {
+#     "http://example.com": {"notify_once": True, },
+# }
 # SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT = 3
 
 #--- Brute force protection settings

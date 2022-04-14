@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 time.sleep(60)
                 continue
 
-            logger.info('check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
+            logger.debug('check payments at %r', timezone.now().strftime("%Y-%m-%d %H:%M:%S"))
 
             # Check status of all incomplete invoices.
             incomplete_invoices = BTCPayInvoice.invoices.filter(finished_at=None)

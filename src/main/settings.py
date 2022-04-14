@@ -396,6 +396,7 @@ GRAPH_MODELS = {
 #------------------------------------------------------------------------------
 #--- SMOKETEST CONFIGS
 SMOKETEST_HOSTS = getattr(params, 'SMOKETEST_HOSTS', [])
+SMOKETEST_HOSTS_CONFIG = getattr(params, 'SMOKETEST_HOSTS_CONFIG', {})
 SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT = getattr(params, 'SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT', 3)
 
 #------------------------------------------------------------------------------

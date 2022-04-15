@@ -73,7 +73,7 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
 
 
 def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, save_to_db=True,
-                                     raise_errors=False, log_events=True, log_transitions=True):
+                                     raise_errors=False, return_outputs=False, log_events=True, log_transitions=True):
     """
     Check if domain exists first and then update it from `domain_object` info.
     If domain not exist create a new domain on back-end.
@@ -95,6 +95,9 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     outputs = list(ds.outputs)
     del ds
     logger.info('domain_synchronizer(%r) finished with %d outputs', domain_object.name, len(outputs))
+
+    if return_outputs:
+        return outputs
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):

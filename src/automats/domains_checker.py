@@ -323,7 +323,10 @@ class DomainsChecker(automat.Automat):
         self.destroy()
 
     def _do_find_errors_in_response(self, response):
-        results = response['epp']['response']['resData']['chkData']['cd']
+        results = None
+        resData = response['epp']['response'].get('resData')
+        if resData:
+            results = resData['chkData']['cd']
         if not results:
             logger.error('unexpected EPP response, no results')
             return [rpc_error.EPPResponseEmpty(), ]

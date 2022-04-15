@@ -513,4 +513,3 @@ class DomainSynchronizer(automat.Automat):
         self.verify_owner = None
         self.latest_domain_info = None
         self.destroy()
-

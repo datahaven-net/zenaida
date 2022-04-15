@@ -189,18 +189,24 @@ class AccountDomainUpdateView(UpdateView):
                 log_events=True,
                 log_transitions=True,
             )
-            if outputs:
-                if not outputs[-1] or isinstance(outputs[-1], Exception):
-                    if isinstance(outputs[-1], (
-                        rpc_error.EPPCommandUseError,
-                        rpc_error.EPPCommandFailed,
-                        rpc_error.EPPBadResponse,
-                    )):
-                        messages.error(self.request, 'Domain details was not updated due to a technical problem. Please try again later.')
-                        return super().form_invalid(form)
-
-                messages.error(self.request, 'Domain details was not updated due to incorrect field input.')
+            if not outputs:
+                messages.error(self.request, 'Domain details was not updated due to a technical problem. Please try again later.')
                 return super().form_invalid(form)
+
+            if outputs[-1] is True:
+                messages.success(self.request, self.success_message)
+                return super().form_valid(form)
+
+            if isinstance(outputs[-1], (
+                rpc_error.EPPCommandUseError,
+                rpc_error.EPPCommandFailed,
+                rpc_error.EPPBadResponse,
+            )):
+                messages.error(self.request, 'Domain details was not updated due to a technical problem. Please try again later.')
+                return super().form_invalid(form)
+
+            messages.error(self.request, 'Domain details was not updated due to incorrect field input.')
+            return super().form_invalid(form)
 
         messages.success(self.request, self.success_message)
         return super().form_valid(form)

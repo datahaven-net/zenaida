@@ -11,10 +11,12 @@ from django.template.loader import get_template
 from billing.models.payment import Payment
 
 
-def generate_transaction_id(size=16, chars=string.ascii_uppercase + string.digits):
+def generate_transaction_id(size=12, chars=string.ascii_uppercase + string.digits, prefix=None):
     """
     Returns randomized text string.
     """
+    if prefix:
+        return prefix + '.' + ''.join(random.choice(chars) for _ in range(size))
     return ''.join(random.choice(chars) for _ in range(size))
 
 
@@ -62,9 +64,9 @@ def start_payment(owner, amount, payment_method):
     """
     Starts new payment for that user.
     """
-    new_transaction_id = generate_transaction_id()
+    new_transaction_id = generate_transaction_id(prefix=str(owner.id))
     while Payment.payments.filter(transaction_id=new_transaction_id).exists():
-        new_transaction_id = generate_transaction_id()
+        new_transaction_id = generate_transaction_id(prefix=str(owner.id))
     new_payment = Payment.payments.create(
         owner=owner,
         amount=amount,

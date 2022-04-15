@@ -25,7 +25,10 @@ from back.models.profile import Profile
 from front import forms
 from front.decorators import validate_profile_exists, brute_force_protection
 
+from epp import rpc_error
+
 from zen import zdomains
+from zen import zerrors
 from zen import zcontacts
 from zen import zzones
 from zen import zmaster
@@ -175,19 +178,35 @@ class AccountDomainUpdateView(UpdateView):
 
     def form_valid(self, form):
         if form.instance.epp_id:
-            domain_update = zmaster.domain_check_create_update_renew(
+            outputs = zmaster.domain_check_create_update_renew(
                 domain_object=form.instance,
                 sync_contacts=True,
                 sync_nameservers=True,
                 renew_years=None,
                 save_to_db=False,
                 raise_errors=False,
+                return_outputs=True,
                 log_events=True,
                 log_transitions=True,
             )
-            if not domain_update:
-                messages.error(self.request, 'Domain details was not updated due to incorrect field input or technical problem.')
+            if not outputs:
+                messages.error(self.request, 'Domain details was not updated due to a technical problem. Please try again later.')
                 return super().form_invalid(form)
+
+            if outputs[-1] is True:
+                messages.success(self.request, self.success_message)
+                return super().form_valid(form)
+
+            if isinstance(outputs[-1], (
+                rpc_error.EPPCommandUseError,
+                rpc_error.EPPCommandFailed,
+                rpc_error.EPPBadResponse,
+            )):
+                messages.error(self.request, 'Domain details was not updated due to a technical problem. Please try again later.')
+                return super().form_invalid(form)
+
+            messages.error(self.request, 'Domain details was not updated due to incorrect field input.')
+            return super().form_invalid(form)
 
         messages.success(self.request, self.success_message)
         return super().form_valid(form)

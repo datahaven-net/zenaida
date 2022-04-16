@@ -11,7 +11,7 @@ from django.template.loader import get_template
 from billing.models.payment import Payment
 
 
-def generate_transaction_id(size=12, chars=string.ascii_uppercase + string.digits, prefix=None):
+def generate_transaction_id(size=8, chars=string.ascii_uppercase + string.digits, prefix=None):
     """
     Returns randomized text string.
     """

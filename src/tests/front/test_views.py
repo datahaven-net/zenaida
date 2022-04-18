@@ -4,6 +4,7 @@ import datetime
 import os
 import mock
 import pytest
+import socket
 
 from django.test import TestCase, override_settings
 from django.conf import settings
@@ -273,10 +274,12 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         assert response.url == '/domains/'
         mock_messages_error.assert_called_once()
 
+    @mock.patch('socket.gethostbyname')
     @mock.patch('os.system')
     @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=True)
-    def test_nameserver_is_not_available(self, mock_ping):
+    def test_nameserver_is_not_available(self, mock_ping, mock_gethostbyname):
         mock_ping.return_value = -1
+        mock_gethostbyname.side_effect = socket.error('failed')
         tester = prepare_tester_account()
         contact_admin = prepare_tester_contact(tester=tester)
         profile = prepare_tester_profile(tester=tester)
@@ -362,13 +365,15 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
 
     @mock.patch('zen.zmaster.contact_create_update')
     @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('socket.gethostbyname')
     @mock.patch('os.system')
     @mock.patch('zen.zmaster.domain_check_create_update_renew')
     def test_nameserver_is_not_available(
-        self, mock_epp_call, mock_ping, mock_user_profile_complete, mock_contact_create_update
+        self, mock_epp_call, mock_ping, mock_gethostbyname, mock_user_profile_complete, mock_contact_create_update
     ):
         mock_epp_call.return_value = True
         mock_ping.return_value = -1
+        mock_gethostbyname.side_effect = socket.error('failed')
         mock_user_profile_complete.return_value = True
         # Create a contact person to have a domain.
         mock_contact_create_update.return_value = True

@@ -1,5 +1,6 @@
 import os
 import re
+import socket
 
 from django.conf import settings
 from django.forms import forms, models, fields
@@ -51,6 +52,13 @@ class DomainDetailsForm(models.ModelForm):
         self.fields['contact_tech'].label_from_instance = lambda c: c.label
         self.fields['contact_tech'].empty_label = ' '
 
+    def hostname_resolve(self, hostname):
+        try:
+            socket.gethostbyname(hostname)
+            return True
+        except socket.error:
+            return False
+
     def clean_ns(self, v):
         return v.lower().replace(' ', '').replace('http:', '').replace('https:', '').strip('.').strip('/')
 
@@ -83,7 +91,8 @@ class DomainDetailsForm(models.ModelForm):
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
                 if not os.system("ping -c 1 " + ns) == 0:
-                    invalid_nameservers.append(ns)
+                    if not self.hostname_resolve(ns):
+                        invalid_nameservers.append(ns)
 
         if invalid_nameservers:
             invalid_nameservers = ', '.join(invalid_nameservers)

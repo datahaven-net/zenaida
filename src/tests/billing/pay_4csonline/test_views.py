@@ -219,7 +219,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         assert response.status_code == 400
         mock_logging.assert_called_once_with('invalid request, payment process raises SuspiciousOperation: '
-                                             'payment transaction is already finished')
+                                             'payment transaction was already finished')
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1)
     @mock.patch('logging.critical')

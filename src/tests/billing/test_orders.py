@@ -12,8 +12,8 @@ from tests import testsupport
 
 class TestOrders(TestCase):
 
-    @mock.patch('zen.zmaster.domain_check_create_update_renew')
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
     def test_order_domain_register_processed(self, mock_domain_check_create_update_renew):
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='testdomain.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
@@ -45,8 +45,8 @@ class TestOrders(TestCase):
         tester_domain.owner.refresh_from_db()
         assert tester_domain.owner.balance == 900.0
 
-    @mock.patch('zen.zmaster.domain_check_create_update_renew')
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
     def test_order_domain_register_incomplete(self, mock_domain_check_create_update_renew):
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='testdomain.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
@@ -78,8 +78,8 @@ class TestOrders(TestCase):
         tester_domain.owner.refresh_from_db()
         assert tester_domain.owner.balance == 1000.0
 
-    @mock.patch('zen.zmaster.domain_transfer_request')
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_transfer_request')
     def test_order_domain_transfer_pending(self, mock_domain_transfer_request):
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='testdomain.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
@@ -111,9 +111,10 @@ class TestOrders(TestCase):
         tester_domain.owner.refresh_from_db()
         assert tester_domain.owner.balance == 1000.0
 
-    @mock.patch('zen.zmaster.domain_check_create_update_renew')
     @pytest.mark.django_db
-    def test_order_domain_renew_processed(self, mock_domain_check_create_update_renew):
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    @mock.patch('zen.zmaster.domain_synchronize_from_backend')
+    def test_order_domain_renew_processed(self, mock_domain_check_create_update_renew, mock_domain_synchronize_from_backend):
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='testdomain.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
             add_contacts=['registrant', 'admin', ],
@@ -125,6 +126,7 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
+        mock_domain_synchronize_from_backend.return_value = True
         mock_domain_check_create_update_renew.return_value = True
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
@@ -144,8 +146,8 @@ class TestOrders(TestCase):
         tester_domain.owner.refresh_from_db()
         assert tester_domain.owner.balance == 900.0
 
-    @mock.patch('zen.zmaster.domain_restore')
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_restore')
     def test_order_domain_restore_processed(self, mock_domain_restore):
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='testdomain.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
@@ -177,8 +179,8 @@ class TestOrders(TestCase):
         tester_domain.owner.refresh_from_db()
         assert tester_domain.owner.balance == 900.0
 
-    @mock.patch('zen.zmaster.domain_transfer_request')
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_transfer_request')
     def test_refresh_order_domain_transfer_pending_to_processed(self, mock_domain_transfer_request):
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='testdomain.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],

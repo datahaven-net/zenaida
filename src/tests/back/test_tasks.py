@@ -82,9 +82,11 @@ class TestAutoRenewExpiringDomains(TestCase):
     @pytest.mark.django_db
     @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
     @mock.patch('zen.zmaster.domain_check_create_update_renew')
-    def test_order_created_executed_email_sent(self, mock_send, mock_domain_check_create_update_renew):
+    @mock.patch('zen.zmaster.domain_synchronize_from_backend')
+    def test_order_created_executed_email_sent(self, mock_send, mock_domain_check_create_update_renew, mock_domain_synchronize_from_backend):
         mock_send.return_value = True
         mock_domain_check_create_update_renew.return_value = True
+        mock_domain_synchronize_from_backend.return_value = True
         tester = testsupport.prepare_tester_account(account_balance=1000.0)
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
@@ -263,9 +265,11 @@ class TestAutoRenewExpiringDomains(TestCase):
     @pytest.mark.django_db
     @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
     @mock.patch('zen.zmaster.domain_check_create_update_renew')
-    def test_owner_profile_email_notifications_disabled(self, mock_send, mock_domain_check_create_update_renew):
+    @mock.patch('zen.zmaster.domain_synchronize_from_backend')
+    def test_owner_profile_email_notifications_disabled(self, mock_send, mock_domain_check_create_update_renew, mock_domain_synchronize_from_backend):
         mock_send.return_value = True
         mock_domain_check_create_update_renew.return_value = True
+        mock_domain_synchronize_from_backend.return_value = True
         tester = testsupport.prepare_tester_account(account_balance=200.0, email_notifications_enabled=False)
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',

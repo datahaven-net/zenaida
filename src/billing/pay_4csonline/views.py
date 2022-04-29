@@ -87,7 +87,7 @@ class VerifyPaymentView(View):
 
         if payment_obj.finished_at:
             logging.critical('invalid request, payment process raises SuspiciousOperation: '
-                             'payment transaction is already finished')
+                             'payment transaction was already finished')
             raise exceptions.SuspiciousOperation()
 
         expected_payment_amount = round(payment_obj.amount * (

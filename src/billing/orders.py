@@ -333,7 +333,22 @@ def execute_domain_renew(order_item, target_domain):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
 
-    return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+    ret = update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+
+    zmaster.domain_synchronize_from_backend(
+        domain_name=order_item.name,
+        refresh_contacts=False,
+        rewrite_contacts=False,
+        change_owner_allowed=False,
+        create_new_owner_allowed=False,
+        soft_delete=False,
+        domain_transferred_away=False,
+        raise_errors=False,
+        log_events=True,
+        log_transitions=True,
+    )
+
+    return ret
 
 
 def execute_domain_restore(order_item, target_domain):

@@ -54,6 +54,11 @@ class Command(BaseCommand):
                 logger.critical(f'payment confirmation failed {payment.transaction_id} : {exc}')
                 continue
 
+            if verified.text.count('Runtime Error'):
+                failed_count += 1
+                logger.critical(f'payment confirmation failed {payment.transaction_id} : Runtime Error response from the Bank')
+                continue
+
             if verified.text != 'YES':
                 if payment.status in ['paid', 'processed', ]:
                     fraud_count += 1

@@ -602,6 +602,8 @@ def build_receipt(owner, year=None, month=None, order_id=None):
         order_object = by_id(order_id)
         if not order_object:
             return None
+        if not order_object.finished_at:
+            return None
         order_objects.append(order_object)
         receipt_period = order_object.finished_at.strftime('%B %Y')
     else:

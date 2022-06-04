@@ -75,6 +75,9 @@ def remove_started_orders(older_than_days=1):
 def retry_failed_orders(max_retries=1):
     failed_orders = orders.list_orders_with_failed_items()
     for order in failed_orders:
+        if order.total_price > order.owner.balance:
+            logger.info('Not possible to retry failed %r because user %r do not have enough balance', order, order.owner)
+            continue
         if order.retries < max_retries:
             logger.info('Going to retry failed %r after %r retries', order, order.retries)
             order.retries = order.retries + 1

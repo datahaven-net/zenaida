@@ -1,6 +1,6 @@
 # This Makefile requires the following commands to be available:
 # * virtualenv
-# * python3.8
+# * python3
 # * docker
 # * docker-compose
 
@@ -27,13 +27,11 @@ VENV_TEST=venv/.venv_test
 VENV_TOX=venv/.venv_tox
 VENV_DEV=venv/.venv_dev
 
-# Params for building and installing on the EXA servers
-
 VSN:=$(shell git describe --tags --always)
 ARTIFACT:=zenaida-$(VSN).tgz
 PIP_CACHE:=.pip_cache
 PIP_DOWNLOAD:=.pip_download
-PYTHON_VERSION=python3.8
+PYTHON_VERSION=python3
 BRANCH=$(shell git branch | grep '*' | awk '{print $$2}')
 BUILD_PROPERTIES_FILE=build.properties
 BUILD_PROPERTIES_JSONFILE=build.properties.json
@@ -256,7 +254,7 @@ run_process_notifications_dev: $(VENV_DEPLOY)
 
 $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# REQUIREMENTS_TXT
-	@$(PIP) install --upgrade pip
+	@$(PIP) install --upgrade pip wheel
 	@$(PIP) install -r $(REQUIREMENTS_BASE)
 	@rm -vf $(REQUIREMENTS_TXT)
 	@$(PIP) freeze > $(REQUIREMENTS_TXT)
@@ -282,25 +280,25 @@ $(VENV_NO_SYSTEM_SITE_PACKAGES):
 # the rest is based on main venvs
 $(VENV_DEPLOY): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
 	# VENV_DEPLOY
-	@$(PIP) install -q --upgrade pip
+	@$(PIP) install -q --upgrade pip wheel
 	@$(PIP) install -q -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_BASE): $(VENV_NO_SYSTEM_SITE_PACKAGES) check_requirements_txt
 	# VENV_BASE
-	@$(PIP) install --upgrade pip
+	@$(PIP) install --upgrade pip wheel
 	@$(PIP) install -r $(REQUIREMENTS_TXT)
 	@touch $@
 
 $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
 	# VENV_TEST
-	@$(PIP) install --upgrade pip
+	@$(PIP) install --upgrade pip wheel
 	@$(PIP) install -r $(REQUIREMENTS_TEST)
 	@touch $@
 
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# VENV_TOX
-	@$(PIP) install --upgrade pip
+	@$(PIP) install --upgrade pip wheel
 	@$(PIP) install tox importlib.metadata==2.0.0
 	@touch $@
 

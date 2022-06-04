@@ -83,7 +83,9 @@ class TestRetryFailedOrdersTask(TestCase):
     @pytest.mark.django_db
     def test_order_failed_to_incomplete(self):
         time_now = datetime.datetime.now()
+        tester = testsupport.prepare_tester_account(account_balance=200)
         testsupport.prepare_tester_order(
+            owner=tester,
             domain_name='test.ai',
             order_type='domain_renew',
             status='failed',
@@ -111,7 +113,9 @@ class TestRetryFailedOrdersTask(TestCase):
     @pytest.mark.django_db
     def test_order_item_failed_to_incomplete(self):
         time_now = datetime.datetime.now()
+        tester = testsupport.prepare_tester_account(account_balance=200)
         testsupport.prepare_tester_order(
+            owner=tester,
             domain_name='test.ai',
             order_type='domain_register',
             status='failed',
@@ -139,7 +143,9 @@ class TestRetryFailedOrdersTask(TestCase):
     @pytest.mark.django_db
     def test_order_incomplete_but_retried(self):
         time_now = datetime.datetime.now()
+        tester = testsupport.prepare_tester_account(account_balance=200)
         testsupport.prepare_tester_order(
+            owner=tester,
             domain_name='test.ai',
             order_type='domain_renew',
             status='incomplete',
@@ -180,3 +186,31 @@ class TestRetryFailedOrdersTask(TestCase):
         mock_domain_check_create_update_renew.assert_called_once()
         tester.refresh_from_db()
         assert tester.balance == 100
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    @mock.patch('zen.zmaster.domain_synchronize_from_backend')
+    def test_order_incomplete_but_low_balance(self, mock_domain_check_create_update_renew, mock_domain_synchronize_from_backend):
+        time_now = datetime.datetime.now()
+        tester = testsupport.prepare_tester_account(account_balance=50)
+        testsupport.prepare_tester_domain(
+            domain_name='test.ai',
+            tester=tester,
+            domain_status='active',
+        )
+        testsupport.prepare_tester_order(
+            domain_name='test.ai',
+            order_type='domain_renew',
+            status='incomplete',
+            item_status='failed',
+            started_at=time_now-datetime.timedelta(minutes=20)
+        )
+        assert Order.orders.first().status == 'incomplete'
+        assert OrderItem.order_items.first().status == 'failed'
+        tasks.retry_failed_orders()
+        assert Order.orders.first().status == 'incomplete'
+        assert OrderItem.order_items.first().status == 'failed'
+        mock_domain_check_create_update_renew.assert_not_called()
+        mock_domain_synchronize_from_backend.assert_not_called()
+        tester.refresh_from_db()
+        assert tester.balance == 50

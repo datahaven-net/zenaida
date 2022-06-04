@@ -1,10 +1,12 @@
 version: '3.1'
 
 services:
+
   test:
     environment:
       - DOCKER_ENV=1
     build: .
+    image: python:3.9.7
     volumes:
       - .:/app
     command: make test

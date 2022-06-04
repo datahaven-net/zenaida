@@ -2,14 +2,13 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: ubuntu-1604:202101-01
+      image: ubuntu-2204:2022.04.1
     steps:
       - checkout
       - run:
-          name: "Use Python v3.8.7"
+          name: "Use Docker Compose"
           command: |
-            pyenv versions
-            pyenv global 3.8.7
+            docker-compose -v
       - run:
           name: "Build"
           command: |

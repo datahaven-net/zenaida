@@ -78,6 +78,9 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             continue
         if not expiring_domain.owner.profile.automatic_renewal_enabled:
             continue
+        if billing_orders.find_pending_domain_renew_order_items(expiring_domain.name):
+            logger.debug('domain renew order already started for %r', expiring_domain.name)
+            continue
         logger.debug('domain %r is expiring, going to start auto-renew now', expiring_domain.name)
         current_expiry_date = expiring_domain.expiry_date
         if expiring_domain.owner.balance < settings.ZENAIDA_DOMAIN_PRICE:
@@ -87,9 +90,6 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
                 users_on_low_balance[expiring_domain.owner.email] = []
             users_on_low_balance[expiring_domain.owner.email].append(expiring_domain.name)
             logger.debug('not enough funds to auto-renew domain %r', expiring_domain.name)
-            continue
-        if billing_orders.find_pending_domain_renew_order_items(expiring_domain.name):
-            logger.debug('domain renew order already started for %r', expiring_domain.name)
             continue
         if dry_run:
             report.append((expiring_domain.name, expiring_domain.owner.email, current_expiry_date, ))

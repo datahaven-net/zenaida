@@ -329,6 +329,7 @@ def execute_domain_renew(order_item, target_domain):
         log_events=True,
         log_transitions=True,
         raise_errors=False,
+        return_outputs=False,
     ):
         update_order_item(order_item, new_status='failed', charge_user=False, save=True)
         return False
@@ -481,8 +482,14 @@ def execute_one_item(order_item):
             return False
 
         if target_domain.owner != order_item.order.owner:
-            logger.critical('user %r tried to execute an order with domain from another owner' % order_item.order.owner)
-            raise SuspiciousOperation()
+            logger.critical('user %r tried to execute an order item %r with domain from another owner' % order_item.order.owner, order_item, target_domain.owner)
+            update_order_item(order_item, new_status='blocked', charge_user=False, save=True, details={'error': 'domain was owned by another user', })
+            return False
+
+        if order_item.order.owner.balance < order_item.price:
+            logger.critical('not enough account balance to execute order item %r for %r', order_item, order_item.order.owner)
+            update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': 'not enough account balance', })
+            return False
 
         if order_item.type == 'domain_register':
             return execute_domain_register(order_item, target_domain)

@@ -1,7 +1,7 @@
 import logging
 import datetime
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # @UnresolvedImport
 from django import shortcuts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required

@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # @UnresolvedImport
 
 from django import shortcuts
 from django.conf import settings
@@ -28,7 +28,6 @@ from front.decorators import validate_profile_exists, brute_force_protection
 from epp import rpc_error
 
 from zen import zdomains
-from zen import zerrors
 from zen import zcontacts
 from zen import zzones
 from zen import zmaster

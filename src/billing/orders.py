@@ -302,7 +302,7 @@ def execute_domain_register(order_item, target_domain):
     """
     Execute domain register order fulfillment and update order item.
     """
-    if not zmaster.domain_check_create_update_renew(
+    outputs = zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
         sync_contacts=False,
         sync_nameservers=True,
@@ -310,10 +310,11 @@ def execute_domain_register(order_item, target_domain):
         log_events=True,
         log_transitions=True,
         raise_errors=False,
-    ):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return_outputs=True,
+    )
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details=repr(outputs))
         return False
-
     return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
 
 
@@ -321,7 +322,7 @@ def execute_domain_renew(order_item, target_domain):
     """
     Execute domain renew order fulfillment and update order item.
     """
-    if not zmaster.domain_check_create_update_renew(
+    outputs = zmaster.domain_check_create_update_renew(
         domain_object=target_domain,
         sync_contacts=False,
         sync_nameservers=True,
@@ -329,13 +330,12 @@ def execute_domain_renew(order_item, target_domain):
         log_events=True,
         log_transitions=True,
         raise_errors=False,
-        return_outputs=False,
-    ):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return_outputs=True,
+    )
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details=repr(outputs))
         return False
-
     ret = update_order_item(order_item, new_status='processed', charge_user=True, save=True)
-
     zmaster.domain_synchronize_from_backend(
         domain_name=order_item.name,
         refresh_contacts=False,
@@ -348,7 +348,6 @@ def execute_domain_renew(order_item, target_domain):
         log_events=True,
         log_transitions=True,
     )
-
     return ret
 
 

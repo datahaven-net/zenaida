@@ -124,7 +124,7 @@ def SetStateChangedCallback(cb):
     """
     Set callback to be fired when any state machine globally changes its state 
     Callback parameters are::
-    
+
         cb(index, id, name, old_state, new_state)
     """
     global _GlobalStateChangedCallback
@@ -159,7 +159,7 @@ class Automat(object):
     You also must set that flag in the MS Visio document and rebuild the code:
     put ``[post]`` string into the last line of the LABEL shape.
     """
-          
+
     def __init__(self,
             name,
             state,

@@ -26,7 +26,7 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
-        mock_domain_check_create_update_renew.return_value = True
+        mock_domain_check_create_update_renew.return_value = [True, ]
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
             item_type='domain_register',
@@ -59,7 +59,7 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
-        mock_domain_check_create_update_renew.return_value = False
+        mock_domain_check_create_update_renew.return_value = [False, ]
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
             item_type='domain_register',
@@ -126,8 +126,8 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
-        mock_domain_synchronize_from_backend.return_value = True
-        mock_domain_check_create_update_renew.return_value = True
+        mock_domain_synchronize_from_backend.return_value = [True, ]
+        mock_domain_check_create_update_renew.return_value = [True, ]
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
             item_type='domain_renew',

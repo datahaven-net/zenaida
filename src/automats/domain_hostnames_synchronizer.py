@@ -290,6 +290,8 @@ class DomainHostnamesSynchronizer(automat.Automat):
         """
         if args:
             self.outputs.append(args[0])
+        else:
+            self.outputs.append(True)
 
     def doReportFailed(self, event, *args, **kwargs):
         """

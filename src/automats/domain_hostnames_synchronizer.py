@@ -147,12 +147,6 @@ class DomainHostnamesSynchronizer(automat.Automat):
                 self.state = 'DONE'
                 self.doReportDone(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-        #---DONE---
-        elif self.state == 'DONE':
-            pass
-        #---FAILED---
-        elif self.state == 'FAILED':
-            pass
         #---HOSTS_CHECK---
         elif self.state == 'HOSTS_CHECK':
             if event == 'response' and self.isCode(1000, *args, **kwargs):
@@ -165,6 +159,12 @@ class DomainHostnamesSynchronizer(automat.Automat):
             elif event == 'no-hosts-to-be-added':
                 self.state = 'DOMAIN_UPDATE!'
                 self.doEppDomainUpdate(*args, **kwargs)
+        #---DONE---
+        elif self.state == 'DONE':
+            pass
+        #---FAILED---
+        elif self.state == 'FAILED':
+            pass
         return None
 
     def isCode(self, *args, **kwargs):

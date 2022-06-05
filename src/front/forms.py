@@ -78,8 +78,18 @@ class DomainDetailsForm(models.ModelForm):
         if not any(ns_list):
             raise forms.ValidationError('At least one nameserver must be specified for the domain.')
         for nameserver in ns_list:
+            if not nameserver or nameserver.strip() == '':
+                continue
             if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", nameserver):
                 raise forms.ValidationError('Please use DNS name instead of IP address for the nameservers.')
+            if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}$", nameserver):
+                raise forms.ValidationError('Please use DNS name instead of IP address for the nameservers.')
+            if re.match(r"^\d{1,3}\.\d{1,3}$", nameserver):
+                raise forms.ValidationError('Please use DNS name instead of IP address for the nameservers.')
+            if re.match(r"^\d{1,50}$", nameserver):
+                raise forms.ValidationError('Please use correct DNS name for the nameservers.')
+            if nameserver.count('.') < 1:
+                raise forms.ValidationError('Please use correct DNS name for the nameservers.')
             if self.instance.name and nameserver.endswith(self.instance.name.strip().lower()):
                 raise forms.ValidationError(f'Please use another nameserver instead of {nameserver}, "glue" records are not supported yet.')
 

@@ -304,5 +304,5 @@ $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 
 $(VENV_DEV): $(VENV_TOX) $(VENV_BASE) $(VENV_TEST)
 	# VENV_DEV
-	@$(PIP) install pytest
+	@$(PIP) install --upgrade pytest
 	@touch $@

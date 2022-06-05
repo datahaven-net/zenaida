@@ -178,8 +178,8 @@ class TestRetryFailedOrdersTask(TestCase):
         )
         assert Order.orders.first().status == 'incomplete'
         assert OrderItem.order_items.first().status == 'failed'
-        mock_domain_check_create_update_renew.return_value = True
-        mock_domain_synchronize_from_backend.return_value = True
+        mock_domain_check_create_update_renew.return_value = [True, ]
+        mock_domain_synchronize_from_backend.return_value = [True, ]
         tasks.retry_failed_orders()
         assert Order.orders.first().status == 'processed'
         assert OrderItem.order_items.first().status == 'processed'

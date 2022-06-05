@@ -395,7 +395,7 @@ class DomainSynchronizer(automat.Automat):
         outputs = list(dcs.outputs)
         del dcs
         if not outputs:
-            logger.error('empty result from DomainContactsSynchronizer: %s', exc)
+            logger.error('empty result from DomainContactsSynchronizer')
             self.event('error', Exception('Empty result from DomainContactsSynchronizer'))
             return
         if isinstance(outputs[-1], Exception):
@@ -419,7 +419,7 @@ class DomainSynchronizer(automat.Automat):
             self.event('nameservers-ok')
             return
         dhs = domain_hostnames_synchronizer.DomainHostnamesSynchronizer(
-            update_domain=False,  # (not self.DomainToBeCreated),
+            update_domain=False,
             raise_errors=True,
         )
         try:
@@ -429,10 +429,19 @@ class DomainSynchronizer(automat.Automat):
             del dhs
             self.event('error', exc)
             return
-        self.outputs.extend(list(dhs.outputs))
+        outputs = list(dhs.outputs)
         del dhs
+        if not outputs:
+            logger.error('empty result from DomainHostnamesSynchronizer')
+            self.event('error', Exception('Empty result from DomainHostnamesSynchronizer'))
+            return
+        if isinstance(outputs[-1], Exception):
+            logger.error('found exception in DomainHostnamesSynchronizer outputs: %s', outputs[-1])
+            self.event('error', outputs[-1])
+            return
+        self.outputs.extend(outputs)
         self.event('nameservers-ok')
-        
+
     def doDBWriteDomainCreated(self, *args, **kwargs):
         """
         Action method.

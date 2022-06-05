@@ -63,7 +63,7 @@ class TestAccountDomainsListView(BaseAuthTesterMixin, TestCase):
             expiry_date=datetime.datetime(2099, 1, 1),
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
-            epp_id='12345'
+            epp_id='12345',
         )
         response = self.client.get('/domains/')
         assert response.status_code == 200
@@ -142,7 +142,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             Registrant.registrants.create(**registrant_info)
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
-                contact_admin=Contact.contacts.all()[0].id
+                contact_admin=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/billing/order/create/register/test.ai/'
@@ -172,7 +172,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     def test_domain_is_already_registered(self, mock_user_profile_complete, mock_domain_find):
         mock_user_profile_complete.return_value = True
         mock_domain_find.return_value = mock.MagicMock(
-            epp_id='12345'
+            epp_id='12345',
         )
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
@@ -182,7 +182,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             Registrant.registrants.create(**registrant_info)
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
-                contact_admin=Contact.contacts.all()[0].id
+                contact_admin=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/domains/'
@@ -199,7 +199,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         mock_user_profile_complete.return_value = True
         mock_domain_find.return_value = mock.MagicMock(
             epp_id=None,
-            create_date=datetime.datetime.utcnow()
+            create_date=datetime.datetime.utcnow(),
         )
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
@@ -209,7 +209,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             Registrant.registrants.create(**registrant_info)
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
-                contact_admin=Contact.contacts.all()[0].id
+                contact_admin=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/domains/'
@@ -231,7 +231,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         mock_domain_find.return_value = mock.MagicMock(
             epp_id=None,
             create_date=datetime.datetime.utcnow() - datetime.timedelta(hours=1),
-            id=1
+            id=1,
         )
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
@@ -241,7 +241,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             Registrant.registrants.create(**registrant_info)
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
-                contact_admin=Contact.contacts.all()[0].id
+                contact_admin=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/billing/order/create/register/test.ai/'
@@ -249,7 +249,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
 
     def test_profile_is_not_complete(self):
         response = self.client.post('/domains/create/test.ai/', data=dict(
-            nameserver1='https://ns1.google.com'
+            nameserver1='https://ns1.google.com',
         ))
         assert response.status_code == 302
         assert response.url == '/profile/'
@@ -268,7 +268,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             Registrant.registrants.create(**registrant_info)
             response = self.client.post('/domains/create/test.ax/', data=dict(
                 nameserver1='ns1.google.com',
-                contact_admin=Contact.contacts.all()[0].id
+                contact_admin=Contact.contacts.all()[0].id,
             ))
         assert response.status_code == 302
         assert response.url == '/domains/'
@@ -286,7 +286,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         prepare_tester_registrant(tester=tester, profile_object=profile)
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='dns1.kuwaitnet.net',
-            contact_admin=contact_admin.id
+            contact_admin=contact_admin.id,
         ))
         assert response.status_code == 200
         assert response.context['errors'] == ['List of nameservers that are not valid or not reachable at this '
@@ -302,10 +302,36 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         prepare_tester_registrant(tester=tester, profile_object=profile)
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='ns1.test.ai',
-            contact_admin=contact_admin.id
+            contact_admin=contact_admin.id,
         ))
         assert response.status_code == 302
         mock_messages_error.assert_called_once()
+
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
+    def test_nameserver_is_not_valid(self):
+        tester = prepare_tester_account()
+        contact_admin = prepare_tester_contact(tester=tester)
+        profile = prepare_tester_profile(tester=tester)
+        prepare_tester_registrant(tester=tester, profile_object=profile)
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='1',
+            contact_admin=contact_admin.id,
+        ))
+        assert response.status_code == 200
+        assert response.context['errors'] == ['Please use correct DNS name for the nameservers.', ]
+
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
+    def test_nameserver_is_not_valid_with_two_dots(self):
+        tester = prepare_tester_account()
+        contact_admin = prepare_tester_contact(tester=tester)
+        profile = prepare_tester_profile(tester=tester)
+        prepare_tester_registrant(tester=tester, profile_object=profile)
+        response = self.client.post('/domains/create/test.ai/', data=dict(
+            nameserver1='1.2',
+            contact_admin=contact_admin.id,
+        ))
+        assert response.status_code == 200
+        assert response.context['errors'] == ['Please use DNS name instead of IP address for the nameservers.', ]
 
 
 class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
@@ -326,7 +352,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
                 expiry_date=datetime.datetime(2099, 1, 1),
                 create_date=datetime.datetime(1970, 1, 1),
                 zone=Zone.zones.create(name='ai'),
-                epp_id='12345'
+                epp_id='12345',
             )
             # 3rd update the domain
             response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
@@ -350,7 +376,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
 
     def test_profile_is_not_complete(self):
         response = self.client.post('/domains/edit/1/', data=dict(
-            nameserver1='https://ns1.google.com'
+            nameserver1='https://ns1.google.com',
         ))
         assert response.status_code == 302
         assert response.url == '/profile/'
@@ -359,7 +385,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
     def test_contact_info_is_not_complete(self, mock_user_profile_complete):
         mock_user_profile_complete.return_value = True
         response = self.client.post('/domains/edit/1/', data=dict(
-            nameserver1='https://ns1.google.com'
+            nameserver1='https://ns1.google.com',
         ))
         assert response.status_code == 404
 
@@ -369,7 +395,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
     @mock.patch('os.system')
     @mock.patch('zen.zmaster.domain_check_create_update_renew')
     def test_nameserver_is_not_available(
-        self, mock_epp_call, mock_ping, mock_gethostbyname, mock_user_profile_complete, mock_contact_create_update
+        self, mock_epp_call, mock_ping, mock_gethostbyname, mock_user_profile_complete, mock_contact_create_update,
     ):
         mock_epp_call.return_value = True
         mock_ping.return_value = -1
@@ -385,7 +411,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             expiry_date=datetime.datetime(2099, 1, 1),
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
-            epp_id='12345'
+            epp_id='12345',
         )
         # Update the domain.
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
@@ -416,7 +442,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            nameserver1='ns1.example.com'
+            nameserver1='ns1.example.com',
         )
         # Update the domain with an ip address.
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
@@ -454,7 +480,7 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            nameserver1='ns1.example.com'
+            nameserver1='ns1.example.com',
         )
         # Update the domain with a "glue" record
         response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
@@ -481,7 +507,7 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            auth_key='transfer_me'
+            auth_key='transfer_me',
         )
         response = self.client.get(f'/domains/{domain.id}/transfer-code/')
         assert response.status_code == 200
@@ -493,7 +519,7 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_set_auth_info')
     def test_technical_error(
-        self, mock_set_auth_info, mock_user_profile_complete, mock_list_contacts, mock_messages_error
+        self, mock_set_auth_info, mock_user_profile_complete, mock_list_contacts, mock_messages_error,
     ):
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
@@ -505,7 +531,7 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
             create_date=datetime.datetime(1970, 1, 1),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
-            auth_key='transfer_me'
+            auth_key='transfer_me',
         )
         response = self.client.get(f'/domains/{domain.id}/transfer-code/')
         assert response.status_code == 302
@@ -530,10 +556,10 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                         "infData": {
                             "clID": "12345",
                             "status": {
-                                "@s": "Good"
+                                "@s": "Good",
                             },
                             "authInfo": {
-                                "pw": "Authinfo Correct"
+                                "pw": "Authinfo Correct",
                             }
                         }
                     }
@@ -541,7 +567,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
             }
         }
         mock_user_profile_complete.return_value = True
-        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         order = billing_orders.list_orders(owner=self.account)[0]
         assert order.owner == self.account
@@ -571,10 +597,10 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                         "infData": {
                             "clID": "test_registrar",
                             "status": {
-                                "@s": "Good"
+                                "@s": "Good",
                             },
                             "authInfo": {
-                                "pw": "Authinfo Correct"
+                                "pw": "Authinfo Correct",
                             }
                         }
                     }
@@ -582,7 +608,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
             }
         }
         mock_user_profile_complete.return_value = True
-        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         order = billing_orders.list_orders(owner=self.account)[0]
         assert order.owner == self.account
@@ -601,7 +627,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('django.contrib.messages.warning')
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_not_possible_backend_down(
-        self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+        self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
         mock_domain_info.return_value = None
         mock_user_profile_complete.return_value = True
@@ -617,7 +643,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('django.contrib.messages.error')
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_auth_info_wrong(
-        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
         mock_domain_info.return_value = {
             "epp": {
@@ -626,10 +652,10 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                         "infData": {
                             "clID": "12345",
                             "status": {
-                                "@s": "Good"
+                                "@s": "Good",
                             },
                             "authInfo": {
-                                "pw": "Authinfo Not Correct"
+                                "pw": "Authinfo Not Correct",
                             }
                         }
                     }
@@ -637,7 +663,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
             }
         }
         mock_user_profile_complete.return_value = True
-        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
@@ -649,7 +675,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('django.contrib.messages.error')
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_is_prohibited(
-        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
         mock_domain_info.return_value = {
             "epp": {
@@ -658,10 +684,10 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                         "infData": {
                             "clID": "12345",
                             "status": {
-                                "@s": "serverTransferProhibited"
+                                "@s": "serverTransferProhibited",
                             },
                             "authInfo": {
-                                "pw": "Authinfo Correct"
+                                "pw": "Authinfo Correct",
                             }
                         }
                     }
@@ -669,7 +695,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
             }
         }
         mock_user_profile_complete.return_value = True
-        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_error.assert_called_once()
@@ -681,13 +707,13 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('django.contrib.messages.warning')
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_takeover_already_in_progress(
-        self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts
+        self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
         started_order = billing_orders.order_single_item(
             owner=self.account,
             item_type="domain_transfer",
             item_price=100.0,
-            item_name="bitdust.ai"
+            item_name="bitdust.ai",
         )
         started_order_item = started_order.items.all()[0]
         billing_orders.update_order_item(order_item=started_order_item, new_status='pending')
@@ -698,10 +724,10 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                         "infData": {
                             "clID": "12345",
                             "status": {
-                                "@s": "Good"
+                                "@s": "Good",
                             },
                             "authInfo": {
-                                "pw": "Authinfo Correct"
+                                "pw": "Authinfo Correct",
                             }
                         }
                     }
@@ -709,7 +735,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
             }
         }
         mock_user_profile_complete.return_value = True
-        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
         mock_messages_warning.assert_called_once()
@@ -722,7 +748,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=True)
     def test_domain_transfer_too_many_attempts(self, mock_cache_get, mock_messages_error, mock_user_profile_complete, mock_list_contacts):
         mock_user_profile_complete.return_value = True
-        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         mock_cache_get.return_value = settings.BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_MAX_ATTEMPTS
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
         assert response.status_code == 200
@@ -741,7 +767,7 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zmaster.contact_create_update')
     @mock.patch('django.contrib.messages.success')
     def test_create_profile_with_contact_person(
-        self, mock_messages_success, mock_contact_create_update, mock_contact_create_from_profile
+        self, mock_messages_success, mock_contact_create_update, mock_contact_create_from_profile,
     ):
         response = self.client.post('/profile/', data=contact_person, follow=True)
         assert response.status_code == 200
@@ -754,7 +780,7 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zmaster.contact_create_update')
     @mock.patch('django.contrib.messages.error')
     def test_create_profile_with_contact_person_returns_error(
-        self, mock_messages_error, mock_contact_create_update, mock_contact_create_from_profile
+        self, mock_messages_error, mock_contact_create_update, mock_contact_create_from_profile,
     ):
         mock_contact_create_update.return_value = False
         response = self.client.post('/profile/', data=contact_person, follow=True)
@@ -769,7 +795,7 @@ class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
         contact['address_city'] = 'Mońki'
         response = self.client.post('/profile/', data=contact, follow=True)
         assert response.status_code == 200
-        assert response.context['errors'] == ['Please use only English characters in your details.']
+        assert response.context['errors'] == ['Please use only English characters in your details.', ]
 
 
 class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
@@ -798,7 +824,7 @@ class TestAccountContactCreateView(BaseAuthTesterMixin, TestCase):
             contact['address_city'] = 'Mońki'
             response = self.client.post('/contacts/create/', data=contact, follow=True)
             assert response.status_code == 200
-            assert response.context['errors'] == ['Please use only English characters in your details.']
+            assert response.context['errors'] == ['Please use only English characters in your details.', ]
 
 
 class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
@@ -831,7 +857,7 @@ class TestAccountContactUpdateView(BaseAuthTesterMixin, TestCase):
             contact['address_city'] = 'Mońki'
             response = self.client.post('/contacts/create/', data=contact, follow=True)
             assert response.status_code == 200
-            assert response.context['errors'] == ['Please use only English characters in your details.']
+            assert response.context['errors'] == ['Please use only English characters in your details.', ]
 
     def test_contact_update_returns_404(self):
         response = self.client.put('/contacts/edit/1/')

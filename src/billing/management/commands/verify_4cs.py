@@ -51,12 +51,14 @@ class Command(BaseCommand):
                                         f'{settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID}&t={payment.transaction_id}')
             except Exception as exc:
                 failed_count += 1
-                logger.critical(f'payment confirmation failed {payment.transaction_id} : {exc}')
+                logger.info(f'payment confirmation failed {payment.transaction_id} : {exc}')
+                logger.critical(f'payment confirmation failed')
                 continue
 
             if verified.text.count('Runtime Error'):
                 failed_count += 1
-                logger.critical(f'payment confirmation failed {payment.transaction_id} : Runtime Error response from the Bank')
+                logger.info(f'payment confirmation failed {payment.transaction_id} : Runtime Error response from the Bank')
+                logger.critical(f'payment confirmation failed: Runtime Error response from the Bank')
                 continue
 
             if verified.text != 'YES':
@@ -76,7 +78,8 @@ class Command(BaseCommand):
                         continue
                     if not payments.finish_payment(transaction_id=payment.transaction_id, status='declined'):
                         failed_count += 1
-                        logger.critical(f'payment not found, transaction_id is {payment.transaction_id}')
+                        logger.info(f'payment was not found, transaction_id is {payment.transaction_id}')
+                        logger.critical(f'payment was not found and was not declined, Bank response is {verified.text}')
                         continue
                     modified_count += 1
                     declined_count += 1
@@ -90,7 +93,8 @@ class Command(BaseCommand):
                             continue
                         if not payments.finish_payment(transaction_id=payment.transaction_id, status='cancelled'):
                             failed_count += 1
-                            logger.critical(f'payment not found, transaction_id is {payment.transaction_id}')
+                            logger.info(f'payment was not found, transaction_id is {payment.transaction_id}')
+                            logger.critical(f'payment was not found and was not cancelled, Bank response is {verified.text}')
                             continue
                         logger.info('%r was started while ago but not known to the Bank, cancelled', payment)
                         cancelled_count += 1
@@ -111,7 +115,8 @@ class Command(BaseCommand):
                     continue
                 if not payments.finish_payment(transaction_id=payment.transaction_id, status='processed'):
                     failed_count += 1
-                    logging.critical(f'payment not found, transaction_id is {payment.transaction_id}')
+                    logger.info(f'payment was not found, transaction_id is {payment.transaction_id}')
+                    logger.critical(f'payment was not found and was not processed, Bank response is {verified.text}')
                     continue
                 modified_count += 1
                 logger.info('%r CONFIRMED and PROCESSED', payment)

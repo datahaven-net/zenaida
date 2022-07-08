@@ -68,7 +68,7 @@ class AccountDomainsListView(ListView):
         zmaster.domains_quick_sync(
             domain_objects_list=context.get('object_list', []),
             hours_passed=12,
-            request_time_limit=5,
+            request_time_limit=3,
         )
         return context
 

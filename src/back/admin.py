@@ -76,6 +76,8 @@ class DomainAdmin(NestedModelAdmin):
         ('nameserver2', ),
         ('nameserver3', ),
         ('nameserver4', ),
+        ('modified_date', ),
+        ('latest_sync_date', ),
     )
     actions = (
         'domain_synchronize_from_backend',
@@ -86,7 +88,7 @@ class DomainAdmin(NestedModelAdmin):
         'domain_deduplicate_contacts',
     )
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
-                    'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', )
+                    'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', )
     list_filter = ('status', )
     search_fields = ('name', 'owner__email', )
     readonly_fields = ('name', 'owner', 'registrar', 'zone',

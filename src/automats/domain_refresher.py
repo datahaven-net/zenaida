@@ -17,6 +17,7 @@ EVENTS:
     * :red:`response`
     * :red:`rewrite-contacts`
     * :red:`run`
+    * :red:`skip-check`
 """
 
 #------------------------------------------------------------------------------ 
@@ -25,6 +26,7 @@ import logging
 import datetime
 
 from django.conf import settings
+from django.utils import timezone
 
 #------------------------------------------------------------------------------
 
@@ -83,9 +85,11 @@ class DomainRefresher(automat.Automat):
         Method to initialize additional variables and flags
         at creation phase of `domain_refresher()` machine.
         """
+        self.skip_check = False
         self.contacts_changed = False
         self.refresh_contacts = False  # when True, Zenaida will read contacts from back-end and update local DB
         self.rewrite_contacts = False  # when True, Zenaida will write DB contacts to the back-end
+        self.request_time_limit = 0
         self.domain_info_response = None
         self.received_registrant_epp_id = None
         self.received_contacts = []
@@ -127,13 +131,13 @@ class DomainRefresher(automat.Automat):
                 self.doDBDeleteDomain(*args, **kwargs)
                 self.doReportNotExist(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000, *args, **kwargs) and self.isDomainExist(*args, **kwargs):
-                self.state = 'INFO?'
-                self.doEppDomainInfo(*args, **kwargs)
             elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
                 self.state = 'FAILED'
                 self.doReportCheckFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+            elif event == 'skip-check' or ( event == 'response' and self.isCode(1000, *args, **kwargs) and self.isDomainExist(*args, **kwargs) ):
+                self.state = 'INFO?'
+                self.doEppDomainInfo(*args, **kwargs)
         #---INFO?---
         elif self.state == 'INFO?':
             if event == 'response' and self.isCode(1000, *args, **kwargs) and self.isContactsNeeded(*args, **kwargs):
@@ -266,11 +270,13 @@ class DomainRefresher(automat.Automat):
         """
         self.domain_name = kwargs['domain_name']
         self.target_domain = zdomains.domain_find(domain_name=self.domain_name)
+        self.skip_check = kwargs.get('skip_check', False)
         self.change_owner_allowed = kwargs.get('change_owner_allowed', False)
         self.create_new_owner_allowed = kwargs.get('create_new_owner_allowed', False)
         self.refresh_contacts = kwargs.get('refresh_contacts', False)
         self.soft_delete = kwargs.get('soft_delete', True)
         self.domain_transferred_away = kwargs.get('domain_transferred_away', False)
+        self.request_time_limit = kwargs.get('request_time_limit', 0)
         self.expected_owner = kwargs.get('expected_owner', None)
         self.rewrite_contacts = kwargs.get('rewrite_contacts', None)
         pending_order_items = orders.find_pending_domain_transfer_order_items(domain_name=self.domain_name)
@@ -293,9 +299,13 @@ class DomainRefresher(automat.Automat):
         """
         Action method.
         """
+        if self.skip_check:
+            self.event('skip-check')
+            return
         try:
             response = rpc_client.cmd_domain_check(
                 domains=[self.domain_name, ],
+                request_time_limit=self.request_time_limit,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:
@@ -311,6 +321,7 @@ class DomainRefresher(automat.Automat):
         try:
             response = rpc_client.cmd_domain_info(
                 domain=self.domain_name,
+                request_time_limit=self.request_time_limit,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:
@@ -437,6 +448,7 @@ class DomainRefresher(automat.Automat):
             try:
                 response = rpc_client.cmd_contact_info(
                     contact_id=received_contact['id'],
+                    request_time_limit=self.request_time_limit,
                     raise_for_result=True,
                 )
             except rpc_error.EPPError as exc:
@@ -451,6 +463,7 @@ class DomainRefresher(automat.Automat):
         try:
             response = rpc_client.cmd_contact_info(
                 contact_id=self.received_registrant_epp_id,
+                request_time_limit=self.request_time_limit,
                 raise_for_result=True,
             )
         except rpc_error.EPPError as exc:
@@ -471,6 +484,7 @@ class DomainRefresher(automat.Automat):
         try:
             response = rpc_client.cmd_contact_info(
                 contact_id=self.received_registrant_epp_id,
+                request_time_limit=self.request_time_limit,
                 raise_for_result=True,
             )
         except rpc_error.EPPError as exc:
@@ -493,11 +507,13 @@ class DomainRefresher(automat.Automat):
                     change_registrant=self.new_registrant_epp_id,
                     remove_contacts_list=remove_contacts_list,
                     add_contacts_list=add_contacts_list,
+                    request_time_limit=self.request_time_limit,
                 )
             else:
                 response = rpc_client.cmd_domain_update(
                     domain=self.domain_name,
                     change_registrant=self.new_registrant_epp_id,
+                    request_time_limit=self.request_time_limit,
                 )
         except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)
@@ -849,10 +865,12 @@ class DomainRefresher(automat.Automat):
         """
         if not self.target_domain:
             return
-        self.target_domain.expiry_date=zdomains.response_to_datetime('exDate', self.domain_info_response)
-        self.target_domain.create_date=zdomains.response_to_datetime('crDate', self.domain_info_response)
+        self.target_domain.expiry_date = zdomains.response_to_datetime('exDate', self.domain_info_response)
+        self.target_domain.create_date = zdomains.response_to_datetime('crDate', self.domain_info_response)
         self.target_domain.save()
         zdomains.domain_update_statuses(self.target_domain, self.domain_info_response)
+        self.target_domain.latest_sync_date = timezone.now()
+        self.target_domain.save()
         self.target_domain.refresh_from_db()
 
     def doCheckProcessPendingOrder(self, *args, **kwargs):
@@ -930,15 +948,6 @@ class DomainRefresher(automat.Automat):
         else:
             self.outputs.append(rpc_error.exception_from_response(response=args[0]))
 
-    def doReportNewRegistrantFailed(self, event, *args, **kwargs):
-        """
-        Action method.
-        """
-        if event == 'error':
-            self.outputs.append(args[0])
-        else:
-            self.outputs.append(rpc_error.exception_from_response(response=args[0]))
-
     def doReportDomainUpdateFailed(self, event, *args, **kwargs):
         """
         Action method.
@@ -953,7 +962,7 @@ class DomainRefresher(automat.Automat):
         Action method.
         """
         received_contacts_info = args[0]
-        for role, response in received_contacts_info.items():
+        for _, response in received_contacts_info.items():
             self.outputs.append(response['response'])
 
     def doDestroyMe(self, *args, **kwargs):

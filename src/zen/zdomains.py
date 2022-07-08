@@ -332,7 +332,7 @@ def list_domains(registrant_email):
     existing_account = zusers.find_account(registrant_email)
     if not existing_account:
         return []
-    return list(existing_account.domains.all().order_by('expiry_date'))
+    return existing_account.domains.all().order_by('expiry_date')
 
 
 def list_domains_by_status(status):

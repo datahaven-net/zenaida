@@ -1,5 +1,7 @@
 import logging
 
+from django.utils import timezone
+
 from automats import contact_synchronizer
 from automats import domains_checker
 from automats import domain_synchronizer
@@ -72,6 +74,33 @@ def domains_check(domain_names, verify_registrant=False, raise_errors=False, log
     return outputs[-1]
 
 
+def domains_quick_sync(domain_objects_list, hours_passed=12, request_time_limit=5, raise_errors=False, log_events=True, log_transitions=True):
+    """
+    Run domain_info EPP command for each domain object from the list to verify and update actual status from the back-end.
+    """
+    for domain_object in domain_objects_list:
+        sync_hours_ago = None
+        if domain_object.latest_sync_date:
+            sync_hours_ago = (timezone.now() - domain_object.latest_sync_date).total_seconds() / (60 * 60)
+        if sync_hours_ago is None or sync_hours_ago > hours_passed:
+            logger.info('starting domain sync for %r, latest sync was %r hours ago', domain_object, sync_hours_ago)
+            domain_synchronize_from_backend(
+                domain_name=domain_object.name,
+                skip_check=True,
+                refresh_contacts=False,
+                rewrite_contacts=False,
+                change_owner_allowed=False,
+                create_new_owner_allowed=False,
+                expected_owner=None,
+                soft_delete=True,
+                domain_transferred_away=False,
+                request_time_limit=request_time_limit,
+                raise_errors=raise_errors,
+                log_events=log_events,
+                log_transitions=log_transitions,
+            )
+
+
 def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, save_to_db=True,
                                      raise_errors=False, return_outputs=False, log_events=True, log_transitions=True):
     """
@@ -109,6 +138,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
 
 
 def domain_synchronize_from_backend(domain_name,
+                                    skip_check=False,
                                     refresh_contacts=False,
                                     rewrite_contacts=None,
                                     change_owner_allowed=False,
@@ -116,6 +146,7 @@ def domain_synchronize_from_backend(domain_name,
                                     expected_owner=None,
                                     soft_delete=True,
                                     domain_transferred_away=False,
+                                    request_time_limit=0,
                                     raise_errors=False, log_events=True, log_transitions=True):
     """
     Requests domain info from back-end and take required actions to update local DB
@@ -136,6 +167,7 @@ def domain_synchronize_from_backend(domain_name,
     try:
         dr.event('run',
             domain_name=domain_name,
+            skip_check=skip_check,
             change_owner_allowed=change_owner_allowed,
             create_new_owner_allowed=create_new_owner_allowed,
             expected_owner=expected_owner,
@@ -143,6 +175,7 @@ def domain_synchronize_from_backend(domain_name,
             rewrite_contacts=rewrite_contacts,
             soft_delete=soft_delete,
             domain_transferred_away=domain_transferred_away,
+            request_time_limit=request_time_limit,
         )
         outputs = list(dr.outputs)
     except rpc_error.EPPError as exc:

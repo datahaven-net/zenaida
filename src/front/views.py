@@ -63,6 +63,15 @@ class AccountDomainsListView(ListView):
     def get_queryset(self):
         return zdomains.list_domains(self.request.user.email)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        zmaster.domains_quick_sync(
+            domain_objects_list=context.get('object_list', []),
+            hours_passed=12,
+            request_time_limit=5,
+        )
+        return context
+
 
 class AccountDomainCreateView(FormView):
     template_name = 'front/account_domain_create.html'

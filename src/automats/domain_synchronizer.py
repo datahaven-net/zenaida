@@ -452,6 +452,7 @@ class DomainSynchronizer(automat.Automat):
         self.target_domain.expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.target_domain.status = 'active'
+        self.target_domain.latest_sync_date = timezone.now()
         if self.save_to_db:
             self.target_domain.save()
 
@@ -470,6 +471,7 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
         self.target_domain.epp_id = args[0]['epp']['response']['resData']['infData']['roid']
+        self.target_domain.latest_sync_date = timezone.now()
         if self.save_to_db:
             self.target_domain.save()
         zdomains.domain_update_statuses(

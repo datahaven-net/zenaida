@@ -121,7 +121,7 @@ test_dev: sanity_checks pyclean venv
 	$(TOX) -e dev -- $*
 
 test/%:
-	./venv/bin/pytest -v $*
+	./.tox/py38/bin/pytest -v $*
 
 test_e2e: $(VENV_TOX)
 	E2E=1 PYTHONPATH=./src .tox/py38/bin/py.test -v -s --capture=no src/tests/

@@ -125,6 +125,27 @@ class TestAutoRenewExpiringDomains(TestCase):
         assert report[0][0] == tester_domain.name
 
     @pytest.mark.django_db
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    @mock.patch('zen.zmaster.domain_synchronize_from_backend')
+    def test_auto_renew_for_expired_domain(self, mock_domain_check_create_update_renew, mock_domain_synchronize_from_backend):
+        mock_domain_check_create_update_renew.return_value = [True, ]
+        mock_domain_synchronize_from_backend.return_value = [True, ]
+        tester = testsupport.prepare_tester_account(account_balance=200.0)
+        tester_domain = testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+            domain_status='suspended',
+            expiry_date=timezone.now() - datetime.timedelta(days=1),  # expired yesterday
+            auto_renew_enabled=True,
+        )
+        assert Notification.notifications.count() == 0
+        report = tasks.auto_renew_expiring_domains(dry_run=False)
+        assert len(report) == 1
+        assert report[0][0] == tester_domain.name
+        assert Notification.notifications.count() > 0
+
+    @pytest.mark.django_db
     def test_pending_renew_order_already_exist(self):
         tester = testsupport.prepare_tester_account(account_balance=200.0)
         testsupport.prepare_tester_domain(
@@ -184,11 +205,13 @@ class TestAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
             auto_renew_enabled=True,
         )
+        assert Notification.notifications.count() == 0
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 1
         assert report[0][0] == tester_domain.name
         assert report[0][1] == tester.email
         assert report[0][2].args[0] == 'not enough funds'
+        assert Notification.notifications.count() > 0
 
     @pytest.mark.django_db
     def test_low_balance_notification_already_sent(self):

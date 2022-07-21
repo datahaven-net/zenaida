@@ -28,7 +28,7 @@ def sync_expired_domains(dry_run=True):
     moment_now = timezone.now()
     expired_active_domains = Domain.domains.filter(
         expiry_date__lte=moment_now,
-        status='active',
+        status__in=['active', 'suspended', ],
     ).exclude(
         epp_id=None,
     )

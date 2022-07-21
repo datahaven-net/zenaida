@@ -349,7 +349,7 @@ class OrderCancelView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         existing_order = orders.get_order_by_id_and_owner(
-            order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
+            order_id=kwargs.get('order_id'), owner=request.user, log_action='cancel'
         )
         for order_item in existing_order.items.all():
             if order_item.type == 'domain_register':

@@ -76,7 +76,6 @@ class DomainAdmin(NestedModelAdmin):
         ('nameserver2', ),
         ('nameserver3', ),
         ('nameserver4', ),
-        ('modified_date', ),
         ('latest_sync_date', ),
     )
     actions = (

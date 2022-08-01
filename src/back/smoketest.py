@@ -2,6 +2,8 @@ import logging
 import os
 import socket
 import requests
+import urllib3
+urllib3.disable_warnings()
 
 from django.conf import settings
 
@@ -148,7 +150,7 @@ def run(history_filename, email_alert=False, push_notification_alert=False, sms_
                 if len(updated_line) == 20:
                     updated_line = updated_line[1:]
             else:
-                # If there is new host is added after file was created, add new line with the health result
+                # If there is a new host added after file was created, add new line with the health result
                 updated_line = f"{health_results[index]}\n"
 
             updated_lines_of_file += updated_line
@@ -159,6 +161,9 @@ def run(history_filename, email_alert=False, push_notification_alert=False, sms_
                     # Raise an alert only one time
                     if updated_line.split('\n')[0].endswith('+' + settings.SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT * '-'):
                         hosts_to_be_notified.append(settings.SMOKETEST_HOSTS[index])
+                else:
+                    # If notify_once is not set for that host then we assume we must raise alert every time it failed
+                    hosts_to_be_notified.append(settings.SMOKETEST_HOSTS[index])
 
     # Update the file with the new values.
     with open(history_filename, "w") as health_check_file:

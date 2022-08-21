@@ -14,5 +14,5 @@ class DomainSyncForm(forms.Form):
 class CSVFileSyncForm(forms.Form):
     csv_file = forms.fields.FileField()
     dry_run = forms.fields.BooleanField(
-        initial=True, required=False, help_text='Take no actions, but only report differences'
+        initial=False, required=False, help_text='Take no actions, but only report differences'
     )

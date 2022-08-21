@@ -99,6 +99,7 @@ def prepare_domain_status(csv_domain_status, default_status='active'):
     return {
         'domain_status_active': 'active',
         'domain_status_suspended': 'suspended',
+        'domain_status_redemption_period': 'to_be_deleted',
     }.get(csv_domain_status, default_status)
 
 
@@ -156,8 +157,6 @@ def check_registrant_to_be_created(known_epp_registrant_id, real_epp_registrant_
 
 
 def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='whois_ai', skip_failing_contacts=False, dry_run=True, log=None):
-    """
-    """
     if log is None:
         log = logger
     errors = []

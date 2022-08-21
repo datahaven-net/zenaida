@@ -79,9 +79,9 @@ class DomainAdmin(NestedModelAdmin):
         ('latest_sync_date', ),
     )
     actions = (
+        'domain_synchronize_from_backend_transfer',
         'domain_synchronize_from_backend',
         'domain_synchronize_from_backend_hard',
-        'domain_synchronize_from_backend_transfer',
         'domain_generate_and_set_new_auth_info_key',
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
@@ -215,11 +215,11 @@ class DomainAdmin(NestedModelAdmin):
 
     def domain_synchronize_from_backend(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
-    domain_synchronize_from_backend.short_description = "Synchronize from back-end"
+    domain_synchronize_from_backend.short_description = "Synchronize domain info only"
 
     def domain_synchronize_from_backend_transfer(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, change_owner_allowed=True)))
-    domain_synchronize_from_backend_transfer.short_description = "Synchronize and change owner"
+    domain_synchronize_from_backend_transfer.short_description = "Synchronize from back-end"
 
     def domain_synchronize_from_backend_hard(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=False)))

@@ -34,40 +34,40 @@ class CustomDateFieldListFilter(admin.DateFieldListFilter):
             today = now.date()
         self.links = (self.links[0], self.links[1], ) + (
             (_('1 day ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=1)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=2)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=2)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=1)),
             }),
             (_('2 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=2)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=3)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=3)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=2)),
             }),
             (_('3 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=3)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=4)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=4)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=3)),
             }),
             (_('4 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=4)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=5)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=5)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=4)),
             }),
             (_('5 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=5)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=6)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=6)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=5)),
             }),
             (_('6 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=6)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=7)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=7)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=6)),
             }),
             (_('7 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=7)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=8)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=8)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=7)),
             }),
             (_('8 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=8)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=9)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=9)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=8)),
             }),
             (_('9 days ago'), {
-                self.lookup_kwarg_since: str(today + datetime.timedelta(days=9)),
-                self.lookup_kwarg_until: str(today + datetime.timedelta(days=10)),
+                self.lookup_kwarg_since: str(today - datetime.timedelta(days=10)),
+                self.lookup_kwarg_until: str(today - datetime.timedelta(days=9)),
             }),
         ) + self.links[1:]
 

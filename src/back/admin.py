@@ -1,7 +1,11 @@
+import datetime
+
 from django.contrib import admin
-from django.db.models import Count
+from django.db.models import Count, DateTimeField
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
 from nested_admin import NestedModelAdmin  # @UnresolvedImport
@@ -15,6 +19,57 @@ from back.models.contact import Contact, Registrant
 from billing import orders as billing_orders
 
 from zen import zmaster
+
+
+class CustomDateFieldListFilter(admin.DateFieldListFilter):
+
+    def __init__(self, field, request, params, model, model_admin, field_path):
+        super().__init__(field, request, params, model, model_admin, field_path)
+        now = timezone.now()
+        if timezone.is_aware(now):
+            now = timezone.localtime(now)
+        if isinstance(field, DateTimeField):
+            today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            today = now.date()
+        self.links = (self.links[0], self.links[1], ) + (
+            (_('1 day ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=1)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=2)),
+            }),
+            (_('2 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=2)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=3)),
+            }),
+            (_('3 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=3)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=4)),
+            }),
+            (_('4 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=4)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=5)),
+            }),
+            (_('5 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=5)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=6)),
+            }),
+            (_('6 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=6)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=7)),
+            }),
+            (_('7 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=7)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=8)),
+            }),
+            (_('8 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=8)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=9)),
+            }),
+            (_('9 days ago'), {
+                self.lookup_kwarg_since: str(today + datetime.timedelta(days=9)),
+                self.lookup_kwarg_until: str(today + datetime.timedelta(days=10)),
+            }),
+        ) + self.links[1:]
 
 
 class ZoneAdmin(NestedModelAdmin):
@@ -88,7 +143,8 @@ class DomainAdmin(NestedModelAdmin):
     )
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', )
-    list_filter = ('status', )
+    list_filter = (('create_date', CustomDateFieldListFilter, ), ('expiry_date', CustomDateFieldListFilter, ), 'status', )
+
     search_fields = ('name', 'owner__email', )
     readonly_fields = ('name', 'owner', 'registrar', 'zone',
                        'get_owner_link', 'get_registrant_link',

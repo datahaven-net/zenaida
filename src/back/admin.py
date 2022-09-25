@@ -69,7 +69,7 @@ class CustomDateFieldListFilter(admin.DateFieldListFilter):
                 self.lookup_kwarg_since: str(today - datetime.timedelta(days=10)),
                 self.lookup_kwarg_until: str(today - datetime.timedelta(days=9)),
             }),
-        ) + self.links[1:]
+        ) + self.links[2:]
 
 
 class ZoneAdmin(NestedModelAdmin):

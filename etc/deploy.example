@@ -12,8 +12,11 @@ make venv
 # apply Django migrations
 make migrate
 
-# update FAQ pages on the web-site
+# update FAQ page on the web-site
 cp -r /home/zenaida/static_html/*.html /home/zenaida/zenaida/src/front/templates/faq/
+
+# update escrow page on the web-site
+cp -r /home/zenaida/static_html/escrow.html /home/zenaida/zenaida/src/front/templates/escrow/
 
 # update Billling templates (e,g: receipt PDF)
 cp -r /home/zenaida/static_html/billing/*.html /home/zenaida/zenaida/src/billing/templates/billing/

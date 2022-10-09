@@ -1023,6 +1023,13 @@ class TestFAQViews(TestCase):
         assert response.status_code == 200
 
 
+class TestEscrowViews(TestCase):
+
+    def test_escrow_successful(self):
+        response = self.client.get('/escrow/')
+        assert response.status_code == 200
+
+
 class TemplateContactUsTemplateView(TestCase):
 
     def test_contact_us_successful(self):

@@ -94,6 +94,8 @@ patterns = [
 
     path('faq/', TemplateView.as_view(template_name='front/faq.html'), name='faq'),
 
+    path('escrow/', TemplateView.as_view(template_name='front/escrow.html'), name='escrow'),
+
     path('contact-us/', TemplateView.as_view(template_name='front/contact_us.html'), name='contact_us'),
 
     path('epp-status/', front_views.EPPStatusView.as_view(), name='epp_status'),

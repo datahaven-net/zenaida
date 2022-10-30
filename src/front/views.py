@@ -87,7 +87,7 @@ class AccountDomainCreateView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'domain_name': self.kwargs.get('domain_name', '').strip().lower()})
+        context.update({'domain_name': zdomains.clean_domain_name(self.kwargs.get('domain_name', ''))})
         context.update({'person_name': self.request.user.registrants.all()[0].person_name})
         return context
 
@@ -111,7 +111,11 @@ class AccountDomainCreateView(FormView):
         return form_kwargs
 
     def form_valid(self, form):
-        domain_name = self.kwargs.get('domain_name', '').strip().lower()
+        domain_name = zdomains.clean_domain_name(self.kwargs.get('domain_name', ''))
+        if not zdomains.is_valid(domain_name):
+            messages.error(self.request, 'Domain name is not valid')
+            return self.render_to_response(self.get_context_data(form=form))
+
         domain_tld = domain_name.split('.')[-1]
 
         if not zzones.is_supported(domain_tld):
@@ -257,7 +261,10 @@ class AccountDomainTransferTakeoverView(FormView):
         if self.request.temporarily_blocked:
             messages.error(self.request, 'Too many attempts made, please try again later')
             return self.render_to_response(self.get_context_data(form=form))
-        domain_name = form.cleaned_data.get('domain_name').strip().lower()
+        domain_name = zdomains.clean_domain_name(form.cleaned_data.get('domain_name'))
+        if not zdomains.is_valid(domain_name):
+            messages.error(self.request, 'Domain name is not valid')
+            return self.render_to_response(self.get_context_data(form=form))
         transfer_code = form.cleaned_data.get('transfer_code').strip()
         internal = False  # detects if transfer is going to happen within same registrar
         info = zmaster.domain_read_info(
@@ -427,7 +434,7 @@ class DomainLookupView(FormView):
             return super().form_valid(form)
         result = None
 
-        domain_name = form.cleaned_data.get('domain_name').strip().lower()
+        domain_name = zdomains.clean_domain_name(form.cleaned_data.get('domain_name'))
 
         if domain_name:
             if not zdomains.is_valid(domain_name):

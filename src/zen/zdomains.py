@@ -17,6 +17,17 @@ from zen import zusers
 logger = logging.getLogger(__name__)
 
 
+def clean_domain_name(domain_name):
+    n = domain_name.strip().lower()
+    if n.startswith('http://'):
+        n = n.replace('http://', '')
+    if n.startswith('https://'):
+        n = n.replace('https://', '')
+    if n.startswith('www.'):
+        n = n.replace('www.', '')
+    return n
+
+
 def is_valid(domain_name, idn=False):
     """
     Return `True` if domain name is valid.

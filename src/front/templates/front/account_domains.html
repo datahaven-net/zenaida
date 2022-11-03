@@ -68,9 +68,11 @@
                             <a class="btn btn-sm btn-warning" href="{% url 'billing_order_restore' domain.name %}" role="button">Restore</a>
                         {% elif domain.can_be_renewed  %}
                             <a class="btn btn-sm btn-primary" href="{% url 'billing_order_renew' domain.name %}" role="button">Renew</a>
-                            <a class="btn btn-sm btn-info" href="{% url 'account_domain_transfer_code' domain.id %}" role="button">Transfer</a>
+                            {% if not domain.is_transfer_prohibited  %}
+                                <a class="btn btn-sm btn-info" href="{% url 'account_domain_transfer_code' domain.id %}" role="button">Transfer</a>
+                            {% endif %}
                         {% else %}
-                            <p>contact site administrator</p>
+                            &nbsp;
                         {% endif %}
                     </td>
                 </tr>

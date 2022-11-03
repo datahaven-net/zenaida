@@ -234,4 +234,8 @@ class Domain(models.Model):
     @property
     def can_be_renewed(self):
         # TODO: check expire date, back-end not allow to extend registration period more than 10 years
-        return bool(self.epp_id) and self.status in ['active', 'suspended', ]
+        return bool(self.epp_id) and self.status in ['active', 'suspended', 'inactive', ]
+
+    @property
+    def is_transfer_prohibited(self):
+        return 'serverTransferProhibited' in self.epp_statuses

@@ -313,7 +313,7 @@ def execute_domain_register(order_item, target_domain):
         return_outputs=True,
     )
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details=repr(outputs))
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': repr(outputs), })
         return False
     return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
 
@@ -333,7 +333,7 @@ def execute_domain_renew(order_item, target_domain):
         return_outputs=True,
     )
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details=repr(outputs))
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': repr(outputs), })
         return False
     ret = update_order_item(order_item, new_status='processed', charge_user=True, save=True)
     zmaster.domain_synchronize_from_backend(

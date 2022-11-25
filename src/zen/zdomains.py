@@ -34,6 +34,8 @@ def is_valid(domain_name, idn=False):
     """
     regexp = '^[\w\-\.]*$'
     regexp_IP = '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
+    if not domain_name.isascii():
+        return False
     if '.' not in domain_name:
         return False
     if re.match(regexp, domain_name) is None:

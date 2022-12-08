@@ -110,6 +110,19 @@ class TestBalanceAdjustmentView(BaseAuthTesterMixin, TestCase):
         mock_messages_error.assert_called_once()
 
 
+class TestTwoFactorResetView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.success')
+    def test_successful_2fa_reset(self, mock_messages_success):
+        form_data = dict(
+            email='tester@zenaida.ai',
+        )
+        response = self.client.post('/board/two-factor-reset/', data=form_data)
+        assert response.status_code == 302
+        mock_messages_success.assert_called_once()
+
+
 class TestFinancialReportView(BaseAuthTesterMixin, TestCase):
     def test_financial_result_for_specific_month_successful(self):
         testsupport.prepare_tester_order(

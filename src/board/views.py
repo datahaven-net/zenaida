@@ -12,12 +12,14 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import FormView, FormMixin
 from django.views.generic import DetailView
 
+from django_otp import devices_for_user
+
 from accounts.models import Account
 from accounts.users import list_all_users_by_date
 from base.mixins import StaffRequiredMixin
 from billing import forms as billing_forms, payments
 from billing.orders import list_all_processed_orders_by_date
-from board.forms import DomainSyncForm, CSVFileSyncForm, BalanceAdjustmentForm
+from board.forms import DomainSyncForm, CSVFileSyncForm, BalanceAdjustmentForm, TwoFactorResetForm
 from board.models import CSVFileSync
 from zen import zmaster, zdomains
 
@@ -60,6 +62,26 @@ class BalanceAdjustmentView(StaffRequiredMixin, FormView, FormMixin):
 
         messages.success(self.request, f'You successfully added {amount} USD to the balance of {email}')
 
+        return super().form_valid(form)
+
+
+class TwoFactorResetView(StaffRequiredMixin, FormView, FormMixin):
+    template_name = 'board/two_factor_reset.html'
+    form_class = TwoFactorResetForm
+    success_url = reverse_lazy('two_factor_reset')
+
+    @transaction.atomic
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email')
+        account = Account.objects.filter(email=email).first()
+
+        if not Account.objects.filter(email=email).first():
+            messages.warning(self.request, 'This user does not exist.')
+            return super().form_valid(form)
+        for device in devices_for_user(account):
+            device.delete()
+
+        messages.success(self.request, f'You successfully reset 2FA for account {email}')
         return super().form_valid(form)
 
 

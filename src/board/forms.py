@@ -1,6 +1,10 @@
 from django import forms
 
 
+class TwoFactorResetForm(forms.Form):
+    email = forms.fields.EmailField(label='Email')
+
+
 class BalanceAdjustmentForm(forms.Form):
     email = forms.fields.EmailField(label='Email')
     amount = forms.fields.IntegerField(label='Amount')

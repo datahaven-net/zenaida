@@ -9,7 +9,7 @@ class NewPaymentForm(forms.Form):
     amount = forms.fields.IntegerField(
         label='Amount to pay',
         max_value=int(50 * settings.ZENAIDA_DOMAIN_PRICE),
-        min_value=int(settings.ZENAIDA_DOMAIN_PRICE),
+        min_value=10,
     )
 
     @staticmethod

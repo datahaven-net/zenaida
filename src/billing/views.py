@@ -75,8 +75,12 @@ class NewPaymentView(LoginRequiredMixin, FormView):
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()
         if 'data' not in kw:
+            amount = self.request.GET.get('amount', str(int(settings.ZENAIDA_DOMAIN_PRICE)))
+            amount = int(float(amount) / 10.0) * 10
+            if not amount:
+                amount = 10
             kw['data'] = {
-                'amount': self.request.GET.get('amount', str(int(settings.ZENAIDA_DOMAIN_PRICE))),
+                'amount': amount,
                 'payment_method': self.form_class._get_payment_method_choices()[0][0]
             }
         return kw

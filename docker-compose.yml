@@ -1,22 +1,23 @@
-version: '3.1'
+version: '3.8'
 
 services:
+
+  postgres:
+    restart: always
+    image: postgres:15.1
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=zenaida_db_user
+      - POSTGRES_PASSWORD=zenaida_db_user
+      - POSTGRES_DB=zenaida_db_01
 
   test:
     environment:
       - DOCKER_ENV=1
     build: .
-    image: python:3.9.7
-    volumes:
-      - .:/app
     command: make test
     links:
-      - "postgres:postgres_host"
-
-  postgres:
-    restart: always
-    image: postgres
-    environment:
-      POSTGRES_USER: zenaida_db_user
-      POSTGRES_PASSWORD: zenaida_db_user
-      POSTGRES_DB: zenaida_db_01
+      - postgres
+    depends_on:
+      - postgres

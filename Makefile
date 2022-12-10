@@ -77,7 +77,6 @@ $(PARAMS): | src/main/params_example.py
 venv: $(VENV_DEV) $(PARAMS)
 	# venv
 
-
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
 	# check_forgotten_migrations
 	$(eval MAKE_MIGRATIONS_OUTPUT:="$(shell echo $(MAKE_MIGRATIONS))")
@@ -89,7 +88,6 @@ check_forgotten_migrations: $(PARAMS) $(VENV_BASE)
 		exit 1; \
 	fi
 
-
 check_requirements_txt:
 	# check_requirements_txt
 	@if [ ! -f "$(REQUIREMENTS_TXT)" ]; then \
@@ -98,17 +96,9 @@ check_requirements_txt:
 	fi
 	@touch $(REQUIREMENTS_TXT) # to make sure that REQUIREMENTS_TXT is the requirements file with the latest timestamp
 
-
 sanity_checks: check_requirements_txt check_forgotten_migrations
 	@echo "Checks OK"
 
-
-# Used by the PR jobs. This target should include all tests necessary
-# to determine if the PR should be rejected or not.
-#
-# To run tests locally: use 'make test/path/to/test' for a selection
-# or 'tox -e py35' to run test for only python35. Of course it's still
-# possible to run 'pytest path/to/test'.
 test: clean sanity_checks tox
 	# test
 
@@ -133,12 +123,8 @@ lint: $(VENV_TOX)
 isort: $(VENV_TOX)
 	@$(TOX) -e isort-fix
 
-docs: clean $(VENV_TOX) $(PARAMS)
-	# @$(TOX) -e docs
-
 docker/test:
-	# docker/test
-	$(DOCKER_COMPOSE) build && trap '$(DOCKER_COMPOSE) down' EXIT && $(DOCKER_COMPOSE) up --exit-code-from test --no-build
+	$(DOCKER_COMPOSE) build && trap '$(DOCKER_COMPOSE) down' EXIT && $(DOCKER_COMPOSE) --verbose up --exit-code-from test
 
 artifact: $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# artifact
@@ -156,19 +142,12 @@ ifndef ENV
 	$(error ENV is undefined)
 endif
 
-# Used by the deploy pipeline to finish installation after the artifact is extracted
+
 install: check_env $(VENV_DEPLOY)
 	@echo "ENV = '$(ENV)'" > $(PARAMS)
 	@$(PYTHON) src/manage.py compilemessages
 	@$(PYTHON) src/manage.py collectstatic --noinput
 	@echo 'Done!'
-
-# Used by the deploy pipeline to test if the software is working correctly
-# This is called once after deployment to test and once after deployment to
-# acceptance.
-smoketest:
-	@echo "No smoketest defined"
-	/bin/false
 
 
 runuwsgi: $(VENV_DEPLOY)

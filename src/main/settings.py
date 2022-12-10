@@ -24,7 +24,6 @@ if os.environ.get('DOCKER_ENV'):
 else:
     from main import params
 
-
 #------------------------------------------------------------------------------
 #--- Sentry config
 SENTRY_ENABLED = getattr(params, 'SENTRY_ENABLED', False)
@@ -343,6 +342,7 @@ for key in ('ENGINE', 'HOST', 'PORT', 'USER', 'PASSWORD'):
     except KeyError:
         pass
 
+print('DATABASES: %r' % DATABASES)
 
 # Caches
 CACHES = {

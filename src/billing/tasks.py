@@ -71,7 +71,7 @@ def remove_started_orders(older_than_days=1):
     )
     for order in started_orders:
         order.delete()
-        logger.debug(f'Removed {order} because it was started "{older_than_days}" days ago and was not completed')
+        logger.info(f'Removed {order} because it was started "{older_than_days}" days ago and was not completed')
 
 
 def retry_failed_orders(max_retries=1):
@@ -95,4 +95,4 @@ def remove_unfinished_payments(past_days=60):
         if payment.status == 'processed':
             continue
         payment.delete()
-        logger.debug(f'Removed {payment} because it was started "{past_days}" days ago and was not processed')
+        logger.info(f'Removed {payment} because it was started "{past_days}" days ago and was not processed')

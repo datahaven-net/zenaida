@@ -57,6 +57,9 @@ class Command(BaseCommand):
             # Remove started but not completed orders after a day.
             billing_tasks.remove_started_orders(older_than_days=365)
 
+            # Remove started but not completed payments after 60 days
+            billing_tasks.remove_unfinished_payments()
+
             # TODO: other background periodical jobs to be placed here
 
             time.sleep(delay)

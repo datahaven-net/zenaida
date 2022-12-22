@@ -342,8 +342,6 @@ for key in ('ENGINE', 'HOST', 'PORT', 'USER', 'PASSWORD'):
     except KeyError:
         pass
 
-print('DATABASES: %r' % DATABASES)
-
 # Caches
 CACHES = {
     'default': {

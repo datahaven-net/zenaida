@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from django.utils import timezone
@@ -5,6 +6,7 @@ from django.utils import timezone
 from accounts.models.account import Account
 
 from billing import orders
+from billing import payments
 
 
 logger = logging.getLogger(__name__)
@@ -83,3 +85,14 @@ def retry_failed_orders(max_retries=1):
             order.retries = order.retries + 1
             order.save()
             orders.execute_order(order)
+
+
+def remove_unfinished_payments(past_days=60):
+    moment_2months_ago = timezone.now() - datetime.timedelta(days=past_days)
+    for payment in payments.iterate_payments(
+        started_at__lte=moment_2months_ago,
+    ):
+        if payment.status == 'processed':
+            continue
+        payment.delete()
+        logger.debug(f'Removed {payment} because it was started "{past_days}" days ago and was not processed')

@@ -12,7 +12,7 @@ class Command(BaseCommand):
     help = 'Background process to execute regular tasks'
 
     def handle(self, *args, **options):
-        # Sync real status of "to_be_deleted" domains from the backend
+        # Sync real status of "to_be_deleted" domains from the back-end
         sync_to_be_deleted_domains_from_backend()
 
 

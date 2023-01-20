@@ -310,6 +310,9 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
             owner=request.user,
             order_items=to_be_ordered,
         )
+        if new_order.total_price > self.request.user.balance:
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(new_order.total_price - self.request.user.balance)))
         return shortcuts.render(request, 'billing/order_details.html', {'order': new_order})
 
 

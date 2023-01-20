@@ -11,6 +11,8 @@ class BaseAuthTesterMixin(object):
     @pytest.mark.django_db
     def setUp(self):
         self.account = zusers.create_account('tester@zenaida.ai', account_password='123', is_active=True)
+        self.account.balance = 1000
+        self.account.save()
         self.client.login(email='tester@zenaida.ai', password='123')
 
 

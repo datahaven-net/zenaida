@@ -227,10 +227,15 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
             context['domain_expiry_date'] = domain.expiry_date
         return context
 
-    def dispatch(self, request, *args, **kwargs):
-        if kwargs.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
-        return super(OrderDomainRegisterView, self).dispatch(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
+        new_order = context.get('order')
+        if new_order and new_order.total_price > new_order.owner.balance:
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(new_order.total_price - new_order.owner.balance)))
+        return self.render_to_response(context)
 
 
 class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
@@ -246,10 +251,15 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
             context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=2)
         return context
 
-    def dispatch(self, request, *args, **kwargs):
-        if kwargs.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
-        return super(OrderDomainRenewView, self).dispatch(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
+        new_order = context.get('order')
+        if new_order and new_order.total_price > new_order.owner.balance:
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(new_order.total_price - new_order.owner.balance)))
+        return self.render_to_response(context)
 
 
 class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
@@ -262,10 +272,15 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
         context['domain_expiry_date'] = timezone.now() + relativedelta(years=2)
         return context
 
-    def dispatch(self, request, *args, **kwargs):
-        if kwargs.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=kwargs.get('order').id)
-        return super(OrderDomainRestoreView, self).dispatch(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
+        new_order = context.get('order')
+        if new_order and new_order.total_price > new_order.owner.balance:
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(new_order.total_price - new_order.owner.balance)))
+        return self.render_to_response(context)
 
 
 class OrderCreateView(LoginRequiredMixin, CreateView):

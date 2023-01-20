@@ -21,6 +21,8 @@ class BaseAuthTesterMixin(object):
     @pytest.mark.django_db
     def setUp(self):
         self.account = zusers.create_account('tester@zenaida.ai', account_password='123', is_active=True)
+        self.account.balance = 1000
+        self.account.save()
         self.client.login(email='tester@zenaida.ai', password='123')
 
 
@@ -574,6 +576,21 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 302
         assert response.url == '/domains/'
 
+    @pytest.mark.django_db
+    def test_order_create_not_enough_balance(self):
+        self.account.balance = 10
+        self.account.save()
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 302
+        assert response.url == '/billing/pay/?amount={}'.format(100 - 10)
+
 
 class TestOrderCancelView(BaseAuthTesterMixin, TestCase):
 
@@ -827,15 +844,17 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 400
 
     def test_order_execute_error_not_enough_balance(self):
+        self.account.balance = 10
+        self.account.save()
         with mock.patch('billing.orders.get_order_by_id_and_owner') as order_mock:
             order_mock.return_value = mock.MagicMock(
                 owner=self.account,
                 started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
                 status='processed',
-                total_price=200.00,
+                total_price=200,
                 id=1,
             )
             order_id = order_mock().id
             response = self.client.post(f'/billing/order/process/{order_id}/')
         assert response.status_code == 302
-        assert response.url == '/billing/pay/?amount=200'
+        assert response.url == '/billing/pay/?amount={}'.format(200 - 10)

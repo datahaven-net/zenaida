@@ -67,7 +67,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
 
 class RedirectPaymentView(View):
     def dispatch(self, request, *args, **kwargs):
-        # If there is any order which needs to be completed, redirect user to that order to complete the order.
+        # If there is any order which needs to be completed, redirect user to the order details view.
         # Otherwise, go back to the payments overview.
         started_orders = billing_orders.list_orders(
             owner=self.request.user,

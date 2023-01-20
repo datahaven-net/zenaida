@@ -278,7 +278,7 @@ $(VENV_TEST): $(VENV_NO_SYSTEM_SITE_PACKAGES) $(REQUIREMENTS_TEST)
 $(VENV_TOX): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 	# VENV_TOX
 	@$(PIP) install --upgrade pip wheel
-	@$(PIP) install tox importlib.metadata==2.0.0
+	@$(PIP) install "tox<4.0.0" importlib.metadata==2.0.0
 	@touch $@
 
 $(VENV_DEV): $(VENV_TOX) $(VENV_BASE) $(VENV_TEST)

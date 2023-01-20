@@ -259,6 +259,17 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         assert response.status_code == 200
 
     @pytest.mark.django_db
+    def test_domain_renew_has_existing_order(self):
+        existing_order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='started',
+        )
+        response = self.client.get('/billing/order/create/renew/test.ai/')
+        assert response.status_code == 302
+        assert response.url == '/billing/order/{}/'.format(existing_order.id)
+
+    @pytest.mark.django_db
     @mock.patch('django.contrib.messages.warning')
     @mock.patch('zen.zdomains.domain_find')
     def test_one_started_order_for_same_user(self, mock_domain_search, mock_messages_warning):
@@ -284,8 +295,37 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         assert orders[0].items.all()[0].name == 'test.ai'
         mock_messages_warning.assert_called_once()
 
+    @pytest.mark.django_db
+    def test_domain_renew_not_enough_balance(self):
+        self.account.balance = 10
+        self.account.save()
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+        )
+        response = self.client.get('/billing/order/create/renew/test.ai/')
+        assert response.status_code == 302
+        assert response.url == '/billing/pay/?amount={}'.format(100 - 10)
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    def test_domain_register_has_existing_order(self):
+        existing_order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='started',
+        )
+        response = self.client.get('/billing/order/create/register/test.ai/')
+        assert response.status_code == 302
+        assert response.url == '/billing/order/{}/'.format(existing_order.id)
 
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
@@ -328,8 +368,30 @@ class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
         assert orders[0].items.all()[0].name == 'test.ai'
         mock_messages_warning.assert_called_once()
 
+    @pytest.mark.django_db
+    def test_domain_register_not_enough_balance(self):
+        self.account.balance = 10
+        self.account.save()
+        response = self.client.get('/billing/order/create/register/test.ai/')
+        assert response.status_code == 302
+        assert response.url == '/billing/pay/?amount={}'.format(100 - 10)
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
+
 
 class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    def test_domain_restore_has_existing_order(self):
+        existing_order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='started',
+        )
+        response = self.client.get('/billing/order/create/restore/test.ai/')
+        assert response.status_code == 302
+        assert response.url == '/billing/order/{}/'.format(existing_order.id)
 
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
@@ -370,6 +432,17 @@ class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
         assert orders[0].status == 'started'
         assert orders[0].items.all()[0].name == 'test.ai'
         mock_messages_warning.assert_called_once()
+
+    @pytest.mark.django_db
+    def test_domain_restore_not_enough_balance(self):
+        self.account.balance = 10
+        self.account.save()
+        response = self.client.get('/billing/order/create/restore/test.ai/')
+        assert response.status_code == 302
+        assert response.url == '/billing/pay/?amount={}'.format(100 + 100 - 10)
+        orders = Order.orders.all()
+        assert len(orders) == 1
+        assert orders[0].status == 'started'
 
 
 class TestOrderDetailsView(BaseAuthTesterMixin, TestCase):

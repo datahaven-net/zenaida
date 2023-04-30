@@ -5,8 +5,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [('logs', '0001_initial'), ('logs', '0002_auto_20230430_1301'), ('logs', '0003_auto_20230430_1526'), ('logs', '0004_apilog_ip_address'), ('logs', '0005_requestlog'), ('logs', '0006_auto_20230430_1856')]
-
     initial = True
 
     dependencies = [

@@ -244,6 +244,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     # useful things: https://django-extensions.readthedocs.io/en/latest/command_extensions.html
     'django_extensions',
+    'logs',
     'billing',
     'accounts',
     'back',
@@ -254,6 +255,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'logs.middleware.LogRequestsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

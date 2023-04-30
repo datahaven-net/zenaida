@@ -41,9 +41,10 @@ class LogRequestsMiddleware(object):
         return None
 
     def log_filter(self, request):
-        if request.path.count('/admin/') or request.path.count('_nested_admin'):
+        p = request.path
+        if p.count('/admin/') or p.count('_nested_admin'):
             return False
-        if request.path == '/favicon.ico':
+        if p == '/favicon.ico' or p == '/robots.txt':
             return False
         return True
 
@@ -66,7 +67,9 @@ class LogRequestsMiddleware(object):
         raw_request_body = ""
         if request.POST:
             try:
-                raw_request_body += '\n'.join(['%s=%s' % (k, v) for k, v in request.POST.items() if k != 'csrfmiddlewaretoken'])
+                raw_request_body += '\n'.join(['%s=%s' % (k, v) for k, v in request.POST.items() if k not in [
+                    'csrfmiddlewaretoken', 'auth-password',
+                ]])
             except Exception as e:
                 raw_request_body += str(e)
         if request.GET:

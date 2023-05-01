@@ -46,12 +46,13 @@ class LogRequestsMiddleware(object):
             return False
         p = request.path
         if p in [
-            '/admin/',
-            '/_nested_admin',
-            '/epp-status/',
             '/favicon.ico',
             '/robots.txt',
         ]:
+            # skip logging of some specific requests
+            return False
+        if p.count('/admin/') or p.count('/_nested_admin'):
+            # skip logging of admin requests
             return False
         return True
 

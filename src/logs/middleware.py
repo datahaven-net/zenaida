@@ -41,10 +41,17 @@ class LogRequestsMiddleware(object):
         return None
 
     def log_filter(self, request):
-        p = request.path
-        if p.count('/admin/') or p.count('_nested_admin'):
+        if self.client_ip(request) == '45.76.43.120':
+            # skip logging all monitoring requests from specific host
             return False
-        if p == '/favicon.ico' or p == '/robots.txt':
+        p = request.path
+        if p in [
+            '/admin/',
+            '/_nested_admin',
+            '/epp-status/',
+            '/favicon.ico',
+            '/robots.txt',
+        ]:
             return False
         return True
 
@@ -68,7 +75,7 @@ class LogRequestsMiddleware(object):
         if request.POST:
             try:
                 raw_request_body += '\n'.join(['%s=%s' % (k, v) for k, v in request.POST.items() if k not in [
-                    'csrfmiddlewaretoken', 'auth-password',
+                    'csrfmiddlewaretoken', 'auth-password', 'g-recaptcha-response',
                 ]])
             except Exception as e:
                 raw_request_body += str(e)

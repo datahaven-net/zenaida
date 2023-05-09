@@ -22,13 +22,16 @@
 
 <body>
     <script>
-      setTimeout("window.top.location.href='{{ redirect_url }}'", 3000);
+      setTimeout("window.top.location.href='{{ redirect_url }}'", 5000);
     </script>
     <div class="container">
         <div class="row mt-3">
             <div class="col-sm-12 text-center">
                 <div class="alert alert-success">
-                  <strong>Your payment was processed successfully.</strong>
+                    <strong>
+                        Your payment of {{ amount }} was processed successfully.
+                        Account balance is {{ new_balance }} now.
+                    </strong>
                 </div>
             </div>
         </div>

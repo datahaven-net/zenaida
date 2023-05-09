@@ -163,6 +163,7 @@ class VerifyPaymentView(View):
             raise exceptions.SuspiciousOperation()
 
         redirect_url = '/billing/payments/'
+        new_balance = payment_object.owner.balance
 
         if not request.user.is_anonymous:
             started_orders = billing_orders.list_orders(
@@ -175,4 +176,8 @@ class VerifyPaymentView(View):
                                                'to complete the order.')
                 redirect_url = '/billing/order/' + str(started_orders[0].id)
 
-        return shortcuts.render(request, 'billing/4csonline/success_payment.html', {'redirect_url': redirect_url})
+        return shortcuts.render(request, 'billing/4csonline/success_payment.html', {
+            'redirect_url': redirect_url,
+            'amount': '$%s US' % amount,
+            'new_balance': '$%s US' % new_balance,
+        })

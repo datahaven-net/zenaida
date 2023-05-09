@@ -175,4 +175,7 @@ class VerifyPaymentView(View):
                                                'to complete the order.')
                 redirect_url = '/billing/order/' + str(started_orders[0].id)
 
-        return shortcuts.render(request, 'billing/4csonline/success_payment.html', {'redirect_url': redirect_url})
+        return shortcuts.render(request, 'billing/4csonline/success_payment.html', {
+            'redirect_url': redirect_url,
+            'amount': '$%s US' % amount,
+        })

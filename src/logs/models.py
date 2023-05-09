@@ -15,6 +15,6 @@ class RequestLog(models.Model):
 
     @staticmethod
     def erase_old_records(num_records):
-        RequestLog.objects.filter(
-            pk__in=RequestLog.objects.order_by('timestamp').all().values_list('pk')[:num_records],
+        return RequestLog.objects.filter(
+            pk__in=RequestLog.objects.order_by('-timestamp').all().values_list('pk')[num_records:],
         ).delete()

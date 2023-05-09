@@ -89,7 +89,7 @@ class NewPaymentView(LoginRequiredMixin, FormView):
         if settings.ZENAIDA_BILLING_PAYMENT_TIME_FREEZE_SECONDS:
             my_latest_unfinished_payment = payments.latest_payment(
                 owner=self.request.user,
-                status_in=['started', 'cancelled', 'declined', ],
+                status_in=['started', 'cancelled', 'declined', 'processed', 'paid', ],
             )
             if my_latest_unfinished_payment:
                 if timezone.now() - my_latest_unfinished_payment.started_at < datetime.timedelta(

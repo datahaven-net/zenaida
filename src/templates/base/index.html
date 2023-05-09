@@ -12,7 +12,7 @@
           Your current balance: <b>${{ user.balance }} US</b>
           <br />
           {% if total_domains > 0 %}
-            Number of domains that you have: <b>{{ total_domains }}</b>
+            Number of domains in your account: <b>{{ total_domains }}</b>
             <br />
             Browse your current <a href="{% url 'account_domains' %}">domains</a>
           {% else %}

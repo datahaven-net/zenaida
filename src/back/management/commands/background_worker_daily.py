@@ -42,4 +42,5 @@ def sync_to_be_deleted_domains_from_backend():
 
 
 def cleanup_old_request_logs():
-    RequestLog.erase_old_records(num_records=100000)
+    deleted = RequestLog.erase_old_records(num_records=100000)
+    logger.info(f'Cleanup request logs: {deleted[0]}')

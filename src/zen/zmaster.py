@@ -302,7 +302,7 @@ def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=Fal
     return True
 
 
-def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True, log_transitions=True):
+def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True, log_transitions=True, return_outputs=False):
     """
     Request from back-end and returns actual info about the domain.
     """
@@ -319,6 +319,9 @@ def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True
     outputs = list(dc.outputs)
     del dc
     logger.info('domains_checker(%r) finished with %d outputs', domain, len(outputs))
+
+    if return_outputs:
+        return outputs
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):

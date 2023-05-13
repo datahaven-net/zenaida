@@ -261,19 +261,46 @@ class AccountDomainTransferTakeoverView(FormView):
         if self.request.temporarily_blocked:
             messages.error(self.request, 'Too many attempts made, please try again later')
             return self.render_to_response(self.get_context_data(form=form))
+
         domain_name = zdomains.clean_domain_name(form.cleaned_data.get('domain_name'))
         if not zdomains.is_valid(domain_name):
             messages.error(self.request, 'Domain name is not valid')
             return self.render_to_response(self.get_context_data(form=form))
+
         transfer_code = form.cleaned_data.get('transfer_code').strip()
         internal = False  # detects if transfer is going to happen within same registrar
-        info = zmaster.domain_read_info(
+
+        outputs = zmaster.domain_read_info(
             domain=domain_name,
             auth_info=transfer_code,
+            return_outputs=True,
         )
-        if not info:
+
+        if not outputs:
             messages.warning(self.request, 'Domain name is not registered or transfer is not possible at the moment')
             return super().form_invalid(form)
+
+        if isinstance(outputs[-1], rpc_error.EPPAuthorizationError):
+            messages.error(self.request, 'You are not authorized to transfer this domain')
+            return super().form_invalid(form)
+
+        if isinstance(outputs[-1], rpc_error.EPPObjectNotExist):
+            messages.error(self.request, 'Domain name is not registered')
+            return super().form_invalid(form)
+
+        if isinstance(outputs[-1], rpc_error.EPPError):
+            messages.error(self.request, 'Domain transfer failed due to unexpected error, please try again later')
+            return super().form_invalid(form)
+
+        if not outputs[-1].get(domain_name):
+            messages.warning(self.request, 'Domain name is not registered')
+            return super().form_invalid(form)
+
+        if len(outputs) < 2:
+            messages.error(self.request, 'Domain name transfer is not possible at the moment, please try again later')
+            return super().form_invalid(form)
+
+        info = outputs[-2]
         current_registrar = info['epp']['response']['resData']['infData']['clID']
         if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
             internal = True
@@ -288,6 +315,7 @@ class AccountDomainTransferTakeoverView(FormView):
         if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
             messages.error(self.request, 'Transfer failed. Probably the domain is locked or the Auth Code was wrong')
             return super().form_invalid(form)
+
         if len(orders.find_pending_domain_transfer_order_items(domain_name)):
             messages.warning(self.request, 'Domain transfer is already in progress')
             return super().form_invalid(form)

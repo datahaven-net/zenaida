@@ -18,8 +18,7 @@ from billing import orders as billing_orders
 from tests.testsupport import (
     prepare_tester_account, prepare_tester_contact, prepare_tester_registrant, prepare_tester_profile,
 )
-
-
+from epp import rpc_error
 from zen import zusers
 
 
@@ -549,7 +548,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     def test_domain_transfer_takeover_successful(
         self, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
-        mock_domain_info.return_value = {
+        mock_domain_info.return_value = [{
             "epp": {
                 "response": {
                     "resData": {
@@ -565,7 +564,9 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                     }
                 }
             }
-        }
+        }, {
+            'bitdust.ai': True,
+        }, ]
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
@@ -590,7 +591,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     def test_domain_transfer_takeover_internal_successful(
         self, mock_domain_info, mock_user_profile_complete, mock_list_contacts
     ):
-        mock_domain_info.return_value = {
+        mock_domain_info.return_value = [{
             "epp": {
                 "response": {
                     "resData": {
@@ -606,7 +607,9 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                     }
                 }
             }
-        }
+        }, {
+            'bitdust.ai': True,
+        }, ]
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
@@ -624,12 +627,50 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
-    @mock.patch('django.contrib.messages.warning')
+    @mock.patch('django.contrib.messages.error')
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_not_possible_backend_down(
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
+    ):
+        mock_domain_info.return_value = [
+            rpc_error.EPPCommandFailed(),
+        ]
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.error')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_transfer_not_authorized(
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
+    ):
+        mock_domain_info.return_value = [
+            rpc_error.EPPAuthorizationError(),
+        ]
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.warning')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_transfer_not_registered(
         self, mock_messages_warning, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
-        mock_domain_info.return_value = None
+        mock_domain_info.return_value = [{
+            'bitdust.ai': False,
+        }, ]
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
@@ -645,7 +686,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     def test_domain_transfer_auth_info_wrong(
         self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
-        mock_domain_info.return_value = {
+        mock_domain_info.return_value = [{
             "epp": {
                 "response": {
                     "resData": {
@@ -661,7 +702,9 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                     }
                 }
             }
-        }
+        }, {
+            'bitdust.ai': True,
+        }, ]
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
@@ -677,7 +720,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     def test_domain_transfer_is_prohibited(
         self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
     ):
-        mock_domain_info.return_value = {
+        mock_domain_info.return_value = [{
             "epp": {
                 "response": {
                     "resData": {
@@ -693,7 +736,9 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                     }
                 }
             }
-        }
+        }, {
+            'bitdust.ai': True,
+        }]
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
@@ -717,7 +762,7 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         )
         started_order_item = started_order.items.all()[0]
         billing_orders.update_order_item(order_item=started_order_item, new_status='pending')
-        mock_domain_info.return_value = {
+        mock_domain_info.return_value = [{
             "epp": {
                 "response": {
                     "resData": {
@@ -733,7 +778,9 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
                     }
                 }
             }
-        }
+        }, {
+            'bitdust.ai': True,
+        }, ]
         mock_user_profile_complete.return_value = True
         mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
         response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))

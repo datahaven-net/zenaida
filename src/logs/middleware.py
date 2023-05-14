@@ -1,3 +1,4 @@
+import re
 import logging
 import time
 import traceback
@@ -69,6 +70,7 @@ class LogRequestsMiddleware(object):
             ip = x_forwarded_for.split(',')[0]
         else:
             ip = request.META.get('REMOTE_ADDR')
+        ip = re.sub(r'[^a-zA-Z0-9\.]', '', ip)
         return ip
 
     def request_body(self, request):
@@ -76,7 +78,11 @@ class LogRequestsMiddleware(object):
         if request.POST:
             try:
                 raw_request_body += '\n'.join(['%s=%s' % (k, v) for k, v in request.POST.items() if k not in [
-                    'csrfmiddlewaretoken', 'auth-password', 'g-recaptcha-response',
+                    'csrfmiddlewaretoken',
+                    'g-recaptcha-response',
+                    'auth-password',
+                    'new_password1',
+                    'new_password2',
                 ]])
             except Exception as e:
                 raw_request_body += str(e)

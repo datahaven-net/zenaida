@@ -34,7 +34,7 @@ class SignInViaEmailForm(forms.Form):
             'Please enter a correct %(email)s and password. Note that both '
             'fields may be case-sensitive.'
         ),
-        'inactive': _('This account is inactive.'),
+        'inactive': _('This account is not active yet. You must verify your email before you can login, please follow the link sent to you via email.'),
     }
 
     def __init__(self, request=None, *args, **kwargs):

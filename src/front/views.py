@@ -281,7 +281,10 @@ class AccountDomainTransferTakeoverView(FormView):
             return super().form_invalid(form)
 
         if isinstance(outputs[-1], rpc_error.EPPAuthorizationError):
-            messages.error(self.request, 'You are not authorized to transfer this domain')
+            if outputs[-1].message.lower().count('incorrect authcode provided'):
+                messages.error(self.request, 'Incorrect authorization code provided')
+            else:
+                messages.error(self.request, 'You are not authorized to transfer this domain')
             return super().form_invalid(form)
 
         if isinstance(outputs[-1], rpc_error.EPPObjectNotExist):

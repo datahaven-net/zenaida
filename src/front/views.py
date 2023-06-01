@@ -125,7 +125,7 @@ class AccountDomainCreateView(FormView):
         existing_domain = zdomains.domain_find(domain_name=domain_name)
         if existing_domain:
             if existing_domain.epp_id:
-                # If domain has EPP id, it means that domain is already owned someone.
+                # If domain has EPP id, it means that domain is already owned by someone.
                 messages.error(self.request, 'Domain name already registered')
                 return super().form_valid(form)
             if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
@@ -143,6 +143,20 @@ class AccountDomainCreateView(FormView):
             if nameserver.strip().lower().endswith(domain_name):
                 messages.error(self.request, f'Please use another nameserver instead of {nameserver}, "glue" records are not supported yet.')
                 return super().form_valid(form)
+
+        check_result = zmaster.domains_check(domain_names=[domain_name, ], )
+        if check_result is None:
+            messages.error(self.request, mark_safe('Service is unavailable at this moment. <br /> Please try again later.'))
+            return super().form_valid(form)
+        if check_result == 'non-supported-zone':
+            messages.error(self.request, 'Domain zone is not supported')
+            return super().form_valid(form)
+        if isinstance(check_result.get(domain_name), Exception):
+            messages.error(self.request, mark_safe('Domain is locked or service is unavailable at this moment. <br /> Please try again later.'))
+            return super().form_valid(form)
+        if check_result.get(domain_name) is True:
+            messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
+            return super().form_valid(form)
 
         domain_creation_date = timezone.now()
 
@@ -479,17 +493,17 @@ class DomainLookupView(FormView):
             if domain_available:
                 check_result = zmaster.domains_check(domain_names=[domain_name, ], )
                 if check_result is None:
-                    messages.error(
-                        self.request,
-                        mark_safe('Service is unavailable at this moment. <br /> Please try it later.')
-                    )
+                    messages.error(self.request, mark_safe('Service is unavailable at this moment. <br /> Please try again later.'))
                 elif check_result == 'non-supported-zone':
                     messages.error(self.request, 'Domain zone is not supported')
                 else:
-                    if check_result.get(domain_name):
-                        messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
+                    if isinstance(check_result.get(domain_name), Exception):
+                        messages.error(self.request, mark_safe('Service is unavailable at this moment. <br /> Please try again later.'))
                     else:
-                        result = 'not exist'
+                        if check_result.get(domain_name) is True:
+                            messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
+                        else:
+                            result = 'not exist'
             else:
                 messages.warning(self.request, mark_safe(f'<b>{domain_name}</b> is already registered.'))
         return self.render_to_response(self.get_context_data(form=form, domain_name=domain_name, result=result))

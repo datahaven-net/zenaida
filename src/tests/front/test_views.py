@@ -129,8 +129,10 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zzones.is_supported')
+    @mock.patch('zen.zmaster.domains_check')
     @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
-    def test_create_domain_successful(self, mock_zone_is_supported, mock_user_profile_complete):
+    def test_create_domain_successful(self, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete):
+        mock_domains_check.return_value = {'test.ai': False, }
         mock_zone_is_supported.return_value = True
         mock_user_profile_complete.return_value = True
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
@@ -150,8 +152,10 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zzones.is_supported')
+    @mock.patch('zen.zmaster.domains_check')
     @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
-    def test_create_domain_successful_without_contacts(self, mock_zone_is_supported, mock_user_profile_complete):
+    def test_create_domain_successful_without_contacts(self, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete):
+        mock_domains_check.return_value = {'test.ai': False, }
         mock_zone_is_supported.return_value = True
         mock_user_profile_complete.return_value = True
         registrant_info = copy.deepcopy(contact_person)
@@ -173,6 +177,29 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         mock_domain_find.return_value = mock.MagicMock(
             epp_id='12345',
         )
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person, follow=True)
+            registrant_info = copy.deepcopy(contact_person)
+            registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            Registrant.registrants.create(**registrant_info)
+            response = self.client.post('/domains/create/test.ai/', data=dict(
+                nameserver1='ns1.google.com',
+                contact_admin=Contact.contacts.all()[0].id,
+            ))
+            assert response.status_code == 302
+            assert response.url == '/domains/'
+            assert len(Domain.domains.all()) == 0
+
+    @pytest.mark.django_db
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zzones.is_supported')
+    @mock.patch('zen.zmaster.domains_check')
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
+    def test_domain_is_already_registered_on_backend(self, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete):
+        mock_domains_check.return_value = {'test.ai': True, }
+        mock_zone_is_supported.return_value = True
+        mock_user_profile_complete.return_value = True
         with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
             mock_contact_create_update.return_value = True
             self.client.post('/contacts/create/', data=contact_person, follow=True)
@@ -218,13 +245,15 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zdomains.domain_find')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zzones.is_supported')
+    @mock.patch('zen.zmaster.domains_check')
     @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
     def test_domain_is_available_after_1_hour(
-        self, mock_zone_is_supported, mock_user_profile_complete, mock_domain_find
+        self, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete, mock_domain_find
     ):
         """
         Test after domain was someone's basket for an hour, user can still register it.
         """
+        mock_domains_check.return_value = {'test.ai': False, }
         mock_zone_is_supported.return_value = True
         mock_user_profile_complete.return_value = True
         mock_domain_find.return_value = mock.MagicMock(

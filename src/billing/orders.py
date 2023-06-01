@@ -537,7 +537,11 @@ def execute_order(order_object):
             else:
                 logger.critical('order item %s execution finished with unexpected status: %s', order_item, order_item.status)
     if total_processed == total_executed:
-        new_status = 'processed'
+        if total_executed > 0:
+            new_status = 'processed'
+        else:
+            new_status = 'incomplete'
+            logger.critical('nothing was executed during order processing: %r', order_object)
     else:
         if total_failed > 0:
             new_status = 'failed'

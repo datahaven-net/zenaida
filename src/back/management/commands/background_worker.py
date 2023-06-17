@@ -52,7 +52,7 @@ class Command(BaseCommand):
             account_tasks.activations_cleanup()
 
             # Remove all inactive domains.
-            zdomains.remove_inactive_domains(days=1)
+            zdomains.remove_inactive_domains(days=10)
 
             # Remove started but not completed orders after a day.
             billing_tasks.remove_started_orders(older_than_days=1)

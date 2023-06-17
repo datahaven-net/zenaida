@@ -178,7 +178,7 @@ class OrderReceiptsDownloadView(LoginRequiredMixin, FormView):
                 month=form.data.get('month'),
             )
             if not pdf_info:
-                messages.warning(self.request, 'No orders found for given period')
+                messages.warning(self.request, 'Found no finished orders for given period')
                 return self.render_to_response(
                     self.get_context_data(
                         form=form
@@ -201,13 +201,17 @@ class OrderSingleReceiptDownloadView(View):
                     order_id=order_id, owner=request.user, log_action="download a receipt for"
                 )
             except SuspiciousOperation:
-                messages.warning(request, "You can't download this receipt.")
+                messages.error(request, "Not possible to download this receipt file.")
                 return shortcuts.redirect('billing_orders')
 
         pdf_info = orders.build_receipt(
             owner=request.user,
             order_id=order_id,
         )
+        if not pdf_info:
+            logging.critical('user %r tried to download a receipt file but no finished orders were found' % request.user)
+            messages.error(request, "Not possible to download this receipt file.")
+            return shortcuts.redirect('billing_orders')
 
         response = HttpResponse(pdf_info['body'], content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename={pdf_info["filename"]}'

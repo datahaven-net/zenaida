@@ -163,8 +163,8 @@ class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
             self.client.get(f'/billing/orders/receipts/download/{order.id}/')
             mock_build_receipt.assert_called_once()
 
-    @mock.patch('django.contrib.messages.warning')
-    def test_download_receipt_for_another_user(self, mock_messages_warning):
+    @mock.patch('django.contrib.messages.error')
+    def test_download_receipt_for_another_user(self, mock_messages_error):
         test_account = testsupport.prepare_tester_account(email='baduser@zenaida.ai')
         order = Order.orders.create(
             owner=test_account,
@@ -174,14 +174,14 @@ class TestOrderSingleReceiptDownloadView(BaseAuthTesterMixin, TestCase):
         response = self.client.get(f'/billing/orders/receipts/download/{order.id}/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
-        mock_messages_warning.assert_called_once()
+        mock_messages_error.assert_called_once()
 
-    @mock.patch('django.contrib.messages.warning')
-    def test_download_receipt_for_non_existing_order(self, mock_messages_warning):
+    @mock.patch('django.contrib.messages.error')
+    def test_download_receipt_for_non_existing_order(self, mock_messages_error):
         response = self.client.get(f'/billing/orders/receipts/download/1232131/')
         assert response.status_code == 302
         assert response.url == '/billing/orders/'
-        mock_messages_warning.assert_called_once()
+        mock_messages_error.assert_called_once()
 
 
 class TestPaymentInvoiceDownloadView(BaseAuthTesterMixin, TestCase):

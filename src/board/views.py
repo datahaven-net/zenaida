@@ -7,10 +7,13 @@ import subprocess
 from django import shortcuts
 from django.conf import settings
 from django.contrib import messages
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView, FormMixin
 from django.views.generic import DetailView
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 from django_otp import devices_for_user
 
@@ -19,7 +22,7 @@ from accounts.users import list_all_users_by_date
 from base.mixins import StaffRequiredMixin
 from billing import forms as billing_forms, payments
 from billing.orders import list_all_processed_orders_by_date
-from board.forms import DomainSyncForm, CSVFileSyncForm, BalanceAdjustmentForm, TwoFactorResetForm
+from board.forms import DomainSyncForm, CSVFileSyncForm, BalanceAdjustmentForm, TwoFactorResetForm, SendingSingleEmailForm
 from board.models import CSVFileSync
 from zen import zmaster, zdomains
 
@@ -217,3 +220,36 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
 
         messages.success(self.request, f'New background process started: {started_records}')
         return self.form_valid(form)
+
+
+class SendingSingleEmailView(StaffRequiredMixin, FormView, FormMixin):
+    template_name = 'board/sending_single_email.html'
+    form_class = SendingSingleEmailForm
+    success_url = reverse_lazy('sending_single_email')
+
+    def form_valid(self, form):
+        receiver = form.cleaned_data.get('receiver')
+        subject = form.cleaned_data.get('subject')
+        body = form.cleaned_data.get('body')
+        context = {
+            'subject': subject,
+            'body': body,
+        }
+        html_content = render_to_string('email/single_email.html', context=context, request=None)
+        text_content = strip_tags(html_content)
+        msg = EmailMultiAlternatives(
+            subject,
+            text_content,
+            settings.DEFAULT_FROM_EMAIL,
+            to=[receiver, ],
+            bcc=[receiver, ],
+            cc=[receiver, ],
+        )
+        msg.attach_alternative(html_content, 'text/html')
+        try:
+            msg.send()
+            messages.success(self.request, f'Email is sent to {receiver}')
+        except Exception as e:
+            logging.exception('Failed to send email')
+            messages.error(self.request, f'Failed to send email: {e}')
+        return super().form_valid(form)

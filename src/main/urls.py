@@ -90,6 +90,7 @@ patterns = [
     path('board/domain-sync/', board_views.NotExistingDomainSyncView.as_view(), name='not_existing_domain_sync'),
     path('board/csv-file-sync/<str:record_id>/', board_views.CSVFileSyncRecordView.as_view(), name='csv_file_sync_record'),
     path('board/csv-file-sync/', board_views.CSVFileSyncView.as_view(), name='csv_file_sync'),
+    path('board/single-email/', board_views.SendingSingleEmailView.as_view(), name='sending_single_email'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 

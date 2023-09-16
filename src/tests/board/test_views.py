@@ -14,6 +14,7 @@ from board.models.csv_file_sync import CSVFileSync
 
 
 class BaseAuthTesterMixin(object):
+
     @pytest.mark.django_db
     def setUp(self):
         self.account = testsupport.prepare_tester_account(
@@ -24,6 +25,7 @@ class BaseAuthTesterMixin(object):
 
 
 class TestBalanceAdjustmentView(BaseAuthTesterMixin, TestCase):
+
     @pytest.mark.django_db
     @mock.patch('django.contrib.messages.success')
     def test_successful_balance_update(self, mock_messages_success):
@@ -124,6 +126,7 @@ class TestTwoFactorResetView(BaseAuthTesterMixin, TestCase):
 
 
 class TestFinancialReportView(BaseAuthTesterMixin, TestCase):
+
     def test_financial_result_for_specific_month_successful(self):
         testsupport.prepare_tester_order(
             domain_name='test.ai',
@@ -247,3 +250,27 @@ class TestCSVFileSyncView(BaseAuthTesterMixin, TestCase):
         assert popen_cmd.count('src/manage.py csv_import')
         assert popen_cmd.count('--record_id=%d ' % latest_record.id)
         os.remove(latest_record.input_filename)
+
+
+class TestSendingSingleEmailView(BaseAuthTesterMixin, TestCase):
+
+    @mock.patch('django.contrib.messages.error')
+    def test_access_denied_for_normal_user(self, mock_messages_error):
+        self.account.is_staff = False
+        self.account.save()
+        response = self.client.post('/board/single-email/', data=dict())
+        assert response.url == '/'
+        mock_messages_error.assert_called_once()
+
+    @mock.patch('django.core.mail.EmailMultiAlternatives.send')
+    @mock.patch('django.contrib.messages.success')
+    def test_successful_email(self, mock_messages_success, mock_EmailMultiAlternatives):
+        form_data = dict(
+            receiver='tester@zenaida.ai',
+            subject='Very important',
+            body='Makes no sense',
+        )
+        response = self.client.post('/board/single-email/', data=form_data)
+        assert response.status_code == 302
+        mock_messages_success.assert_called_once()
+        mock_EmailMultiAlternatives.assert_called_once()

@@ -74,11 +74,13 @@
                                 Management
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuManagement">
+                                <a class="dropdown-item" href="/admin/">Django Admin</a>
                                 <a class="dropdown-item" href="{% url 'balance_adjustment' %}">Balance Adjustment</a>
                                 <a class="dropdown-item" href="{% url 'two_factor_reset' %}">Reset 2FA</a>
                                 <a class="dropdown-item" href="{% url 'financial_report' %}">Financial Report</a>
                                 <a class="dropdown-item" href="{% url 'not_existing_domain_sync' %}">Domain Sync</a>
                                 <a class="dropdown-item" href="{% url 'csv_file_sync' %}">CSV file Sync</a>
+                                <a class="dropdown-item" href="{% url 'sending_single_email' %}">Testing email</a>
                             </div>
                         </li>
                         {% endif %}

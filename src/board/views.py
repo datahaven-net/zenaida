@@ -242,8 +242,6 @@ class SendingSingleEmailView(StaffRequiredMixin, FormView, FormMixin):
             text_content,
             settings.DEFAULT_FROM_EMAIL,
             to=[receiver, ],
-            bcc=[receiver, ],
-            cc=[receiver, ],
         )
         msg.attach_alternative(html_content, 'text/html')
         try:

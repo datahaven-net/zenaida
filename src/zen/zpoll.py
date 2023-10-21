@@ -283,6 +283,9 @@ def on_queue_message(msgQ):
             if details.lower() == 'domain transferred':
                 return do_domain_transfer_in(domain)
 
+            if details.lower() == 'transfer rejected through ui':
+                return False
+
         if change == 'DELETION':
             if details.lower() == 'domain deleted':
                 return do_domain_deleted(domain)

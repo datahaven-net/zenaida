@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 def activations_cleanup():
     """
-    If the activation_code is older than a certain time of period and the account is still inactive (no domain,
+    If the activation_code is older than a certain time and the account is still inactive (no domain,
     balance or payment belongs to the account as well), removes the inactive account and the expired activation code.
 
-    If the activation_code is older than a certain time of period but the account is still active, then removes
+    If the activation_code is older than a certain time but the account is still active, then removes
     only the activation code.
     """
 

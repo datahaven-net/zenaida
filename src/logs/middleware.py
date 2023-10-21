@@ -83,6 +83,8 @@ class LogRequestsMiddleware(object):
                     'auth-password',
                     'new_password1',
                     'new_password2',
+                    'password1',
+                    'password2',
                 ]])
             except Exception as e:
                 raw_request_body += str(e)

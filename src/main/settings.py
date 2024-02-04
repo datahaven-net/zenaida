@@ -405,6 +405,8 @@ SMOKETEST_HOSTS = getattr(params, 'SMOKETEST_HOSTS', [])
 SMOKETEST_HOSTS_CONFIG = getattr(params, 'SMOKETEST_HOSTS_CONFIG', {})
 SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT = getattr(params, 'SMOKETEST_MAXIMUM_UNAVAILABLE_AMOUNT', 3)
 
+MONITORING_HOSTS = getattr(params, 'MONITORING_HOSTS', [])
+
 #------------------------------------------------------------------------------
 #--- BRUTE FORCE PROTECTION SETTINGS
 BRUTE_FORCE_PROTECTION_ENABLED = getattr(params, 'BRUTE_FORCE_PROTECTION_ENABLED', False)

@@ -1,3 +1,13 @@
+# business sensitive info
+src/billing/templates/billing/billing_receipt.html
+src/billing/templates/billing/billing_invoice.html
+
+# static FAQ pages and other content
+src/templates/email/price_change.html
+src/front/templates/front/faq_epp.html
+src/front/templates/escrow/escrow.html
+src/front/templates/faq/faq.html
+
 # Zenaida local development
 keys.local/
 logs.local/

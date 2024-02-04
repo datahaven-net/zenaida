@@ -4,6 +4,10 @@
 # * docker
 # * docker-compose
 
+ifeq ($(PYTHON_VER),)
+	PYTHON_VER=python3
+endif
+
 REQUIREMENTS_BASE:=requirements/requirements-base.txt
 REQUIREMENTS_TEST:=requirements/requirements-testing.txt
 REQUIREMENTS_TXT:=requirements.txt
@@ -31,7 +35,6 @@ VSN:=$(shell git describe --tags --always)
 ARTIFACT:=zenaida-$(VSN).tgz
 PIP_CACHE:=.pip_cache
 PIP_DOWNLOAD:=.pip_download
-PYTHON_VERSION=python3
 BRANCH=$(shell git branch | grep '*' | awk '{print $$2}')
 BUILD_PROPERTIES_FILE=build.properties
 BUILD_PROPERTIES_JSONFILE=build.properties.json
@@ -245,7 +248,7 @@ $(REQUIREMENTS_TXT): $(VENV_NO_SYSTEM_SITE_PACKAGES)
 $(VENV_SYSTEM_SITE_PACKAGES):
 	# VENV_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
-	@$(PYTHON_VERSION) -m venv --system-site-packages venv
+	@$(PYTHON_VER) -m venv --system-site-packages venv
 	@echo "[easy_install]" > venv/.pydistutils.cfg
 	@echo "find_links = file://$(PWD)/$(PIP_DOWNLOAD)/" >> venv/.pydistutils.cfg
 	@touch $@
@@ -253,7 +256,7 @@ $(VENV_SYSTEM_SITE_PACKAGES):
 $(VENV_NO_SYSTEM_SITE_PACKAGES):
 	# VENV_NO_SYSTEM_SITE_PACKAGES
 	@rm -rf venv
-	@$(PYTHON_VERSION) -m venv venv
+	@$(PYTHON_VER) -m venv venv
 	@touch $@
 
 # the rest is based on main venvs

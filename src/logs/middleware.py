@@ -3,28 +3,72 @@ import logging
 import time
 import traceback
 
+from django.conf import settings
+from django.http import HttpResponseForbidden
+from django.urls import resolve
+from django.urls.exceptions import Resolver404
+
+from django_extensions.management.commands import show_urls
+
 from logs.models import RequestLog
 
 
 logger = logging.getLogger(__name__)
 
 
+LOG_IGNORE_PATH_STARTSWITH = [
+    '/admin/',
+    '/_nested_admin/',
+    '/grappelli/',
+    '/favicon.ico',
+    '/robots.txt',
+]
+
+STRIP_INPUT_FIELDS = [
+    'csrfmiddlewaretoken',
+    'g-recaptcha-response',
+    'auth-password',
+    'new_password1',
+    'new_password2',
+    'password1',
+    'password2',
+]
+
+
 class LogRequestsMiddleware(object):
 
     def __init__(self, get_response):
         self.get_response = get_response
+        self.whitelisted_routes = self.scan_all_routes()
 
     def __call__(self, request):
         request._start_time = time.monotonic_ns()
+        ip_addr = self.client_ip(request)
+
         request_body = self.request_body(request)
+        request_path = request.path
+
+        if not self.log_filter(request):
+            return self.get_response(request)
+
+        route = None
+        try:
+            route = resolve(request_path).route
+        except Resolver404 as exc:
+            route = exc.args[0]['path']
+
+        if route not in self.whitelisted_routes:
+            #TODO: possibly we could block this IP if it hits the web-site too often
+            return HttpResponseForbidden()
+
         response = self.get_response(request)
+
         if response.streaming:
             return response
-        if not self.log_filter(request):
-            return response
+
         try:
             RequestLog.objects.create(
-                ip_address=self.client_ip(request),
+                ip_address=ip_addr,
                 user=self.user_email(request),
                 method=request.method,
                 path=request.path,
@@ -34,7 +78,8 @@ class LogRequestsMiddleware(object):
                 duration=(time.monotonic_ns() - request._start_time) / 1000000000.0,
             )
         except:
-            logger.exception("Failed to create APILog record")
+            logger.exception("failed to create APILog record")
+
         return response
 
     def process_exception(self, request, exception):
@@ -42,18 +87,12 @@ class LogRequestsMiddleware(object):
         return None
 
     def log_filter(self, request):
-        if self.client_ip(request) == '45.76.43.120':
-            # skip logging all monitoring requests from specific host
+        if self.client_ip(request) in settings.MONITORING_HOSTS:
+            # skip logging all monitoring requests from specific hosts
             return False
         p = request.path
-        if p in [
-            '/favicon.ico',
-            '/robots.txt',
-        ]:
+        if any([p.startswith(ignore_path) for ignore_path in LOG_IGNORE_PATH_STARTSWITH]):
             # skip logging of some specific requests
-            return False
-        if p.count('/admin/') or p.count('/_nested_admin'):
-            # skip logging of admin requests
             return False
         return True
 
@@ -96,3 +135,10 @@ class LogRequestsMiddleware(object):
             except Exception as e:
                 raw_request_body += str(e)
         return raw_request_body
+
+    def scan_all_routes(self):
+        urlconf = __import__(getattr(settings, 'ROOT_URLCONF'), {}, {}, [''])
+        routes = set()
+        for (_, regex, _) in show_urls.Command().extract_views_from_urlpatterns(urlconf.urlpatterns):
+            routes.add(regex)
+        return routes

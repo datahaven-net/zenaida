@@ -219,7 +219,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 #--- Application definition
 INSTALLED_APPS = [
     # nice django admin: https://django-grappelli.readthedocs.io/en/latest/
+    'grappelli.dashboard',
     'grappelli',
+
+    # Django standard things
     'django.contrib.admin',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -353,6 +356,9 @@ CACHES = {
     }
 }
 
+#--- GRAPPELLI
+GRAPPELLI_ADMIN_TITLE = getattr(params, 'GRAPPELLI_ADMIN_TITLE', 'Administration')
+GRAPPELLI_INDEX_DASHBOARD = 'board.dashboard.CustomIndexDashboard'
 
 #------------------------------------------------------------------------------
 #--- Django Rest Framework

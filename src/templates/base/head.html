@@ -68,22 +68,7 @@
                                 <a class="dropdown-item" href="{% url 'billing_receipts_download' %}">Download Receipts</a>
                             </div>
                         </li>
-                        {% if request.user.is_staff %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {% if url_name == 'financial_report' %}active{% endif %}" href="{% url 'financial_report' %}" id="navbarDropdownMenuManagement" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Management
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuManagement">
-                                <a class="dropdown-item" href="/admin/">Django Admin</a>
-                                <a class="dropdown-item" href="{% url 'balance_adjustment' %}">Balance Adjustment</a>
-                                <a class="dropdown-item" href="{% url 'two_factor_reset' %}">Reset 2FA</a>
-                                <a class="dropdown-item" href="{% url 'financial_report' %}">Financial Report</a>
-                                <a class="dropdown-item" href="{% url 'not_existing_domain_sync' %}">Domain Sync</a>
-                                <a class="dropdown-item" href="{% url 'csv_file_sync' %}">CSV file Sync</a>
-                                <a class="dropdown-item" href="{% url 'sending_single_email' %}">Testing email</a>
-                            </div>
-                        </li>
-                        {% endif %}
+
                         <li class="nav-item dropdown">
                             <a class="nav-link {% if url_name == 'faq' %}active{% endif %}" href="{% url 'faq' %}" id="navbarDropdownMenuFAQ" role="button" aria-haspopup="true" aria-expanded="false">
                                 FAQ
@@ -96,6 +81,13 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav">
+
+                        {% if request.user.is_staff %}
+                        <li class="nav-item">
+                            <a class="btn btn-danger btn-margin-right" href="/admin/" role="button">Administration</a>
+                        </li>
+                        {% endif %}
+
                         <li class="nav-item">
                             <a class="btn btn-success btn-margin-right" href="{% url 'domain_lookup' %}" role="button">New Domain</a>
                         </li>

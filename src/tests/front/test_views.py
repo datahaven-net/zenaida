@@ -1113,8 +1113,14 @@ class TemplateContactUsTemplateView(TestCase):
         assert response.status_code == 200
 
 
-class TestErrorViews(TestCase):
+class TestErrorViews(BaseAuthTesterMixin, TestCase):
 
     def test_404_handler(self):
-        response = self.client.get('/notfound/')
-        assert response.status_code == 404
+        with mock.patch('back.models.profile.Profile.is_complete') as mock_user_profile_complete:
+            mock_user_profile_complete.return_value = True
+            response = self.client.post('/contacts/edit/12345/')
+            assert response.status_code == 404
+
+    def test_403_handler(self):
+        response = self.client.get('/not/exist.html')
+        assert response.status_code == 403

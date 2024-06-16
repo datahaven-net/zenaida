@@ -1,6 +1,10 @@
-from django.contrib import admin
-from django.urls import reverse
+from django.contrib import admin, auth, messages
+from django.http import HttpResponseRedirect
+from django.urls import path, reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.shortcuts import resolve_url
+
 from nested_admin import NestedModelAdmin  # @UnresolvedImport
 
 from accounts.models.account import Account
@@ -12,7 +16,8 @@ class AccountAdmin(NestedModelAdmin):
 
     list_display = (
         'email', 'profile_link', 'balance', 'is_active', 'is_staff', 'known_registrants',
-        'known_contacts', 'total_domains', 'total_payments', 'total_orders', 'notes'
+        'known_contacts', 'total_domains', 'total_payments', 'total_orders', 'notes',
+        'get_admin_login_link',
     )
     search_fields = ('email', )
     readonly_fields = ('email', )
@@ -49,6 +54,45 @@ class AccountAdmin(NestedModelAdmin):
             reverse("admin:billing_order_changelist"),
             account_instance.email,
             str(account_instance.orders.count() or 'no')))
+
+    def process_account_admin_login(self, request, account_id, *args, **kwargs):
+        current_user = request.user
+        if not current_user.is_staff:
+            messages.add_message(request, messages.ERROR, 'Must have staff permissions to login as another user')
+            return HttpResponseRedirect(resolve_url('admin:accounts_account_changelist'))
+        if not current_user.is_superuser:
+            messages.add_message(request, messages.ERROR, 'Must have superuser permissions to login as another user')
+            return HttpResponseRedirect(resolve_url('admin:accounts_account_changelist'))
+        another_user = self.get_object(request, account_id)
+        if another_user.is_staff:
+            messages.add_message(request, messages.ERROR, 'May not login as another staff account')
+            return HttpResponseRedirect(resolve_url('admin:accounts_account_changelist'))
+        if another_user.is_superuser:
+            messages.add_message(request, messages.ERROR, 'May not login as another superuser account')
+            return HttpResponseRedirect(resolve_url('admin:accounts_account_changelist'))
+        auth.login(request, another_user)
+        messages.add_message(request, messages.SUCCESS, 'Superuser %s successfully logged in as %s' % (current_user, another_user, ))
+        return HttpResponseRedirect(resolve_url('/'))
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<int:account_id>/admin_login/',
+                self.admin_site.admin_view(self.process_account_admin_login),
+                name='account-admin-login',
+            ),
+        ]
+        return custom_urls + urls
+
+    def get_admin_login_link(self, instance):
+        if instance.is_staff:
+            return format_html('&nbsp;')
+        t = '<a href="{}" class="grp-button {}" style="opacity: {};">{}</a>'
+        l = reverse('admin:account-admin-login', args=[instance.pk])
+        return format_html(t.format(l, 'grp-default', '.6', 'login'))
+    get_admin_login_link.short_description = 'superuser'
+    get_admin_login_link.allow_tags = True
 
 
 class ActivationAdmin(NestedModelAdmin):

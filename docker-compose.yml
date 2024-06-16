@@ -15,6 +15,7 @@ services:
   test:
     environment:
       - DOCKER_ENV=1
+      - PYTHON_VER=python3
     build: .
     command: make test
     links:

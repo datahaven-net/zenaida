@@ -5,7 +5,7 @@
 # * docker-compose
 
 ifeq ($(PYTHON_VER),)
-	PYTHON_VER=python3
+	PYTHON_VER=python3.8
 endif
 
 REQUIREMENTS_BASE:=requirements/requirements-base.txt
@@ -77,7 +77,7 @@ $(PARAMS): | src/main/params_example.py
 	# PARAMS
 	@cp $| $@
 
-venv: $(VENV_DEV) $(PARAMS)
+venv: $(VENV_DEPLOY) $(PARAMS)
 	# venv
 
 check_forgotten_migrations: $(PARAMS) $(VENV_BASE)

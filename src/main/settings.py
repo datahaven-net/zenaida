@@ -235,6 +235,9 @@ INSTALLED_APPS = [
     # Database Backup
     'dbbackup',  # django-dbbackup
 
+    # Friendly Captcha
+    'friendly_captcha',
+
     # OTP
     'django_otp',
     'django_otp.plugins.otp_totp',
@@ -421,6 +424,12 @@ BRUTE_FORCE_PROTECTION_DOMAIN_TRANSFER_TIMEOUT = getattr(params, 'BRUTE_FORCE_PR
 #--- GOOGLE RE-CAPTCHA KEYS
 GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
 GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
+
+#------------------------------------------------------------------------------
+#--- FRIENDLY CAPTCHA KEYS
+FRC_CAPTCHA_SECRET = getattr(params, 'FRC_CAPTCHA_SECRET', '')
+FRC_CAPTCHA_SITE_KEY = getattr(params, 'FRC_CAPTCHA_SITE_KEY', '')
+FRC_CAPTCHA_VERIFICATION_URL = 'https://api.friendlycaptcha.com/api/v1/siteverify'
 
 #------------------------------------------------------------------------------
 #--- SMS GATEWAY CONFIGS

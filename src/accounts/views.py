@@ -13,7 +13,7 @@ from django.views.generic.edit import FormView
 from django.conf import settings
 
 from accounts.decorators import check_recaptcha
-from accounts.forms import SignUpForm, SignInViaEmailForm, CustomPasswordResetForm
+from accounts.forms import SignUpForm, SignInViaEmailForm, CustomPasswordResetForm, FriendlyCaptchaAuthenticationForm
 from accounts.models.activation import Activation
 
 from zen.zusers import create_profile
@@ -25,7 +25,10 @@ class SignInView(SuccessURLAllowedHostsMixin, FormView):
     if hasattr(settings, 'LOGIN_VIA_EMAIL') and settings.LOGIN_VIA_EMAIL:
         form_class = SignInViaEmailForm
     else:
-        form_class = AuthenticationForm
+        if hasattr(settings, 'FRC_CAPTCHA_SECRET') and settings.FRC_CAPTCHA_SECRET:
+            form_class = FriendlyCaptchaAuthenticationForm
+        else:
+            form_class = AuthenticationForm
 
     redirect_field_name = REDIRECT_FIELD_NAME
     success_url = '/'

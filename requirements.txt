@@ -10,6 +10,7 @@ django-bootstrap4==24.1
 django-dbbackup==4.1.0
 django-extensions==3.2.3
 django-formtools==2.5.1
+django-friendly-captcha==0.1.11
 django-grappelli==4.0.1
 django-ipware==3.0.7
 django-nested-admin==4.0.2

@@ -1,10 +1,8 @@
 import logging
 
-from friendly_captcha.fields import FrcCaptchaField
-
 from django import forms
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordResetForm
+from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -15,10 +13,7 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models.activation import Activation
 from accounts.models.account import Account
-
-
-class FriendlyCaptchaAuthenticationForm(AuthenticationForm):
-    captcha = FrcCaptchaField()
+from lib.captcha import CaptchaField
 
 
 class SignInViaEmailForm(forms.Form):
@@ -34,8 +29,7 @@ class SignInViaEmailForm(forms.Form):
         strip=False,
         widget=forms.PasswordInput,
     )
-    if hasattr(settings, 'FRC_CAPTCHA_SECRET') and settings.FRC_CAPTCHA_SECRET:
-        captcha = FrcCaptchaField()
+    captcha = CaptchaField()
 
     error_messages = {
         'invalid_login': _(
@@ -90,8 +84,7 @@ class SignUpForm(UserCreationForm):
 
     email = forms.EmailField(max_length=255, help_text=_('Required. Type a valid email address.'))
 
-    if hasattr(settings, 'FRC_CAPTCHA_SECRET') and settings.FRC_CAPTCHA_SECRET:
-        captcha = FrcCaptchaField()
+    captcha = CaptchaField()
 
     error_messages = {
         'unique_email': _('You can not use this email.'),

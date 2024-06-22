@@ -1,3 +1,5 @@
+from captcha.models import CaptchaStore
+
 from django.contrib import admin, auth, messages
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
@@ -105,6 +107,11 @@ class NotificationAdmin(NestedModelAdmin):
     search_fields = ('account__email', 'recipient', )
 
 
+class CaptchaStoreAdmin(NestedModelAdmin):
+    pass
+
+
 admin.site.register(Account, AccountAdmin)
 admin.site.register(Activation, ActivationAdmin)
 admin.site.register(Notification, NotificationAdmin)
+admin.site.register(CaptchaStore, CaptchaStoreAdmin)

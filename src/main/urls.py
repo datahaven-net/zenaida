@@ -47,6 +47,7 @@ auth_patterns = [
         template_name='accounts/password_reset_confirm.html'), name='password_reset_confirm'),
     path('accounts/password/reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='accounts/password_reset_complete.html'), name='password_reset_complete'),
+    path('captcha/', include('captcha.urls')),
 ]
 
 patterns = [

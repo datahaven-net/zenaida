@@ -222,6 +222,9 @@ INSTALLED_APPS = [
     'grappelli.dashboard',
     'grappelli',
 
+    # django-simple-captcha: https://github.com/mbi/django-simple-captcha
+    'captcha',
+
     # Django standard things
     'django.contrib.admin',
     'django.contrib.sessions',
@@ -234,9 +237,6 @@ INSTALLED_APPS = [
 
     # Database Backup
     'dbbackup',  # django-dbbackup
-
-    # Friendly Captcha
-    'friendly_captcha',
 
     # OTP
     'django_otp',
@@ -426,10 +426,9 @@ GOOGLE_RECAPTCHA_SITE_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SITE_KEY', '')
 GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
 
 #------------------------------------------------------------------------------
-#--- FRIENDLY CAPTCHA KEYS
-FRC_CAPTCHA_SECRET = getattr(params, 'FRC_CAPTCHA_SECRET', '')
-FRC_CAPTCHA_SITE_KEY = getattr(params, 'FRC_CAPTCHA_SITE_KEY', '')
-FRC_CAPTCHA_VERIFICATION_URL = 'https://api.friendlycaptcha.com/api/v1/siteverify'
+#--- SIMPLE CAPTCHA CONFIGS
+CAPTCHA_LENGTH = 6
+CAPTCHA_FONT_SIZE = 26
 
 #------------------------------------------------------------------------------
 #--- SMS GATEWAY CONFIGS

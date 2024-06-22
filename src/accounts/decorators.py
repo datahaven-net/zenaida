@@ -7,9 +7,15 @@ import requests
 
 
 def check_recaptcha(view_func):
+
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         request.request.recaptcha_is_valid = None
+
+        if not settings.GOOGLE_RECAPTCHA_SITE_KEY:
+            request.request.recaptcha_is_valid = True
+            return view_func(request, *args, **kwargs)
+
         if request.request.method == 'POST':
             recaptcha_response = request.request.POST.get('g-recaptcha-response')
             data = {
@@ -26,4 +32,5 @@ def check_recaptcha(view_func):
                 request.request.recaptcha_is_valid = False
                 messages.error(request.request, 'You filled the captcha wrong, please try again')
         return view_func(request, *args, **kwargs)
+
     return _wrapped_view

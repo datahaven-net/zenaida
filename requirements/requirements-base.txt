@@ -8,8 +8,6 @@ psycopg2-binary
 uwsgi
 Django
 django-admin-ip-restrictor
-djangorestframework
-python-memcached
 django-bootstrap4
 django-nested-admin
 django-grappelli
@@ -17,9 +15,12 @@ django-extensions
 django_otp
 django-formtools
 django-dbbackup
+django-simple-captcha
+djangorestframework
 qrcode
 pdfkit
 btcpay-python
+python-memcached
 python-dateutil
 lxml
 beautifulsoup4

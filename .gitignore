@@ -12,6 +12,7 @@ src/front/templates/faq/faq.html
 keys.local/
 logs.local/
 automats/*.~vsd
+opt/*
 
 # Zenaida FAQ pages should be placed directly on the server in static HTML files
 src/front/templates/faq/*.html
@@ -23,8 +24,6 @@ etc/nginx/zenaida
 
 # Zenaida Gate health file to be also excluded from GIT
 health
-
-
 
 
 # Created by https://www.gitignore.io/api/pycharm,osx,linux,virtualenv,python,vim

@@ -152,23 +152,23 @@ class DomainRefresher(automat.Automat):
                 self.doCheckProcessPendingOrder(*args, **kwargs)
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
-            elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2201, *args, **kwargs) ):
-                self.state = 'FAILED'
-                self.doReportInfoFailed(event, *args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
             elif event == 'registrant-unknown':
                 self.state = 'CUR_REG?'
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doEppCurrentRegistrantInfo(*args, **kwargs)
-            elif event == 'domain-transferred-away' or ( event == 'response' and self.isCode(2201, *args, **kwargs) ):
-                self.state = 'DONE'
-                self.doDBDeleteDomain(*args, **kwargs)
-                self.doReportAnotherRegistrar(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
             elif event == 'rewrite-contacts':
                 self.state = 'UPDATE_REG'
                 self.doUseExistingContacts(*args, **kwargs)
                 self.doEppDomainUpdate(*args, **kwargs)
+            elif event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) and not self.isCode(2201, *args, **kwargs) and not self.isCode(2303, *args, **kwargs) ):
+                self.state = 'FAILED'
+                self.doReportInfoFailed(event, *args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'domain-transferred-away' or ( event == 'response' and ( self.isCode(2201, *args, **kwargs) or self.isCode(2303, *args, **kwargs) ) ):
+                self.state = 'DONE'
+                self.doDBDeleteDomain(*args, **kwargs)
+                self.doReportAnotherRegistrar(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---CONTACTS?---
         elif self.state == 'CONTACTS?':
             if event == 'all-contacts-received':
@@ -337,7 +337,7 @@ class DomainRefresher(automat.Automat):
             self.event('error', exc)
             return
 
-        if code == 2201:
+        if code == 2201 or code == 2303:
             self.domain_info_response = response
             self.event('response', response)
             return

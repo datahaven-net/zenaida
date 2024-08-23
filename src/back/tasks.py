@@ -113,10 +113,10 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
             logger.info('for account %r renew order status is %r', expiring_domain.owner, new_status)
             continue
-        if not expiring_domain.owner.profile.email_notifications_enabled:
-            report.append((expiring_domain.name, expiring_domain.owner.email, Exception('email notifications are disabled', ), ))
-            logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expiring_domain.owner)
-            continue
+        # if not expiring_domain.owner.profile.email_notifications_enabled:
+        #     report.append((expiring_domain.name, expiring_domain.owner.email, Exception('email notifications are disabled', ), ))
+        #     logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expiring_domain.owner)
+        #     continue
         # step 3: send a notification to the customer
         notifications.start_email_notification_domain_renewed(
             user=expiring_domain.owner,
@@ -171,10 +171,10 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             report.append((expired_domain.name, expired_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
             logger.info('for account %r renew order status is %r', expired_domain.owner, new_status)
             continue
-        if not expired_domain.owner.profile.email_notifications_enabled:
-            report.append((expired_domain.name, expired_domain.owner.email, Exception('email notifications are disabled', ), ))
-            logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expired_domain.owner)
-            continue
+        # if not expired_domain.owner.profile.email_notifications_enabled:
+        #     report.append((expired_domain.name, expired_domain.owner.email, Exception('email notifications are disabled', ), ))
+        #     logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expired_domain.owner)
+        #     continue
         # step 3: send a notification to the customer
         notifications.start_email_notification_domain_renewed(
             user=expired_domain.owner,
@@ -186,13 +186,13 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
 
     for one_user_email, user_domain_names in users_on_low_balance.items():
         one_user = zusers.find_account(one_user_email)
-        if not one_user.profile.email_notifications_enabled:
-            one_domain_name = ''
-            if user_domain_names:
-                one_domain_name = user_domain_names[0]
-            report.append((one_domain_name, one_user.email, Exception('email notifications are disabled', ), ))
-            logger.info('skip "low_balance" notification, email notifications are disabled for account %r', one_user)
-            continue
+        # if not one_user.profile.email_notifications_enabled:
+        #     one_domain_name = ''
+        #     if user_domain_names:
+        #         one_domain_name = user_domain_names[0]
+        #     report.append((one_domain_name, one_user.email, Exception('email notifications are disabled', ), ))
+        #     logger.info('skip "low_balance" notification, email notifications are disabled for account %r', one_user)
+        #     continue
         recent_low_balance_notification = one_user.notifications.filter(
             subject='low_balance',
             created_at__gte=(moment_now - datetime.timedelta(days=30)),

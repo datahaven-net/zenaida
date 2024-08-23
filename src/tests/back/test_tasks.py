@@ -294,16 +294,20 @@ class TestAutoRenewExpiringDomains(TestCase):
         mock_domain_check_create_update_renew.return_value = [True, ]
         mock_domain_synchronize_from_backend.return_value = [True, ]
         tester = testsupport.prepare_tester_account(account_balance=200.0, email_notifications_enabled=False)
+        expiry_date = timezone.now() + datetime.timedelta(days=89)  # will expire in 89 days
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
             domain_epp_id='aaa123',
             domain_status='active',
-            expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
+            expiry_date=expiry_date,
             auto_renew_enabled=True,
         )
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 1
         assert report[0][0] == 'abcd.ai'
         assert report[0][1] == tester.email
-        assert report[0][2].args[0] == 'email notifications are disabled'
+        assert report[0][2] == expiry_date
+        process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
+        new_notification = Notification.notifications.first()
+        assert new_notification.status == 'skipped'

@@ -56,8 +56,8 @@ def check_notify_domain_expiring(dry_run=True, min_days_before_expire=0, max_day
     for user in Account.users.all():
         if not hasattr(user, 'profile'):
             continue
-        if not user.profile.email_notifications_enabled:
-            continue
+        # if not user.profile.email_notifications_enabled:
+        #     continue
         expiring_domains = {}
         for domain in user.domains.all():
             if not domain.epp_id or domain.status in ['inactive', ]:

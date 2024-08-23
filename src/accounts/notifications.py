@@ -133,6 +133,18 @@ def process_notifications_queue(iterations=None, delay=3, iteration_delay=5*60):
             status='started',
             type='email',
         ):
+            if not hasattr(one_notification.account, 'profile'):
+                one_notification.status = 'skipped'
+                one_notification.save()
+                logger.info('skipped (no profile) %r', one_notification)
+                time.sleep(delay)
+                continue
+            if not one_notification.account.profile.email_notifications_enabled:
+                one_notification.status = 'skipped'
+                one_notification.save()
+                logger.info('skipped %r', one_notification)
+                time.sleep(delay)
+                continue
             try:
                 result = execute_email_notification(one_notification)
             except:

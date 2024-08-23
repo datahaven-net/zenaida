@@ -25,6 +25,7 @@ class Notification(models.Model):
             ('started', 'STARTED', ),
             ('sent', 'SENT', ),
             ('failed', 'FAILED', ),
+            ('skipped', 'SKIPPED', ),
         ),
         default='started',
     )

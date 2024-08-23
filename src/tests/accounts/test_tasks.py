@@ -288,7 +288,10 @@ class TestCheckNotifyDomainExpiring(TestCase):
             max_days_before_expire=30,
             subject='domain_expire_soon',
         )
-        assert len(outgoing_emails) == 0
+        assert len(outgoing_emails) == 1
+        process_notifications_queue(iterations=1, delay=0.1, iteration_delay=0.1)
+        new_notification = Notification.notifications.first()
+        assert new_notification.status == 'skipped'
 
     @pytest.mark.django_db
     @mock.patch('accounts.notifications.EmailMultiAlternatives.send')

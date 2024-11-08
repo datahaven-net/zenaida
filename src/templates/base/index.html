@@ -1,4 +1,5 @@
 {% include 'base/head.html' %}
+{% load settings_filter %}
 
 
 <div class="container-fluid">
@@ -8,7 +9,7 @@
 
       <div class="text-center">
         {% if request.user.is_authenticated %}
-          <h4>Welcome to {{ site_name }}, <b>{{ user.profile.person_name }}</b>!</h4>
+          <h4>Welcome to {% settings_value SITE_NAME %}, <b>{{ user.profile.person_name }}</b>!</h4>
           Your current balance: <b>${{ user.balance }} US</b>
           <br />
           {% if total_domains > 0 %}
@@ -20,7 +21,7 @@
           {% endif %}
           <br />
         {% else %}
-          <h1>Welcome to {{ site_name }}</h1>
+          <h1>Welcome to {% settings_value SITE_NAME %}</h1>
         {% endif %}
         <br />
         <form action="{% url 'domain_lookup' %}" method="post">

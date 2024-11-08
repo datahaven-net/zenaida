@@ -1,4 +1,5 @@
 {% load static %}
+{% load settings_filter %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,12 +7,12 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Zenaida.Cate.ai">
+    <meta name="description" content="{% settings_value SITE_NAME %}">
     <meta name="author" content="Veselin Penev">
 
     <link rel="icon" href="{% static 'images/favicon.ico' %}">
 
-    <title>Zenaida.Cate.ai</title>
+    <title>{% settings_value SITE_NAME %}</title>
 
     <link href="{% static 'vendor/bootstrap/css/bootstrap.css' %}" rel="stylesheet" type="text/css">
     <link href="{% static 'css/styles.css' %}" rel="stylesheet" type="text/css">
@@ -40,7 +41,7 @@
 <body>
 <header>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark static-top">
-        <a class="navbar-brand" href="/">Zenaida.Cate.ai</a>
+        <a class="navbar-brand" href="/">{% settings_value SITE_NAME %}</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>

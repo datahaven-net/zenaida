@@ -49,6 +49,12 @@ Create DB and user:
         postgres=# GRANT ALL PRIVILEGES ON DATABASE zenaida_db_01 TO zenaida_db_user;
         GRANT
 
+        postgres=# GRANT ALL ON SCHEMA public TO zenaida_db_user;
+        GRANT
+
+        postgres=# ALTER DATABASE zenaida_db_01 OWNER TO zenaida_db_user;
+        ALTER DATABASE
+
         \q
         exit
 

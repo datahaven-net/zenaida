@@ -68,6 +68,7 @@ ALLOWED_HOSTS = ['*', ]
 
 SITE_ID = 1
 SITE_BASE_URL = getattr(params, 'SITE_BASE_URL', 'http://localhost:8000')
+SITE_NAME = getattr(params, 'SITE_NAME', 'Zenaida.Cate.AI')
 
 ROOT_URLCONF = 'main.urls'
 

@@ -46,6 +46,7 @@ class IndexPageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['site_name'] = settings.SITE_NAME
         if self.request.user.is_authenticated:
             context['total_domains'] = len(self.request.user.domains.all())
         return context

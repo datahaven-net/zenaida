@@ -17,12 +17,15 @@ from accounts.models.notification import Notification
 class AccountAdmin(NestedModelAdmin):
 
     list_display = (
-        'email', 'profile_link', 'balance', 'is_active', 'is_staff', 'known_registrants',
+        'email', 'profile_link', 'balance', 'is_active', 'is_approved', 'is_staff', 'known_registrants',
         'known_contacts', 'total_domains', 'total_payments', 'total_orders', 'notes',
-        'get_admin_login_link',
+        'get_admin_login_link', 'get_approve_link',
     )
     search_fields = ('email', )
     readonly_fields = ('email', )
+
+    def get_model_info(self):
+        return (self.model._meta.app_label, self.model._meta.model_name)
 
     def profile_link(self, account_instance):
         return mark_safe('<a href="{}?q={}">{}</a>'.format(
@@ -76,6 +79,20 @@ class AccountAdmin(NestedModelAdmin):
         messages.add_message(request, messages.SUCCESS, 'Superuser %s successfully logged in as %s' % (current_user, another_user, ))
         return HttpResponseRedirect(resolve_url('/'))
 
+    def process_account_approve(self, request, account_id, *args, **kwargs):
+        current_user = request.user
+        if not current_user.is_staff:
+            messages.add_message(request, messages.ERROR, 'Must have staff permissions to login as another user')
+            return HttpResponseRedirect(resolve_url('admin:accounts_account_changelist'))
+        if not current_user.is_superuser:
+            messages.add_message(request, messages.ERROR, 'Must have superuser permissions to login as another user')
+            return HttpResponseRedirect(resolve_url('admin:accounts_account_changelist'))
+        inst = self.get_object(request, account_id)
+        inst.is_approved = True
+        inst.save()
+        url = reverse("admin:%s_%s_changelist" % self.get_model_info(), current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -83,6 +100,11 @@ class AccountAdmin(NestedModelAdmin):
                 '<int:account_id>/admin_login/',
                 self.admin_site.admin_view(self.process_account_admin_login),
                 name='account-admin-login',
+            ),
+            path(
+                '<int:account_id>/approve/',
+                self.admin_site.admin_view(self.process_account_approve),
+                name='account-approve',
             ),
         ]
         return custom_urls + urls
@@ -95,6 +117,15 @@ class AccountAdmin(NestedModelAdmin):
         return format_html(t.format(l, 'grp-default', '.6', 'login'))
     get_admin_login_link.short_description = 'superuser'
     get_admin_login_link.allow_tags = True
+
+    def get_approve_link(self, instance):
+        if instance.is_approved:
+            return format_html('&nbsp;')
+        t = '<a href="{}" class="grp-button {}" style="opacity: {};">{}</a>'
+        l = reverse('admin:account-approve', args=[instance.pk])
+        return format_html(t.format(l, 'grp-default', '.6', 'approve'))
+    get_approve_link.short_description = 'approved'
+    get_approve_link.allow_tags = True
 
 
 class ActivationAdmin(NestedModelAdmin):

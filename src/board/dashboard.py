@@ -39,7 +39,7 @@ class CustomIndexDashboard(Dashboard):
                     'external': False,
                 },
                 {
-                    'title': _('Batch synchronization using CSV file'),
+                    'title': _('CSV file synchronization'),
                     'url': reverse('csv_file_sync'),
                     'external': False,
                 },

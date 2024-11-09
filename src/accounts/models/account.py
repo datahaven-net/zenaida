@@ -1,5 +1,6 @@
 from django.db import models
 
+from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 
@@ -12,11 +13,11 @@ class UserManager(BaseUserManager):
         """
         if not email:
             raise ValueError('Users must have an email address')
-
         user = self.model(
             email=self.normalize_email(email),
         )
         user.is_active = is_active
+        user.is_approved = settings.ACCOUNT_AUTO_APPROVE
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -31,6 +32,7 @@ class UserManager(BaseUserManager):
         )
         user.is_active = True
         user.is_staff = True
+        user.is_approved = True
         user.save(using=self._db)
         return user
 
@@ -45,6 +47,7 @@ class UserManager(BaseUserManager):
         user.is_active = True
         user.is_staff = True
         user.is_superuser = True
+        user.is_approved = True
         user.save(using=self._db)
         return user
 
@@ -87,6 +90,11 @@ class Account(AbstractUser):
         blank=True,
         default=None,
         help_text='any note regarding this account such as manual balance changes.'
+    )
+    is_approved = models.BooleanField(
+        verbose_name='approved',
+        default=True,
+        help_text='indicate if the user was approved by the site administrator',
     )
 
     def __str__(self):

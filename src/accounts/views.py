@@ -84,10 +84,18 @@ class SignUpView(FormView):
                 user = form.save(commit=False)
                 user.email = user.email.lower()
                 user.is_active = False
+                user.is_approved = settings.ACCOUNT_AUTO_APPROVE
                 user.save()
                 form.send_activation_email(self.request, user)
-                messages.add_message(self.request, messages.SUCCESS,
-                                     'You are registered. To activate the account, follow the link sent to the mail.')
+                if settings.ACCOUNT_AUTO_APPROVE:
+                    messages.add_message(self.request, messages.SUCCESS,
+                                         'You are registered. To activate the account, follow the link sent to the mail.')
+                else:
+                    messages.add_message(
+                        self.request, messages.SUCCESS,
+                        'You are registered. To activate the account, follow the link sent to the mail.'
+                        'You will be able to log in once the Administrator approves your account.'
+                    )
             else:
                 form.save()
                 email = (form.cleaned_data.get('email') or '').lower()

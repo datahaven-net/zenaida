@@ -37,6 +37,7 @@ class SignInViaEmailForm(forms.Form):
             'fields may be case-sensitive.'
         ),
         'inactive': _('This account is not active yet. You must verify your email before you can login, please follow the link sent to you via email.'),
+        'unapproved': _('This account is not yet approved by the web-site Administrator.'),
     }
 
     def __init__(self, request=None, *args, **kwargs):
@@ -70,6 +71,11 @@ class SignInViaEmailForm(forms.Form):
             raise forms.ValidationError(
                 self.error_messages['inactive'],
                 code='inactive',
+            )
+        if not user.is_approved:
+            raise forms.ValidationError(
+                self.error_messages['unapproved'],
+                code='unapproved',
             )
 
     def get_user(self):

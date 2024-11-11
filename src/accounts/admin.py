@@ -120,7 +120,7 @@ class AccountAdmin(NestedModelAdmin):
 
     def get_approve_link(self, instance):
         if instance.is_approved:
-            return format_html('&nbsp;')
+            return format_html('yes')
         t = '<a href="{}" class="grp-button {}" style="opacity: {};">{}</a>'
         l = reverse('admin:account-approve', args=[instance.pk])
         return format_html(t.format(l, 'grp-default', '.6', 'approve'))

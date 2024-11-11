@@ -41,7 +41,7 @@ class ProcessPaymentView(LoginRequiredMixin, View):
             100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0, 2)
 
         return shortcuts.render(request, 'billing/4csonline/merchant_form.html', {
-            'company_name': 'DATAHAVEN NET',
+            'company_name': settings.ZENAIDA_BILLING_4CSONLINE_COMPANY_NAME,
             'price': '%.2f' % payment_amount,
             'merch_id': settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_ID,
             'merch_link': settings.ZENAIDA_BILLING_4CSONLINE_MERCHANT_LINK,

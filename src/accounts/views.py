@@ -144,8 +144,8 @@ class ActivateView(RedirectView):
             return super().get_redirect_url()
         messages.add_message(
             self.request, messages.SUCCESS,
-            'You have successfully activated your account.'
-            'As soon as the Administrator approves your account you will be able to log in.'
+            'You have successfully activated your account, '
+            'as soon as the Administrator approves it you will be able to sign in.'
         )
         return super().get_redirect_url()
 

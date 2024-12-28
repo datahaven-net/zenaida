@@ -90,6 +90,8 @@ class DomainDetailsForm(models.ModelForm):
                 raise forms.ValidationError('Please use correct DNS name for the nameservers.')
             if nameserver.count('.') < 1:
                 raise forms.ValidationError('Please use correct DNS name for the nameservers.')
+            if nameserver.count('..'):
+                raise forms.ValidationError('Please use correct DNS name for the nameservers.')
             if self.instance.name and nameserver.endswith(self.instance.name.strip().lower()):
                 raise forms.ValidationError(f'Please use another nameserver instead of {nameserver}, "glue" records are not supported yet.')
 

@@ -87,7 +87,7 @@ class SignUpView(FormView):
                 user.is_approved = settings.ACCOUNT_AUTO_APPROVE
                 user.save()
                 form.send_activation_email(self.request, user)
-                if settings.ACCOUNT_AUTO_APPROVE:
+                if user.is_approved:
                     messages.add_message(self.request, messages.SUCCESS,
                                          'You are registered. To activate the account, follow the link sent to the mail.')
                 else:
@@ -133,13 +133,20 @@ class ActivateView(RedirectView):
             return super().get_redirect_url()
         user.is_active = True
         user.save()
-        messages.success(self.request, 'You have successfully activated your account')
-        login(self.request, user)
-        # If user do not have a profile yet need to create it for him.
-        try:
-            user.profile
-        except ObjectDoesNotExist:
-            create_profile(user, contact_email=user.email)
+        if user.is_approved:
+            messages.success(self.request, 'You have successfully activated your account')
+            login(self.request, user)
+            # If user do not have a profile yet need to create it for him.
+            try:
+                user.profile
+            except ObjectDoesNotExist:
+                create_profile(user, contact_email=user.email)
+            return super().get_redirect_url()
+        messages.add_message(
+            self.request, messages.SUCCESS,
+            'You have successfully activated your account.'
+            'As soon as the Administrator approves your account you will be able to log in.'
+        )
         return super().get_redirect_url()
 
 

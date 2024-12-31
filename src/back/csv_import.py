@@ -101,6 +101,8 @@ def prepare_domain_status(csv_domain_status, default_status='active'):
         'domain_status_suspended': 'suspended',
         'domain_status_redemption_period': 'to_be_deleted',
         'Ok': 'active',
+        'clientDeleteProhibited': 'inactive',
+        'clientDeleteProhibited': 'inactive',
     }.get(csv_domain_status, default_status)
 
 
@@ -109,6 +111,8 @@ def prepare_domain_epp_statuses(csv_domain_status, default_epp_statuses={'ok': '
         'domain_status_active': {'ok': 'Active'},
         'domain_status_suspended': {'serverHold': 'Suspended automatically'},
         'Ok': {'ok': 'Active'},
+        'clientDeleteProhibited': {'clientDeleteProhibited': ''},
+        'clientTransferProhibited': {'clientTransferProhibited': ''},
     }.get(csv_domain_status, default_epp_statuses)
 
 
@@ -188,7 +192,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='zenaida_a
     real_create_date = csv_info['create_date']
     real_epp_id = csv_record.get('roid_0')
     real_status = csv_record.get('eppstatus_7')
-    real_status_short = prepare_domain_status(real_status, default_status=None)
+    real_status_short = prepare_domain_status(real_status, default_status='inactive')
     real_auth_key = csv_record.get('auth_info_password_3') or ''
     real_registrant_contact_id = csv_record.get('registrant_contact_id_21')
     real_admin_contact_id = csv_record.get('admin_contact_id_55')

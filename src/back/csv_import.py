@@ -101,8 +101,18 @@ def prepare_domain_status(csv_domain_status, default_status='active'):
         'domain_status_suspended': 'suspended',
         'domain_status_redemption_period': 'to_be_deleted',
         'Ok': 'active',
-        'clientDeleteProhibited': 'inactive',
-        'clientDeleteProhibited': 'inactive',
+        'clientHold': 'suspended',
+        'serverHold': 'suspended',
+        'clientDeleteProhibited': 'active',
+        'serverDeleteProhibited': 'active',
+        'clientTransferProhibited': 'active',
+        'serverTransferProhibited': 'active',
+        'clientRenewProhibited': 'active',
+        'serverRenewProhibited': 'active',
+        'clientTransferProhibited': 'active',
+        'serverTransferProhibited': 'active',
+        'clientUpdateProhibited': 'active',
+        'serverUpdateProhibited': 'active',
     }.get(csv_domain_status, default_status)
 
 
@@ -111,8 +121,16 @@ def prepare_domain_epp_statuses(csv_domain_status, default_epp_statuses={'ok': '
         'domain_status_active': {'ok': 'Active'},
         'domain_status_suspended': {'serverHold': 'Suspended automatically'},
         'Ok': {'ok': 'Active'},
-        'clientDeleteProhibited': {'clientDeleteProhibited': ''},
-        'clientTransferProhibited': {'clientTransferProhibited': ''},
+        'clientDeleteProhibited': {'clientDeleteProhibited': 'CSV import'},
+        'serverDeleteProhibited': {'clientDeleteProhibited': 'CSV import'},
+        'clientTransferProhibited': {'clientTransferProhibited': 'CSV import'},
+        'serverTransferProhibited': {'serverTransferProhibited': 'CSV import'},
+        'clientRenewProhibited': {'clientRenewProhibited': 'CSV import'},
+        'serverRenewProhibited': {'serverRenewProhibited': 'CSV import'},
+        'clientTransferProhibited': {'clientTransferProhibited': 'CSV import'},
+        'serverTransferProhibited': {'serverTransferProhibited': 'CSV import'},
+        'clientUpdateProhibited': {'clientUpdateProhibited': 'CSV import'},
+        'serverUpdateProhibited': {'serverUpdateProhibited': 'CSV import'},
     }.get(csv_domain_status, default_epp_statuses)
 
 

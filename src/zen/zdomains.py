@@ -575,6 +575,21 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
             updated = True
     else:
         new_domain_status = 'inactive'
+        for st in (
+            'clientDeleteProhibited',
+            'serverDeleteProhibited',
+            'clientRenewProhibited',
+            'serverRenewProhibited',
+            'clientTransferProhibited',
+            'serverTransferProhibited',
+            'clientUpdateProhibited',
+            'serverUpdateProhibited',
+        ):
+            if st in new_domain_statuses:
+                new_domain_status = 'active'
+                break
+        if 'clientHold' in new_domain_statuses:
+            new_domain_status = 'suspended'
         if 'serverHold' in new_domain_statuses:
             new_domain_status = 'suspended'
         if 'pendingDelete' in new_domain_statuses:
@@ -582,7 +597,6 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         if 'pendingRestore' in new_domain_statuses:
             # TODO: check that flow
             new_domain_status = 'to_be_restored'
-        # TODO: continue with other statuses: https://www.icann.org/resources/pages/epp-status-codes-2014-06-16-en
         if domain_object.status != new_domain_status:
             domain_object.status = new_domain_status
             updated = True

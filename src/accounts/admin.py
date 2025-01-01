@@ -12,6 +12,7 @@ from nested_admin import NestedModelAdmin  # @UnresolvedImport
 from accounts.models.account import Account
 from accounts.models.activation import Activation
 from accounts.models.notification import Notification
+from accounts import notifications
 
 
 class AccountAdmin(NestedModelAdmin):
@@ -91,6 +92,7 @@ class AccountAdmin(NestedModelAdmin):
         inst.is_approved = True
         inst.save()
         url = reverse("admin:%s_%s_changelist" % self.get_model_info(), current_app=self.admin_site.name)
+        notifications.start_email_notification_account_approved(inst)
         return HttpResponseRedirect(url)
 
     def get_urls(self):

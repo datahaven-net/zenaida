@@ -50,6 +50,7 @@ class Notification(models.Model):
             ('domain_deactivated', 'DOMAIN DEACTIVATED', ),
             ('domain_renewed', 'DOMAIN RENEWED', ),
             ('low_balance', 'LOW BALANCE', ),
+            ('account_approved', 'ACCOUNT_APPROVED', ),
         ),
     )
 

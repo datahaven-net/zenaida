@@ -120,7 +120,7 @@ def execute_email_notification(notification_object):
     elif notification_object.subject == 'account_approved':
         email_template = 'email/account_approved.html'
         context.update({
-            'subject': '%r account was activated' % settings.SITE_NAME,
+            'subject': '%s account was activated' % settings.SITE_NAME,
         })
 
     html_content = render_to_string(email_template, context=context, request=None)

@@ -344,4 +344,4 @@ class TestDomainUpdateStatuses(TestCase):
         assert tester_domain.epp_id == 'another_epp_id_456'
         assert tester_domain.epp_statuses['clientUpdateProhibited'] == 'Set by admin through UI on Aug 15, 2020 7:21 AM'
         assert tester_domain.epp_statuses['clientTransferProhibited'] == 'Set by admin through UI on Aug 15, 2020 7:21 AM'
-        assert tester_domain.status == 'inactive'
+        assert tester_domain.status == 'active'

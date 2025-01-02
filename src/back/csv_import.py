@@ -556,7 +556,7 @@ def load_from_csv(filename, dry_run=True, registrar_epp_id=None, sync_after=Fals
         registrar_epp_id = 'zenaida_ai'
     for row in epp_domains:
         count += 1
-        domain = row[5]
+        domain = row[4]
         try:
             errors = domain_regenerate_from_csv_row(
                 row,

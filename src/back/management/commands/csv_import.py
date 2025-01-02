@@ -46,7 +46,7 @@ class Command(BaseCommand):
                 csv_sync_record.save()
             raise CommandError('File not found "%s"' % filename)
 
-        import_results = load_from_csv(filename, dry_run=dry_run)
+        import_results = load_from_csv(filename, dry_run=dry_run, sync_after=True)
 
         if record_id >= 0:
             csv_sync_record = CSVFileSync.executions.get(id=record_id)

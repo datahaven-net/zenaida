@@ -7,9 +7,9 @@ import json
 from lib import xml2json
 
 from epp import rpc_client
+from epp import rpc_error
 
 from zen import zmaster
-from epp import rpc_error
 from zen import zdomains
 
 #------------------------------------------------------------------------------

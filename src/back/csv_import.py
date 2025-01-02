@@ -6,9 +6,12 @@ import csv
 
 from django.utils.timezone import make_aware
 
+from epp import rpc_error
+
 from zen import zcontacts
 from zen import zusers
 from zen import zdomains
+from zen import zmaster
 
 logger = logging.getLogger(__name__)
 
@@ -538,7 +541,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='zenaida_a
     return errors
 
 
-def load_from_csv(filename, dry_run=True, registrar_epp_id=None, log=None):
+def load_from_csv(filename, dry_run=True, registrar_epp_id=None, sync_after=False, log=None):
     if log is None:
         log = logger
     from back.models.registrar import Registrar
@@ -553,7 +556,7 @@ def load_from_csv(filename, dry_run=True, registrar_epp_id=None, log=None):
         registrar_epp_id = 'zenaida_ai'
     for row in epp_domains:
         count += 1
-        domain = row[1]
+        domain = row[5]
         try:
             errors = domain_regenerate_from_csv_row(
                 row,
@@ -568,6 +571,27 @@ def load_from_csv(filename, dry_run=True, registrar_epp_id=None, log=None):
             return -1
         if errors:
             log.error('%s errors:\n    %s\n', domain, ';'.join(errors))
-        else:
+            continue
+        if not sync_after:
             log.info('%s processed\n\n', domain)
+            continue
+        try:
+            outputs = zmaster.domain_synchronize_from_backend(
+                domain_name=domain,
+                refresh_contacts=True,
+                rewrite_contacts=True,
+                change_owner_allowed=True,
+                create_new_owner_allowed=True,
+            )
+        except rpc_error.EPPError:
+            log.exception('failed to synchronize domain %s from back-end\n' % domain)
+            continue
+        if not outputs:
+            log.critical('synchronize domain %s failed with empty result\n' % domain)
+            continue
+        if not outputs[-1] or isinstance(outputs[-1], Exception):
+            log.critical('synchronize domain %s failed with result: %r\n', domain, outputs[-1])
+            continue
+        log.info('outputs: %r\n', outputs)
+        log.info('%s processed and synchronized\n\n', domain)
     return count

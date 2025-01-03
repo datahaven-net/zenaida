@@ -27,6 +27,8 @@ from automats import automat
 from epp import rpc_client
 from epp import rpc_error
 
+from zen import zerrors
+
 #------------------------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
@@ -206,7 +208,7 @@ class DomainTransferRequestor(automat.Automat):
         """
         Action method.
         """
-        self.outputs.append(Exception(message='Domain already belong to the registrar'))
+        self.outputs.append(zerrors.RegistrarAuthFailed(message='Domain already belong to the registrar'))
 
     def doReportDone(self, *args, **kwargs):
         """

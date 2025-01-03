@@ -252,7 +252,7 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
         context['domain_expiry_date'] = ''
         domain = zdomains.domain_find(domain_name=kwargs.get('domain_name'))
         if domain:
-            context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=2)
+            context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_YEARS)
         return context
 
     def get(self, request, *args, **kwargs):
@@ -273,7 +273,7 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({'order': kwargs.get('order')})
-        context['domain_expiry_date'] = timezone.now() + relativedelta(years=2)
+        context['domain_expiry_date'] = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_YEARS)
         return context
 
     def get(self, request, *args, **kwargs):

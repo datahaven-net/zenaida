@@ -40,13 +40,13 @@ class Command(BaseCommand):
         if select == 'all':
             for user in Account.users.filter(
                 is_active=True,
-                profile__email_notifications_enabled=True,
+                # profile__email_notifications_enabled=True,
             ).exclude(
                 is_staff=True,
             ):
                 selected_users.append({
                     'email': user.email,
-                    'person_name': user.profile.person_name,
+                    'person_name': (user.profile.person_name if hasattr(user, 'profile') else '') or 'dear Customer',
                 })
         else:
             for user_email in open(select, 'r').read().strip().split('\n'):

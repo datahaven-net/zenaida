@@ -206,7 +206,7 @@ class DomainTransferRequestor(automat.Automat):
         """
         Action method.
         """
-        self.outputs.append(rpc_error.EPPRegistrarAuthFailed(message='Domain already belong to the registrar'))
+        self.outputs.append(Exception(message='Domain already belong to the registrar'))
 
     def doReportDone(self, *args, **kwargs):
         """

@@ -279,7 +279,7 @@ class DomainResurrector(automat.Automat):
             ds.event('run', self.target_domain,
                 sync_contacts=False,
                 sync_nameservers=False,
-                renew_years=2,
+                renew_years=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
                 save_to_db=True,
             )
         except Exception as exc:

@@ -164,7 +164,7 @@ class AccountDomainCreateView(FormView):
             domain_name=domain_name,
             owner=self.request.user,
             create_date=domain_creation_date,
-            expiry_date=domain_creation_date + relativedelta(years=2),
+            expiry_date=domain_creation_date + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_YEARS),
             registrant=zcontacts.get_oldest_registrant(self.request.user),
             contact_admin=domain_obj.contact_admin,
             contact_tech=domain_obj.contact_tech,

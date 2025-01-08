@@ -89,6 +89,7 @@ class AccountDomainCreateView(FormView):
         context = super().get_context_data(**kwargs)
         context.update({'domain_name': zdomains.clean_domain_name(self.kwargs.get('domain_name', ''))})
         context.update({'person_name': self.request.user.registrants.all()[0].person_name})
+        context.update({'duration_years': settings.ZENAIDA_DOMAIN_RENEW_YEARS})
         return context
 
     def get_form_kwargs(self):

@@ -276,9 +276,9 @@ class DomainSynchronizer(automat.Automat):
             days_difference = (self.target_domain.expiry_date - timezone.now()).days
         else:
             days_difference = 365 * self.renew_years
-        if days_difference > 365 * 10 - 1:
-            logger.error('extension period must be no more than 10 years: %s', self.target_domain)
-            self.event('error', Exception('extension period must be no more than 10 years'))
+        if days_difference > 365 * 20 - 1:
+            logger.error('extension period must be no more than 20 years: %s', self.target_domain)
+            self.event('error', Exception('extension period must be no more than 20 years'))
             return
         if days_difference % 365 == 0:
             period_units = 'y'
@@ -348,9 +348,9 @@ class DomainSynchronizer(automat.Automat):
             days_difference = (self.target_domain.expiry_date - timezone.now()).days
         else:
             days_difference = 365 * self.renew_years
-        if days_difference > 365 * 10 - 1:
-            logger.error('extension period must be no more than 10 years: %s', self.target_domain)
-            self.event('error', Exception('extension period must be no more than 10 years'))
+        if days_difference > 365 * 20 - 1:
+            logger.error('extension period must be no more than 20 years: %s', self.target_domain)
+            self.event('error', Exception('extension period must be no more than 20 years'))
             return
         if days_difference % 365 == 0:
             period_units = 'y'

@@ -129,7 +129,7 @@ class AccountDomainCreateView(FormView):
                 # If domain has EPP id, it means that domain is already owned by someone.
                 messages.error(self.request, 'Domain name already registered')
                 return super().form_valid(form)
-            if existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow():
+            if existing_domain.create_date and (existing_domain.create_date.replace(tzinfo=None) + datetime.timedelta(hours=1) < datetime.datetime.utcnow()):
                 # If domain was on someone's basket more than an hour, remove that from database in order to make it
                 # available for current user.
                 zdomains.domain_delete(domain_id=existing_domain.id)

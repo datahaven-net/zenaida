@@ -16,7 +16,7 @@ from logs.models import RequestLog
 logger = logging.getLogger(__name__)
 
 
-LOG_IGNORE_PATH_STARTSWITH = [
+IGNORE_PATH_STARTSWITH = [
     '/admin/',
     '/_nested_admin/',
     '/grappelli/',
@@ -32,6 +32,27 @@ STRIP_INPUT_FIELDS = [
     'new_password2',
     'password1',
     'password2',
+]
+
+SHORT_PATHS = [
+    ('/accounts/activate/', None, '/accounts/activate/*', ),
+    ('/accounts/password/', None, '/accounts/password/*', ),
+    ('/billing/4csonline/process/', None, '/billing/4csonline/process/*', ),
+    ('/billing/btcpay/process/', None, '/billing/btcpay/process/*', ),
+    ('/billing/order/', None, '/billing/order/*', ),
+    ('/billing/order/cancel/', None, '/billing/order/cancel/*', ),
+    ('/billing/order/create/register/', None, '/billing/order/create/register/*', ),
+    ('/billing/order/create/renew/', None, '/billing/order/create/renew/*', ),
+    ('/billing/order/create/restore/', None, '/billing/order/create/restore/*', ),
+    ('/billing/order/process/', None, '/billing/order/process/*', ),
+    ('/billing/orders/receipts/download/', None, '/billing/orders/receipts/download/*', ),
+    ('/billing/payment/invoice/download/', None, '/billing/payment/invoice/download/*', ),
+    ('/captcha/image/', None, '/captcha/image/*', ),
+    ('/contacts/edit/', None, '/contacts/edit/*', ),
+    ('/contacts/delete/', None, '/contacts/delete/*', ),
+    ('/domains/', '/transfer-code/', '/domains/*/transfer-code/', ),
+    ('/domains/create/', None, '/domains/create/*', ),
+    ('/domains/edit/', None, '/domains/edit/*', ),
 ]
 
 
@@ -71,7 +92,8 @@ class LogRequestsMiddleware(object):
                 ip_address=ip_addr,
                 user=self.user_email(request),
                 method=request.method,
-                path=request.path,
+                path=self.short_path(request.path),
+                path_full=request.path,
                 request=request_body,
                 status_code=response.status_code,
                 exception=getattr(request, '_captured_exception', None) or None,
@@ -91,7 +113,7 @@ class LogRequestsMiddleware(object):
             # skip logging all monitoring requests from specific hosts
             return False
         p = request.path
-        if any([p.startswith(ignore_path) for ignore_path in LOG_IGNORE_PATH_STARTSWITH]):
+        if any([p.startswith(ignore_path) for ignore_path in IGNORE_PATH_STARTSWITH]):
             # skip logging of some specific requests
             return False
         return True
@@ -142,3 +164,14 @@ class LogRequestsMiddleware(object):
         for (_, regex, _) in show_urls.Command().extract_views_from_urlpatterns(urlconf.urlpatterns):
             routes.add(regex)
         return routes
+
+    def short_path(self, path):
+        for head, tail, short_path in SHORT_PATHS:
+            if head:
+                if not path.startswith(head):
+                    continue
+                if tail:
+                    if not ''.endswith(tail):
+                        continue
+                return short_path
+        return path

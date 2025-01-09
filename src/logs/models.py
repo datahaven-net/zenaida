@@ -8,6 +8,7 @@ class RequestLog(models.Model):
                             max_length=255, blank=True, default="", db_index=True)
     method = models.CharField(help_text="HTTP method", max_length=16, blank=True, default="", db_index=True)
     path = models.CharField(help_text="Request path", max_length=255, blank=True, default="", db_index=True)
+    path_full = models.CharField(help_text="Request path", max_length=255, blank=True, default="", db_index=True)
     request = models.TextField(help_text="Request body", null=True, default="")
     status_code = models.IntegerField(help_text="Response HTTP status code", null=True, blank=True, default=None, db_index=True)
     exception = models.TextField(help_text="Exception info", blank=True, null=True, default=None)

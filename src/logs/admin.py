@@ -24,10 +24,10 @@ class HasExceptionListFilter(admin.SimpleListFilter):
 
 
 class RequestLogAdmin(admin.ModelAdmin):
-    list_display = ('timestamp', 'ip_address', 'user', 'method', 'path', 'status_code', 'duration', 'no_exception')
-    list_filter = ('timestamp', 'ip_address', 'user', 'method', 'path', 'status_code', HasExceptionListFilter)
-    search_fields = ('timestamp', 'ip_address', 'user', 'method', 'path', 'status_code', 'duration', 'exception')
-    readonly_fields = ('timestamp', 'ip_address', 'user', 'method', 'path', 'status_code', 'duration', 'get_request', 'exception')
+    list_display = ('timestamp', 'ip_address', 'user', 'method', 'path', 'path_full', 'status_code', 'duration', 'no_exception')
+    list_filter = ('timestamp', 'method', 'path', 'status_code', HasExceptionListFilter)
+    search_fields = ('timestamp', 'ip_address', 'user', 'method', 'path', 'status_code', 'exception')
+    readonly_fields = ('timestamp', 'ip_address', 'user', 'method', 'path', 'path_full', 'status_code', 'duration', 'get_request', 'exception')
     exclude = ('request', )
     date_hierarchy = 'timestamp'
 

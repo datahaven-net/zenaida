@@ -436,7 +436,7 @@ def update_nameservers(domain_object, hosts=[], domain_info_response=None):
     domain_modified = False
     for i in range(len(hosts)):
         if hosts[i]:
-            if existing_nameservers[i] != hosts[i]:
+            if len(existing_nameservers) > i and existing_nameservers[i] != hosts[i]:
                 logger.info('nameserver host at position %d to be changed for %r : %s -> %s',
                              i, domain_object.name, existing_nameservers[i], hosts[i])
                 domain_object.set_nameserver(i, hosts[i])

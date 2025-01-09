@@ -36,23 +36,25 @@ STRIP_INPUT_FIELDS = [
 
 SHORT_PATHS = [
     ('/accounts/activate/', None, '/accounts/activate/*', ),
+    ('/accounts/password/reset/done/', None, '/accounts/password/reset/done/', ),
+    ('/accounts/password/reset/', None, '/accounts/password/reset/', ),
     ('/accounts/password/', None, '/accounts/password/*', ),
     ('/billing/4csonline/process/', None, '/billing/4csonline/process/*', ),
     ('/billing/btcpay/process/', None, '/billing/btcpay/process/*', ),
-    ('/billing/order/', None, '/billing/order/*', ),
-    ('/billing/order/cancel/', None, '/billing/order/cancel/*', ),
     ('/billing/order/create/register/', None, '/billing/order/create/register/*', ),
     ('/billing/order/create/renew/', None, '/billing/order/create/renew/*', ),
     ('/billing/order/create/restore/', None, '/billing/order/create/restore/*', ),
+    ('/billing/order/cancel/', None, '/billing/order/cancel/*', ),
     ('/billing/order/process/', None, '/billing/order/process/*', ),
+    ('/billing/order/', None, '/billing/order/*', ),
     ('/billing/orders/receipts/download/', None, '/billing/orders/receipts/download/*', ),
     ('/billing/payment/invoice/download/', None, '/billing/payment/invoice/download/*', ),
     ('/captcha/image/', None, '/captcha/image/*', ),
     ('/contacts/edit/', None, '/contacts/edit/*', ),
     ('/contacts/delete/', None, '/contacts/delete/*', ),
-    ('/domains/', '/transfer-code/', '/domains/*/transfer-code/', ),
     ('/domains/create/', None, '/domains/create/*', ),
     ('/domains/edit/', None, '/domains/edit/*', ),
+    ('/domains/', '/transfer-code/', '/domains/*/transfer-code/', ),
 ]
 
 

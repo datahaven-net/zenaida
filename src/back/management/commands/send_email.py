@@ -28,6 +28,7 @@ class Command(BaseCommand):
         from_email = from_email or settings.DEFAULT_FROM_EMAIL
         context = {
             'subject': subject,
+            'site_url': settings.SITE_BASE_URL,
         }
         email_template = 'email/test_email.html'
         html_content = render_to_string(email_template, context=context, request=None)

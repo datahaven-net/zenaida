@@ -16,7 +16,7 @@ class Command(BaseCommand):
     """
     Usage:
 
-        ./venv/bin/python src/manage.py email_announcement --from=admin@zenaida.cate.ai --select=all --template=email/maintenance.html --data={"subject": "system maintenance down-time"}
+        ./venv/bin/python src/manage.py email_announcement --from=admin@from-address.com --select=all --template=email/maintenance.html --data={"subject": "system maintenance down-time"}
         ./venv/bin/python src/manage.py email_announcement --select=/tmp/emails_list.txt --template=email/migration.html --data={"subject": "Migration", "date": "20.05.2020"}
 
     """

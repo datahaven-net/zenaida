@@ -1069,6 +1069,7 @@ class TestEPPStatusViewView(BaseAuthTesterMixin, TestCase):
 
     @mock.patch('front.views.EPPStatusView.check_epp_status')
     @mock.patch('django.core.cache.cache.get')
+    @override_settings(ZENAIDA_GATE_HEALTH_CACHE_ENABLED=True)
     def test_healthy_cached(self, mock_cache_get, mock_check_epp_status):
         mock_cache_get.return_value = 'OK'
         mock_check_epp_status.assert_not_called()

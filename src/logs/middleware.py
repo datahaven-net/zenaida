@@ -69,7 +69,7 @@ class LogRequestsMiddleware(object):
         ip_addr = self.client_ip(request)
 
         request_body = self.request_body(request)
-        request_path = request.path
+        request_path = request.path or ''
 
         if not self.log_filter(request):
             return self.get_response(request)
@@ -92,10 +92,10 @@ class LogRequestsMiddleware(object):
         try:
             RequestLog.objects.create(
                 ip_address=ip_addr,
-                user=self.user_email(request),
-                method=request.method,
-                path=self.short_path(request.path),
-                path_full=request.path,
+                user=self.user_email(request) or '',
+                method=request.method or '',
+                path=self.short_path(request.path) or '',
+                path_full=request.path or '',
                 request=request_body,
                 status_code=response.status_code,
                 exception=getattr(request, '_captured_exception', None) or None,
@@ -114,7 +114,7 @@ class LogRequestsMiddleware(object):
         if self.client_ip(request) in settings.MONITORING_HOSTS:
             # skip logging all monitoring requests from specific hosts
             return False
-        p = request.path
+        p = request.path or ''
         if any([p.startswith(ignore_path) for ignore_path in IGNORE_PATH_STARTSWITH]):
             # skip logging of some specific requests
             return False

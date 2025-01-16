@@ -559,7 +559,10 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     if not isinstance(epp_statuses, list):
         epp_statuses = [epp_statuses, ]
     for st in epp_statuses:
-        new_domain_statuses[str(st['@s'])] = st['#text']
+        if '#text' in st:
+            new_domain_statuses[str(st['@s'])] = st['#text']
+        elif '@s' in st:
+            new_domain_statuses[str(st['@s'])] = ''
     modified = (sorted(current_domain_statuses.keys()) != sorted(new_domain_statuses.keys()))
     updated = False
     old_domain_status = domain_object.status

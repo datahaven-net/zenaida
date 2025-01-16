@@ -21,7 +21,7 @@ class Contact(models.Model):
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contacts', )
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
+    epp_id = models.CharField(max_length=64, unique=True, null=True, blank=True, default=None)
 
     person_name = models.CharField(max_length=255, verbose_name='Full Name')
     organization_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Organization')
@@ -80,7 +80,7 @@ class Registrant(models.Model):
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='registrants', )
 
-    epp_id = models.CharField(max_length=32, unique=True, null=True, blank=True, default=None)
+    epp_id = models.CharField(max_length=64, unique=True, null=True, blank=True, default=None)
 
     person_name = models.CharField(max_length=255, verbose_name='Full Name')
     organization_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Organization')

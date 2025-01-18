@@ -256,6 +256,16 @@ def on_queue_response(resData):
 
         return do_domain_transfer_away(domain, from_client=from_client, to_client=to_client)
 
+    if 'renData' in resData:
+        try:
+            domain = str(resData['renData']['name'])
+            exDate = str(resData['renData']['exDate'])
+        except:
+            logger.exception('can not process queue response: %s' % resData)
+            return False
+
+        # TODO: to be implemented
+
     logger.error('UNKNOWN response: %s' % resData)
     return False
 

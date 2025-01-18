@@ -340,6 +340,6 @@ class DomainsChecker(automat.Automat):
                 reason = result.get('reason').lower()
                 if reason.count('non-supported zone'):
                     return [zerrors.NonSupportedZone(), ]
-                if not reason.count('the domain exists'):
+                if not reason.count('the domain exists') and not reason.count('domain exists'):
                     return [rpc_error.exception_from_response(response=response), ]
         return []

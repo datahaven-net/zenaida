@@ -211,14 +211,14 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='zenaida_a
 
     real_expiry_date = csv_info['expiry_date']
     real_create_date = csv_info['create_date']
-    real_epp_id = csv_record.get('roid_0')
+    real_epp_id = (csv_record.get('roid_0') or '').lower()
     real_status = csv_record.get('eppstatus_7')
     real_status_short = prepare_domain_status(real_status, default_status='inactive')
     real_auth_key = csv_record.get('auth_info_password_3') or ''
-    real_registrant_contact_id = csv_record.get('registrant_contact_id_21')
-    real_admin_contact_id = csv_record.get('admin_contact_id_55')
-    real_tech_contact_id = csv_record.get('tech_contact_id_72')
-    real_billing_contact_id = csv_record.get('billing_contact_id_38')
+    real_registrant_contact_id = (csv_record.get('registrant_contact_id_21') or '').lower()
+    real_admin_contact_id = (csv_record.get('admin_contact_id_55') or '').lower()
+    real_tech_contact_id = (csv_record.get('tech_contact_id_72') or '').lower()
+    real_billing_contact_id = (csv_record.get('billing_contact_id_38') or '').lower()
     real_registrant_email = csv_info['registrant']['contact_email']
     real_admin_email = csv_info['admin']['contact_email']
     real_tech_email = csv_info['tech']['contact_email']
@@ -265,13 +265,13 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='zenaida_a
     if known_domain:
         known_expiry_date = known_domain.expiry_date
         known_create_date = known_domain.create_date
-        known_epp_id = known_domain.epp_id
+        known_epp_id = (known_domain.epp_id or '').lower()
         known_status = known_domain.status
         known_auth_key = known_domain.auth_key
-        known_registrant_contact_id = None if not known_domain.registrant else known_domain.registrant.epp_id
-        known_admin_contact_id = None if not known_domain.contact_admin else known_domain.contact_admin.epp_id
-        known_billing_contact_id = None if not known_domain.contact_billing else known_domain.contact_billing.epp_id
-        known_tech_contact_id = None if not known_domain.contact_tech else known_domain.contact_tech.epp_id
+        known_registrant_contact_id = None if not known_domain.registrant else (known_domain.registrant.epp_id or '').lower()
+        known_admin_contact_id = None if not known_domain.contact_admin else (known_domain.contact_admin.epp_id or '').lower()
+        known_billing_contact_id = None if not known_domain.contact_billing else (known_domain.contact_billing.epp_id or '').lower()
+        known_tech_contact_id = None if not known_domain.contact_tech else (known_domain.contact_tech.epp_id or '').lower()
         known_nameservers = known_domain.list_nameservers()
 
     if real_registrant_contact_id:

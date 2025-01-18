@@ -88,7 +88,7 @@ def is_exist(domain_name='', epp_id=None):
     """
     from back.models.domain import Domain
     if epp_id:
-        return bool(Domain.domains.filter(epp_id=epp_id).first())
+        return bool(Domain.domains.filter(epp_id__iexact=epp_id.lower()).first())
     return bool(Domain.domains.filter(name=domain_name).first())
 
 
@@ -119,7 +119,7 @@ def domain_find(domain_name='', epp_id=None, domain_id=None):
     if domain_id:
         return Domain.domains.filter(id=domain_id).first()
     if epp_id:
-        return Domain.domains.filter(epp_id=epp_id).first()
+        return Domain.domains.filter(epp_id__iexact=epp_id.lower()).first()
     return Domain.domains.filter(name=domain_name.strip().lower()).first()
 
 

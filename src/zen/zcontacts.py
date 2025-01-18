@@ -22,7 +22,7 @@ def by_epp_id(epp_id):
     """
     if not epp_id:
         return None
-    return Contact.contacts.filter(epp_id=epp_id).first()
+    return Contact.contacts.filter(epp_id__iexact=epp_id.lower()).first()
 
 
 def exists(epp_id):
@@ -31,7 +31,7 @@ def exists(epp_id):
     """
     if not epp_id:
         return False
-    return bool(Contact.contacts.filter(epp_id=epp_id).first())
+    return bool(Contact.contacts.filter(epp_id__iexact=epp_id.lower()).first())
 
 
 def list_contacts(owner):
@@ -126,7 +126,7 @@ def contact_create(epp_id, owner, contact_info_response=None, raise_owner_exist=
     Creates new contact for given owner, but only if Contact with same epp_id not exist yet.
     """
     if epp_id:
-        existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+        existing_contact = Contact.contacts.filter(epp_id__iexact=epp_id.lower()).first()
         if existing_contact:
             logger.debug('contact with epp_id=%s already exist, owner is %r', epp_id, existing_contact.owner)
             if existing_contact.owner.pk != owner.pk:
@@ -184,7 +184,9 @@ def contact_update(epp_id, **kwargs):
     """
     Update given Contact with new field values.
     """
-    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+    if not epp_id:
+        raise Exception('EPP ID of the contact is empty')
+    existing_contact = Contact.contacts.filter(epp_id__iexact=epp_id.lower()).first()
     if not existing_contact:
         raise Exception('Contact not found')
     updated = Contact.contacts.filter(pk=existing_contact.pk).update(**kwargs)
@@ -196,7 +198,9 @@ def contact_refresh(epp_id, contact_info_response):
     """
     Update given Contact with new field values.
     """
-    existing_contact = Contact.contacts.filter(epp_id=epp_id).first()
+    if not epp_id:
+        raise Exception('EPP ID of the contact is empty')
+    existing_contact = Contact.contacts.filter(epp_id__iexact=epp_id.lower()).first()
     if not existing_contact:
         raise Exception('Contact not found')
     d = contact_info_response['epp']['response']['resData']['infData']
@@ -423,7 +427,9 @@ def registrant_delete(epp_id):
     Removes Registrant with given epp_id from DB.
     WARNING! will aslo remove all domains associated to the registrant.
     """
-    Registrant.registrants.filter(epp_id=epp_id).delete()
+    if not epp_id:
+        raise Exception('EPP ID of the contact was empty')
+    Registrant.registrants.filter(epp_id__iexact=epp_id.lower()).delete()
     logger.info('registrant with epp_id=%r deleted', epp_id)
     return True
 
@@ -434,7 +440,7 @@ def registrant_find(epp_id=None, contact_email=None):
     """
     if contact_email is not None:
         return Registrant.registrants.filter(contact_email=contact_email).first()
-    return Registrant.registrants.filter(epp_id=epp_id).first()
+    return Registrant.registrants.filter(epp_id__iexact=epp_id.lower()).first()
 
 
 def registrant_exists(epp_id):

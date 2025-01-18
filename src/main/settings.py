@@ -428,8 +428,8 @@ GOOGLE_RECAPTCHA_SECRET_KEY = getattr(params, 'GOOGLE_RECAPTCHA_SECRET_KEY', '')
 
 #------------------------------------------------------------------------------
 #--- SIMPLE CAPTCHA CONFIGS
-CAPTCHA_LENGTH = 6
-CAPTCHA_FONT_SIZE = 26
+CAPTCHA_LENGTH = getattr(params, 'CAPTCHA_LENGTH', 6)
+CAPTCHA_FONT_SIZE = getattr(params, 'CAPTCHA_FONT_SIZE', 26)
 
 #------------------------------------------------------------------------------
 #--- SMS GATEWAY CONFIGS

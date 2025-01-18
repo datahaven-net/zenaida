@@ -4,8 +4,8 @@ from django.db import models
 from back.constants import COUNTRIES
 
 phone_regex = RegexValidator(
-    regex=r'^\+?1?\d{9,15}$',
-    message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+    regex=r'^\+[0-9]{1,3}\.?[0-9]{1,14}$',
+    message="Phone number must be entered in the format: '+123.4567890'. The number must include the country code, which is separated from the phone number (up to 14 digits allowed) by a period."
 )
 
 

@@ -21,6 +21,8 @@ from django.conf import settings
 
 from automats import automat
 
+from base import utils
+
 from epp import rpc_client
 from epp import rpc_error
 
@@ -182,10 +184,11 @@ class ContactSynchronizer(automat.Automat):
             response = rpc_client.cmd_contact_create(
                 contact_id=self.contact_info['id'],
                 email=self.contact_info['email'],
-                voice=self.contact_info['voice'],
-                fax=self.contact_info['fax'],
+                voice=utils.to_e164(self.contact_info['voice']),
+                fax=utils.to_e164(self.contact_info['fax']),
                 # auth_info=auth_info,
                 contacts_list=self.contact_info['contacts'],
+                include_local=False,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:
@@ -202,10 +205,11 @@ class ContactSynchronizer(automat.Automat):
             response = rpc_client.cmd_contact_update(
                 contact_id=self.contact_info['id'],
                 email=self.contact_info['email'],
-                voice=self.contact_info['voice'],
-                fax=self.contact_info['fax'],
+                voice=utils.to_e164(self.contact_info['voice']),
+                fax=utils.to_e164(self.contact_info['fax']),
                 # auth_info=auth_info,
                 contacts_list=self.contact_info['contacts'],
+                include_local=False,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:

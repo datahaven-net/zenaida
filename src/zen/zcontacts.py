@@ -315,7 +315,7 @@ def to_dict(contact_object):
         info['voice'] = contact_object.contact_voice
     if not info.get('voice'):
         # every contact must have a voice number
-        info['voice'] = '0'
+        info['voice'] = '+1.234'
     if contact_object.contact_fax:
         info['fax'] = contact_object.contact_fax
     else:

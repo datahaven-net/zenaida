@@ -158,7 +158,7 @@ class DomainsChecker(automat.Automat):
         if not isinstance(results, list):
             results = [results, ]
         for result in results:
-            if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('the domain exists'):
+            if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('domain exists'):
                 return True
         return False
 
@@ -196,7 +196,7 @@ class DomainsChecker(automat.Automat):
             if not name:
                 logger.error('invalid EPP response, unknown domain name: %s', args[0])
                 continue
-            if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('the domain exists'):
+            if result.get('name', {}).get('@avail') == '0' and result.get('reason').lower().count('domain exists'):
                 self.available_domain_names.append(name)
         self.existing_domains = list(self.available_domain_names)
 
@@ -279,7 +279,7 @@ class DomainsChecker(automat.Automat):
                 logger.error('unexpected EPP response, unknown domain name: %s', args[0])
                 continue
             if result.get('name', {}).get('@avail') == '0':
-                if result.get('reason').lower().count('the domain exists'):
+                if result.get('reason').lower().count('domain exists'):
                     existing_domains.append(name)
                     self.check_results[name] = True
                 else:
@@ -340,6 +340,6 @@ class DomainsChecker(automat.Automat):
                 reason = result.get('reason').lower()
                 if reason.count('non-supported zone'):
                     return [zerrors.NonSupportedZone(), ]
-                if not reason.count('the domain exists') and not reason.count('domain exists'):
+                if not reason.count('domain exists'):
                     return [rpc_error.exception_from_response(response=response), ]
         return []

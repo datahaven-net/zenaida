@@ -259,12 +259,11 @@ def on_queue_response(resData):
     if 'renData' in resData:
         try:
             domain = str(resData['renData']['name'])
-            exDate = str(resData['renData']['exDate'])
         except:
             logger.exception('can not process queue response: %s' % resData)
             return False
 
-        # TODO: to be implemented
+        return do_domain_renewal(domain)
 
     logger.error('UNKNOWN response: %s' % resData)
     return False

@@ -293,7 +293,7 @@ class DomainSynchronizer(automat.Automat):
         try:
             response = rpc_client.cmd_domain_create(
                 domain=self.target_domain.name,
-                nameservers=self.target_domain.list_nameservers(),
+                nameservers=self.target_domain.list_nameservers(skip_empty=True),
                 contacts_dict=contacts_dict,
                 registrant=self.target_domain.registrant.epp_id,
                 auth_info=zdomains.generate_random_auth_info(),

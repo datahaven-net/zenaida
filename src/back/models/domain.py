@@ -118,17 +118,20 @@ class Domain(models.Model):
             result.append(('registrant', self.registrant, ))
         return result
 
-    def list_nameservers(self):
+    def list_nameservers(self, skip_empty=False):
         """
         Return list of current nameservers.
         Always returns list of 4 items, empty string means nameserver was not set.
         """
-        return [
+        ns_list = [
             self.nameserver1,
             self.nameserver2,
             self.nameserver3,
             self.nameserver4,
         ]
+        if skip_empty:
+            return list(filter(None, ns_list))
+        return ns_list
 
     def get_nameserver(self, pos):
         """

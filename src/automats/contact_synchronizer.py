@@ -189,6 +189,7 @@ class ContactSynchronizer(automat.Automat):
                 # auth_info=auth_info,
                 contacts_list=self.contact_info['contacts'],
                 include_local=False,
+                include_international=False,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:
@@ -210,6 +211,7 @@ class ContactSynchronizer(automat.Automat):
                 # auth_info=auth_info,
                 contacts_list=self.contact_info['contacts'],
                 include_local=False,
+                include_international=False,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:

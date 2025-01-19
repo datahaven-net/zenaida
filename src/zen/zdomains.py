@@ -624,11 +624,13 @@ def generate_random_auth_info(length=12):
     random.seed()
     lower_length = int(length / 3)
     upper_length = int(length / 3)
-    digits_lendth = length - upper_length - lower_length
+    special_length = 1
+    digits_lendth = length - upper_length - lower_length - special_length
     lower_pwd = [random.choice(string.ascii_lowercase) for _ in range(lower_length)]
     upper_pwd = [random.choice(string.ascii_uppercase) for _ in range(upper_length)]
     digits_pwd = [random.choice(string.digits) for _ in range(digits_lendth)]
-    pwd = lower_pwd + upper_pwd + digits_pwd
+    special_pwd = [random.choice('!@#$%^*()') for _ in range(special_length)]
+    pwd = lower_pwd + upper_pwd + digits_pwd + special_pwd
     random.shuffle(pwd)
     return ''.join(pwd)
 

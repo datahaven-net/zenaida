@@ -296,6 +296,7 @@ class DomainSynchronizer(automat.Automat):
                 nameservers=self.target_domain.list_nameservers(),
                 contacts_dict=contacts_dict,
                 registrant=self.target_domain.registrant.epp_id,
+                auth_info=zdomains.generate_random_auth_info(),
                 period=period_value,
                 period_units=period_units,
             )

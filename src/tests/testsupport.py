@@ -50,9 +50,9 @@ def prepare_tester_contact(tester=None, epp_id=None, create_new=False):
         tester_contact = zcontacts.contact_create(
             epp_id=epp_id,
             owner=tester,
-            person_name='Tester Tester',
+            person_name='Tester Tester' + (f' {create_new}' if create_new else ''),
             organization_name='TestingCorp',
-            address_street='TestStreet',
+            address_street='TestStreet' + (f'_{create_new}' if create_new else ''),
             address_city='TestCity',
             address_province='TestProvince',
             address_postal_code='TestPostalCode',

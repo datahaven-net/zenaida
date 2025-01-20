@@ -4,6 +4,7 @@ import datetime
 import os
 import mock
 import pytest
+import pytz
 import socket
 
 from django.test import TestCase, override_settings
@@ -59,8 +60,8 @@ class TestAccountDomainsListView(BaseAuthTesterMixin, TestCase):
         Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
         )
@@ -144,6 +145,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/billing/order/create/register/test.ai/'
@@ -154,7 +156,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zzones.is_supported')
     @mock.patch('zen.zmaster.domains_check')
     @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
-    def test_create_domain_successful_without_contacts(self, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete):
+    def test_create_domain_blocked_without_contacts(self, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete):
         mock_domains_check.return_value = {'test.ai': False, }
         mock_zone_is_supported.return_value = True
         mock_user_profile_complete.return_value = True
@@ -164,9 +166,8 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='ns1.google.com',
         ))
-        assert response.status_code == 302
-        assert response.url == '/billing/order/create/register/test.ai/'
-        assert len(Domain.domains.all()) == 1
+        assert response.status_code == 200
+        assert response.context['errors'] == ['Administrative contact info is mandatory.']
 
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
@@ -186,6 +187,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/domains/'
@@ -209,6 +211,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/domains/'
@@ -236,6 +239,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/domains/'
@@ -270,6 +274,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/domains/create/test.ai/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
             ))
             assert response.status_code == 302
             assert response.url == '/billing/order/create/register/test.ai/'
@@ -297,6 +302,7 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
             response = self.client.post('/domains/create/test.ax/', data=dict(
                 nameserver1='ns1.google.com',
                 contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
             ))
         assert response.status_code == 302
         assert response.url == '/domains/'
@@ -325,12 +331,14 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
     @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
     def test_glue_record_not_supported(self, mock_messages_error):
         tester = prepare_tester_account()
-        contact_admin = prepare_tester_contact(tester=tester)
+        contact_admin = prepare_tester_contact(tester=tester, create_new='1')
+        contact_tech = prepare_tester_contact(tester=tester, create_new='2')
         profile = prepare_tester_profile(tester=tester)
         prepare_tester_registrant(tester=tester, profile_object=profile)
         response = self.client.post('/domains/create/test.ai/', data=dict(
             nameserver1='ns1.test.ai',
             contact_admin=contact_admin.id,
+            contact_tech=contact_tech.id,
         ))
         assert response.status_code == 302
         mock_messages_error.assert_called_once()
@@ -364,6 +372,54 @@ class TestAccountDomainCreateView(BaseAuthTesterMixin, TestCase):
 
 class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
 
+    @pytest.mark.django_db
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zzones.is_supported')
+    @mock.patch('zen.zmaster.domains_check')
+    @mock.patch('zen.zmaster.domain_check_create_update_renew')
+    @override_settings(ZENAIDA_PING_NAMESERVERS_ENABLED=False)
+    def test_update_successful(self, mock_epp_call, mock_domains_check, mock_zone_is_supported, mock_user_profile_complete):
+        mock_domains_check.return_value = {'test.ai': False, }
+        mock_epp_call.return_value = [True, ]
+        mock_zone_is_supported.return_value = True
+        mock_user_profile_complete.return_value = True
+        with mock.patch('zen.zmaster.contact_create_update') as mock_contact_create_update:
+            # First create a contact person for the owner
+            mock_contact_create_update.return_value = True
+            self.client.post('/contacts/create/', data=contact_person, follow=True)
+            # 2nd create a domain
+            created_domain = Domain.domains.create(
+                owner=self.account,
+                name='test.ai',
+                expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+                create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+                zone=Zone.zones.create(name='ai'),
+                epp_id='12345',
+            )
+            # 3rd update the domain
+            response = self.client.post(f'/domains/edit/{created_domain.id}/', data=dict(
+                nameserver1='ns2.google.com',
+                contact_admin=Contact.contacts.all()[0].id,
+                contact_tech=Contact.contacts.all()[0].id,
+            ))
+            assert response.status_code == 302
+            assert response.url == '/domains/'
+            #
+            #
+            # mock_contact_create_update.return_value = True
+            # self.client.post('/contacts/create/', data=contact_person, follow=True)
+            # registrant_info = copy.deepcopy(contact_person)
+            # registrant_info['owner'] = zusers.find_account('tester@zenaida.ai')
+            # Registrant.registrants.create(**registrant_info)
+            # response = self.client.post('/domains/edit/test.ai/', data=dict(
+            #     nameserver1='ns1.google.com',
+            #     contact_admin=Contact.contacts.all()[0].id,
+            #     contact_tech=Contact.contacts.all()[0].id,
+            # ))
+            # assert response.status_code == 302
+            # assert response.url == '/billing/order/create/register/test.ai/'
+            # assert len(Domain.domains.all()) == 1
+
     @mock.patch('back.models.profile.Profile.is_complete')
     def test_update_successful_e2e(self, mock_user_profile_complete):
         if os.environ.get('E2E', '0') != '1':
@@ -377,8 +433,8 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
             created_domain = Domain.domains.create(
                 owner=self.account,
                 name='test.ai',
-                expiry_date=datetime.datetime(2099, 1, 1),
-                create_date=datetime.datetime(1970, 1, 1),
+                expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+                create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
                 zone=Zone.zones.create(name='ai'),
                 epp_id='12345',
             )
@@ -436,8 +492,8 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         created_domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
         )
@@ -466,8 +522,8 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         created_domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
             nameserver1='ns1.example.com',
@@ -504,8 +560,8 @@ class TestAccountDomainUpdateView(BaseAuthTesterMixin, TestCase):
         created_domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
             nameserver1='ns1.example.com',
@@ -531,8 +587,8 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
         domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
             auth_key='transfer_me',
@@ -555,8 +611,8 @@ class TestAccountDomainTransferCodeView(BaseAuthTesterMixin, TestCase):
         domain = Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
             auth_key='transfer_me',

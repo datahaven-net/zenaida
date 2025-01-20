@@ -116,6 +116,13 @@ class DomainDetailsForm(models.ModelForm):
                 )
             )
 
+        contact_admin = cleaned_data['contact_admin']
+        if not contact_admin:
+            raise forms.ValidationError('Administrative contact info is mandatory.')
+        contact_tech = cleaned_data['contact_tech']
+        if not contact_tech:
+            raise forms.ValidationError('Technical contact info is mandatory.')
+
         return cleaned_data
 
 

@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
-from django.urls import path
-from django.conf.urls import include, url
+from django.urls import path, re_path
+from django.conf.urls import include
 from django.views.generic import TemplateView
 
 from front import views as front_views
@@ -28,7 +28,7 @@ admin_patterns = [
 
 auth_patterns = [
     # All login related stuff goes through the "two_factor" module.
-    url(r'', include(two_factor_urls)),
+    re_path(r'', include(two_factor_urls)),
 
     # Register, logout, password change/reset/forgotten flows go through "accounts" module.
     path('accounts/logout/', auth_views.LogoutView.as_view(

@@ -271,7 +271,17 @@ def on_queue_response(resData):
 
 def on_queue_message(msgQ):
     try:
-        json_input = json.loads(xml2json.xml2json(msgQ['msg']['#text'], XML2JsonOptions(), strip_ns=1, strip=1))
+        msg_text = msgQ['msg'].get('#text')
+    except:
+        logger.exception('can not process queue message: %s' % msgQ)
+        return False
+
+    if not msg_text:
+        logger.error('unexpected payload received: %r' % msgQ)
+        return True
+
+    try:
+        json_input = json.loads(xml2json.xml2json(msg_text, XML2JsonOptions(), strip_ns=1, strip=1))
     except:
         logger.exception('can not process queue message: %s' % msgQ)
         return False

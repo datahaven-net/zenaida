@@ -362,7 +362,7 @@ class DomainSynchronizer(automat.Automat):
         try:
             response = rpc_client.cmd_domain_renew(
                 domain=self.target_domain.name,
-                cur_exp_date=self.latest_domain_info['epp']['response']['resData']['infData']['exDate'],
+                cur_exp_date=self.latest_domain_info['epp']['response']['resData']['infData']['exDate'].split('T')[0],
                 period=period_value,
                 period_units=period_units,
             )

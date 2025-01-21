@@ -1,8 +1,13 @@
 version: 2.1
-jobs:
-  build:
+executors:
+  my-machine-executor:
     machine:
       image: default
+
+jobs:
+  zenaida-job:
+
+    executor: my-machine-executor
     steps:
       - checkout
       - run:
@@ -13,3 +18,11 @@ jobs:
           name: "Build"
           command: |
             make docker/test
+
+workflows:
+  build:
+    jobs:
+      - zenaida-job:
+          filters:
+            branches:
+              ignore: master

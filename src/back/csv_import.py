@@ -258,6 +258,7 @@ def domain_regenerate_from_csv_row(csv_row, headers, wanted_registrar='zenaida_a
             email=real_registrant_email,
             account_password=new_password,
             is_active=True,
+            is_approved=True,
             **csv_info['registrant'],
         )
         log.info('generated new account and password for %r : %r', real_registrant_email, new_password)

@@ -65,11 +65,13 @@ class AccountDomainsListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        zmaster.domains_quick_sync(
-            domain_objects_list=context.get('object_list', []),
-            hours_passed=12,
-            request_time_limit=3,
-        )
+        domain_objects_list = context.get('object_list', [])
+        if len(domain_objects_list) < 10:
+            zmaster.domains_quick_sync(
+                domain_objects_list=domain_objects_list,
+                hours_passed=12,
+                request_time_limit=3,
+            )
         return context
 
 

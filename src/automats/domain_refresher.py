@@ -629,6 +629,7 @@ class DomainRefresher(automat.Automat):
                 account_password=zusers.generate_password(length=10),
                 also_profile=True,
                 is_active=True,
+                is_approved=True,
                 person_name=self.current_registrant_address_info.get('name', 'unknown'),
                 organization_name=self.current_registrant_address_info.get('org', 'unknown'),
                 address_street=self.current_registrant_address_info.get('street', 'unknown'),

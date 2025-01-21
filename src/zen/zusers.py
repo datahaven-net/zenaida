@@ -21,7 +21,7 @@ def find_account(email):
     return Account.users.filter(email=email.lower()).first()
 
 
-def create_account(email, account_password=None, also_profile=True, is_active=False, **kwargs):
+def create_account(email, account_password=None, also_profile=True, is_active=False, is_approved=False, **kwargs):
     """
     Creates a new user account with given email and also new Profile object for him.
     All `kwargs` will be passed as field values to the new Profile object. 
@@ -30,6 +30,7 @@ def create_account(email, account_password=None, also_profile=True, is_active=Fa
         email=email.lower(),
         password=account_password,
         is_active=is_active,
+        is_approved=is_approved,
     )
     if also_profile:
         create_profile(new_account, **kwargs)

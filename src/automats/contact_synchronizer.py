@@ -27,6 +27,7 @@ from epp import rpc_client
 from epp import rpc_error
 
 from zen import zcontacts
+from zen import zdomains
 
 #------------------------------------------------------------------------------
 
@@ -187,9 +188,10 @@ class ContactSynchronizer(automat.Automat):
                 voice=utils.to_e164(self.contact_info['voice']),
                 fax=utils.to_e164(self.contact_info['fax']),
                 # auth_info=auth_info,
+                auth_info=zdomains.generate_random_auth_info(),
                 contacts_list=self.contact_info['contacts'],
                 include_local=False,
-                include_international=False,
+                # include_international=False,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:
@@ -209,9 +211,10 @@ class ContactSynchronizer(automat.Automat):
                 voice=utils.to_e164(self.contact_info['voice']),
                 fax=utils.to_e164(self.contact_info['fax']),
                 # auth_info=auth_info,
+                auth_info=zdomains.generate_random_auth_info(),
                 contacts_list=self.contact_info['contacts'],
                 include_local=False,
-                include_international=False,
+                # include_international=False,
                 raise_for_result=False,
             )
         except rpc_error.EPPError as exc:

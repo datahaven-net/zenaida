@@ -75,8 +75,8 @@ class DomainDetailsForm(models.ModelForm):
             cleaned_data.get('nameserver4'),
         ]
 
-        if not any(ns_list):
-            raise forms.ValidationError('At least one nameserver must be specified for the domain.')
+        # if not any(ns_list):
+        #     raise forms.ValidationError('At least one nameserver must be specified for the domain.')
         for nameserver in ns_list:
             if not nameserver or nameserver.strip() == '':
                 continue

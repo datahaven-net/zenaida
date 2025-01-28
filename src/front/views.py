@@ -143,7 +143,7 @@ class AccountDomainCreateView(FormView):
         domain_obj = form.save(commit=False)
 
         for nameserver in domain_obj.list_nameservers():
-            if nameserver.strip().lower().endswith(domain_name):
+            if nameserver.strip() and nameserver.strip().lower().endswith(domain_name):
                 messages.error(self.request, f'Please use another nameserver instead of {nameserver}, "glue" records are not supported yet.')
                 return super().form_valid(form)
 

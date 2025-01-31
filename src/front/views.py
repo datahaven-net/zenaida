@@ -328,7 +328,8 @@ class AccountDomainTransferTakeoverView(FormView):
         current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
         current_statuses = [s['@s'] for s in current_statuses]
 
-        if info['epp']['response']['resData']['infData']['authInfo']['pw'] != 'Authinfo Correct':
+        pw = info['epp']['response']['resData']['infData']['authInfo']['pw']
+        if pw != 'Authinfo Correct' and pw != transfer_code:
             messages.error(self.request, 'Given transfer code is not correct')
             return super().form_invalid(form)
 

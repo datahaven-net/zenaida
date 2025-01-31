@@ -258,11 +258,11 @@ class DomainRefresher(automat.Automat):
         existing_account = zusers.find_account(args[0]['epp']['response']['resData']['infData']['email'].lower())
         if not existing_account:
             return False
-#         existing_registrant = existing_account.registrants.first()
-#         if not existing_registrant:
-#             return False
-#         if existing_registrant.epp_id != self.received_registrant_epp_id:
-#             return False
+        existing_registrant = existing_account.registrants.first()
+        if not existing_registrant:
+            return False
+        if existing_registrant.epp_id != self.received_registrant_epp_id:
+            return False
         return True
 
     def doInit(self, *args, **kwargs):

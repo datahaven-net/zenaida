@@ -280,7 +280,7 @@ def clear_contacts_change(to_be_added, to_be_removed):
     for add_item in to_be_added:
         add_remove_collision_found = False
         for remove_item in to_be_removed:
-            if add_item['type'] == remove_item['type'] and add_item['id'] == remove_item['id']:
+            if add_item['type'] == remove_item['type'] and add_item['id'].lower() == remove_item['id'].lower():
                 add_remove_collision_found = True
                 break
         if not add_remove_collision_found:
@@ -288,7 +288,7 @@ def clear_contacts_change(to_be_added, to_be_removed):
     for remove_item in to_be_removed:
         remove_add_collision_found = False
         for add_item in to_be_added:
-            if add_item['type'] == remove_item['type'] and add_item['id'] == remove_item['id']:
+            if add_item['type'] == remove_item['type'] and add_item['id'].lower() == remove_item['id'].lower():
                 remove_add_collision_found = True
                 break
         if not remove_add_collision_found:

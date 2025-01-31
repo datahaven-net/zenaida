@@ -473,7 +473,7 @@ def compare_contacts(domain_object, domain_info_response, target_contacts=None):
         current_contacts = [current_contacts, ]
     current_contacts = [{
         'type': i['@type'],
-        'id': i['#text'],
+        'id': i['#text'].lower(),
     } for i in current_contacts]
 
     for cur_contact_info in current_contacts:

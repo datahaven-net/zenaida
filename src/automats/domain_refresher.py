@@ -553,7 +553,7 @@ class DomainRefresher(automat.Automat):
             first_contact = zcontacts.contact_create_from_profile(self.known_registrant.owner, self.known_registrant.owner.profile)
         if first_contact.epp_id:
             if not self.new_domain_contacts.get('admin'):
-                self.new_domain_contacts['admin'] = first_contact.epp_id
+                self.new_domain_contacts['admin'] = first_contact.epp_id.lower()
         if self.target_domain:
             self.target_domain.refresh_from_db()
             target_contacts = None
@@ -575,7 +575,7 @@ class DomainRefresher(automat.Automat):
                     if cont and cont.epp_id:
                         self.received_contacts.append({
                             'type': role,
-                            'id': cont.epp_id,
+                            'id': cont.epp_id.lower(),
                         })
 
     def doRewriteDomainContacts(self, *args, **kwargs):

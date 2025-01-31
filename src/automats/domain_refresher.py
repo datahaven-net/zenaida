@@ -20,7 +20,7 @@ EVENTS:
     * :red:`skip-check`
 """
 
-#------------------------------------------------------------------------------ 
+#------------------------------------------------------------------------------
 
 import logging
 import datetime
@@ -200,6 +200,7 @@ class DomainRefresher(automat.Automat):
                 self.state = 'REWRITE_CONT'
                 self.doUseReceivedRegistrantInfo(*args, **kwargs)
                 self.doDBCheckCreateUserAccount(*args, **kwargs)
+                self.doDBCheckCreateDomain(*args, **kwargs)
                 self.doDBSetDomainContacts(*args, **kwargs)
                 self.doRewriteDomainContacts(*args, **kwargs)
         #---UPDATE_REG---

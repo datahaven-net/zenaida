@@ -271,13 +271,22 @@ def on_queue_response(resData):
 
 def on_queue_message(msgQ):
     try:
-        msg_text = msgQ['msg'].get('#text')
+        msg_element = msgQ['msg']
     except:
         logger.exception('can not process queue message: %s' % msgQ)
         return False
 
+    if isinstance(msg_element, dict):
+        msg_text = msg_element.get('#text')
+    else:
+        msg_text = str(msg_element)
+
     if not msg_text:
         logger.error('unexpected payload received: %r' % msgQ)
+        return True
+
+    if msg_text.lower().count('registry balance alert'):
+        logger.critical(msg_text)
         return True
 
     try:

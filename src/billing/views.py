@@ -352,6 +352,20 @@ class OrderExecuteView(LoginRequiredMixin, View):
     success_message = 'Order processed successfully'
     processing_message = 'Order is processing, please wait'
 
+    def _verify_existing_order(self, request, existing_order):
+        for order_item in existing_order.items.all():
+            if order_item.status in ['processed', 'pending', 'blocked', ]:
+                continue
+            target_domain = zdomains.domain_find(order_item.name)
+            if not target_domain:
+                messages.error(request, 'One of the items is not valid anymore because related domain does not exist. Please start a new order.')
+                return False
+            if order_item.type == 'domain_renew':
+                if not target_domain.contact_admin or not target_domain.contact_tech:
+                    messages.error(request, 'Domain %s is missing a mandatory contact info. Please update domain info and confirm your order again.' % target_domain.name)
+                    return False
+        return True
+
     def post(self, request, *args, **kwargs):
         existing_order = orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='execute'
@@ -360,7 +374,8 @@ class OrderExecuteView(LoginRequiredMixin, View):
             messages.error(request, self.error_message_balance)
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(existing_order.total_price - existing_order.owner.balance)))
-
+        if not self._verify_existing_order(request, existing_order):
+            return shortcuts.redirect('account_domains')
         new_status = orders.execute_order(existing_order)
         if new_status == 'processed':
             messages.success(request, self.success_message)

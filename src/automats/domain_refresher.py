@@ -391,9 +391,22 @@ class DomainRefresher(automat.Automat):
                 if add_contacts or remove_contacts or change_registrant:
                     self.contacts_changed = True
 
+        # check if domain was trnasferred away: must not have a registrant and client ID (registrar) must be different
+        try:
+            infData = response['epp']['response']['resData']['infData']
+        except Exception as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
+            raise rpc_error.EPPBadResponse('response field not recognized')
+        if 'registrant' not in infData:
+            current_registrar = infData.get('clID')
+            if current_registrar and current_registrar != settings.ZENAIDA_REGISTRAR_ID:
+                logger.error('domain %r have no registrant and different registrar, it was transferred away', self.domain_name)
+                self.event('domain-transferred-away')
+                return
+
         # detect current registrant
         try:
-            self.received_registrant_epp_id = response['epp']['response']['resData']['infData']['registrant']
+            self.received_registrant_epp_id = infData['registrant']
         except Exception as exc:
             self.log(self.debug_level, 'Exception in doEppDomainInfo: %s' % exc)
             self.event('error', zerrors.RegistrantUnknown(response=response))

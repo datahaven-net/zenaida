@@ -54,8 +54,10 @@ class Command(BaseCommand):
             # Remove all inactive domains.
             zdomains.remove_inactive_domains(days=10)
 
-            # Remove started but not completed orders after a day.
-            billing_tasks.remove_started_orders(older_than_days=1)
+            # Remove not completed orders.
+            billing_tasks.remove_unfinished_orders(status='started', older_than_days=1)
+            billing_tasks.remove_unfinished_orders(status='incomplete', older_than_days=2)
+            billing_tasks.remove_unfinished_orders(status='cancelled', older_than_days=30)
 
             # Remove started but not completed payments after 60 days
             billing_tasks.remove_unfinished_payments()

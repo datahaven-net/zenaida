@@ -65,13 +65,13 @@ def create_auto_renew_orders(domains_to_renew):
     # TODO: ...
 
 
-def remove_started_orders(older_than_days=1):
-    started_orders = orders.get_all_orders_by_status_and_older_than_days(
-        status='started', older_than_days=older_than_days
+def remove_unfinished_orders(status, older_than_days=2):
+    unfinished_orders = orders.get_all_orders_by_status_and_older_than_days(
+        status=status, older_than_days=older_than_days
     )
-    for order in started_orders:
+    for order in unfinished_orders:
+        logger.info(f'Removing {order} because it was not finished after "{older_than_days}" days')
         order.delete()
-        logger.info(f'Removed {order} because it was started "{older_than_days}" days ago and was not completed')
 
 
 def retry_failed_orders(max_retries=1):

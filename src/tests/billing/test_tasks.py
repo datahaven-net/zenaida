@@ -72,10 +72,9 @@ class TestOrderRemovalTasks(TestCase):
             started_at=time_now-datetime.timedelta(days=2)
         )
         assert Order.orders.all().count() == 1
-        tasks.remove_started_orders(1)
+        tasks.remove_unfinished_orders(status='started', older_than_days=1)
         assert Order.orders.all().count() == 0
         mock_log_info.assert_called()
-
 
 
 class TestRetryFailedOrdersTask(TestCase):

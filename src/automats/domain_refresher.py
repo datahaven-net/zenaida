@@ -567,6 +567,8 @@ class DomainRefresher(automat.Automat):
         if first_contact.epp_id:
             if not self.new_domain_contacts.get('admin'):
                 self.new_domain_contacts['admin'] = first_contact.epp_id.lower()
+            if not self.new_domain_contacts.get('tech'):
+                self.new_domain_contacts['tech'] = first_contact.epp_id.lower()
         if self.target_domain:
             self.target_domain.refresh_from_db()
             target_contacts = []
@@ -707,6 +709,7 @@ class DomainRefresher(automat.Automat):
         if not first_contact:
             first_contact = zcontacts.contact_create_from_profile(self.known_registrant.owner, self.known_registrant.owner.profile)
         zdomains.domain_join_contact(self.target_domain, 'admin', first_contact)
+        zdomains.domain_join_contact(self.target_domain, 'tech', first_contact)
         self.target_domain.refresh_from_db()
 
     def doDBDeleteDomain(self, *args, **kwargs):
@@ -730,8 +733,8 @@ class DomainRefresher(automat.Automat):
             first_contact = self.known_registrant.owner.contacts.first()
             if not first_contact:
                 first_contact = zcontacts.contact_create_from_profile(self.known_registrant.owner, self.known_registrant.owner.profile)
-            # only populate Admin contact from one of the existing contacts that must already exist!
-            self.new_domain_contacts = {'admin': first_contact.epp_id, }
+            # only populate Admin & Tech contacts from one of the existing contacts that must already exist!
+            self.new_domain_contacts = {'admin': first_contact.epp_id, 'tech': first_contact.epp_id, }
             return
         received_contacts_info = args[0]
         # even if domain not exist yet make sure all contacts really exists in DB and in sync with back-end
@@ -796,7 +799,11 @@ class DomainRefresher(automat.Automat):
             self.target_domain = zdomains.domain_change_registrant(self.target_domain, self.known_registrant)
             self.target_domain.refresh_from_db()
             first_contact = self.known_registrant.owner.contacts.first()
-            self.target_domain = zdomains.domain_replace_contacts(self.target_domain, new_admin_contact=first_contact)
+            self.target_domain = zdomains.domain_replace_contacts(
+                self.target_domain,
+                new_admin_contact=first_contact,
+                new_tech_contact=first_contact,
+            )
             self.target_domain.refresh_from_db()
             return
         # make sure owner of the domain is correct
@@ -810,7 +817,11 @@ class DomainRefresher(automat.Automat):
             self.target_domain = zdomains.domain_change_owner(self.target_domain, self.known_registrant.owner)
             self.target_domain.refresh_from_db()
             first_contact = self.known_registrant.owner.contacts.first()
-            self.target_domain = zdomains.domain_replace_contacts(self.target_domain, new_admin_contact=first_contact)
+            self.target_domain = zdomains.domain_replace_contacts(
+                self.target_domain,
+                new_admin_contact=first_contact,
+                new_tech_contact=first_contact,
+            )
             self.target_domain.refresh_from_db()
             return
         # also check if registrant's email changed on back-end

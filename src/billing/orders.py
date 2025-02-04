@@ -405,6 +405,7 @@ def execute_domain_transfer(order_item):
         zdomains.domain_detach_contact(domain, 'billing')
         zdomains.domain_detach_contact(domain, 'tech')
         zdomains.domain_join_contact(domain, 'admin', order_item.order.owner.contacts.first())
+        zdomains.domain_join_contact(domain, 'tech', order_item.order.owner.contacts.first())
         domain.refresh_from_db()
 
         # Override info on back-end

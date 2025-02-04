@@ -399,7 +399,7 @@ class DomainRefresher(automat.Automat):
             raise rpc_error.EPPBadResponse('response field not recognized')
         if 'registrant' not in infData:
             current_registrar = infData.get('clID')
-            if current_registrar and current_registrar != settings.ZENAIDA_REGISTRAR_ID:
+            if current_registrar and current_registrar.lower() != settings.ZENAIDA_REGISTRAR_ID.lower():
                 logger.error('domain %r have no registrant and different registrar, it was transferred away', self.domain_name)
                 self.event('domain-transferred-away')
                 return
@@ -569,13 +569,24 @@ class DomainRefresher(automat.Automat):
                 self.new_domain_contacts['admin'] = first_contact.epp_id.lower()
         if self.target_domain:
             self.target_domain.refresh_from_db()
-            target_contacts = None
+            target_contacts = []
             if not self.target_domain.list_contacts():
                 target_contacts = list({
                     'admin': first_contact,
                     'billing': first_contact,
                     'tech': first_contact,
-                }.items()),
+                }.items())
+            found_admin = False
+            found_tech = False
+            for target_contact in target_contacts:
+                if target_contact[0] == 'admin' and target_contact[1]:
+                    found_admin = True
+                if target_contact[0] == 'tech' and target_contact[1]:
+                    found_tech = True
+            if not found_admin:
+                target_contacts.append(('admin', first_contact, ))
+            if not found_tech:
+                target_contacts.append(('tech', first_contact, ))
             self.contacts_to_add, self.contacts_to_remove, change_registrant = zdomains.compare_contacts(
                 domain_object=self.target_domain,
                 domain_info_response=self.domain_info_response,

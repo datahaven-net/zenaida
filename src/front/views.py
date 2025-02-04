@@ -322,7 +322,7 @@ class AccountDomainTransferTakeoverView(FormView):
 
         info = outputs[-2]
         current_registrar = info['epp']['response']['resData']['infData']['clID']
-        if current_registrar == settings.ZENAIDA_REGISTRAR_ID:
+        if current_registrar.lower() == settings.ZENAIDA_REGISTRAR_ID.lower():
             internal = True
         current_statuses = info['epp']['response']['resData']['infData']['status']
         current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
@@ -341,7 +341,7 @@ class AccountDomainTransferTakeoverView(FormView):
             messages.warning(self.request, 'Domain transfer is already in progress')
             return super().form_invalid(form)
 
-        if current_registrar in [settings.ZENAIDA_AUCTION_REGISTRAR_ID, settings.ZENAIDA_REGISTRAR_ID]:
+        if current_registrar.lower() in [settings.ZENAIDA_AUCTION_REGISTRAR_ID.lower(), settings.ZENAIDA_REGISTRAR_ID.lower()]:
             price = 0.0
         else:
             price = settings.ZENAIDA_DOMAIN_PRICE

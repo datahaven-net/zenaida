@@ -398,14 +398,19 @@ def execute_domain_transfer(order_item):
             logger.critical('failed to finish internal domain transfer of %r because of invalid transfer code', domain)
             return False
 
+        first_contact = order_item.order.owner.contacts.first()
+        if not first_contact:
+            # must create one contact if not exist yet
+            first_contact = zcontacts.contact_create_from_profile(order_item.order.owner, order_item.order.owner.profile)
+
         # Change the owner of the domain with removing his/her contact and updating the new contact
         oldest_registrant = zcontacts.get_oldest_registrant(order_item.order.owner)
         zdomains.domain_change_registrant(domain, oldest_registrant, True)
         zdomains.domain_detach_contact(domain, 'admin')
         zdomains.domain_detach_contact(domain, 'billing')
         zdomains.domain_detach_contact(domain, 'tech')
-        zdomains.domain_join_contact(domain, 'admin', order_item.order.owner.contacts.first())
-        zdomains.domain_join_contact(domain, 'tech', order_item.order.owner.contacts.first())
+        zdomains.domain_join_contact(domain, 'admin', first_contact)
+        zdomains.domain_join_contact(domain, 'tech', first_contact)
         domain.refresh_from_db()
 
         # Override info on back-end

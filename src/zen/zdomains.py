@@ -306,7 +306,7 @@ def domain_detach_contact(domain_object, role):
 
 def domain_replace_contacts(domain_object, new_admin_contact=None, new_tech_contact=None):
     """
-    Detach all current contacts of the domain and attach new contact as admin role if required.
+    Detach all current contacts of the domain and attach new contacts as admin & tech roles if required.
     """
     domain_object = domain_detach_contact(domain_object, 'admin')
     domain_object = domain_detach_contact(domain_object, 'billing')

@@ -251,7 +251,7 @@ def on_queue_response(resData):
             logger.info('domain %s transfer status is: %s' % (domain, trStatus, ))
             return True
 
-        if to_client == settings.ZENAIDA_REGISTRAR_ID:
+        if to_client.lower() == settings.ZENAIDA_REGISTRAR_ID.lower():
             return do_domain_transfer_in(domain)
 
         return do_domain_transfer_away(domain, from_client=from_client, to_client=to_client)

@@ -18,6 +18,7 @@ EVENTS:
     * :red:`rewrite-contacts`
     * :red:`run`
     * :red:`skip-check`
+    * :red:`updates-prohibited`
 """
 
 #------------------------------------------------------------------------------
@@ -144,14 +145,6 @@ class DomainRefresher(automat.Automat):
                 self.state = 'CONTACTS?'
                 self.doReportDomainInfo(*args, **kwargs)
                 self.doEppContactsInfoMany(*args, **kwargs)
-            elif event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isContactsNeeded(*args, **kwargs):
-                self.state = 'DONE'
-                self.doDBCheckCreateDomain(*args, **kwargs)
-                self.doDBCheckUpdateNameservers(*args, **kwargs)
-                self.doDBCheckUpdateDomainInfo(*args, **kwargs)
-                self.doCheckProcessPendingOrder(*args, **kwargs)
-                self.doReportDomainInfo(*args, **kwargs)
-                self.doDestroyMe(*args, **kwargs)
             elif event == 'registrant-unknown':
                 self.state = 'CUR_REG?'
                 self.doReportDomainInfo(*args, **kwargs)
@@ -168,6 +161,14 @@ class DomainRefresher(automat.Automat):
                 self.state = 'DONE'
                 self.doDBDeleteDomain(*args, **kwargs)
                 self.doReportAnotherRegistrar(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
+            elif event == 'updates-prohibited' or ( event == 'response' and self.isCode(1000, *args, **kwargs) and not self.isContactsNeeded(*args, **kwargs) ):
+                self.state = 'DONE'
+                self.doDBCheckCreateDomain(*args, **kwargs)
+                self.doDBCheckUpdateNameservers(*args, **kwargs)
+                self.doDBCheckUpdateDomainInfo(*args, **kwargs)
+                self.doCheckProcessPendingOrder(*args, **kwargs)
+                self.doReportDomainInfo(*args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
         #---CONTACTS?---
         elif self.state == 'CONTACTS?':
@@ -338,6 +339,11 @@ class DomainRefresher(automat.Automat):
             self.event('error', exc)
             return
 
+        domain_info_statuses = zdomains.read_domain_info_statuses(response)
+        updateProhibited = False
+        if 'clientUpdateProhibited' in domain_info_statuses or 'serverUpdateProhibited' in domain_info_statuses:
+            updateProhibited = True
+
         if code == 2201 or code == 2303:
             self.domain_info_response = response
             self.event('response', response)
@@ -425,6 +431,11 @@ class DomainRefresher(automat.Automat):
             self.known_registrant = zcontacts.registrant_find(epp_id=self.received_registrant_epp_id)
             logger.info('trying to find registrant by epp id %r: %r',
                         self.received_registrant_epp_id, self.known_registrant)
+
+        if updateProhibited:
+            logger.warn('updates are prohibited for domain %r', self.domain_name)
+            self.event('updates-prohibited')
+            return
 
         if self.rewrite_contacts and self.known_registrant:
             logger.info('going to rewrite domain %r contacts from existing owner %r', self.domain_name, self.known_registrant.owner)

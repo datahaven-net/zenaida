@@ -434,7 +434,7 @@ class DomainRefresher(automat.Automat):
 
         if updateProhibited:
             logger.warn('updates are prohibited for domain %r', self.domain_name)
-            self.event('updates-prohibited')
+            self.event('updates-prohibited', response)
             return
 
         if self.rewrite_contacts and self.known_registrant:

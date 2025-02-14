@@ -275,6 +275,7 @@ class DomainSynchronizer(automat.Automat):
             if 'clientUpdateProhibited' in domain_info_statuses or 'serverUpdateProhibited' in domain_info_statuses:
                 updateProhibited = True
             if updateProhibited:
+                logger.warn('updates are prohibited for domain %r', self.target_domain.name)
                 self.event('update-prohibited', response)
             else:
                 self.event('response', response)

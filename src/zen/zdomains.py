@@ -542,6 +542,23 @@ def response_to_datetime(field_name, domain_info_response):
 
 #------------------------------------------------------------------------------
 
+def read_domain_info_statuses(domain_info_response):
+    try:
+        epp_statuses = domain_info_response['epp']['response']['resData']['infData']['status']
+    except:
+        logger.exception('Failed to read domain statuses from domain_info response')
+        return {}
+    if not isinstance(epp_statuses, list):
+        epp_statuses = [epp_statuses, ]
+    domain_statuses = {}
+    for st in epp_statuses:
+        if '#text' in st:
+            domain_statuses[str(st['@s'])] = st['#text']
+        elif '@s' in st:
+            domain_statuses[str(st['@s'])] = ''
+    return domain_statuses
+
+
 def domain_update_statuses(domain_object, domain_info_response, save=True):
     """
     Update given Domain object from epp domain_info response. 

@@ -285,7 +285,8 @@ def on_queue_message(msgQ):
         logger.error('unexpected payload received: %r' % msgQ)
         return True
 
-    if msg_text.lower().count('registry balance alert'):
+    if msg_text.lower().count('alert') and msg_text.lower().count('balance'):
+        # TODO: take some action here to notify administrator
         logger.critical(msg_text)
         return True
 

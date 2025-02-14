@@ -14,6 +14,7 @@ EVENTS:
     * :red:`no-updates`
     * :red:`response`
     * :red:`run`
+    * :red:`update-prohibited`
 """
 
 #------------------------------------------------------------------------------
@@ -129,6 +130,10 @@ class DomainSynchronizer(automat.Automat):
             elif event == 'response' and self.isCode(1000, *args, **kwargs):
                 self.state = 'CONTACTS'
                 self.doRunDomainContactsSync(*args, **kwargs)
+            elif event == 'update-prohibited':
+                self.state = 'DONE'
+                self.doReportUpdateProhibited(*args, **kwargs)
+                self.doDestroyMe(*args, **kwargs)
         #---CONTACTS---
         elif self.state == 'CONTACTS':
             if event == 'error':
@@ -265,7 +270,14 @@ class DomainSynchronizer(automat.Automat):
             self.event('error', exc)
         else:
             self.latest_domain_info = response
-            self.event('response', response)
+            domain_info_statuses = zdomains.read_domain_info_statuses(response)
+            updateProhibited = False
+            if 'clientUpdateProhibited' in domain_info_statuses or 'serverUpdateProhibited' in domain_info_statuses:
+                updateProhibited = True
+            if updateProhibited:
+                self.event('update-prohibited')
+            else:
+                self.event('response', response)
 
     def doEppDomainCreate(self, *args, **kwargs):
         """
@@ -504,6 +516,12 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
         self.outputs.append(zerrors.RegistrarAuthFailed(response=args[0]))
+
+    def doReportUpdateProhibited(self, *args, **kwargs):
+        """
+        Action method.
+        """
+        self.outputs.append(False)
 
     def doReportFailed(self, event, *args, **kwargs):
         """

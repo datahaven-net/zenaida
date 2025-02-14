@@ -6,6 +6,8 @@ import json
 
 from lib import xml2json
 
+from base.email import send_email
+
 from epp import rpc_client
 from epp import rpc_error
 
@@ -104,6 +106,17 @@ def do_domain_status_changed(domain, notify=False):
 
 def do_domain_renewal(domain, notify=False):
     logger.info('domain %s renewal', domain)
+    site_name = settings.SITE_BASE_URL.replace("https://","")
+    for admin_email in settings.ZENAIDA_ADMIN_NOTIFY_EMAILS:
+        try:
+            send_email(
+                subject=f'{site_name}: domain {domain} renewal',
+                text_content=f'Domain {domain} registered by {site_name} was automatically renewed on the back-end system',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to_email=admin_email,
+            )
+        except:
+            logger.exception('alert EMAIL sending failed')
     try:
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,

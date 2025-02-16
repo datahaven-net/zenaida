@@ -117,6 +117,11 @@ def do_domain_renewal(domain, notify=False):
             )
         except:
             logger.exception('alert EMAIL sending failed')
+    current_expiry_date = None
+    existing_domain_object = zdomains.domain_find(domain_name=domain)
+    if existing_domain_object:
+        current_expiry_date = existing_domain_object.expiry_date
+    synchronize_failed = False
     try:
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
@@ -127,8 +132,12 @@ def do_domain_renewal(domain, notify=False):
         )
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
-        return False
-    if not outputs:
+        synchronize_failed = True
+    zdomains.create_back_end_renew_notification(
+        domain_name=domain,
+        previous_expiry_date=current_expiry_date,
+    )
+    if synchronize_failed or not outputs:
         logger.critical('synchronize domain %s failed with empty result' % domain)
         return False
     if not outputs[-1] or isinstance(outputs[-1], Exception):
@@ -276,9 +285,7 @@ def on_queue_response(resData):
             logger.exception('can not process queue response: %s' % resData)
             return False
 
-        ret = do_domain_renewal(domain)
-        zdomains.create_back_end_renew_notification(domain)
-        return ret
+        return do_domain_renewal(domain)
 
     logger.error('UNKNOWN response: %s' % resData)
     return False
@@ -337,9 +344,7 @@ def on_queue_message(msgQ):
                 return do_domain_status_changed(domain)
 
         if change == 'RENEWAL':
-            ret = do_domain_renewal(domain)
-            zdomains.create_back_end_renew_notification(domain)
-            return ret
+            return do_domain_renewal(domain)
 
         if change == 'RESTORED':
             if details.lower() in ['domain restored', 'domain restored via ui', ]:

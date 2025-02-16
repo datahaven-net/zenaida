@@ -913,7 +913,10 @@ class DomainRefresher(automat.Automat):
         """
         if not self.target_domain:
             return
-        self.target_domain.expiry_date = zdomains.response_to_datetime('exDate', self.domain_info_response)
+        new_expiry_date = zdomains.response_to_datetime('exDate', self.domain_info_response)
+        if self.target_domain.expiry_date != new_expiry_date:
+            logger.info('updating expiry date of %r : %r -> %r', self.target_domain, self.target_domain.expiry_date, new_expiry_date)
+        self.target_domain.expiry_date = new_expiry_date
         self.target_domain.create_date = zdomains.response_to_datetime('crDate', self.domain_info_response)
         self.target_domain.save()
         zdomains.domain_update_statuses(self.target_domain, self.domain_info_response)

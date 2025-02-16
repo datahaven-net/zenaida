@@ -463,8 +463,11 @@ class DomainSynchronizer(automat.Automat):
         # TODO: args[0]['epp']['response']['trID']['svTRID']  store in history
         self.target_domain.create_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['crDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        self.target_domain.expiry_date = datetime.datetime.strptime(
+        new_expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['creData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        if self.target_domain.expiry_date != new_expiry_date:
+            logger.info('updating expiry date of %r : %r -> %r', self.target_domain, self.target_domain.expiry_date, new_expiry_date)
+        self.target_domain.expiry_date = new_expiry_date
         self.target_domain.status = 'active'
         self.target_domain.latest_sync_date = timezone.now()
         if self.save_to_db:
@@ -475,8 +478,11 @@ class DomainSynchronizer(automat.Automat):
         Action method.
         """
         # TODO: args[0]['epp']['response']['trID']['svTRID']  store in history
-        self.target_domain.expiry_date = datetime.datetime.strptime(
+        new_expiry_date = datetime.datetime.strptime(
             args[0]['epp']['response']['resData']['renData']['exDate'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        if self.target_domain.expiry_date != new_expiry_date:
+            logger.info('updating expiry date of %r : %r -> %r', self.target_domain, self.target_domain.expiry_date, new_expiry_date)
+        self.target_domain.expiry_date = new_expiry_date
         if self.save_to_db:
             self.target_domain.save()
 

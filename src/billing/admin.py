@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from nested_admin import NestedModelAdmin  # @UnresolvedImport
 
-from billing import orders
 from billing.models.payment import Payment
 from billing.models.order import Order
 from billing.models.order_item import OrderItem
@@ -39,6 +38,7 @@ class OrderAdmin(NestedModelAdmin):
         return queryset
 
     def order_retry(self, request, queryset):
+        from billing import orders
         results = []
         for order_object in queryset:
             results.append('{}: {}'.format(order_object, orders.execute_order(order_object)))
@@ -57,7 +57,7 @@ class OrderAdmin(NestedModelAdmin):
 class OrderItemAdmin(NestedModelAdmin):
     list_display = ('order', 'description', 'name', 'type', 'price', 'status', )
     list_filter = ('status', 'type', )
-    search_fields = ('name', 'order__owner__email', 'order__id')
+    search_fields = ('name', 'order__owner__email', 'order__id', )
 
     def description(self, order_item_instance):
         return mark_safe('<a href="{}?q={}">{}</a>'.format(

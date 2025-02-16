@@ -15,6 +15,7 @@ from back.models.registrar import Registrar
 from back.models.profile import Profile
 from back.models.domain import Domain
 from back.models.contact import Contact, Registrant
+from back.models.back_end_renew import BackEndRenew
 
 from billing import orders as billing_orders
 
@@ -380,9 +381,16 @@ class RegistrantAdmin(NestedModelAdmin):
     get_owner_link.short_description = 'Account'
 
 
+class BackEndRenewAdmin(NestedModelAdmin):
+    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'status', )
+    list_filter = ('status', )
+    search_fields = ('domain_name', 'owner__email', )
+
+
 admin.site.register(Zone, ZoneAdmin)
 admin.site.register(Registrar, RegistrarAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(Domain, DomainAdmin)
 admin.site.register(Contact, ContactAdmin)
 admin.site.register(Registrant, RegistrantAdmin)
+admin.site.register(BackEndRenew, BackEndRenewAdmin)

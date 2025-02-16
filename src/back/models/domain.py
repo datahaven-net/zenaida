@@ -24,6 +24,9 @@ class Domain(models.Model):
         default_manager_name = 'domains'
         ordering = ['expiry_date']
 
+    # related fields:
+    # renewals -> back.models.back_end_renew.BackEndRenew
+
     name = models.CharField(max_length=255, unique=True, validators=[validate_domain_name, ])
 
     expiry_date = models.DateTimeField(null=True, blank=True, default=None)

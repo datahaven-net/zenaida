@@ -19,7 +19,7 @@ class Contact(models.Model):
     # billing_domains -> back.models.domain.Domain
     # tech_domains -> back.models.domain.Domain
 
-    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contacts', )
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contacts')
 
     epp_id = models.CharField(max_length=64, unique=True, null=True, blank=True, default=None)
 
@@ -78,7 +78,7 @@ class Registrant(models.Model):
     # related fields:
     # registrant_domains -> back.models.domain.Domain
 
-    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='registrants', )
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='registrants')
 
     epp_id = models.CharField(max_length=64, unique=True, null=True, blank=True, default=None)
 

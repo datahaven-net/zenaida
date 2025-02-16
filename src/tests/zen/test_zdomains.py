@@ -85,6 +85,26 @@ def test_remove_inactive_domains_without_create_date():
     assert domains[0].name == 'xyz.ai'
 
 
+@pytest.mark.django_db
+def test_create_back_end_renew_notification():
+    tester_domain1 = testsupport.prepare_tester_domain(domain_name='abc.ai', expiry_date=datetime.datetime(2020, 1, 1))
+    notification = zdomains.create_back_end_renew_notification(domain_name='abc.ai')
+    assert notification.domain_name == 'abc.ai'
+    assert notification.domain == tester_domain1
+    assert notification.domain.name == tester_domain1.name
+    assert notification.owner == tester_domain1.owner
+    assert notification.status == 'started'
+
+
+@pytest.mark.django_db
+def test_create_back_end_renew_notification_domain_not_exist():
+    notification = zdomains.create_back_end_renew_notification(domain_name='not-exist.ai')
+    assert notification.domain_name == 'not-exist.ai'
+    assert notification.domain is None
+    assert notification.owner == None
+    assert notification.status == 'started'
+
+
 class TestDomainStatuses(TestCase):
     
     @pytest.mark.django_db

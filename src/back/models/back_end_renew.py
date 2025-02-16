@@ -40,6 +40,8 @@ class BackEndRenew(models.Model):
         blank=False,
     )
 
+    previous_expiry_date = models.DateTimeField(null=True, blank=True, default=None)
+
     def __str__(self):
         return 'BackEndRenew({} {} {})'.format(self.domain_name, self.created, self.status)
 

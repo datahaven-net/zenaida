@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from back.models.domain import Domain
+from back.models.back_end_renew import BackEndRenew
 
 from accounts import notifications
 
@@ -208,3 +209,15 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         notifications.start_email_notification_low_balance(one_user, expiring_domains_list=user_domain_names)
 
     return report
+
+
+def complete_back_end_auto_renewals():
+    notifications = BackEndRenew.renewals.filter(
+        status__in=['started', ],
+    )
+    for notification in notifications:
+        if not notification.owner:
+            continue
+        if not notification.domain:
+            continue
+        # TODO: ...

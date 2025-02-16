@@ -276,7 +276,9 @@ def on_queue_response(resData):
             logger.exception('can not process queue response: %s' % resData)
             return False
 
-        return do_domain_renewal(domain)
+        ret = do_domain_renewal(domain)
+        zdomains.create_back_end_renew_notification(domain)
+        return ret
 
     logger.error('UNKNOWN response: %s' % resData)
     return False
@@ -335,7 +337,9 @@ def on_queue_message(msgQ):
                 return do_domain_status_changed(domain)
 
         if change == 'RENEWAL':
-            return do_domain_renewal(domain)
+            ret = do_domain_renewal(domain)
+            zdomains.create_back_end_renew_notification(domain)
+            return ret
 
         if change == 'RESTORED':
             if details.lower() in ['domain restored', 'domain restored via ui', ]:

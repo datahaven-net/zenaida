@@ -654,3 +654,17 @@ def generate_random_auth_info(length=12):
     return ''.join(pwd)
 
 #------------------------------------------------------------------------------
+
+def create_back_end_renew_notification(domain_name):
+    """
+    Creates BackEndRenew notification object to keep track of domain billing process
+    after automatic renew initiated by the back-end system.
+    """
+    from back.models.back_end_renew import BackEndRenew
+    domain = domain_find(domain_name)
+    notification = BackEndRenew.renewals.create(
+        domain_name=domain_name,
+        domain=domain,
+        owner=domain.owner if domain else None,
+    )
+    return notification

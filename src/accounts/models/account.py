@@ -74,6 +74,7 @@ class Account(AbstractUser):
     # registrants -> back.models.contact.Registrant
     # payments -> billing.models.payment.Payment
     # orders -> billing.models.order.Order
+    # renewals -> back.models.back_end_renew.BackEndRenew
 
     email = models.EmailField(
         verbose_name='email address',

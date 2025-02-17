@@ -662,11 +662,15 @@ def create_back_end_renew_notification(domain_name, previous_expiry_date=None):
     """
     from back.models.back_end_renew import BackEndRenew
     domain = domain_find(domain_name)
+    if domain and previous_expiry_date:
+        if domain.expiry_date == previous_expiry_date:
+            logger.critical('expiry date %r was not changed during auto-renewal for %r', domain.expiry_date, domain)
     notification = BackEndRenew.renewals.create(
         domain_name=domain_name,
         domain=domain,
         owner=domain.owner if domain else None,
         previous_expiry_date=previous_expiry_date,
+        next_expiry_date=domain.expiry_date if domain else None,
     )
     logger.info('created %r notification', notification)
     return notification

@@ -393,10 +393,10 @@ class BackEndRenewAdmin(NestedModelAdmin):
         ('previous_expiry_date', ),
         ('status', ),
     )
-    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'status', )
+    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'next_expiry_date', 'status', )
     list_filter = ('status', )
     search_fields = ('domain_name', 'owner__email', )
-    readonly_fields = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', )
+    readonly_fields = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'next_expiry_date', )
 
 
 admin.site.register(Zone, ZoneAdmin)

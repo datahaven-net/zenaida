@@ -112,6 +112,7 @@ class ProfileAdmin(NestedModelAdmin):
 
 
 class DomainAdmin(NestedModelAdmin):
+
     fields = (
         ('name', ),
         ('get_owner_link', ),
@@ -382,9 +383,20 @@ class RegistrantAdmin(NestedModelAdmin):
 
 
 class BackEndRenewAdmin(NestedModelAdmin):
-    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'status', )
+
+    fields = (
+        ('domain_name', ),
+        ('domain', ),
+        ('owner', ),
+        ('renew_order', ),
+        ('created', ),
+        ('previous_expiry_date', ),
+        ('status', ),
+    )
+    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'status', )
     list_filter = ('status', )
     search_fields = ('domain_name', 'owner__email', )
+    readonly_fields = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', )
 
 
 admin.site.register(Zone, ZoneAdmin)

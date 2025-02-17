@@ -220,4 +220,8 @@ def complete_back_end_auto_renewals():
             continue
         if not notification.domain:
             continue
+        renew_years = None
+        if notification.previous_expiry_date:
+            renew_years = (notification.domain.expiry_date - notification.previous_expiry_date).years
+        logger.info('detected %r back-end auto renewal for %r years', notification.domain, renew_years)
         # TODO: ...

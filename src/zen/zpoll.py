@@ -308,8 +308,18 @@ def on_queue_message(msgQ):
         return True
 
     if msg_text.lower().count('alert') and msg_text.lower().count('balance'):
-        # TODO: take some action here to notify administrator
-        logger.critical(msg_text)
+        site_name = settings.SITE_BASE_URL.replace("https://","")
+        for admin_email in settings.ZENAIDA_ADMIN_NOTIFY_EMAILS:
+            try:
+                send_email(
+                    subject=f'{site_name}: Admin alert',
+                    text_content=msg_text,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to_email=admin_email,
+                )
+            except:
+                logger.exception('alert EMAIL sending failed')
+        logger.warn(msg_text)
         return True
 
     try:

@@ -339,10 +339,11 @@ class DomainRefresher(automat.Automat):
             self.event('error', exc)
             return
 
-        domain_info_statuses = zdomains.read_domain_info_statuses(response)
         updateProhibited = False
-        if 'clientUpdateProhibited' in domain_info_statuses or 'serverUpdateProhibited' in domain_info_statuses:
-            updateProhibited = True
+        if code == 1000:
+            domain_info_statuses = zdomains.read_domain_info_statuses(response)
+            if 'clientUpdateProhibited' in domain_info_statuses or 'serverUpdateProhibited' in domain_info_statuses:
+                updateProhibited = True
 
         if code == 2201 or code == 2303:
             self.domain_info_response = response

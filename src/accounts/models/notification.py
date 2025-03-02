@@ -49,7 +49,9 @@ class Notification(models.Model):
             ('domain_activated', 'DOMAIN ACTIVATED', ),
             ('domain_deactivated', 'DOMAIN DEACTIVATED', ),
             ('domain_renewed', 'DOMAIN RENEWED', ),
+            ('domain_deleted', 'DOMAIN DELETED', ),
             ('low_balance', 'LOW BALANCE', ),
+            ('low_balance_back_end_renew', 'LOW BALANCE BACK END RENEW', ),
             ('account_approved', 'ACCOUNT_APPROVED', ),
         ),
     )

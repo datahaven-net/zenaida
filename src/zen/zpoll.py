@@ -133,8 +133,10 @@ def do_domain_renewal(domain, notify=False):
     except rpc_error.EPPError:
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         synchronize_failed = True
+    existing_domain_object = zdomains.domain_find(domain_name=domain)
     zdomains.create_back_end_renew_notification(
         domain_name=domain,
+        next_expiry_date=existing_domain_object.expiry_date if existing_domain_object else None,
         previous_expiry_date=current_expiry_date,
     )
     if synchronize_failed or not outputs:
@@ -320,6 +322,11 @@ def on_queue_message(msgQ):
             except:
                 logger.exception('alert EMAIL sending failed')
         logger.warn(msg_text)
+        return True
+
+    if msg_text.lower().count('delete requested'):
+        domain = msg_text.lower().replace('delete requested: ', '')
+        logger.info('received removal request for domain %r', domain)
         return True
 
     try:

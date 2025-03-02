@@ -49,6 +49,10 @@ class Command(BaseCommand):
                 max_days_before_expire=90,
             )
 
+            back_tasks.complete_back_end_auto_renewals(
+                critical_days_before_delete=15,
+            )
+
             account_tasks.activations_cleanup()
 
             # Remove all inactive domains.

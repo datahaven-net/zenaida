@@ -11,6 +11,7 @@ from tests import testsupport
 from accounts.models.notification import Notification
 from accounts.notifications import process_notifications_queue
 from back import tasks
+from back.models.back_end_renew import BackEndRenew
 from billing import orders
 from epp import rpc_error
 from zen import zdomains
@@ -113,6 +114,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
         assert new_notification.subject == 'domain_renewed'
         tester_orders = orders.list_orders(owner=tester)
         assert tester_orders[0].description == 'abcd.ai renew (automatically)'
+        assert BackEndRenew.renewals.first().renew_order == tester_orders[0]
         report2 = tasks.complete_back_end_auto_renewals(dry_run=False)
         assert len(report2) == 0
 

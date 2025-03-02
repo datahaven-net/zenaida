@@ -276,11 +276,10 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
                 'created_automatically': moment_now.isoformat(),
             },
         )
-        renewal.renewal_order = renewal_order
-        renewal.save()
         new_status = billing_orders.execute_order(renewal_order, already_processed=True)
-        renewal.domain.refresh_from_db()
+        renewal.renew_order = renewal_order
         if new_status != 'processed':
+            renewal.save()
             report.append((new_status, renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, Exception('renew order status is %s' % new_status, ), ))
             logger.critical('for account %r back-end auto renew order status is %r', renewal.owner, new_status)
             continue

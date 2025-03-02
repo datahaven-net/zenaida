@@ -11,6 +11,9 @@ from accounts import notifications
 
 from billing import orders as billing_orders
 
+from epp import rpc_client
+from epp import rpc_error
+
 from zen import zmaster
 from zen import zusers
 
@@ -114,10 +117,6 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             report.append((expiring_domain.name, expiring_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
             logger.info('for account %r renew order status is %r', expiring_domain.owner, new_status)
             continue
-        # if not expiring_domain.owner.profile.email_notifications_enabled:
-        #     report.append((expiring_domain.name, expiring_domain.owner.email, Exception('email notifications are disabled', ), ))
-        #     logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expiring_domain.owner)
-        #     continue
         # step 3: send a notification to the customer
         notifications.start_email_notification_domain_renewed(
             user=expiring_domain.owner,
@@ -172,10 +171,6 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             report.append((expired_domain.name, expired_domain.owner.email, Exception('renew order status is %s' % new_status, ), ))
             logger.info('for account %r renew order status is %r', expired_domain.owner, new_status)
             continue
-        # if not expired_domain.owner.profile.email_notifications_enabled:
-        #     report.append((expired_domain.name, expired_domain.owner.email, Exception('email notifications are disabled', ), ))
-        #     logger.info('skip "domain_renewed" notification, email notifications are disabled for account %r', expired_domain.owner)
-        #     continue
         # step 3: send a notification to the customer
         notifications.start_email_notification_domain_renewed(
             user=expired_domain.owner,
@@ -187,13 +182,6 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
 
     for one_user_email, user_domain_names in users_on_low_balance.items():
         one_user = zusers.find_account(one_user_email)
-        # if not one_user.profile.email_notifications_enabled:
-        #     one_domain_name = ''
-        #     if user_domain_names:
-        #         one_domain_name = user_domain_names[0]
-        #     report.append((one_domain_name, one_user.email, Exception('email notifications are disabled', ), ))
-        #     logger.info('skip "low_balance" notification, email notifications are disabled for account %r', one_user)
-        #     continue
         recent_low_balance_notification = one_user.notifications.filter(
             subject='low_balance',
             created_at__gte=(moment_now - datetime.timedelta(days=30)),
@@ -211,17 +199,116 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
     return report
 
 
-def complete_back_end_auto_renewals():
-    notifications = BackEndRenew.renewals.filter(
+def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=False):
+    moment_now = timezone.now()
+    report = []
+    accepted_renewals = []
+    rejected_renewals = []
+    domains_to_be_deleted = []
+    renewals = BackEndRenew.renewals.filter(
         status__in=['started', ],
     )
-    for notification in notifications:
-        if not notification.owner:
+    for renewal in renewals:
+        if not renewal.owner:
+            logger.critical('back-end renew notification has no identified owner: %r', renewal)
             continue
-        if not notification.domain:
+        if not renewal.domain:
+            logger.critical('back-end renew notification was not attached to a domain: %r', renewal)
+            continue
+        if renewal.renew_order:
+            logger.critical('notification %r was already linked with %r', renewal, renewal.renew_order)
             continue
         renew_years = None
-        if notification.previous_expiry_date:
-            renew_years = (notification.domain.expiry_date - notification.previous_expiry_date).years
-        logger.info('detected %r back-end auto renewal for %r years', notification.domain, renew_years)
-        # TODO: ...
+        if renewal.previous_expiry_date:
+            if renewal.next_expiry_date:
+                renew_years = int(round((renewal.next_expiry_date - renewal.previous_expiry_date).days / 365.0))
+            else:
+                renew_years = int(round((renewal.domain.expiry_date - renewal.previous_expiry_date).days / 365.0))
+        if not renew_years:
+            logger.critical('renew duration was not identified for %r', renewal)
+            continue
+        logger.info('detected %r back-end auto renewal for %r years', renewal.domain, renew_years)
+        if renewal.owner.profile.automatic_renewal_enabled and renewal.domain.auto_renew_enabled:
+            accepted_renewals.append(renewal)
+        else:
+            rejected_renewals.append(renewal)
+
+    for renewal in rejected_renewals:
+        days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
+        if days_before_expire > 0 and days_before_expire < critical_days_before_delete:
+            logger.info('domain was about to expire in %d days, but back-end auto renewal %r was rejected by customer', days_before_expire, renewal)
+            domains_to_be_deleted.append(renewal)
+            continue
+
+    for renewal in accepted_renewals:
+        if renewal.owner.balance < settings.ZENAIDA_DOMAIN_PRICE:
+            logger.warn('account %r have insufficient balance to complete auto-renew order for %r', renewal.owner, renewal.domain)
+            days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
+            if days_before_expire > 0 and days_before_expire < critical_days_before_delete:
+                logger.info('domain was about to expire in %d days, but back-end auto renewal %r was rejected because of insufficient account balance', days_before_expire, renewal)
+                if renewal not in domains_to_be_deleted:
+                    domains_to_be_deleted.append(renewal)
+                continue
+            if renewal.insufficient_balance_email_sent:
+                continue
+            if dry_run:
+                report.append(('insufficient_balance_email_sent', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+                continue
+            notifications.start_email_notification_low_balance_back_end_renew(
+                user=renewal.owner,
+                domains_list=[renewal.domain.name, ],
+            )
+            renewal.insufficient_balance_email_sent = True
+            renewal.save()
+            report.append(('insufficient_balance_email_sent', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+            continue
+
+        logger.info('domain %r was automatically renew on back-end, creating order retroactively', renewal.domain)
+        if dry_run:
+            report.append(('processed', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+            continue
+        renewal_order = billing_orders.order_single_item(
+            owner=renewal.owner,
+            item_type='domain_renew',
+            item_price=settings.ZENAIDA_DOMAIN_PRICE,
+            item_name=renewal.domain.name,
+            item_details={
+                'created_automatically': moment_now.isoformat(),
+            },
+        )
+        renewal.renewal_order = renewal_order
+        renewal.save()
+        new_status = billing_orders.execute_order(renewal_order, already_processed=True)
+        renewal.domain.refresh_from_db()
+        if new_status != 'processed':
+            report.append((new_status, renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, Exception('renew order status is %s' % new_status, ), ))
+            logger.critical('for account %r back-end auto renew order status is %r', renewal.owner, new_status)
+            continue
+        renewal.status = 'processed'
+        renewal.save()
+        notifications.start_email_notification_domain_renewed(
+            user=renewal.owner,
+            domain_name=renewal.domain.name,
+            expiry_date=renewal.next_expiry_date,
+            old_expiry_date=renewal.previous_expiry_date,
+        )
+        report.append(('processed', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+
+    for renewal in domains_to_be_deleted:
+        if dry_run:
+            report.append(('rejected', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+            continue
+        try:
+            rpc_client.cmd_domain_delete(renewal.domain.name)
+        except rpc_error.EPPError:
+            logger.exception('domain %s delete request failed' % renewal.domain)
+            continue
+        renewal.status = 'rejected'
+        renewal.save()
+        notifications.start_email_notification_domain_deleted(
+            user=renewal.owner,
+            domain_name=renewal.domain.name,
+        )
+        report.append(('rejected', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+
+    return report

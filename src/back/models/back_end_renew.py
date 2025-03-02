@@ -33,6 +33,7 @@ class BackEndRenew(models.Model):
         choices=(
             ('started', 'Started', ),
             ('processed', 'Processed', ),
+            ('rejected', 'Rejected', ),
         ),
         default='started',
         max_length=16,
@@ -43,6 +44,8 @@ class BackEndRenew(models.Model):
     previous_expiry_date = models.DateTimeField(null=True, blank=True, default=None)
 
     next_expiry_date = models.DateTimeField(null=True, blank=True, default=None)
+
+    insufficient_balance_email_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return 'BackEndRenew({} {} {})'.format(self.domain_name, self.created, self.status)

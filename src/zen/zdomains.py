@@ -655,7 +655,7 @@ def generate_random_auth_info(length=12):
 
 #------------------------------------------------------------------------------
 
-def create_back_end_renew_notification(domain_name, previous_expiry_date=None):
+def create_back_end_renew_notification(domain_name, next_expiry_date, previous_expiry_date):
     """
     Creates BackEndRenew notification object to keep track of domain billing process
     after automatic renew initiated by the back-end system.
@@ -670,7 +670,7 @@ def create_back_end_renew_notification(domain_name, previous_expiry_date=None):
         domain=domain,
         owner=domain.owner if domain else None,
         previous_expiry_date=previous_expiry_date,
-        next_expiry_date=domain.expiry_date if domain else None,
+        next_expiry_date=next_expiry_date,
     )
     logger.info('created %r notification', notification)
     return notification

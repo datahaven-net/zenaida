@@ -514,7 +514,7 @@ def execute_one_item(order_item):
     return False
 
 
-def execute_order(order_object):
+def execute_order(order_object, already_processed=False):
     """
     High-level method to execute fulfillment from given Order object.
     Checks every OrderItem in that Order and tries to execute it if possible.
@@ -533,15 +533,19 @@ def execute_order(order_object):
             # only take actions with items that are not yet finished or in pending state
             continue
         total_executed += 1
-        if execute_one_item(order_item):
-            if order_item.status == 'processed':
-                total_processed += 1
-            elif order_item.status == 'pending':
-                total_in_progress += 1
-            elif order_item.status == 'failed':
-                total_failed += 1
-            else:
-                logger.critical('order item %s execution finished with unexpected status: %s', order_item, order_item.status)
+        if already_processed:
+            update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+            total_processed += 1
+        else:
+            if execute_one_item(order_item):
+                if order_item.status == 'processed':
+                    total_processed += 1
+                elif order_item.status == 'pending':
+                    total_in_progress += 1
+                elif order_item.status == 'failed':
+                    total_failed += 1
+                else:
+                    logger.critical('order item %s execution finished with unexpected status: %s', order_item, order_item.status)
     if total_processed == total_executed:
         if total_executed > 0:
             new_status = 'processed'

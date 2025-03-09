@@ -255,6 +255,8 @@ class AccountDomainTransferCodeView(TemplateView):
             messages.error(self.request, 'There is a technical problem with domain transfer code processing, '
                                          'please try again later')
             return shortcuts.redirect('account_domains')
+        messages.success(self.request, 'A new authorization code has been generated.'
+                         'Please keep in mind that domain authorization change will take several minutes to complete.')
         return self.render_to_response(self.get_context_data(transfer_code=domain.auth_key, domain_name=domain.name.strip().lower()))
 
 

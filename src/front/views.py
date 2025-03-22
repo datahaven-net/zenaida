@@ -212,7 +212,7 @@ class AccountDomainUpdateView(UpdateView):
                 sync_contacts=True,
                 sync_nameservers=True,
                 renew_years=None,
-                new_epp_statuses=form.epp_statuses,
+                new_domain_statuses=form.epp_statuses,
                 save_to_db=False,
                 raise_errors=False,
                 return_outputs=True,

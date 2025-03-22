@@ -237,10 +237,12 @@ class DomainAdmin(NestedModelAdmin):
         return report
 
     def _do_prepare_auth_info_keys_csv_file(self, queryset):
+        counter = 0
         txt = ''
         for domain_object in queryset:
             txt += '%s,%s\n' % (domain_object.name, domain_object.auth_key or '', )
-        file_name = f"{time.strftime('%Y%m%d%H%M%S', time.localtime())}.csv"
+            counter += 1
+        file_name = f"auth_info_{counter}_domains_{time.strftime('%Y%m%d%H%M%S', time.localtime())}.csv"
         open(f'/tmp/{file_name}', 'wt').write(txt)
         return file_name
 
@@ -299,7 +301,7 @@ class DomainAdmin(NestedModelAdmin):
 
     def domain_download_auth_info_key(self, request, queryset):
         file_name = self._do_prepare_auth_info_keys_csv_file(queryset)
-        self.message_user(request, mark_safe('download authorization codes via: <a href="%s">this link</a>' % (
+        self.message_user(request, mark_safe('download authorization codes via <a href="%s">this link</a>' % (
             reverse("auth_codes_download", args=[file_name.replace('.csv', ''), ])
         )))
     domain_download_auth_info_key.short_description = "Download auth info"

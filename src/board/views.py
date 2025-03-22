@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import logging
 import tempfile
 import subprocess
@@ -10,7 +11,8 @@ from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponse
 from django.db import transaction
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.generic.edit import FormView, FormMixin
 from django.views.generic import DetailView
@@ -21,19 +23,26 @@ from django_otp import devices_for_user
 
 from accounts.models import Account
 from accounts.users import list_all_users_by_date
+
 from base.mixins import StaffRequiredMixin
+
 from billing import forms as billing_forms, payments
-from billing.orders import list_all_processed_orders_by_date
-from board.forms import DomainSyncForm, CSVFileSyncForm, BalanceAdjustmentForm, TwoFactorResetForm, SendingSingleEmailForm
+from billing import orders
+
+from board import forms as board_forms
 from board.models import CSVFileSync
+
+from epp import rpc_error
+
 from zen import zmaster, zdomains
+
 
 logger = logging.getLogger(__name__)
 
 
 class BalanceAdjustmentView(StaffRequiredMixin, FormView, FormMixin):
     template_name = 'board/balance_adjustment.html'
-    form_class = BalanceAdjustmentForm
+    form_class = board_forms.BalanceAdjustmentForm
     success_url = reverse_lazy('balance_adjustment')
 
     def get_context_data(self, **kwargs):
@@ -47,45 +56,38 @@ class BalanceAdjustmentView(StaffRequiredMixin, FormView, FormMixin):
         email = form.cleaned_data.get('email')
         amount = form.cleaned_data.get('amount')
         payment_reason = form.cleaned_data.get('reason')
-
         account = Account.objects.filter(email=email).first()
-        if not Account.objects.filter(email=email).first():
+        if not account:
             messages.warning(self.request, 'This user does not exist.')
             return super().form_valid(form)
-
         payment = payments.start_payment(
             owner=account,
             amount=amount,
             payment_method='pay_by_admin',
         )
-
         payments.finish_payment(
             transaction_id=payment.transaction_id,
             status='processed',
             notes=f'{payment_reason} (by {self.request.user.email})',
         )
-
         messages.success(self.request, f'You successfully added {amount} USD to the balance of {email}')
-
         return super().form_valid(form)
 
 
 class TwoFactorResetView(StaffRequiredMixin, FormView, FormMixin):
     template_name = 'board/two_factor_reset.html'
-    form_class = TwoFactorResetForm
+    form_class = board_forms.TwoFactorResetForm
     success_url = reverse_lazy('two_factor_reset')
 
     @transaction.atomic
     def form_valid(self, form):
         email = form.cleaned_data.get('email')
         account = Account.objects.filter(email=email).first()
-
-        if not Account.objects.filter(email=email).first():
+        if not account:
             messages.warning(self.request, 'This user does not exist.')
             return super().form_valid(form)
         for device in devices_for_user(account):
             device.delete()
-
         messages.success(self.request, f'You successfully reset 2FA for account {email}')
         return super().form_valid(form)
 
@@ -99,14 +101,12 @@ class FinancialReportView(StaffRequiredMixin, FormView):
         year = form.cleaned_data.get('year')
         month = form.cleaned_data.get('month')
         if year or (year and month):
-            orders_for_specific_time = list_all_processed_orders_by_date(
+            orders_for_specific_time = orders.list_all_processed_orders_by_date(
                 year=form.data.get('year'),
                 month=form.data.get('month')
             )
-
             order_items = []
             total_payment = 0
-
             for order in orders_for_specific_time:
                 for order_item in order.items.all():
                     order_items.append(order_item)
@@ -124,7 +124,7 @@ class FinancialReportView(StaffRequiredMixin, FormView):
 
 class NotExistingDomainSyncView(StaffRequiredMixin, FormView):
     template_name = 'board/not_existing_domain_sync.html'
-    form_class = DomainSyncForm
+    form_class = board_forms.DomainSyncForm
     success_url = reverse_lazy('not_existing_domain_sync')
 
     def form_valid(self, form):
@@ -140,14 +140,12 @@ class NotExistingDomainSyncView(StaffRequiredMixin, FormView):
             log_events=True,
             log_transitions=True,
         )
-
         domain_in_db = zdomains.domain_find(domain_name=domain_name)
         if domain_in_db:
             logger.info(f'domain {domain_name} is successfully synchronized')
             messages.success(self.request, f'Domain {domain_name} is successfully synchronized')
         else:
             messages.warning(self.request, f'Something went wrong during synchronization of {domain_name}')
-
         return super().form_valid(form)
 
 
@@ -160,7 +158,7 @@ class CSVFileSyncRecordView(StaffRequiredMixin, DetailView):
 
 class CSVFileSyncView(StaffRequiredMixin, FormView):
     template_name = 'board/csv_file_sync.html'
-    form_class = CSVFileSyncForm
+    form_class = board_forms.CSVFileSyncForm
     success_url = reverse_lazy('csv_file_sync')
 
     def get_context_data(self, **kwargs):
@@ -226,7 +224,7 @@ class CSVFileSyncView(StaffRequiredMixin, FormView):
 
 class SendingSingleEmailView(StaffRequiredMixin, FormView, FormMixin):
     template_name = 'board/sending_single_email.html'
-    form_class = SendingSingleEmailForm
+    form_class = board_forms.SendingSingleEmailForm
     success_url = reverse_lazy('sending_single_email')
 
     def form_valid(self, form):
@@ -270,3 +268,135 @@ class AuthCodesDownloadView(StaffRequiredMixin, View):
         except Exception as e:
             logger.exception(f'was not able to delete file {file_path}: {e}')
         return response
+
+
+class BulkTransferResultDownloadView(StaffRequiredMixin, View):
+
+    def dispatch(self, request, *args, **kwargs):
+        file_name = '%s.txt' % kwargs.get('file_id')
+        file_path = f'/tmp/{file_name}'
+        if not os.path.isfile(file_path):
+            messages.warning(request, "Invalid request, file not exist")
+            return shortcuts.redirect('index')
+        response = HttpResponse(open(file_path, 'rt').read(), content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={file_name}'
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            logger.exception(f'was not able to delete file {file_path}: {e}')
+        return response
+
+
+class BulkTransferView(StaffRequiredMixin, FormView, FormMixin):
+    template_name = 'board/bulk_transfer.html'
+    form_class = board_forms.BulkTransferForm
+    success_url = reverse_lazy('bulk_transfer')
+
+    def form_valid(self, form):
+        new_owner_email = form.cleaned_data.get('new_owner')
+        body = form.cleaned_data.get('body')
+        new_owner = Account.objects.filter(email=new_owner_email).first()
+        report = []
+        processed_count = 0
+        if not new_owner:
+            messages.warning(self.request, 'This user does not exist.')
+            return super().form_valid(form)
+        try:
+            for line in body.split('\n'):
+                if line.count(','):
+                    domain_name, auth_code = line.strip().split(',')
+                elif line.strip().count(';'):
+                    domain_name, auth_code = line.strip().split(';')
+                elif line.strip().count('|'):
+                    domain_name, auth_code = line.strip().split('|')
+                elif line.strip().count(' '):
+                    domain_name, auth_code = line.strip().split(' ')
+                else:
+                    report.append(('', 'invlid input line', ))
+                    continue
+                domain_obj = zdomains.domain_find(domain_name=domain_name)
+                if not domain_obj:
+                    report.append((domain_name, 'domain does not exist', ))
+                    continue
+                if domain_obj.owner == new_owner:
+                    report.append((domain_name, 'domain is already owned by %r' % new_owner, ))
+                    continue
+                outputs = zmaster.domain_read_info(
+                    domain=domain_name,
+                    auth_info=auth_code,
+                    return_outputs=True,
+                )
+                if not outputs:
+                    report.append((domain_name, 'domain name is not registered or transfer is not possible at the moment', ))
+                    continue
+                if isinstance(outputs[-1], rpc_error.EPPAuthorizationError):
+                    if outputs[-1].message.lower().count('incorrect authcode provided'):
+                        report.append((domain_name, 'incorrect authorization code provided', ))
+                    else:
+                        report.append((domain_name, 'you are not authorized to transfer this domain', ))
+                    continue
+                if isinstance(outputs[-1], rpc_error.EPPObjectNotExist):
+                    report.append((domain_name, 'domain name is not registered', ))
+                    continue
+                if isinstance(outputs[-1], rpc_error.EPPError):
+                    report.append((domain_name, 'domain transfer failed due to unexpected error, please try again later', ))
+                    continue
+                if not outputs[-1].get(domain_name):
+                    report.append((domain_name, 'domain name is not registered', ))
+                    continue
+                if len(outputs) < 2:
+                    report.append((domain_name, 'domain name transfer is not possible at the moment, please try again later', ))
+                    continue
+                info = outputs[-2]
+                current_registrar = info['epp']['response']['resData']['infData']['clID']
+                if current_registrar.lower() == settings.ZENAIDA_REGISTRAR_ID.lower():
+                    internal = True
+                current_statuses = info['epp']['response']['resData']['infData']['status']
+                current_statuses = [current_statuses, ] if not isinstance(current_statuses, list) else current_statuses
+                current_statuses = [s['@s'] for s in current_statuses]
+                pw = info['epp']['response']['resData']['infData']['authInfo']['pw']
+                if pw != 'Authinfo Correct' and pw != auth_code:
+                    report.append((domain_name, 'given transfer code is not correct', ))
+                    continue
+                if 'clientTransferProhibited' in current_statuses or 'serverTransferProhibited' in current_statuses:
+                    report.append((domain_name, 'transfer failed because domain was locked or auth code was wrong', ))
+                    continue
+                if len(orders.find_pending_domain_transfer_order_items(domain_name)):
+                    report.append((domain_name, 'domain transfer is already in progress', ))
+                    continue
+                if current_registrar.lower() in [settings.ZENAIDA_AUCTION_REGISTRAR_ID.lower(), settings.ZENAIDA_REGISTRAR_ID.lower()]:
+                    price = 0.0
+                else:
+                    price = settings.ZENAIDA_DOMAIN_PRICE
+                if price > new_owner.balance:
+                    report.append((domain_name, 'account %r does not have enough funds to complete domain transfer', ))
+                    continue
+                transfer_order = orders.order_single_item(
+                    owner=new_owner,
+                    item_type='domain_transfer',
+                    item_price=price,
+                    item_name=domain_name,
+                    item_details={
+                        'transfer_code': auth_code,
+                        'rewrite_contacts': True,
+                        'internal': internal,
+                    },
+                )
+                new_status = orders.execute_order(transfer_order)
+                report.append((domain_name, 'created and executed %r, order status is %r' % (transfer_order, new_status, ), ))
+                if new_status == 'processed':
+                    processed_count += 1
+            txt = ''
+            counter = 0
+            for item in report:
+                txt += ('[%s] %s' % (item[0], item[1], )).strip() + '\n'
+                counter += 1
+            file_name = f"bulk_transfer_{counter}_domains_{time.strftime('%Y%m%d%H%M%S', time.localtime())}.txt"
+            open(f'/tmp/{file_name}', 'wt').write(txt)
+            messages.success(self.request, mark_safe('Bulk transfer completed, %d orders were processed. Download full report via <a href="%s">this link</a>' % (
+                processed_count, reverse("bulk_transfer_result_download", args=[file_name.replace('.txt', ''), ]),
+            )))
+        except Exception as e:
+            logging.exception('bulk transfer failed due to %r' % e)
+            messages.error(self.request, f'Bulk transfer failed due to {e}')
+        return super().form_valid(form)

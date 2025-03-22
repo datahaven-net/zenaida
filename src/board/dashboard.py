@@ -48,6 +48,11 @@ class CustomIndexDashboard(Dashboard):
                     'url': reverse('sending_single_email'),
                     'external': False,
                 },
+                {
+                    'title': _('Bulk domain transfer'),
+                    'url': reverse('bulk_transfer'),
+                    'external': False,
+                },
             ]
         ))
 

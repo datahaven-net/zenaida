@@ -64,7 +64,6 @@ patterns = [
     path('domains/edit/<int:domain_id>/', front_views.AccountDomainUpdateView.as_view(), name='account_domain_edit'),
     path('domains/<str:domain_id>/transfer-code/', front_views.AccountDomainTransferCodeView.as_view(), name='account_domain_transfer_code'),
 
-    path('billing/', billing_views.billing_overview, name='billing_overview'),
     path('billing/orders/', billing_views.OrdersListView.as_view(), name='billing_orders'),
     path('billing/orders/receipts/download/', billing_views.OrderReceiptsDownloadView.as_view(), name='billing_receipts_download'),
     path('billing/orders/receipts/download/<int:order_id>/', billing_views.OrderSingleReceiptDownloadView.as_view(), name='billing_receipt_download'),
@@ -92,7 +91,9 @@ patterns = [
     path('board/csv-file-sync/<str:record_id>/', board_views.CSVFileSyncRecordView.as_view(), name='csv_file_sync_record'),
     path('board/csv-file-sync/', board_views.CSVFileSyncView.as_view(), name='csv_file_sync'),
     path('board/single-email/', board_views.SendingSingleEmailView.as_view(), name='sending_single_email'),
-    path('board/auth-codes/<str:file_id>', board_views.AuthCodesDownloadView.as_view(), name='auth_codes_download'),
+    path('board/auth-codes/<str:file_id>/', board_views.AuthCodesDownloadView.as_view(), name='auth_codes_download'),
+    path('board/bulk-transfer/', board_views.BulkTransferView.as_view(), name='bulk_transfer'),
+    path('board/bulk-transfer-result/<str:file_id>/', board_views.BulkTransferResultDownloadView.as_view(), name='bulk_transfer_result_download'),
 
     path('lookup/', front_views.DomainLookupView.as_view(), name='domain_lookup'),
 

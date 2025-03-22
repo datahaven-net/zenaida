@@ -25,14 +25,6 @@ from billing.decorators import create_or_update_single_order
 from zen import zdomains
 
 
-@login_required
-def billing_overview(request):
-    """
-    """
-    # TODO: this needs to be done
-    pass
-
-
 class PaymentsListView(LoginRequiredMixin, ListView):
     template_name = 'billing/account_payments.html'
     paginate_by = 10

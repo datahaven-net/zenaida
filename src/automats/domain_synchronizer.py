@@ -236,6 +236,8 @@ class DomainSynchronizer(automat.Automat):
         """
         self.target_domain = args[0]
         self.renew_years = kwargs.get('renew_years', None)
+        self.known_domain_info_statuses = None
+        self.new_domain_statuses = kwargs.get('new_domain_statuses', None)
         self.sync_contacts = kwargs.get('sync_contacts', True)
         self.sync_nameservers = kwargs.get('sync_nameservers', True)
         self.save_to_db = kwargs.get('save_to_db', True)
@@ -270,9 +272,12 @@ class DomainSynchronizer(automat.Automat):
             self.event('error', exc)
         else:
             self.latest_domain_info = response
-            domain_info_statuses = zdomains.read_domain_info_statuses(response)
+            self.known_domain_info_statuses = zdomains.read_domain_info_statuses(response)
             updateProhibited = False
-            if 'clientUpdateProhibited' in domain_info_statuses or 'serverUpdateProhibited' in domain_info_statuses:
+            if 'clientUpdateProhibited' in self.known_domain_info_statuses:
+                if self.new_domain_statuses and self.new_domain_statuses['clientUpdateProhibited']:
+                    updateProhibited = True
+            if 'serverUpdateProhibited' in self.known_domain_info_statuses:
                 updateProhibited = True
             if updateProhibited:
                 logger.warn('updates are prohibited for domain %r', self.target_domain.name)
@@ -335,7 +340,11 @@ class DomainSynchronizer(automat.Automat):
             domain_object=self.target_domain,
             domain_info_response=args[0],
         )
-        if not (add_contacts or remove_contacts or add_nameservers or remove_nameservers or change_registrant):
+        add_statuses, remove_statuses = zdomains.compare_statuses(
+            new_domain_statuses=self.new_domain_statuses,
+            current_domain_statuses=self.known_domain_info_statuses,
+        )
+        if not (add_contacts or remove_contacts or add_nameservers or remove_nameservers or change_registrant or add_statuses or remove_statuses):
             self.event('no-updates')
             return
         try:
@@ -346,6 +355,8 @@ class DomainSynchronizer(automat.Automat):
                 remove_contacts_list=remove_contacts,
                 add_nameservers_list=add_nameservers,
                 remove_nameservers_list=remove_nameservers,
+                add_statuses_list=add_statuses,
+                remove_statuses_list=remove_statuses,
             )
         except rpc_error.EPPError as exc:
             self.log(self.debug_level, 'Exception in doEppDomainUpdate: %s' % exc)

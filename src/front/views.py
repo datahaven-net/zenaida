@@ -66,7 +66,7 @@ class AccountDomainsListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         domain_objects_list = context.get('object_list', [])
-        if len(domain_objects_list) < 10:
+        if settings.ZENAIDA_SYNC_ACCOUNT_DOMAINS_LIST and len(domain_objects_list) < 10:
             zmaster.domains_quick_sync(
                 domain_objects_list=domain_objects_list,
                 hours_passed=12,
@@ -77,7 +77,7 @@ class AccountDomainsListView(ListView):
 
 class AccountDomainCreateView(FormView):
     template_name = 'front/account_domain_create.html'
-    form_class = forms.DomainDetailsForm
+    form_class = forms.DomainCreateForm
     pk_url_kwarg = 'domain_name'
     success_message = 'Please confirm the payment to finish registering your domain.'
     success_url = reverse_lazy('account_domains')
@@ -212,6 +212,7 @@ class AccountDomainUpdateView(UpdateView):
                 sync_contacts=True,
                 sync_nameservers=True,
                 renew_years=None,
+                new_epp_statuses=form.epp_statuses,
                 save_to_db=False,
                 raise_errors=False,
                 return_outputs=True,

@@ -144,7 +144,7 @@ class DomainDetailsForm(models.ModelForm):
     client_transfer_prohibited = fields.BooleanField(
         required=False,
         initial=False,
-        label='Reject trasnfer requests',
+        label='Reject transfer requests',
         help_text='Indicates that it is not possible to transfer that domain.'
                   'Helps to prevent unauthorized transfers resulting from hijacking and/or fraud.',
     )

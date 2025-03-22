@@ -37,5 +37,5 @@ class BulkTransferForm(forms.Form):
         label='List of domains and auth codes, line by line',
         widget=forms.widgets.Textarea,
         help_text='Enter a list of domains and authentication codes above, separated by comma or space on each line. '
-                  'You can copy and paste here the entire contents of the .CSV file you already downloaded via the admin console.',
+                  'You can copy and paste here the entire contents of the text file you already downloaded via the admin console.',
     )

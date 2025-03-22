@@ -256,12 +256,12 @@ class SendingSingleEmailView(StaffRequiredMixin, FormView, FormMixin):
 class AuthCodesDownloadView(StaffRequiredMixin, View):
 
     def dispatch(self, request, *args, **kwargs):
-        file_name = '%s.csv' % kwargs.get('file_id')
+        file_name = '%s.txt' % kwargs.get('file_id')
         file_path = f'/tmp/{file_name}'
         if not os.path.isfile(file_path):
             messages.warning(request, "Invalid request, file not exist")
             return shortcuts.redirect('index')
-        response = HttpResponse(open(file_path, 'rt').read(), content_type='text/csv')
+        response = HttpResponse(open(file_path, 'rt').read(), content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={file_name}'
         try:
             os.remove(file_path)

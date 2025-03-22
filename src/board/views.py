@@ -8,8 +8,10 @@ from django import shortcuts
 from django.conf import settings
 from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
+from django.http import HttpResponse
 from django.db import transaction
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic.edit import FormView, FormMixin
 from django.views.generic import DetailView
 from django.template.loader import render_to_string
@@ -251,3 +253,20 @@ class SendingSingleEmailView(StaffRequiredMixin, FormView, FormMixin):
             logging.exception('Failed to send email')
             messages.error(self.request, f'Failed to send email: {e}')
         return super().form_valid(form)
+
+
+class AuthCodesDownloadView(StaffRequiredMixin, View):
+
+    def dispatch(self, request, *args, **kwargs):
+        file_name = '%s.csv' % kwargs.get('file_id')
+        file_path = f'/tmp/{file_name}'
+        if not os.path.isfile(file_path):
+            messages.warning(request, "Invalid request, file not exist")
+            return shortcuts.redirect('index')
+        response = HttpResponse(open(file_path, 'rt').read(), content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={file_name}'
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            logger.exception(f'was not able to delete file {file_path}: {e}')
+        return response

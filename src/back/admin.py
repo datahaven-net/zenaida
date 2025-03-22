@@ -1,3 +1,4 @@
+import time
 import datetime
 
 from django.contrib import admin
@@ -106,7 +107,7 @@ class ProfileAdmin(NestedModelAdmin):
     search_fields = ('account__email', 'contact_email', 'person_name', 'organization_name', )
 
     def get_owner_link(self, profile_instance):
-        link = reverse("admin:accounts_account_change", args=[profile_instance.account.pk])
+        link = reverse("admin:accounts_account_change", args=[profile_instance.account.pk, ])
         return mark_safe(f'<a href="{link}">{profile_instance.account}</a>')
     get_owner_link.short_description = 'Account'
 
@@ -140,6 +141,7 @@ class DomainAdmin(NestedModelAdmin):
         'domain_synchronize_from_backend',
         'domain_synchronize_from_backend_hard',
         'domain_generate_and_set_new_auth_info_key',
+        'domain_download_auth_info_key',
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
     )
@@ -158,22 +160,22 @@ class DomainAdmin(NestedModelAdmin):
 
     def registrant_contact(self, domain_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:back_registrant_change", args=[domain_instance.registrant.pk]),
+            reverse("admin:back_registrant_change", args=[domain_instance.registrant.pk, ]),
             domain_instance.registrant.epp_id)) if domain_instance.registrant else ''
 
     def admin_contact(self, domain_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:back_contact_change", args=[domain_instance.contact_admin.pk]),
+            reverse("admin:back_contact_change", args=[domain_instance.contact_admin.pk, ]),
             domain_instance.contact_admin.epp_id)) if domain_instance.contact_admin else ''
 
     def billing_contact(self, domain_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:back_contact_change", args=[domain_instance.contact_billing.pk]),
+            reverse("admin:back_contact_change", args=[domain_instance.contact_billing.pk, ]),
             domain_instance.contact_billing.epp_id)) if domain_instance.contact_billing else ''
 
     def tech_contact(self, domain_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk]),
+            reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk, ]),
             domain_instance.contact_tech.epp_id)) if domain_instance.contact_tech else ''
 
     def get_owner_link(self, domain_instance):
@@ -182,22 +184,22 @@ class DomainAdmin(NestedModelAdmin):
     get_owner_link.short_description = 'Account'
 
     def get_registrant_link(self, domain_instance):
-        link = reverse("admin:back_registrant_change", args=[domain_instance.registrant.pk])
+        link = reverse("admin:back_registrant_change", args=[domain_instance.registrant.pk, ])
         return mark_safe(f'<a href="{link}">{domain_instance.registrant}</a>')
     get_registrant_link.short_description = 'Registrant'
 
     def get_contact_admin_link(self, domain_instance):
-        link = reverse("admin:back_contact_change", args=[domain_instance.contact_admin.pk])
+        link = reverse("admin:back_contact_change", args=[domain_instance.contact_admin.pk, ])
         return mark_safe(f'<a href="{link}">{domain_instance.contact_admin}</a>')
     get_contact_admin_link.short_description = 'Admin contact'
 
     def get_contact_billing_link(self, domain_instance):
-        link = reverse("admin:back_contact_change", args=[domain_instance.contact_billing.pk])
+        link = reverse("admin:back_contact_change", args=[domain_instance.contact_billing.pk, ])
         return mark_safe(f'<a href="{link}">{domain_instance.contact_billing}</a>')
     get_contact_billing_link.short_description = 'Billing contact'
 
     def get_contact_tech_link(self, domain_instance):
-        link = reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk])
+        link = reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk, ])
         return mark_safe(f'<a href="{link}">{domain_instance.contact_tech}</a>')
     get_contact_tech_link.short_description = 'Tech contact'
 
@@ -233,6 +235,14 @@ class DomainAdmin(NestedModelAdmin):
             result = zmaster.domain_set_auth_info(domain_object)
             report.append('"%s": %s' % (domain_object.name, 'OK' if result else 'ERROR', ))
         return report
+
+    def _do_prepare_auth_info_keys_csv_file(self, queryset):
+        txt = ''
+        for domain_object in queryset:
+            txt += '%s,%s\n' % (domain_object.name, domain_object.auth_key or '', )
+        file_name = f"{time.strftime('%Y%m%d%H%M%S', time.localtime())}.csv"
+        open(f'/tmp/{file_name}', 'wt').write(txt)
+        return file_name
 
     def _do_renew_on_behalf_of_customer(self, queryset):
         report = []
@@ -287,6 +297,13 @@ class DomainAdmin(NestedModelAdmin):
         self.message_user(request, ', '.join(self._do_generate_and_set_new_auth_info_key(queryset)))
     domain_generate_and_set_new_auth_info_key.short_description = "Generate new auth info"
 
+    def domain_download_auth_info_key(self, request, queryset):
+        file_name = self._do_prepare_auth_info_keys_csv_file(queryset)
+        self.message_user(request, mark_safe('download authorization codes via: <a href="%s">this link</a>' % (
+            reverse("auth_codes_download", args=[file_name.replace('.csv', ''), ])
+        )))
+    domain_download_auth_info_key.short_description = "Download auth info"
+
     def domain_renew_on_behalf_of_customer(self, request, queryset):
         self.message_user(request, ', '.join(self._do_renew_on_behalf_of_customer(queryset)))
     domain_renew_on_behalf_of_customer.short_description = "Renew on behalf of customer"
@@ -327,7 +344,7 @@ class ContactAdmin(NestedModelAdmin):
 
     def account(self, contact_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:accounts_account_change", args=[contact_instance.owner.pk]),
+            reverse("admin:accounts_account_change", args=[contact_instance.owner.pk, ]),
             contact_instance.owner.email))
 
     def domains_count(self, obj):
@@ -335,7 +352,7 @@ class ContactAdmin(NestedModelAdmin):
     domains_count.admin_order_field = '_all_domains_count'
 
     def get_owner_link(self, contact_instance):
-        link = reverse("admin:accounts_account_change", args=[contact_instance.owner.pk])
+        link = reverse("admin:accounts_account_change", args=[contact_instance.owner.pk, ])
         return mark_safe(f'<a href="{link}">{contact_instance.owner}</a>')
     get_owner_link.short_description = 'Account'
 
@@ -369,7 +386,7 @@ class RegistrantAdmin(NestedModelAdmin):
 
     def account(self, registrant_instance):
         return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk]),
+            reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk, ]),
             registrant_instance.owner.email))
 
     def domains_count(self, obj):
@@ -377,7 +394,7 @@ class RegistrantAdmin(NestedModelAdmin):
     domains_count.admin_order_field = '_all_domains_count'
 
     def get_owner_link(self, registrant_instance):
-        link = reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk])
+        link = reverse("admin:accounts_account_change", args=[registrant_instance.owner.pk, ])
         return mark_safe(f'<a href="{link}">{registrant_instance.owner}</a>')
     get_owner_link.short_description = 'Account'
 

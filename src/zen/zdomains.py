@@ -559,6 +559,23 @@ def read_domain_info_statuses(domain_info_response):
     return domain_statuses
 
 
+def compare_statuses(new_domain_statuses, current_domain_statuses):
+    add = []
+    remove = []
+    if new_domain_statuses is None:
+        return add, remove
+    changeable_statuses = ('clientUpdateProhibited', 'clientRenewProhibited', 'clientTransferProhibited', 'clientDeleteProhibited', )
+    for st, val in current_domain_statuses.items():
+        if st in changeable_statuses:
+            if st not in new_domain_statuses:
+                remove.append({'name': st, })
+    for st, val in new_domain_statuses.items():
+        if st in changeable_statuses:
+            if st not in current_domain_statuses:
+                add.append({'name': st, 'value': val, })
+    return add, remove
+
+
 def domain_update_statuses(domain_object, domain_info_response, save=True):
     """
     Update given Domain object from epp domain_info response. 

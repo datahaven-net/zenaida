@@ -101,7 +101,8 @@ def domains_quick_sync(domain_objects_list, hours_passed=12, request_time_limit=
             )
 
 
-def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None, save_to_db=True,
+def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nameservers=True, renew_years=None,
+                                     new_domain_statuses=None, save_to_db=True,
                                      raise_errors=False, return_outputs=False, log_events=True, log_transitions=True):
     """
     Check if domain exists first and then update it from `domain_object` info.
@@ -119,6 +120,7 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
         sync_contacts=sync_contacts,
         sync_nameservers=sync_nameservers,
         renew_years=renew_years,
+        new_domain_statuses=new_domain_statuses,
         save_to_db=save_to_db,
     )
     outputs = list(ds.outputs)

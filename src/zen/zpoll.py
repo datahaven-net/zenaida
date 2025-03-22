@@ -465,7 +465,7 @@ def main():
                 break
 
             if resp_code != '1301':
-                logger.error('wrong response from EPP: %s', resp_code)
+                logger.error('wrong response from EPP: %s', req)
                 break
 
             try:

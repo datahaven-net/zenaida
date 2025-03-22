@@ -32,6 +32,14 @@
         {% bootstrap_field form.auto_renew_enabled layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-3 text-right" horizontal_field_class="col-sm-6" %}
       </fieldset>
     </div>
+    <div class="col-12">
+      <fieldset>
+        {% bootstrap_field form.client_update_prohibited layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-3 text-right" horizontal_field_class="col-sm-6" %}
+        {% bootstrap_field form.client_renew_prohibited layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-3 text-right" horizontal_field_class="col-sm-6" %}
+        {% bootstrap_field form.client_transfer_prohibited layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-3 text-right" horizontal_field_class="col-sm-6" %}
+        {% bootstrap_field form.client_delete_prohibited layout="horizontal" placeholder="" size="small" label_class="form-label col-sm-3 text-right" horizontal_field_class="col-sm-6" %}
+      </fieldset>
+    </div>
   </div>
   <br>
   <div class="row">

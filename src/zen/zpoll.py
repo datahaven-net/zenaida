@@ -107,16 +107,17 @@ def do_domain_status_changed(domain, notify=False):
 def do_domain_renewal(domain, notify=False):
     logger.info('domain %s renewal', domain)
     site_name = settings.SITE_BASE_URL.replace("https://","")
-    for admin_email in settings.ZENAIDA_ADMIN_NOTIFY_EMAILS:
-        try:
-            send_email(
-                subject=f'{site_name}: domain {domain} renewal',
-                text_content=f'Domain {domain} registered by {site_name} was automatically renewed on the back-end system',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to_email=admin_email,
-            )
-        except:
-            logger.exception('alert EMAIL sending failed')
+    if False:
+        for admin_email in settings.ZENAIDA_ADMIN_NOTIFY_EMAILS:
+            try:
+                send_email(
+                    subject=f'{site_name}: domain {domain} renewal',
+                    text_content=f'Domain {domain} registered by {site_name} was automatically renewed on the back-end system',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to_email=admin_email,
+                )
+            except:
+                logger.exception('alert EMAIL sending failed')
     current_expiry_date = None
     existing_domain_object = zdomains.domain_find(domain_name=domain)
     if existing_domain_object:

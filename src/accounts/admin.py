@@ -137,7 +137,8 @@ class ActivationAdmin(NestedModelAdmin):
 
 class NotificationAdmin(NestedModelAdmin):
     list_display = ('account', 'recipient', 'subject', 'type', 'status', 'created_at',  )
-    search_fields = ('account__email', 'recipient', )
+    search_fields = ('account__email', 'recipient', 'domain_name', )
+    list_filter = ('status', 'subject', 'type', )
 
 
 class CaptchaStoreAdmin(NestedModelAdmin):

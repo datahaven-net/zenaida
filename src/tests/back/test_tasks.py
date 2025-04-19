@@ -211,7 +211,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
     def test_balance_not_enough_domain_delete_failed(self, mock_cmd_domain_delete):
         mock_cmd_domain_delete.side_effect = rpc_error.EPPCommandFailed()
         tester = testsupport.prepare_tester_account(account_balance=10.0)
-        testsupport.prepare_tester_domain(
+        tester_domain = testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
             domain_epp_id='aaa123',
@@ -226,15 +226,19 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             next_expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
         )
         report = tasks.complete_back_end_auto_renewals(dry_run=False)
-        assert len(report) == 0
+        assert len(report) == 1
+        assert report[0][0] == 'delete_failed'
+        assert report[0][1] == tester_domain.name
         report = tasks.complete_back_end_auto_renewals(dry_run=False)
-        assert len(report) == 0
+        assert len(report) == 1
+        assert report[0][0] == 'delete_failed'
+        assert report[0][1] == tester_domain.name
         assert len(mock_cmd_domain_delete.mock_calls) == 2
 
     @pytest.mark.django_db
-    @mock.patch('accounts.notifications.EmailMultiAlternatives.send')
-    def test_balance_not_enough(self, mock_send):
-        mock_send.return_value = True
+    @mock.patch('epp.rpc_client.cmd_domain_delete')
+    def test_balance_not_enough_domain_already_expired(self, mock_cmd_domain_delete):
+        mock_cmd_domain_delete.return_value = True
         tester = testsupport.prepare_tester_account(account_balance=10.0)
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
@@ -242,17 +246,17 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             domain_epp_id='aaa123',
             domain_status='active',
             # domain was already synchronized from back-end with the new expiry date
-            expiry_date=timezone.now() + datetime.timedelta(days=45) + datetime.timedelta(days=365*2),
+            expiry_date=timezone.now() - datetime.timedelta(days=1) + datetime.timedelta(days=365*2),
             auto_renew_enabled=True,
         )
         zdomains.create_back_end_renew_notification(
             domain_name='abcd.ai',
-            previous_expiry_date=timezone.now() + datetime.timedelta(days=45) - datetime.timedelta(days=365*2),
-            next_expiry_date=timezone.now() + datetime.timedelta(days=45) + datetime.timedelta(days=365*2),
+            previous_expiry_date=timezone.now() - datetime.timedelta(days=1),
+            next_expiry_date=timezone.now() - datetime.timedelta(days=1) + datetime.timedelta(days=365*2),
         )
         report = tasks.complete_back_end_auto_renewals(dry_run=False)
         assert len(report) == 1
-        assert report[0][0] == 'insufficient_balance_email_sent'
+        assert report[0][0] == 'rejected'
         assert report[0][1] == tester_domain.name
         report2 = tasks.complete_back_end_auto_renewals(dry_run=False)
         assert len(report2) == 0

@@ -205,9 +205,7 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
     accepted_renewals = []
     rejected_renewals = []
     domains_to_be_deleted = []
-    renewals = BackEndRenew.renewals.filter(
-        status__in=['started', ],
-    )
+    renewals = BackEndRenew.renewals.filter(status__in=['started', ])
     for renewal in renewals:
         if not renewal.owner:
             logger.critical('back-end renew notification has no identified owner: %r', renewal)
@@ -245,7 +243,12 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             logger.warn('account %r have insufficient balance to complete auto-renew order for %r', renewal.owner, renewal.domain)
             days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
             if days_before_expire > 0 and days_before_expire < critical_days_before_delete:
-                logger.info('domain was about to expire in %d days, but back-end auto renewal %r was rejected because of insufficient account balance', days_before_expire, renewal)
+                logger.info('domain was about to expire in %d days, back-end auto renewal %r will be rejected because of insufficient account balance', days_before_expire, renewal)
+                if renewal not in domains_to_be_deleted:
+                    domains_to_be_deleted.append(renewal)
+                continue
+            if days_before_expire <= 0:
+                logger.info('domain already expired, back-end auto renewal %r will be rejected because of insufficient account balance', renewal)
                 if renewal not in domains_to_be_deleted:
                     domains_to_be_deleted.append(renewal)
                 continue
@@ -301,6 +304,7 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             rpc_client.cmd_domain_delete(renewal.domain.name)
         except rpc_error.EPPError:
             logger.exception('domain %s delete request failed' % renewal.domain)
+            report.append(('delete_failed', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
             continue
         renewal.status = 'rejected'
         renewal.save()

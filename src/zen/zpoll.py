@@ -135,6 +135,10 @@ def do_domain_renewal(domain, notify=False):
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         synchronize_failed = True
     existing_domain_object = zdomains.domain_find(domain_name=domain)
+    if existing_domain_object and not current_expiry_date:
+        current_expiry_date = existing_domain_object.expiry_date
+    if not current_expiry_date:
+        logger.critical('new expiry date was not identified for %r', domain)
     zdomains.create_back_end_renew_notification(
         domain_name=domain,
         next_expiry_date=existing_domain_object.expiry_date if existing_domain_object else None,

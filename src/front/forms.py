@@ -172,10 +172,10 @@ class DomainDetailsForm(models.ModelForm):
         self.fields['contact_tech'].queryset = self.fields['contact_tech'].queryset.filter(owner=current_user.id)
         self.fields['contact_tech'].label_from_instance = lambda c: c.label
         self.fields['contact_tech'].empty_label = ' '
-        self.fields['client_update_prohibited'].initial = bool((self.instance.epp_statuses or {}).get('clientUpdateProhibited'))
-        self.fields['client_renew_prohibited'].initial = bool((self.instance.epp_statuses or {}).get('clientRenewProhibited'))
-        self.fields['client_transfer_prohibited'].initial = bool((self.instance.epp_statuses or {}).get('clientTransferProhibited'))
-        self.fields['client_delete_prohibited'].initial = bool((self.instance.epp_statuses or {}).get('clientDeleteProhibited'))
+        self.fields['client_update_prohibited'].initial = bool('clientUpdateProhibited' in (self.instance.epp_statuses or {}))
+        self.fields['client_renew_prohibited'].initial = bool('clientRenewProhibited' in (self.instance.epp_statuses or {}))
+        self.fields['client_transfer_prohibited'].initial = bool('clientTransferProhibited' in (self.instance.epp_statuses or {}))
+        self.fields['client_delete_prohibited'].initial = bool('clientDeleteProhibited' in (self.instance.epp_statuses or {}))
 
     def hostname_resolve(self, hostname):
         try:
@@ -251,22 +251,22 @@ class DomainDetailsForm(models.ModelForm):
 
         epp_statuses = dict(self.instance.epp_statuses or {})
         if cleaned_data['client_update_prohibited']:
-            if not epp_statuses.get('clientUpdateProhibited'):
+            if 'clientUpdateProhibited' not in epp_statuses:
                 epp_statuses['clientUpdateProhibited'] = '%s by customer' % time.asctime()
         else:
             epp_statuses.pop('clientUpdateProhibited', None)
         if cleaned_data['client_renew_prohibited']:
-            if not epp_statuses.get('clientRenewProhibited'):
+            if 'clientRenewProhibited' not in epp_statuses:
                 epp_statuses['clientRenewProhibited'] = '%s by customer' % time.asctime()
         else:
             epp_statuses.pop('clientRenewProhibited', None)
         if cleaned_data['client_transfer_prohibited']:
-            if not epp_statuses.get('clientTransferProhibited'):
+            if 'clientTransferProhibited' not in epp_statuses:
                 epp_statuses['clientTransferProhibited'] = '%s by customer' % time.asctime()
         else:
             epp_statuses.pop('clientTransferProhibited', None)
         if cleaned_data['client_delete_prohibited']:
-            if not epp_statuses.get('clientDeleteProhibited'):
+            if 'clientDeleteProhibited' not in epp_statuses:
                 epp_statuses['clientDeleteProhibited'] = '%s by customer' % time.asctime()
         else:
             epp_statuses.pop('clientDeleteProhibited', None)

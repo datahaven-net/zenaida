@@ -219,7 +219,6 @@ class DomainResurrector(automat.Automat):
         except Exception as exc:
             logger.warn('not able to recognize pendingDelete date from the pendingDelete status info, populate from expiry date')
             pending_delete_date = self.target_domain.expiry_date.strftime('%Y-%m-%dT%H:%M:%SZ')
-        rgp_restore = None
         rgp_restore_report={
             "pre_data": kwargs.get('pre_data', 'Pre-delete registration data not provided'),
             "post_data": kwargs.get('post_data', 'Post-restore registration data not provided'),
@@ -231,9 +230,19 @@ class DomainResurrector(automat.Automat):
             "other": kwargs.get('other', 'No other information provided'),
         }
         try:
+            response_restore_request = rpc_client.cmd_domain_update(
+                domain=self.target_domain.name,
+                rgp_restore=True,
+                rgp_restore_report={},
+            )
+        except rpc_error.EPPError as exc:
+            self.log(self.debug_level, 'Exception in doEppDomainUpdate after restore request: %s' % exc)
+            self.event('error', exc)
+            return
+        try:
             response = rpc_client.cmd_domain_update(
                 domain=self.target_domain.name,
-                rgp_restore=rgp_restore,
+                rgp_restore=None,
                 rgp_restore_report=rgp_restore_report,
             )
         except rpc_error.EPPError as exc:

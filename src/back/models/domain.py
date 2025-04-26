@@ -98,10 +98,10 @@ class Domain(models.Model):
         return self.create_date.date()
 
     def __str__(self):
-        return 'Domain({} {} {})'.format(self.name, self.owner.email, self.epp_id or '?')
+        return 'Domain({} {} {})'.format(self.name, self.owner.email, (self.epp_id or '?')[:10])
 
     def __repr__(self):
-        return 'Domain({} {} {})'.format(self.name, self.owner.email, self.epp_id or '?')
+        return 'Domain({} {} {})'.format(self.name, self.owner.email, (self.epp_id or '?')[:10])
 
     def save(self, *args, **kwargs):
         if not self.epp_id:

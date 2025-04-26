@@ -300,6 +300,16 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
         if dry_run:
             report.append(('rejected', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
             continue
+        if 'clientUpdateProhibited' in (renewal.domain.epp_statuses or {}):
+            try:
+                rpc_client.cmd_domain_update(
+                    domain=renewal.domain.name,
+                    remove_statuses_list=[{'name': 'clientUpdateProhibited', }],
+                )
+            except rpc_error.EPPError as exc:
+                logger.exception('domain %s failed to remove clientUpdateProhibited status: %r' % (renewal.domain, exc, ))
+                report.append(('delete_failed', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
+                continue
         if 'clientDeleteProhibited' in (renewal.domain.epp_statuses or {}):
             try:
                 rpc_client.cmd_domain_update(

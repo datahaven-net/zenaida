@@ -218,6 +218,7 @@ class DomainResurrector(automat.Automat):
                 ).strftime('%Y-%m-%dT%H:%M:%SZ')
         except Exception as exc:
             logger.warn('not able to recognize pendingDelete date from the pendingDelete status info, populate from expiry date')
+        if not pending_delete_date:
             pending_delete_date = self.target_domain.expiry_date.strftime('%Y-%m-%dT%H:%M:%SZ')
         rgp_restore_report={
             "pre_data": kwargs.get('pre_data', 'Pre-delete registration data not provided'),

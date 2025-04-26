@@ -223,8 +223,9 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             else:
                 renew_years = int(round((renewal.domain.expiry_date - renewal.previous_expiry_date).days / 365.0))
         if not renew_years:
-            logger.critical('renew duration was not identified for %r', renewal)
-            continue
+            logger.warn('renew duration was not correctly identified for %r, assuming notificaiton received moment', renewal)
+            renewal.previous_expiry_date = renewal.created
+            renewal.save()
         logger.info('detected %r back-end auto renewal for %r years', renewal.domain, renew_years)
         if renewal.owner.profile.automatic_renewal_enabled and renewal.domain.auto_renew_enabled:
             accepted_renewals.append(renewal)

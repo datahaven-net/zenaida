@@ -6,6 +6,8 @@ import json
 
 from lib import xml2json
 
+from django.utils import timezone
+
 from base.email import send_email
 
 from epp import rpc_client
@@ -135,13 +137,13 @@ def do_domain_renewal(domain, notify=False):
         logger.exception('failed to synchronize domain from back-end: %s' % domain)
         synchronize_failed = True
     existing_domain_object = zdomains.domain_find(domain_name=domain)
-    if existing_domain_object and not current_expiry_date:
-        current_expiry_date = existing_domain_object.expiry_date
+    next_expiry_date = existing_domain_object.expiry_date if existing_domain_object else None
     if not current_expiry_date:
-        logger.critical('new expiry date was not identified for %r', domain)
+        logger.warn('new expiry date was not identified for %r, populate date from today', domain)
+        current_expiry_date = timezone.now()
     zdomains.create_back_end_renew_notification(
         domain_name=domain,
-        next_expiry_date=existing_domain_object.expiry_date if existing_domain_object else None,
+        next_expiry_date=next_expiry_date,
         previous_expiry_date=current_expiry_date,
     )
     if synchronize_failed or not outputs:

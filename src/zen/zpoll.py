@@ -331,9 +331,14 @@ def on_queue_message(msgQ):
         logger.warn(msg_text)
         return True
 
-    if msg_text.lower().count('delete requested'):
+    if msg_text.lower().count('delete requested: '):
         domain = msg_text.lower().replace('delete requested: ', '')
         logger.info('received removal request for domain %r', domain)
+        return True
+
+    if msg_text.lower().count('restore completed: '):
+        domain = msg_text.lower().replace('restore completed:', '')
+        logger.info('received restore completed notification for domain %r', domain)
         return True
 
     try:

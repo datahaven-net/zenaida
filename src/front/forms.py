@@ -129,18 +129,18 @@ class DomainCreateForm(models.ModelForm):
 
 class DomainDetailsForm(models.ModelForm):
 
-    client_update_prohibited = fields.BooleanField(
-        required=False,
-        initial=False,
-        label='Lock domain details update',
-        help_text='Prevent unauthorized updates of the domain info details.',
-    )
-    client_renew_prohibited = fields.BooleanField(
-        required=False,
-        initial=False,
-        label='Reject renew requests',
-        help_text='Instruct registry system to reject requests to renew the domain.',
-    )
+    # client_update_prohibited = fields.BooleanField(
+    #     required=False,
+    #     initial=False,
+    #     label='Lock domain details update',
+    #     help_text='Prevent unauthorized updates of the domain info details.',
+    # )
+    # client_renew_prohibited = fields.BooleanField(
+    #     required=False,
+    #     initial=False,
+    #     label='Reject renew requests',
+    #     help_text='Instruct registry system to reject requests to renew the domain.',
+    # )
     client_transfer_prohibited = fields.BooleanField(
         required=False,
         initial=False,
@@ -148,12 +148,12 @@ class DomainDetailsForm(models.ModelForm):
         help_text='Indicates that it is not possible to transfer that domain.'
                   'Helps to prevent unauthorized transfers resulting from hijacking and/or fraud.',
     )
-    client_delete_prohibited = fields.BooleanField(
-        required=False,
-        initial=False,
-        label='Reject delete requests',
-        help_text='Can prevent unauthorized deletions resulting from hijacking and/or fraud.',
-    )
+    # client_delete_prohibited = fields.BooleanField(
+    #     required=False,
+    #     initial=False,
+    #     label='Reject delete requests',
+    #     help_text='Can prevent unauthorized deletions resulting from hijacking and/or fraud.',
+    # )
 
     class Meta:
         model = Domain
@@ -172,10 +172,10 @@ class DomainDetailsForm(models.ModelForm):
         self.fields['contact_tech'].queryset = self.fields['contact_tech'].queryset.filter(owner=current_user.id)
         self.fields['contact_tech'].label_from_instance = lambda c: c.label
         self.fields['contact_tech'].empty_label = ' '
-        self.fields['client_update_prohibited'].initial = bool('clientUpdateProhibited' in (self.instance.epp_statuses or {}))
-        self.fields['client_renew_prohibited'].initial = bool('clientRenewProhibited' in (self.instance.epp_statuses or {}))
+        # self.fields['client_update_prohibited'].initial = bool('clientUpdateProhibited' in (self.instance.epp_statuses or {}))
+        # self.fields['client_renew_prohibited'].initial = bool('clientRenewProhibited' in (self.instance.epp_statuses or {}))
         self.fields['client_transfer_prohibited'].initial = bool('clientTransferProhibited' in (self.instance.epp_statuses or {}))
-        self.fields['client_delete_prohibited'].initial = bool('clientDeleteProhibited' in (self.instance.epp_statuses or {}))
+        # self.fields['client_delete_prohibited'].initial = bool('clientDeleteProhibited' in (self.instance.epp_statuses or {}))
 
     def hostname_resolve(self, hostname):
         try:
@@ -250,26 +250,26 @@ class DomainDetailsForm(models.ModelForm):
             raise forms.ValidationError('Technical contact info is mandatory.')
 
         epp_statuses = dict(self.instance.epp_statuses or {})
-        if cleaned_data['client_update_prohibited']:
-            if 'clientUpdateProhibited' not in epp_statuses:
-                epp_statuses['clientUpdateProhibited'] = '%s by customer' % time.asctime()
-        else:
-            epp_statuses.pop('clientUpdateProhibited', None)
-        if cleaned_data['client_renew_prohibited']:
-            if 'clientRenewProhibited' not in epp_statuses:
-                epp_statuses['clientRenewProhibited'] = '%s by customer' % time.asctime()
-        else:
-            epp_statuses.pop('clientRenewProhibited', None)
+        # if cleaned_data['client_update_prohibited']:
+        #     if 'clientUpdateProhibited' not in epp_statuses:
+        #         epp_statuses['clientUpdateProhibited'] = '%s by customer' % time.asctime()
+        # else:
+        #     epp_statuses.pop('clientUpdateProhibited', None)
+        # if cleaned_data['client_renew_prohibited']:
+        #     if 'clientRenewProhibited' not in epp_statuses:
+        #         epp_statuses['clientRenewProhibited'] = '%s by customer' % time.asctime()
+        # else:
+        #     epp_statuses.pop('clientRenewProhibited', None)
         if cleaned_data['client_transfer_prohibited']:
             if 'clientTransferProhibited' not in epp_statuses:
                 epp_statuses['clientTransferProhibited'] = '%s by customer' % time.asctime()
         else:
             epp_statuses.pop('clientTransferProhibited', None)
-        if cleaned_data['client_delete_prohibited']:
-            if 'clientDeleteProhibited' not in epp_statuses:
-                epp_statuses['clientDeleteProhibited'] = '%s by customer' % time.asctime()
-        else:
-            epp_statuses.pop('clientDeleteProhibited', None)
+        # if cleaned_data['client_delete_prohibited']:
+        #     if 'clientDeleteProhibited' not in epp_statuses:
+        #         epp_statuses['clientDeleteProhibited'] = '%s by customer' % time.asctime()
+        # else:
+        #     epp_statuses.pop('clientDeleteProhibited', None)
         self.epp_statuses = epp_statuses
 
         return cleaned_data

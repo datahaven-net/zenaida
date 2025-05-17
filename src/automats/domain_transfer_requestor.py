@@ -131,7 +131,13 @@ class DomainTransferRequestor(automat.Automat):
         """
         Condition method.
         """
-        return args[0] == int(args[1]['epp']['response']['result']['@code'])
+        if args[0] == int(args[1]['epp']['response']['result']['@code']):
+            return True
+        if args[0] == 1000:
+            # also consider 1001 as a positive reply
+            if int(args[1]['epp']['response']['result']['@code']) == 1001:
+                return True
+        return False
 
     def isTransferPossible(self, *args, **kwargs):
         """
@@ -140,8 +146,8 @@ class DomainTransferRequestor(automat.Automat):
         # TODO: Update state machine, this step is not needed anymore.
         # current_registrar = args[0]['epp']['response']['resData']['infData']['clID']
         # domain must not belong to the given registrar
-        return True
         # return current_registrar != settings.ZENAIDA_REGISTRAR_ID
+        return True
 
     def doInit(self, *args, **kwargs):
         """
@@ -224,5 +230,3 @@ class DomainTransferRequestor(automat.Automat):
         self.auth_info = None
         self.latest_domain_info = None
         self.destroy()
-
-

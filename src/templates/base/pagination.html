@@ -11,11 +11,20 @@
                 {% endif %}
 
                 {% for i in objects.paginator.page_range %}
+
                     {% if objects.number == i %}
                         <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
                     {% else %}
                         <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
                     {% endif %}
+
+                    {% if i >= 20 %}
+                    {% if i|divisibleby:20 %}
+            </ul>
+            <ul class="pagination justify-content-center">
+                    {% endif %}
+                    {% endif %}
+
                 {% endfor %}
 
                 {% if objects.has_next %}

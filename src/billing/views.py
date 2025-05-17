@@ -345,14 +345,14 @@ class OrderExecuteView(LoginRequiredMixin, View):
     processing_message = 'Order is processing, please wait'
 
     def _verify_existing_order(self, request, existing_order):
-        for order_item in existing_order.items.all():
-            if order_item.status in ['processed', 'pending', 'blocked', ]:
+        for order_item_object in existing_order.items.all():
+            if order_item_object.status in ['processed', 'pending', 'blocked', ]:
                 continue
-            target_domain = zdomains.domain_find(order_item.name)
-            if not target_domain:
+            target_domain = zdomains.domain_find(order_item_object.name)
+            if not target_domain and order_item_object.type != 'domain_transfer':
                 messages.error(request, 'One of the items is not valid anymore because related domain does not exist. Please start a new order.')
                 return False
-            if order_item.type == 'domain_renew':
+            if order_item_object.type == 'domain_renew':
                 if not target_domain.contact_admin or not target_domain.contact_tech:
                     messages.error(request, 'Domain %s is missing a mandatory contact info. Please update domain info and confirm your order again.' % target_domain.name)
                     return False
@@ -384,11 +384,11 @@ class OrderCancelView(LoginRequiredMixin, View):
         existing_order = orders.get_order_by_id_and_owner(
             order_id=kwargs.get('order_id'), owner=request.user, log_action='cancel'
         )
-        for order_item in existing_order.items.all():
-            if order_item.type == 'domain_register':
-                domain = zdomains.domain_find(domain_name=order_item.name)
+        for order_item_object in existing_order.items.all():
+            if order_item_object.type == 'domain_register':
+                domain = zdomains.domain_find(domain_name=order_item_object.name)
                 if domain and domain.status == 'inactive' and not domain.epp_id:
-                    zdomains.domain_delete(domain_name=order_item.name)
+                    zdomains.domain_delete(domain_name=order_item_object.name)
         orders.cancel_and_remove_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')

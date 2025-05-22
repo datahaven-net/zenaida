@@ -290,7 +290,7 @@ class DomainResurrector(automat.Automat):
             ds.event('run', self.target_domain,
                 sync_contacts=False,
                 sync_nameservers=False,
-                renew_years=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
+                # renew_years=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
                 save_to_db=True,
             )
         except Exception as exc:
@@ -300,7 +300,7 @@ class DomainResurrector(automat.Automat):
         else:
             self.outputs.extend(list(ds.outputs))
             del ds
-            self.event('refresh-ok')
+            self.event('renew-ok')
 
     def doReportDone(self, *args, **kwargs):
         """

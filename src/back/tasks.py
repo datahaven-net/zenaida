@@ -46,7 +46,7 @@ def sync_expired_domains(dry_run=True):
                 domain_name=expired_domain.name,
                 create_new_owner_allowed=False,
                 domain_transferred_away=True,
-                soft_delete=False,
+                soft_delete=True,
             )
         report.append((expired_domain, result, ))
     return report

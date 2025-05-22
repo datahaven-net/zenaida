@@ -382,7 +382,7 @@ def execute_domain_transfer(order_item):
                 rewrite_contacts=False,
                 change_owner_allowed=True,
                 create_new_owner_allowed=True,
-                soft_delete=False,
+                soft_delete=True,
                 domain_transferred_away=False,
                 raise_errors=True,
                 log_events=True,

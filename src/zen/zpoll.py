@@ -106,6 +106,23 @@ def do_domain_status_changed(domain, notify=False):
     return True
 
 
+def do_domain_restored(domain, notify=False):
+    logger.info('domain %s was restored', domain)
+    try:
+        outputs = zmaster.domain_synchronize_from_backend(
+            domain_name=domain,
+            refresh_contacts=True,
+            rewrite_contacts=False,
+            change_owner_allowed=True,
+            create_new_owner_allowed=True,
+        )
+    except rpc_error.EPPError:
+        logger.exception('failed to synchronize domain from back-end: %s' % domain)
+        return False
+    logger.info('outputs: %r', outputs)
+    return True
+
+
 def do_domain_renewal(domain, notify=False):
     logger.info('domain %s renewal', domain)
     site_name = settings.SITE_BASE_URL.replace("https://","")
@@ -336,10 +353,20 @@ def on_queue_message(msgQ):
         logger.info('received removal request for domain %r', domain)
         return True
 
-    if msg_text.lower().count('restore completed: '):
-        domain = msg_text.lower().replace('restore completed:', '')
-        logger.info('received restore completed notification for domain %r', domain)
+    if msg_text.lower().count('restore requested: '):
+        domain = msg_text.lower().replace('restore requested: ', '')
+        logger.info('received restore request for domain %r', domain)
         return True
+
+    if msg_text.lower().count('restore completed: '):
+        domain = msg_text.lower().replace('restore completed: ', '')
+        logger.info('received restore completed notification for domain %r', domain)
+        return do_domain_restored(domain)
+
+    if msg_text.lower().count('pending delete: '):
+        domain = msg_text.lower().replace('pending delete: ', '')
+        logger.info('received pending delete notification for domain %r', domain)
+        return do_domain_deleted(domain)
 
     try:
         json_input = json.loads(xml2json.xml2json(msg_text, XML2JsonOptions(), strip_ns=1, strip=1))

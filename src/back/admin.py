@@ -408,11 +408,13 @@ class BackEndRenewAdmin(NestedModelAdmin):
         ('domain', ),
         ('owner', ),
         ('renew_order', ),
+        ('restore_order', ),
         ('created', ),
         ('previous_expiry_date', ),
+        ('next_expiry_date', ),
         ('status', ),
     )
-    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'next_expiry_date', 'status', )
+    list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'restore_order', 'created', 'previous_expiry_date', 'next_expiry_date', 'status', )
     list_filter = ('status', )
     search_fields = ('domain_name', 'owner__email', )
     readonly_fields = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'next_expiry_date', )

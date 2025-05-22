@@ -161,6 +161,15 @@ def find_pending_domain_renew_order_items(domain_name):
     ).all())
 
 
+def find_latest_processed_domain_restore_order(domain_name):
+    """
+    Find most recent Order object for given domain name with completed domain_restore OrderItems.
+    """
+    return Order.orders.filter(
+        Q(items__status__in=['processed', ], items__type='domain_restore', items__name=domain_name) &
+        Q(status__in=['processed', 'incomplete', ])
+    ).order_by('-finished_at').first()
+
 def find_pending_domain_transfer_order_items(domain_name):
     """
     Find OrderItem objects for domain transfer order for given domain.

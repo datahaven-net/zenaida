@@ -29,6 +29,9 @@ class BackEndRenew(models.Model):
     renew_order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name='renewals', null=True, blank=True)
 
+    restore_order = models.ForeignKey(
+        Order, on_delete=models.SET_NULL, related_name='restore_renewals', null=True, blank=True)
+
     status = models.CharField(
         choices=(
             ('started', 'Started', ),

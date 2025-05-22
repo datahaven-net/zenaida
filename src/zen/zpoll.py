@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
 import logging
-import time
 import json
+import time
+import datetime
 
 from lib import xml2json
 
@@ -12,6 +13,8 @@ from base.email import send_email
 
 from epp import rpc_client
 from epp import rpc_error
+
+from billing import orders as billing_orders
 
 from zen import zmaster
 from zen import zdomains
@@ -158,10 +161,16 @@ def do_domain_renewal(domain, notify=False):
     if not current_expiry_date:
         logger.warn('new expiry date was not identified for %r, populate date from today', domain)
         current_expiry_date = timezone.now()
+    if next_expiry_date and current_expiry_date:
+        renew_years = int(round((next_expiry_date - current_expiry_date).days / 365.0))
+        if not renew_years or renew_years < 0:
+            logger.warn('renew duration was not correctly identified, assuming renew durating of 2 years')
+        current_expiry_date = next_expiry_date - datetime.timedelta(years=2)
     zdomains.create_back_end_renew_notification(
         domain_name=domain,
         next_expiry_date=next_expiry_date,
         previous_expiry_date=current_expiry_date,
+        restore_order=billing_orders.find_latest_processed_domain_restore_order(domain_name=domain),
     )
     if synchronize_failed or not outputs:
         logger.critical('synchronize domain %s failed with empty result' % domain)

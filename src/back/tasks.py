@@ -230,8 +230,12 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             logger.info('accepting domain %r back-end auto renewal for %r years', renewal.domain, renew_years)
             accepted_renewals.append(renewal)
         else:
-            logger.info('rejecting domain %r back-end auto renewal for %r years', renewal.domain, renew_years)
-            rejected_renewals.append(renewal)
+            if renewal.restore_order:
+                logger.info('accepting domain %r back-end auto renewal for %r years after a restore order %r', renewal.domain, renew_years, renewal.restore_order)
+                accepted_renewals.append(renewal)
+            else:
+                logger.info('rejecting domain %r back-end auto renewal for %r years', renewal.domain, renew_years)
+                rejected_renewals.append(renewal)
 
     for renewal in rejected_renewals:
         days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
@@ -240,7 +244,7 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             domains_to_be_deleted.append(renewal)
             continue
         if days_before_expire <= 0:
-            logger.info('domain already expired, back-end auto renewal %r will be rejected because of insufficient account balance', renewal)
+            logger.info('domain already expired, back-end auto renewal %r will be rejected', renewal)
             if renewal not in domains_to_be_deleted:
                 domains_to_be_deleted.append(renewal)
             continue
@@ -250,12 +254,12 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             logger.warn('account %r have insufficient balance to complete auto-renew order for %r', renewal.owner, renewal.domain)
             days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
             if days_before_expire > 0 and days_before_expire < critical_days_before_delete:
-                logger.info('domain was about to expire in %d days, back-end auto renewal %r will be rejected because of insufficient account balance', days_before_expire, renewal)
+                logger.info('domain was about to expire in %d days, back-end auto renewal %r will be rejected because of %r insufficient account balance', days_before_expire, renewal, renewal.owner)
                 if renewal not in domains_to_be_deleted:
                     domains_to_be_deleted.append(renewal)
                 continue
             if days_before_expire <= 0:
-                logger.info('domain already expired, back-end auto renewal %r will be rejected because of insufficient account balance', renewal)
+                logger.info('domain already expired, back-end auto renewal %r will be rejected because of %r insufficient account balance', renewal, renewal.owner)
                 if renewal not in domains_to_be_deleted:
                     domains_to_be_deleted.append(renewal)
                 continue

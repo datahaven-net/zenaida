@@ -126,7 +126,7 @@ def do_domain_restored(domain, notify=False):
     return True
 
 
-def do_domain_renewal(domain, notify=False):
+def do_domain_renewal(domain, ex_date=None, notify=False):
     logger.info('domain %s renewal', domain)
     site_name = settings.SITE_BASE_URL.replace("https://","")
     if False:
@@ -165,7 +165,7 @@ def do_domain_renewal(domain, notify=False):
         renew_years = int(round((next_expiry_date - current_expiry_date).days / 365.0))
         if not renew_years or renew_years < 0:
             logger.warn('renew duration was not correctly identified, assuming renew durating of 2 years')
-        current_expiry_date = next_expiry_date - datetime.timedelta(years=2)
+        current_expiry_date = next_expiry_date - datetime.timedelta(days=365*2)
     zdomains.create_back_end_renew_notification(
         domain_name=domain,
         next_expiry_date=next_expiry_date,
@@ -319,8 +319,13 @@ def on_queue_response(resData):
         except:
             logger.exception('can not process queue response: %s' % resData)
             return False
+        try:
+            exDate = str(resData['renData']['exDate'])
+        except:
+            logger.exception('unexpected queue response structure: %s' % resData)
+            exDate = None
 
-        return do_domain_renewal(domain)
+        return do_domain_renewal(domain, ex_date=exDate)
 
     logger.error('UNKNOWN response: %s' % resData)
     return False

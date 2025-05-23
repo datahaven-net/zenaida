@@ -146,7 +146,7 @@ class DomainAdmin(NestedModelAdmin):
         'domain_deduplicate_contacts',
     )
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
-                    'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', )
+                    'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', 'auto_renew_enabled' )
     list_filter = (('create_date', CustomDateFieldListFilter, ), ('expiry_date', CustomDateFieldListFilter, ), 'status', )
 
     search_fields = ('name', 'owner__email', )

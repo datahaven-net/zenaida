@@ -15,6 +15,7 @@ from back.models.back_end_renew import BackEndRenew
 from billing import orders
 from epp import rpc_error
 from zen import zdomains
+from zen import zmaster
 
 
 class TestSyncExpiredDomains(TestCase):
@@ -96,7 +97,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() + datetime.timedelta(days=45) + datetime.timedelta(days=365*2),
             auto_renew_enabled=True,
         )
-        zdomains.create_back_end_renew_notification(
+        zmaster.create_back_end_renew_notification(
             domain_name='abcd.ai',
             previous_expiry_date=timezone.now() + datetime.timedelta(days=45),
             next_expiry_date=timezone.now() + datetime.timedelta(days=45) + datetime.timedelta(days=365*2),
@@ -133,7 +134,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() + datetime.timedelta(days=45) + datetime.timedelta(days=365*2),
             auto_renew_enabled=False,
         )
-        zdomains.create_back_end_renew_notification(
+        zmaster.create_back_end_renew_notification(
             domain_name='abcd.ai',
             previous_expiry_date=timezone.now() + datetime.timedelta(days=45),
             next_expiry_date=timezone.now() + datetime.timedelta(days=45) + datetime.timedelta(days=365*2),
@@ -158,7 +159,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
             auto_renew_enabled=False,
         )
-        zdomains.create_back_end_renew_notification(
+        zmaster.create_back_end_renew_notification(
             domain_name='abcd.ai',
             previous_expiry_date=timezone.now() + datetime.timedelta(days=10),
             next_expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
@@ -192,7 +193,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
             auto_renew_enabled=True,
         )
-        zdomains.create_back_end_renew_notification(
+        zmaster.create_back_end_renew_notification(
             domain_name='abcd.ai',
             previous_expiry_date=timezone.now() + datetime.timedelta(days=10),
             next_expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
@@ -226,7 +227,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
             auto_renew_enabled=True,
         )
-        zdomains.create_back_end_renew_notification(
+        zmaster.create_back_end_renew_notification(
             domain_name='abcd.ai',
             previous_expiry_date=timezone.now() + datetime.timedelta(days=10),
             next_expiry_date=timezone.now() + datetime.timedelta(days=10) + datetime.timedelta(days=365*2),
@@ -255,7 +256,7 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
             expiry_date=timezone.now() - datetime.timedelta(days=1) + datetime.timedelta(days=365*2),
             auto_renew_enabled=True,
         )
-        zdomains.create_back_end_renew_notification(
+        zmaster.create_back_end_renew_notification(
             domain_name='abcd.ai',
             previous_expiry_date=timezone.now() - datetime.timedelta(days=1),
             next_expiry_date=timezone.now() - datetime.timedelta(days=1) + datetime.timedelta(days=365*2),

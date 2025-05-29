@@ -44,6 +44,10 @@ class Notification(models.Model):
         choices=(
             ('domain_expiring', 'DOMAIN EXPIRING', ),
             ('domain_expire_soon', 'DOMAIN EXPIRE SOON', ),
+            ('domain_expire_in_5_days', 'DOMAIN EXPIRE IN 5 DAYS', ),
+            ('domain_expire_in_3_days', 'DOMAIN EXPIRE IN 3 DAYS', ),
+            ('domain_expire_in_1_day', 'DOMAIN EXPIRE IN 1 DAY', ),
+            ('domain_expired', 'DOMAIN EXPIRED', ),
             ('domain_restored', 'DOMAIN RESTORED', ),
             ('domain_transferred', 'DOMAIN TRANSFERRED', ),
             ('domain_activated', 'DOMAIN ACTIVATED', ),

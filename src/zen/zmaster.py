@@ -1,6 +1,8 @@
 import logging
+import datetime
 
 from django.utils import timezone
+from django.conf import settings
 
 from automats import contact_synchronizer
 from automats import domains_checker
@@ -10,8 +12,10 @@ from automats import domain_resurrector
 from automats import domain_contacts_synchronizer
 
 from epp import rpc_error
+from epp import rpc_client
 
 from zen import zerrors
+from zen import zdomains
 
 logger = logging.getLogger(__name__)
 
@@ -353,3 +357,114 @@ def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True
 
     logger.info('domains_checker(%r) OK', domain)
     return outputs[-2]
+
+#------------------------------------------------------------------------------
+
+
+def create_back_end_renew_notification(domain_name, next_expiry_date, previous_expiry_date, restore_order=None):
+    """
+    Creates BackEndRenew notification object to keep track of domain billing process
+    after automatic renew initiated by the back-end system.
+    """
+    from back.models.back_end_renew import BackEndRenew
+    domain = zdomains.domain_find(domain_name)
+    if domain and previous_expiry_date:
+        if domain.expiry_date == previous_expiry_date:
+            logger.critical('expiry date %r was not changed during auto-renewal for %r', domain.expiry_date, domain)
+    notification = BackEndRenew.renewals.create(
+        domain_name=domain_name,
+        domain=domain,
+        owner=domain.owner if domain else None,
+        previous_expiry_date=previous_expiry_date,
+        next_expiry_date=next_expiry_date,
+        restore_order=restore_order,
+    )
+    logger.info('created %r notification, restore_order=%r', notification, restore_order)
+    return notification
+
+
+def process_back_end_renew_notification(notification, domain_object):
+    from accounts import notifications
+    from billing import orders as billing_orders
+    moment_now = timezone.now()
+    accepted = False
+    insufficient_balance = False
+    if notification.restore_order or domain_object.owner.profile.automatic_renewal_enabled or domain_object.domain.auto_renew_enabled:
+        if domain_object.owner.balance >= settings.ZENAIDA_DOMAIN_PRICE:
+            accepted = True
+        else:
+            insufficient_balance = True
+    #--- domain was accepted for auto-renew
+    if accepted:
+        renewal_order = billing_orders.order_single_item(
+            owner=domain_object.owner,
+            item_type='domain_renew',
+            item_price=settings.ZENAIDA_DOMAIN_PRICE,
+            item_name=domain_object.name,
+            item_details={
+                'created_automatically': moment_now.isoformat(),
+            },
+        )
+        new_status = billing_orders.execute_order(renewal_order, already_processed=True)
+        notification.renew_order = renewal_order
+        notification.save()
+        if new_status != 'processed':
+            logger.critical('for account %r back-end auto renew order status is %r', domain_object.owner, new_status)
+            notification.status = 'failed'
+            notification.details = {'errors': ['renew order status is %r' % new_status, ]}
+            notification.save()
+            return False
+        notification.status = 'processed'
+        notification.save()
+        notifications.start_email_notification_domain_renewed(
+            user=domain_object.owner,
+            domain_name=domain_object.name,
+            expiry_date=notification.next_expiry_date,
+            old_expiry_date=notification.previous_expiry_date,
+        )
+        logger.info('created and processed %r for %r', renewal_order, domain_object)
+        return True
+    #--- domain was not accepted for auto-renew
+    if 'clientUpdateProhibited' in (domain_object.epp_statuses or {}):
+        try:
+            rpc_client.cmd_domain_update(
+                domain=domain_object.name,
+                remove_statuses_list=[{'name': 'clientUpdateProhibited', }],
+            )
+        except rpc_error.EPPError as exc:
+            logger.exception('domain %s failed to remove clientUpdateProhibited status: %r' % (domain_object, exc, ))
+            notification.status = 'failed'
+            notification.details = {'errors': ['domain %s failed to remove clientUpdateProhibited status: %r' % (domain_object, exc, ), ]}
+            notification.save()
+            return False
+    if 'clientDeleteProhibited' in (domain_object.epp_statuses or {}):
+        try:
+            rpc_client.cmd_domain_update(
+                domain=domain_object.name,
+                remove_statuses_list=[{'name': 'clientDeleteProhibited', }],
+            )
+        except rpc_error.EPPError as exc:
+            logger.exception('domain %s failed to remove clientDeleteProhibited status: %r' % (domain_object, exc, ))
+            notification.status = 'failed'
+            notification.details = {'errors': ['domain %s failed to remove clientDeleteProhibited status: %r' % (domain_object, exc, ), ]}
+            notification.save()
+            return False
+    try:
+        rpc_client.cmd_domain_delete(domain_object.name)
+    except rpc_error.EPPError as exc:
+        logger.exception('domain %s delete request failed: %r' % (domain_object, exc, ))
+        notification.status = 'failed'
+        notification.details = {'errors': ['domain %s delete request failed: %r' % (domain_object, exc, ), ]}
+        notification.save()
+        return False
+    notification.status = 'rejected'
+    notification.save()
+    notifications.start_email_notification_domain_deleted(
+        user=domain_object.owner,
+        domain_name=domain_object.domain.name,
+        expiry_date=notification.next_expiry_date,
+        restore_end_date=notification.created + datetime.timedelta(days=15),
+        delete_end_date=notification.created + datetime.timedelta(days=30),
+        insufficient_balance=insufficient_balance,
+    )
+    return True

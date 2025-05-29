@@ -8,13 +8,12 @@ import datetime
 from lib import xml2json
 
 from django.utils import timezone
+from django.conf import settings
 
 from base.email import send_email
 
 from epp import rpc_client
 from epp import rpc_error
-
-from billing import orders as billing_orders
 
 from zen import zmaster
 from zen import zdomains
@@ -22,10 +21,6 @@ from zen import zdomains
 #------------------------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
-
-#------------------------------------------------------------------------------
-
-from django.conf import settings
 
 #------------------------------------------------------------------------------
 
@@ -164,9 +159,10 @@ def do_domain_renewal(domain, ex_date=None, notify=False):
     if next_expiry_date and current_expiry_date:
         renew_years = int(round((next_expiry_date - current_expiry_date).days / 365.0))
         if not renew_years or renew_years < 0:
-            logger.warn('renew duration was not correctly identified, assuming renew durating of 2 years')
+            logger.warn('renew duration was not correctly identified for %r, assuming renew durating of 2 years', domain)
         current_expiry_date = next_expiry_date - datetime.timedelta(days=365*2)
-    zdomains.create_back_end_renew_notification(
+    from billing import orders as billing_orders
+    notification = zmaster.create_back_end_renew_notification(
         domain_name=domain,
         next_expiry_date=next_expiry_date,
         previous_expiry_date=current_expiry_date,
@@ -174,18 +170,34 @@ def do_domain_renewal(domain, ex_date=None, notify=False):
     )
     if synchronize_failed or not outputs:
         logger.critical('synchronize domain %s failed with empty result' % domain)
+        notification.status = 'failed'
+        notification.details = {'errors': ['synchronize domain %s failed with empty result' % domain, ]}
+        notification.save()
         return False
     if not outputs[-1] or isinstance(outputs[-1], Exception):
         logger.critical('synchronize domain %s failed with result: %r', domain, outputs[-1])
+        notification.status = 'failed'
+        notification.details = {'errors': ['synchronize domain %s failed with result: %r' % (domain, outputs[-1]), ]}
+        notification.save()
         return False
     logger.info('outputs: %r', outputs)
     domain_object = zdomains.domain_find(domain_name=domain)
     if not domain_object:
         logger.critical('synchronize domain %s failed, no domain object found' % domain)
+        notification.status = 'failed'
+        notification.details = {'errors': ['synchronize domain %s failed, no domain object found' % domain, ]}
+        notification.save()
         return False
     logger.info('domain_object: %r', domain_object)
+    try:
+        zmaster.process_back_end_renew_notification(notification, domain_object)
+    except Exception as exc:
+        logger.exception('failed processing of the notification %r for %r: %r' % (notification, domain_object, exc, ))
+        notification.status = 'failed'
+        notification.details = {'errors': ['failed processing of the notification %r for %r: %r' % (notification, domain_object, exc, ), ]}
+        notification.save()
+        return False
     return True
-
 
 
 def do_domain_expiry_date_updated(domain):

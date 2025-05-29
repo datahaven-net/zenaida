@@ -55,14 +55,19 @@ def start_email_notification_domain_renewed(user, domain_name, expiry_date, old_
     return new_notification
 
 
-def start_email_notification_domain_deleted(user, domain_name):
+def start_email_notification_domain_deleted(user, domain_name, expiry_date, restore_end_date, delete_end_date, insufficient_balance):
     new_notification = Notification.notifications.create(
         account=user,
         recipient=user.profile.contact_email,
         type='email',
         subject='domain_deleted',
         domain_name=domain_name,
-        details={},
+        details={
+            'expiry_date': expiry_date,
+            'restore_end_date': restore_end_date,
+            'delete_end_date': delete_end_date,
+            'insufficient_balance': insufficient_balance,
+        },
     )
     logger.info('created new %r', new_notification)
     return new_notification
@@ -121,6 +126,30 @@ def execute_email_notification(notification_object):
             'subject': 'AI domain will expire after 30 days',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
         })
+    elif notification_object.subject == 'domain_expire_in_5_days':
+        email_template = 'email/domain_expire_in_5_days.html'
+        context.update({
+            'domain_name': notification_object.domain_name,
+            'domain_expiry_date': notification_object.details.get('expiry_date'),
+            'subject': 'AI domain will expire in 5 days',
+            'person_name': notification_object.account.profile.person_name or 'dear Customer',
+        })
+    elif notification_object.subject == 'domain_expire_in_3_days':
+        email_template = 'email/domain_expire_in_3_days.html'
+        context.update({
+            'domain_name': notification_object.domain_name,
+            'domain_expiry_date': notification_object.details.get('expiry_date'),
+            'subject': 'AI domain will expire in 3 days',
+            'person_name': notification_object.account.profile.person_name or 'dear Customer',
+        })
+    elif notification_object.subject == 'domain_expire_in_1_day':
+        email_template = 'email/domain_expire_in_1_day.html'
+        context.update({
+            'domain_name': notification_object.domain_name,
+            'domain_expiry_date': notification_object.details.get('expiry_date'),
+            'subject': 'AI domain will expire in 24 hours',
+            'person_name': notification_object.account.profile.person_name or 'dear Customer',
+        })
     elif notification_object.subject == 'low_balance':
         email_template = 'email/low_balance.html'
         context.update({
@@ -149,7 +178,11 @@ def execute_email_notification(notification_object):
         email_template = 'email/domain_deleted.html'
         context.update({
             'domain_name': notification_object.domain_name,
-            'subject': 'AI domain was automatically deleted',
+            'domain_expiry_date': notification_object.details.get('expiry_date'),
+            'domain_restore_end_date': notification_object.details.get('restore_end_date'),
+            'domain_delete_end_date': notification_object.details.get('delete_end_date'),
+            'insufficient_balance': 'insufficient account balance' if notification_object.details.get('insufficient_balance') else 'disabled auto-renewal configuration',
+            'subject': 'AI domain expired',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
         })
     elif notification_object.subject == 'domain_deactivated':

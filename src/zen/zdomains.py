@@ -671,26 +671,3 @@ def generate_random_auth_info(length=12):
     pwd = lower_pwd + upper_pwd + digits_pwd + special_pwd
     random.shuffle(pwd)
     return ''.join(pwd)
-
-#------------------------------------------------------------------------------
-
-def create_back_end_renew_notification(domain_name, next_expiry_date, previous_expiry_date, restore_order=None):
-    """
-    Creates BackEndRenew notification object to keep track of domain billing process
-    after automatic renew initiated by the back-end system.
-    """
-    from back.models.back_end_renew import BackEndRenew
-    domain = domain_find(domain_name)
-    if domain and previous_expiry_date:
-        if domain.expiry_date == previous_expiry_date:
-            logger.critical('expiry date %r was not changed during auto-renewal for %r', domain.expiry_date, domain)
-    notification = BackEndRenew.renewals.create(
-        domain_name=domain_name,
-        domain=domain,
-        owner=domain.owner if domain else None,
-        previous_expiry_date=previous_expiry_date,
-        next_expiry_date=next_expiry_date,
-        restore_order=restore_order,
-    )
-    logger.info('created %r notification, restore_order=%r', notification, restore_order)
-    return notification

@@ -439,7 +439,7 @@ class TestOrderDomainRestoreView(BaseAuthTesterMixin, TestCase):
         self.account.save()
         response = self.client.get('/billing/order/create/restore/test.ai/')
         assert response.status_code == 302
-        assert response.url == '/billing/pay/?amount={}'.format(100 + 100 - 10)
+        assert response.url == '/billing/pay/?amount={}'.format(290)
         orders = Order.orders.all()
         assert len(orders) == 1
         assert orders[0].status == 'started'

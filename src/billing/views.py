@@ -273,9 +273,9 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
         if context.get('has_existing_order'):
             return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         new_order = context.get('order')
-        if new_order and new_order.total_price > new_order.owner.balance:
+        if new_order and new_order.total_price + settings.ZENAIDA_DOMAIN_PRICE > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
-                int(new_order.total_price - new_order.owner.balance)))
+                int(new_order.total_price + settings.ZENAIDA_DOMAIN_PRICE - new_order.owner.balance)))
         return self.render_to_response(context)
 
 

@@ -1,5 +1,7 @@
 from django.db import models
 
+from django.core.serializers.json import DjangoJSONEncoder
+
 from accounts.models.account import Account
 
 from back.models.domain import Domain
@@ -37,6 +39,7 @@ class BackEndRenew(models.Model):
             ('started', 'Started', ),
             ('processed', 'Processed', ),
             ('rejected', 'Rejected', ),
+            ('failed', 'Failed', ),
         ),
         default='started',
         max_length=16,
@@ -49,6 +52,8 @@ class BackEndRenew(models.Model):
     next_expiry_date = models.DateTimeField(null=True, blank=True, default=None)
 
     insufficient_balance_email_sent = models.BooleanField(default=False)
+
+    details = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     def __str__(self):
         return 'BackEndRenew({} {} {})'.format(self.domain_name, self.created, self.status)

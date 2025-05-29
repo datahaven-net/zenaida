@@ -11,9 +11,25 @@
 
 <p>Hello, {{ person_name }}.</p>
 
-<p>Domain <b>{{ domain_name }}</b> was automatically deleted.</p>
+<p>
+Due to {{ insufficient_balance }}, your domain <b>{{ domain_name }}</b> was not automatically renewed by the system.
+</p>
 
-<p>Reason for that could be insufficient funds in your account or turned OFF automatical domain renew flag.</p>
+<p>
+Domain <b>{{ domain_name }}</b> expired on <b>{{ domain_expiry_date }}</b> and is currently in pending deletion state.
+</p>
+
+<p>
+If you prefer to keep the domain under your account, you have 15 days to start a domain restore order.
+<br>
+You will be charged extra for the restore procedure on top of the regular domain renewal costs.
+</p>
+
+<p>
+After {{ domain_restore_end_date }}, domain restore is no longer possible.
+<br>
+Finally, after {{ domain_delete_end_date }}, domain <b>{{ domain_name }}</b>  will be automatically released by the domain registry system to the market and available for new registration.
+</p>
 
 <p>To stop receiving email notifications from AI domains registry please sign in to <a href="{{ site_url }}" target=_blank>{{ site_url }}</a>,
 go to your profile settings and disable "Email notifications enabled" checkbox.</p>

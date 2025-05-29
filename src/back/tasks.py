@@ -55,7 +55,7 @@ def sync_expired_domains(dry_run=True):
 def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_days_before_expire=90):
     """
     When customer enables "domain auto-renew" feature on "My Profile" page and possess enough account balance
-    Zenaida must take care of his expiring domains and automatically renew them 3 months before the expiration date.
+    Zenaida must take care of the expiring domains and automatically renew a domain 3 months before the expiration date.
     The task is checking all expiring domains and for those which has enabled `auto_renew_enabled` flag performs
     such actions:
         1. create a renew order on behalf of customer
@@ -198,6 +198,9 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
 
 
 def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=False):
+    """
+    Currently not in use.
+    """
     moment_now = timezone.now()
     report = []
     accepted_renewals = []
@@ -340,6 +343,10 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
         notifications.start_email_notification_domain_deleted(
             user=renewal.owner,
             domain_name=renewal.domain.name,
+            expiry_date=renewal.next_expiry_date,
+            restore_end_date=renewal.created + datetime.timedelta(days=15),
+            delete_end_date=renewal.created + datetime.timedelta(days=30),
+            insufficient_balance=False,
         )
         report.append(('rejected', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
 

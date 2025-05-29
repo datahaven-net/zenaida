@@ -47,7 +47,7 @@ def check_notify_domain_expiring(dry_run=True, min_days_before_expire=0, max_day
 
     Values `min_days_before_expire` and `max_days_before_expire` will select domains based on `expiry_date` field.
 
-    Parameter `subject` must be one of "domain_expiring" or "domain_expire_soon".
+    Parameter `subject` must be one of "domain_expiring", "domain_expire_soon"... listed in "Notification.subject" model field choices.
 
     If `dry_run` is True only returns identified users and domains without taking any actions.
     """

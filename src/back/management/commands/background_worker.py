@@ -32,6 +32,27 @@ class Command(BaseCommand):
             account_tasks.check_notify_domain_expiring(
                 dry_run=dry_run,
                 min_days_before_expire=0,
+                max_days_before_expire=2,
+                subject='domain_expire_in_1_day',
+            )
+
+            account_tasks.check_notify_domain_expiring(
+                dry_run=dry_run,
+                min_days_before_expire=2,
+                max_days_before_expire=5,
+                subject='domain_expire_in_3_days',
+            )
+
+            account_tasks.check_notify_domain_expiring(
+                dry_run=dry_run,
+                min_days_before_expire=4,
+                max_days_before_expire=7,
+                subject='domain_expire_in_5_days',
+            )
+
+            account_tasks.check_notify_domain_expiring(
+                dry_run=dry_run,
+                min_days_before_expire=7,
                 max_days_before_expire=30,
                 subject='domain_expire_soon',
             )
@@ -49,9 +70,9 @@ class Command(BaseCommand):
                 max_days_before_expire=90,
             )
 
-            back_tasks.complete_back_end_auto_renewals(
-                critical_days_before_delete=15,
-            )
+            # back_tasks.complete_back_end_auto_renewals(
+            #     critical_days_before_delete=15,
+            # )
 
             account_tasks.activations_cleanup()
 

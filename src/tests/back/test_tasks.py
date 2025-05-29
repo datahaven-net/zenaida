@@ -120,7 +120,10 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
 
     @pytest.mark.django_db
     def test_domain_auto_renew_disabled(self):
-        tester = testsupport.prepare_tester_account(account_balance=1000.0)
+        tester = testsupport.prepare_tester_account(
+            account_balance=1000.0,
+            automatic_renewal_enabled=False,
+        )
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
@@ -142,7 +145,10 @@ class TestBackEndAutoRenewExpiringDomains(TestCase):
     @mock.patch('epp.rpc_client.cmd_domain_delete')
     def test_domain_auto_renew_disabled_domain_deleted(self, mock_cmd_domain_delete):
         mock_cmd_domain_delete.return_value = True
-        tester = testsupport.prepare_tester_account(account_balance=1000.0)
+        tester = testsupport.prepare_tester_account(
+            account_balance=1000.0,
+            automatic_renewal_enabled=False,
+        )
         tester_domain = testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
@@ -444,7 +450,10 @@ class TestAutoRenewExpiringDomains(TestCase):
 
     @pytest.mark.django_db
     def test_domain_auto_renew_disabled(self):
-        tester = testsupport.prepare_tester_account(account_balance=200.0)
+        tester = testsupport.prepare_tester_account(
+            account_balance=200.0,
+            automatic_renewal_enabled=False,
+        )
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
@@ -458,7 +467,10 @@ class TestAutoRenewExpiringDomains(TestCase):
 
     @pytest.mark.django_db
     def test_owner_profile_automatic_renewal_disabled(self):
-        tester = testsupport.prepare_tester_account(account_balance=200.0, automatic_renewal_enabled=False)
+        tester = testsupport.prepare_tester_account(
+            account_balance=200.0,
+            automatic_renewal_enabled=False,
+        )
         testsupport.prepare_tester_domain(
             domain_name='abcd.ai',
             tester=tester,
@@ -466,6 +478,23 @@ class TestAutoRenewExpiringDomains(TestCase):
             domain_status='active',
             expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
             auto_renew_enabled=True,
+        )
+        report = tasks.auto_renew_expiring_domains(dry_run=False)
+        assert len(report) == 1
+
+    @pytest.mark.django_db
+    def test_automatic_renewal_disabled_completely(self):
+        tester = testsupport.prepare_tester_account(
+            account_balance=200.0,
+            automatic_renewal_enabled=False,
+        )
+        testsupport.prepare_tester_domain(
+            domain_name='abcd.ai',
+            tester=tester,
+            domain_epp_id='aaa123',
+            domain_status='active',
+            expiry_date=timezone.now() + datetime.timedelta(days=89),  # will expire in 89 days
+            auto_renew_enabled=False,
         )
         report = tasks.auto_renew_expiring_domains(dry_run=False)
         assert len(report) == 0

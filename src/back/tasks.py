@@ -80,10 +80,9 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
         epp_id=None,
     )
     for expiring_domain in expiring_active_domains:
-        if not expiring_domain.auto_renew_enabled:
-            continue
         if not expiring_domain.owner.profile.automatic_renewal_enabled:
-            continue
+            if not expiring_domain.auto_renew_enabled:
+                continue
         if billing_orders.find_pending_domain_renew_order_items(expiring_domain.name):
             logger.warn('domain renew order already started for %r', expiring_domain.name)
             continue
@@ -134,10 +133,9 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
     )
     # step 6: make an attempt to auto-renew already suspended and expired domains
     for expired_domain in expired_suspended_domains:
-        if not expired_domain.auto_renew_enabled:
-            continue
         if not expired_domain.owner.profile.automatic_renewal_enabled:
-            continue
+            if not expired_domain.auto_renew_enabled:
+                continue
         if billing_orders.find_pending_domain_renew_order_items(expired_domain.name):
             logger.warn('domain renew order already started for %r', expired_domain.name)
             continue
@@ -226,7 +224,7 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             logger.warn('renew duration was not correctly identified for %r, assuming notificaiton received moment', renewal)
             renewal.previous_expiry_date = renewal.created
             renewal.save()
-        if renewal.owner.profile.automatic_renewal_enabled and renewal.domain.auto_renew_enabled:
+        if renewal.owner.profile.automatic_renewal_enabled or renewal.domain.auto_renew_enabled:
             logger.info('accepting domain %r back-end auto renewal for %r years', renewal.domain, renew_years)
             accepted_renewals.append(renewal)
         else:

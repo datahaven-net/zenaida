@@ -76,8 +76,7 @@ class Domain(models.Model):
     auto_renew_enabled = models.BooleanField(
         verbose_name='Automatically renew',
         help_text='Domain will be automatically renewed 3 months before the expiration date, if you have enough funds. '
-                  'Account balance will be automatically deducted.'
-                  'Please make sure you also enabled automatic domains renewal in your profile settings.',
+                  'Account balance will be automatically deducted.',
         default=True,
     )
 

@@ -413,11 +413,26 @@ class BackEndRenewAdmin(NestedModelAdmin):
         ('previous_expiry_date', ),
         ('next_expiry_date', ),
         ('status', ),
+        ('details', ),
     )
     list_display = ('domain_name', 'domain', 'owner', 'renew_order', 'restore_order', 'created', 'previous_expiry_date', 'next_expiry_date', 'status', )
     list_filter = ('status', )
     search_fields = ('domain_name', 'owner__email', )
-    readonly_fields = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'next_expiry_date', )
+    readonly_fields = ('domain_name', 'domain', 'owner', 'renew_order', 'created', 'previous_expiry_date', 'next_expiry_date', 'details', )
+    actions = ('reprocess_notification', )
+
+    def _do_reprocess_notification(self, queryset):
+        report = []
+        for notification_object in queryset:
+            if notification_object.status in ('processed', 'rejected', ):
+                report.append('status is already: %r' % notification_object.status)
+            else:
+                report.append('result: %r' % zmaster.process_back_end_renew_notification(notification_object, notification_object.domain))
+        return report
+
+    def reprocess_notification(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_reprocess_notification(queryset)))
+    reprocess_notification.short_description = "Re-process notifications"
 
 
 admin.site.register(Zone, ZoneAdmin)

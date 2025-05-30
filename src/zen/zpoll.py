@@ -188,7 +188,7 @@ def do_domain_renewal(domain, ex_date=None, notify=False):
         notification.details = {'errors': ['synchronize domain %s failed, no domain object found' % domain, ]}
         notification.save()
         return False
-    logger.info('domain_object: %r', domain_object)
+    logger.info('domain object: %r', domain_object)
     try:
         zmaster.process_back_end_renew_notification(notification, domain_object)
     except Exception as exc:
@@ -197,6 +197,7 @@ def do_domain_renewal(domain, ex_date=None, notify=False):
         notification.details = {'errors': ['failed processing of the notification %r for %r: %r' % (notification, domain_object, exc, ), ]}
         notification.save()
         return False
+    logger.info('domain renew notification processed successfully: %r', notification)
     return True
 
 

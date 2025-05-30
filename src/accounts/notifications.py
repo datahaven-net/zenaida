@@ -131,7 +131,7 @@ def execute_email_notification(notification_object):
         context.update({
             'domain_name': notification_object.domain_name,
             'domain_expiry_date': notification_object.details.get('expiry_date'),
-            'subject': 'AI domain will expire in 5 days',
+            'subject': 'AI domain will expire in few days',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
         })
     elif notification_object.subject == 'domain_expire_in_3_days':

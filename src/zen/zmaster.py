@@ -426,6 +426,7 @@ def process_back_end_renew_notification(notification, domain_object):
         return True
     #--- domain was not accepted for auto-renew
     if 'clientUpdateProhibited' in (domain_object.epp_statuses or {}):
+        logger.info('going to request to remove EPP status clientUpdateProhibited from %r', domain_object.name)
         try:
             rpc_client.cmd_domain_update(
                 domain=domain_object.name,
@@ -438,6 +439,7 @@ def process_back_end_renew_notification(notification, domain_object):
             notification.save()
             return False
     if 'clientDeleteProhibited' in (domain_object.epp_statuses or {}):
+        logger.info('going to request to remove EPP status clientDeleteProhibited from %r', domain_object.name)
         try:
             rpc_client.cmd_domain_update(
                 domain=domain_object.name,
@@ -457,11 +459,12 @@ def process_back_end_renew_notification(notification, domain_object):
         notification.details = {'errors': ['domain %s delete request failed: %r' % (domain_object, exc, ), ]}
         notification.save()
         return False
+    logger.info('domain renewal is rejected, sent domain %r delete EPP request', domain_object)
     notification.status = 'rejected'
     notification.save()
     notifications.start_email_notification_domain_deleted(
         user=domain_object.owner,
-        domain_name=domain_object.domain.name,
+        domain_name=domain_object.name,
         expiry_date=notification.next_expiry_date,
         restore_end_date=notification.created + datetime.timedelta(days=15),
         delete_end_date=notification.created + datetime.timedelta(days=30),

@@ -389,7 +389,7 @@ def process_back_end_renew_notification(notification, domain_object):
     moment_now = timezone.now()
     accepted = False
     insufficient_balance = False
-    if notification.restore_order or domain_object.owner.profile.automatic_renewal_enabled or domain_object.domain.auto_renew_enabled:
+    if notification.restore_order or domain_object.owner.profile.automatic_renewal_enabled or domain_object.auto_renew_enabled:
         if domain_object.owner.balance >= settings.ZENAIDA_DOMAIN_PRICE:
             accepted = True
         else:

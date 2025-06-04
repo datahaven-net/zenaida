@@ -56,3 +56,10 @@ class OrderItem(models.Model):
 
     def __repr__(self):
         return 'OrderItem({} {} {})'.format(self.type, self.name, self.status)
+
+    @property
+    def maximum_price(self):
+        if self.type == 'domain_restore':
+            from django.conf import settings
+            return self.price + settings.ZENAIDA_DOMAIN_PRICE
+        return self.price

@@ -250,6 +250,13 @@ def domain_restore(domain_object, raise_errors=False, log_events=True, log_trans
             logger.error('domain_resurrector(%r) unexpectedly failed with: %r', domain_object.name, outputs)
         return False
 
+    try:
+        domain_object.refresh_from_db()
+        domain_object.auto_renew_enabled = True
+        domain_object.save()
+    except Exception as exc:
+        logger.exception('failed to set auto_renew_enabled flag for %r: %r' % (domain_object, exc))
+
     logger.info('domain_resurrector(%r) finished with %d outputs', domain_object.name, len(outputs))
     return True
 

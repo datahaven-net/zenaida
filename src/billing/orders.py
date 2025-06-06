@@ -259,7 +259,7 @@ def order_multiple_items(owner, order_items):
     return new_order
 
 
-def update_order_item(order_item, new_status=None, charge_user=False, save=True, details=None):
+def update_order_item(order_item, new_status=None, charge_user=False, save=True, details=None, outputs=None):
     """
     Update given OrderItem object with new info.
     Optionally can charge user balance if order fulfillment was successful.
@@ -282,9 +282,12 @@ def update_order_item(order_item, new_status=None, charge_user=False, save=True,
         if save:
             order_item.save()
         logger.info('updated status of %r from "%s" to "%s"' % (order_item, old_status, new_status))
-    if details is not None and save:
+    if (details is not None or outputs is not None) and save:
         d = order_item.details or {}
-        d.update(details)
+        if details:
+            d.update(details)
+        if outputs:
+            d['outputs'] = [(str(o) if isinstance(o, Exception) else o) for o in outputs]
         order_item.details = d
         order_item.save()
         logger.info('updated details of %r : %r' % (order_item, d, ))
@@ -322,9 +325,9 @@ def execute_domain_register(order_item, target_domain):
         return_outputs=True,
     )
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': repr(outputs), })
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, outputs=outputs)
         return False
-    return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+    return update_order_item(order_item, new_status='processed', charge_user=True, save=True, outputs=outputs)
 
 
 def execute_domain_renew(order_item, target_domain):
@@ -342,9 +345,9 @@ def execute_domain_renew(order_item, target_domain):
         return_outputs=True,
     )
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': repr(outputs), })
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, outputs=outputs)
         return False
-    ret = update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+    ret = update_order_item(order_item, new_status='processed', charge_user=True, save=True, outputs=outputs)
     zmaster.domain_synchronize_from_backend(
         domain_name=order_item.name,
         refresh_contacts=False,
@@ -364,28 +367,30 @@ def execute_domain_restore(order_item, target_domain):
     """
     Execute domain restore order fulfillment and update order item.
     """
-    if not zmaster.domain_restore(
+    outputs = zmaster.domain_restore(
         domain_object=target_domain,
         res_reason='Customer %s requested to restore %s domain' % (order_item.order.owner.email, target_domain.name, ),
         log_events=True,
         log_transitions=True,
         raise_errors=False,
-    ):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return_outputs=True,
+    )
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, outputs=outputs)
         return False
-
-    return update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+    return update_order_item(order_item, new_status='processed', charge_user=True, save=True, outputs=outputs)
 
 
 def execute_domain_transfer(order_item):
     """
     Execute domain transfer take-over order fulfillment and update order item, status will be "pending".
     """
+    outputs = []
     if hasattr(order_item, 'details') and order_item.details.get('internal'):
         domain = zdomains.domain_find(order_item.name)
         if not domain:
             logger.info('domain name %r was not found in local DB, sync from back-end', order_item.name)
-            zmaster.domain_synchronize_from_backend(
+            outputs.extend(zmaster.domain_synchronize_from_backend(
                 domain_name=order_item.name,
                 refresh_contacts=True,
                 rewrite_contacts=False,
@@ -396,7 +401,7 @@ def execute_domain_transfer(order_item):
                 raise_errors=True,
                 log_events=True,
                 log_transitions=True,
-            )
+            ))
 
         domain = zdomains.domain_find(order_item.name)
         if not domain:
@@ -423,7 +428,7 @@ def execute_domain_transfer(order_item):
         domain.refresh_from_db()
 
         # Override info on back-end
-        zmaster.domain_synchronize_from_backend(
+        outputs.extend(zmaster.domain_synchronize_from_backend(
             domain_name=domain.name,
             refresh_contacts=False,
             rewrite_contacts=True,
@@ -433,11 +438,11 @@ def execute_domain_transfer(order_item):
             raise_errors=True,
             log_events=True,
             log_transitions=True,
-        )
+        ))
         domain.refresh_from_db()
 
         # Override registrant on back-end
-        zmaster.domain_synchronize_contacts(
+        outputs.extend(zmaster.domain_synchronize_contacts(
             domain,
             merge_duplicated_contacts=True,
             rewrite_registrant=True,
@@ -445,14 +450,14 @@ def execute_domain_transfer(order_item):
             raise_errors=True,
             log_events=True,
             log_transitions=True,
-        )
+        ))
         domain.refresh_from_db()
 
         try:
-            zmaster.domain_set_auth_info(domain)
+            outputs.extend(zmaster.domain_set_auth_info(domain, return_outputs=True))
         except Exception as e:
             logger.exception('failed changing auth code for %r after internal transfer' % domain)
-            update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': str(e), })
+            update_order_item(order_item, new_status='failed', charge_user=False, save=True, details={'error': str(e), }, outputs=outputs)
             return False
 
         domain.refresh_from_db()
@@ -462,18 +467,20 @@ def execute_domain_transfer(order_item):
         domain.save()
 
         # In the end, order is done so, update order item as processed.
-        update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+        update_order_item(order_item, new_status='processed', charge_user=True, save=True, outputs=outputs)
 
         return True
 
-    if not zmaster.domain_transfer_request(
+    outputs.extend(zmaster.domain_transfer_request(
         domain=order_item.name,
         auth_info=order_item.details.get('transfer_code'),
-    ):
-        update_order_item(order_item, new_status='failed', charge_user=False, save=True)
+        return_outputs=True,
+    ))
+    if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
+        update_order_item(order_item, new_status='failed', charge_user=False, save=True, outputs=outputs)
         return False
 
-    return update_order_item(order_item, new_status='pending', charge_user=False, save=True)
+    return update_order_item(order_item, new_status='pending', charge_user=False, save=True, outputs=outputs)
 
 
 def execute_one_item(order_item):
@@ -543,7 +550,7 @@ def execute_order(order_object, already_processed=False):
             continue
         total_executed += 1
         if already_processed:
-            update_order_item(order_item, new_status='processed', charge_user=True, save=True)
+            update_order_item(order_item, new_status='processed', charge_user=True, save=True, details={'reason': 'already processed'})
             total_processed += 1
         else:
             if execute_one_item(order_item):

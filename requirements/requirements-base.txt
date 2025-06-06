@@ -22,6 +22,7 @@ pdfkit
 btcpay-python
 python-memcached
 python-dateutil
+Pygments
 lxml
 beautifulsoup4
 https://github.com/datahaven-net/epp-python-client/archive/master.zip

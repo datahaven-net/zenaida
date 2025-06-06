@@ -225,12 +225,12 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        if context.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         new_order = context.get('order')
         if new_order and new_order.total_price > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(new_order.total_price - new_order.owner.balance)))
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         return self.render_to_response(context)
 
 
@@ -249,12 +249,12 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        if context.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         new_order = context.get('order')
         if new_order and new_order.total_price > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(new_order.total_price - new_order.owner.balance)))
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         return self.render_to_response(context)
 
 
@@ -271,9 +271,9 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         new_order = context.get('order')
-        if new_order and new_order.total_price + settings.ZENAIDA_DOMAIN_PRICE > new_order.owner.balance:
+        if new_order and new_order.maximum_price_total > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
-                int(new_order.total_price + settings.ZENAIDA_DOMAIN_PRICE - new_order.owner.balance)))
+                int(new_order.maximum_price_total - new_order.owner.balance)))
         if context.get('has_existing_order'):
             return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         return self.render_to_response(context)
@@ -338,7 +338,7 @@ class OrderDetailsView(LoginRequiredMixin, DetailView):
 
 class OrderExecuteView(LoginRequiredMixin, View):
     error_message_balance = 'Not enough funds on your balance to complete order. ' \
-                            'Please buy more credits to be able to register/renew domains'
+                            'Please buy more credits to be able to register, renew or restore domains'
     error_message_technical = 'There is technical problem with order processing. ' \
                               'Please try again later.'
     success_message = 'Order processed successfully'
@@ -366,6 +366,10 @@ class OrderExecuteView(LoginRequiredMixin, View):
             messages.error(request, self.error_message_balance)
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(existing_order.total_price - existing_order.owner.balance)))
+        if existing_order.maximum_price_total > existing_order.owner.balance:
+            messages.error(request, self.error_message_balance)
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(existing_order.maximum_price_total - existing_order.owner.balance)))
         if not self._verify_existing_order(request, existing_order):
             return shortcuts.redirect('account_domains')
         new_status = orders.execute_order(existing_order)

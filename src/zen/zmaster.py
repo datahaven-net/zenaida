@@ -132,14 +132,18 @@ def domain_check_create_update_renew(domain_object, sync_contacts=True, sync_nam
     logger.info('domain_synchronizer(%r) finished with %d outputs', domain_object.name, len(outputs))
 
     if return_outputs:
-        return outputs
+        return outputs or []
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):
             logger.error('domain_synchronizer(%r) failed with: %r', domain_object.name, outputs[-1])
+        if return_outputs:
+            return outputs or []
         return False
 
     logger.info('domain_synchronizer(%r) OK', domain_object.name)
+    if return_outputs:
+        return outputs or []
     return True
 
 
@@ -189,7 +193,7 @@ def domain_synchronize_from_backend(domain_name,
         outputs = [exc, ]
     del dr
     logger.info('domain_refresher(%r) finished with %d outputs', domain_name, len(outputs))
-    return outputs
+    return outputs or []
 
 
 def domain_synchronize_contacts(domain_object,
@@ -227,10 +231,10 @@ def domain_synchronize_contacts(domain_object,
         return outputs or []
 
     logger.info('domain_synchronize_contacts(%r) finished with %d outputs', domain_object.name, len(outputs))
-    return outputs
+    return outputs or []
 
 
-def domain_restore(domain_object, raise_errors=False, log_events=True, log_transitions=True, **kwargs):
+def domain_restore(domain_object, raise_errors=False, log_events=True, log_transitions=True, return_outputs=False, **kwargs):
     """
     Restores domain from "pendingDelete" state.
     """
@@ -248,6 +252,8 @@ def domain_restore(domain_object, raise_errors=False, log_events=True, log_trans
             logger.error('domain_resurrector(%r) failed with: %r', domain_object.name, outputs[-1])
         else:
             logger.error('domain_resurrector(%r) unexpectedly failed with: %r', domain_object.name, outputs)
+        if return_outputs:
+            return outputs or []
         return False
 
     try:
@@ -258,10 +264,12 @@ def domain_restore(domain_object, raise_errors=False, log_events=True, log_trans
         logger.exception('failed to set auto_renew_enabled flag for %r: %r' % (domain_object, exc))
 
     logger.info('domain_resurrector(%r) finished with %d outputs', domain_object.name, len(outputs))
+    if return_outputs:
+        return outputs or []
     return True
 
 
-def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_events=True, log_transitions=True, **kwargs):
+def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_events=True, log_transitions=True, return_outputs=False, **kwargs):
     """
     Updates auth_info field for given domain on back-end side and also store it in the local DB. 
     """
@@ -280,13 +288,17 @@ def domain_set_auth_info(domain_object, auth_info=None, raise_errors=False, log_
             logger.error('domain_auth_changer(%r) failed with: %r', domain_object.name, outputs[-1])
         else:
             logger.error('domain_auth_changer(%r) unexpectedly failed with: %r', domain_object.name, outputs)
+        if return_outputs:
+            return outputs or []
         return False
 
     logger.info('domain_auth_changer(%r) finished with %d outputs', domain_object.name, len(outputs))
+    if return_outputs:
+        return outputs or []
     return True
 
 
-def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=False, log_events=True, log_transitions=True):
+def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=False, log_events=True, log_transitions=True, return_outputs=False):
     """
     Sending domain transfer request to the back-end. As soon as back-end process the request and accept transfer
     new event message suppose to be received via polling script and new domain object will be created in Zenaida DB.
@@ -309,9 +321,13 @@ def domain_transfer_request(domain, auth_info, skip_info=False, raise_errors=Fal
             logger.error('domain_transfer_request(%r) failed with: %r', domain, outputs[-1])
         else:
             logger.error('domain_transfer_request(%r) unexpectedly failed with: %r', domain, outputs)
+        if return_outputs:
+            return outputs or []
         return False
 
     logger.info('domain_transfer_request(%r) finished with %d outputs', domain, len(outputs))
+    if return_outputs:
+        return outputs or []
     return True
 
 
@@ -334,7 +350,7 @@ def domain_read_info(domain, auth_info=None, raise_errors=False, log_events=True
     logger.info('domains_checker(%r) finished with %d outputs', domain, len(outputs))
 
     if return_outputs:
-        return outputs
+        return outputs or []
 
     if not outputs or not outputs[-1] or isinstance(outputs[-1], Exception):
         if outputs and isinstance(outputs[-1], Exception):

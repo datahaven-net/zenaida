@@ -53,6 +53,10 @@ class Order(models.Model):
         return sum([i.price for i in self.items.all()])
 
     @property
+    def maximum_price_total(self):
+        return sum([i.maximum_price for i in self.items.all()])
+
+    @property
     def items_count(self):
         return len(self.items.all())
 

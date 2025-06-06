@@ -934,7 +934,7 @@ class DomainRefresher(automat.Automat):
             logger.critical('found more than one pending order for domain %s transfer: %r', self.domain_name, pending_order_items)
         if len(pending_order_items) > 0:
             related_order_item = pending_order_items[0]
-            orders.update_order_item(related_order_item, new_status='processed', charge_user=True, save=True)
+            orders.update_order_item(related_order_item, new_status='processed', charge_user=True, save=True, details={'reason': 'processed pending order'})
             orders.refresh_order(related_order_item.order)
             logger.info('processed one pending order %r for %r', related_order_item, self.expected_owner)
         else:

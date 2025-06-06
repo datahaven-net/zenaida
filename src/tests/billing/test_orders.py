@@ -92,7 +92,7 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
-        mock_domain_transfer_request.return_value = True
+        mock_domain_transfer_request.return_value = [True, ]
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
             item_type='domain_transfer',
@@ -160,7 +160,7 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
-        mock_domain_restore.return_value = True
+        mock_domain_restore.return_value = [True, ]
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
             item_type='domain_restore',
@@ -193,7 +193,7 @@ class TestOrders(TestCase):
         )
         tester_domain.owner.balance = 1000.0
         tester_domain.owner.save()
-        mock_domain_transfer_request.return_value = True
+        mock_domain_transfer_request.return_value = [True, ]
         order_object = orders.order_single_item(
             owner=tester_domain.owner,
             item_type='domain_transfer',

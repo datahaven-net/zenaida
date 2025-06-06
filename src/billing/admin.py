@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
@@ -58,10 +60,32 @@ class OrderItemAdmin(NestedModelAdmin):
     list_display = ('order', 'description', 'name', 'type', 'price', 'status', )
     list_filter = ('status', 'type', )
     search_fields = ('name', 'order__owner__email', 'order__id', )
+    fields = (
+        ('order', ),
+        ('price', ),
+        ('type', ),
+        ('name', ),
+        ('status', ),
+        ('details_formatted', ),
+    )
+    readonly_fields = ('price', 'type', 'name', 'status', 'order', 'details_formatted', )
+    exclude = ('details', )
 
     def description(self, order_item_instance):
         return mark_safe('<a href="{}?q={}">{}</a>'.format(
             reverse("admin:billing_orderitem_changelist"), order_item_instance.order.id, order_item_instance.order.description))
+
+    def details_formatted(self, order_item_instance):
+        from pygments import highlight
+        from pygments.formatters import HtmlFormatter  # @UnresolvedImport
+        from pygments.lexers.data import JsonLexer
+        formatter = HtmlFormatter(style='abap', noclasses=True)
+        details_raw_text = json.dumps(order_item_instance.details, indent=1)
+        details_raw_text = details_raw_text.replace('@{http://www.w3.org/2001/XMLSchema-instance}schemaLocation', 'schema')
+        details_raw_text = details_raw_text.replace('urn:ietf:params:xml:ns:', '')
+        details_raw_text = details_raw_text.replace('-1.0.xsd', '')
+        return mark_safe(highlight(details_raw_text, JsonLexer(), formatter))
+    details_formatted.short_description = 'Details'
 
 
 admin.site.register(Payment, PaymentAdmin)

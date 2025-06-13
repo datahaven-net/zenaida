@@ -612,7 +612,7 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         rgp_status = [rgp_status, ]
     for st in rgp_status:
         if '@s' in st:
-            new_domain_extensions[str(st('@s'))] = ''
+            new_domain_extensions[str(st['@s'])] = ''
     modified = (sorted(current_domain_statuses.keys()) != sorted(new_domain_statuses.keys()))
     extensions_modified = (sorted(current_domain_extensions.keys()) != sorted(new_domain_extensions.keys()))
     updated = False

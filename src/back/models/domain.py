@@ -36,6 +36,7 @@ class Domain(models.Model):
 
     epp_id = models.CharField(max_length=64, unique=True, null=True, blank=True, default=None)
     epp_statuses = models.JSONField(null=True, encoder=DjangoJSONEncoder)
+    extension_info = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     status = models.CharField(
         max_length=32,
@@ -97,10 +98,10 @@ class Domain(models.Model):
         return self.create_date.date()
 
     def __str__(self):
-        return 'Domain({} {} {})'.format(self.name, self.owner.email, (self.epp_id or '?')[:10])
+        return 'Domain({} {} {})'.format(self.name, self.owner.email, (self.epp_id or '?')[:6])
 
     def __repr__(self):
-        return 'Domain({} {} {})'.format(self.name, self.owner.email, (self.epp_id or '?')[:10])
+        return 'Domain({} {} {})'.format(self.name, self.owner.email, (self.epp_id or '?')[:6])
 
     def save(self, *args, **kwargs):
         if not self.epp_id:

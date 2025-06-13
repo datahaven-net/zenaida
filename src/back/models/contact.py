@@ -37,10 +37,10 @@ class Contact(models.Model):
     contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
 
     def __str__(self):
-        return 'Contact({} {})'.format(self.owner.email, self.epp_id or '?')
+        return 'Contact({} {})'.format(self.owner.email, str(self.epp_id or '?')[:6])
 
     def __repr__(self):
-        return 'Contact({} {})'.format(self.owner.email, self.epp_id or '?')
+        return 'Contact({} {})'.format(self.owner.email, str(self.epp_id or '?')[:6])
 
     def save(self, *args, **kwargs):
         if not self.epp_id:

@@ -204,8 +204,8 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
     moment_now = timezone.now()
     report = []
     accepted_renewals = []
-    rejected_renewals = []
-    domains_to_be_deleted = []
+    rejected_renewals = {}
+    domains_to_be_deleted = {}
     renewals = BackEndRenew.renewals.filter(status__in=['started', ])
     for renewal in renewals:
         if not renewal.owner:
@@ -236,18 +236,25 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
                 accepted_renewals.append(renewal)
             else:
                 logger.info('rejecting domain %r back-end auto renewal for %r years', renewal.domain, renew_years)
-                rejected_renewals.append(renewal)
+                rejected_renewals[renewal] = {
+                    'profile_renew_enabled': renewal.owner.profile.automatic_renewal_enabled,
+                    'domain_renew_enabled': renewal.domain.auto_renew_enabled,
+                }
 
-    for renewal in rejected_renewals:
+    for renewal, details in rejected_renewals.items():
         days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
         if days_before_expire > 0 and days_before_expire < critical_days_before_delete:
             logger.info('domain was about to expire in %d days, but back-end auto renewal %r was rejected by customer', days_before_expire, renewal)
-            domains_to_be_deleted.append(renewal)
+            details['days_before_expire'] = days_before_expire
+            domains_to_be_deleted[renewal] = details
             continue
         if days_before_expire <= 0:
             logger.info('domain already expired, back-end auto renewal %r will be rejected', renewal)
-            if renewal not in domains_to_be_deleted:
-                domains_to_be_deleted.append(renewal)
+            details['days_before_expire'] = days_before_expire
+            if renewal in domains_to_be_deleted:
+                domains_to_be_deleted[renewal].update(details)
+            else:
+                domains_to_be_deleted[renewal] = details
             continue
 
     for renewal in accepted_renewals:
@@ -255,14 +262,20 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             logger.warn('account %r have insufficient balance to complete auto-renew order for %r', renewal.owner, renewal.domain)
             days_before_expire = (renewal.previous_expiry_date - timezone.now()).days
             if days_before_expire > 0 and days_before_expire < critical_days_before_delete:
+                details = {'days_before_expire': days_before_expire, 'balance': renewal.owner.balance}
                 logger.info('domain was about to expire in %d days, back-end auto renewal %r will be rejected because of %r insufficient account balance', days_before_expire, renewal, renewal.owner)
-                if renewal not in domains_to_be_deleted:
-                    domains_to_be_deleted.append(renewal)
+                if renewal in domains_to_be_deleted:
+                    domains_to_be_deleted[renewal].update(details)
+                else:
+                    domains_to_be_deleted[renewal] = details
                 continue
             if days_before_expire <= 0:
                 logger.info('domain already expired, back-end auto renewal %r will be rejected because of %r insufficient account balance', renewal, renewal.owner)
-                if renewal not in domains_to_be_deleted:
-                    domains_to_be_deleted.append(renewal)
+                details = {'days_before_expire': days_before_expire, 'balance': renewal.owner.balance}
+                if renewal in domains_to_be_deleted:
+                    domains_to_be_deleted[renewal].update(details)
+                else:
+                    domains_to_be_deleted[renewal] = details
                 continue
             if renewal.insufficient_balance_email_sent:
                 continue
@@ -308,7 +321,7 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
         )
         report.append(('processed', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
 
-    for renewal in domains_to_be_deleted:
+    for renewal, details in domains_to_be_deleted.items():
         if dry_run:
             report.append(('rejected', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
             continue
@@ -339,6 +352,9 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             report.append(('delete_failed', renewal.domain.name, renewal.owner.email, renewal.previous_expiry_date, ))
             continue
         renewal.status = 'rejected'
+        _d = renewal.details or {}
+        _d.update(details)
+        renewal.details = _d
         renewal.save()
         notifications.start_email_notification_domain_deleted(
             user=renewal.owner,

@@ -598,7 +598,12 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         return False
     rgp_status = {}
     try:
-        rgp_status = ((domain_info_response['epp']['response'].get('extension') or {}).get('infData') or {}).get('rgpStatus') or {}
+        extension_infos = (domain_info_response['epp']['response'].get('extension') or {}).get('infData')
+        if extension_infos:
+            if not isinstance(extension_infos, list):
+                extension_infos = [extension_infos, ]
+            for infData in extension_infos:
+                rgp_status.update(infData.get('rgpStatus') or {})
     except:
         logger.exception('Failed to read domain rgpStatus from domain_info response')
     if not isinstance(epp_statuses, list):

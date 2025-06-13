@@ -118,10 +118,11 @@ class DomainAdmin(NestedModelAdmin):
         ('name', ),
         ('get_owner_link', ),
         ('status', ),
-        ('epp_id', ),
+        ('get_epp_id', ),
         ('create_date', ),
         ('expiry_date', ),
         ('epp_statuses', ),
+        ('extension_info', ),
         ('auth_key', ),
         ('zone', ),
         ('registrar', ),
@@ -145,13 +146,13 @@ class DomainAdmin(NestedModelAdmin):
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
     )
-    list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'epp_id', 'epp_statuses',
+    list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'get_epp_id', 'epp_statuses', 'extension_info',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', 'auto_renew_enabled' )
     list_filter = (('create_date', CustomDateFieldListFilter, ), ('expiry_date', CustomDateFieldListFilter, ), 'status', )
 
     search_fields = ('name', 'owner__email', )
     readonly_fields = ('name', 'owner', 'registrar', 'zone',
-                       'get_owner_link', 'get_registrant_link',
+                       'get_owner_link', 'get_registrant_link', 'get_epp_id',
                        'get_contact_admin_link', 'get_contact_billing_link', 'get_contact_tech_link', )
 
     def account(self, domain_instance):
@@ -177,6 +178,10 @@ class DomainAdmin(NestedModelAdmin):
         return mark_safe('<a href="{}">{}</a>'.format(
             reverse("admin:back_contact_change", args=[domain_instance.contact_tech.pk, ]),
             domain_instance.contact_tech.epp_id)) if domain_instance.contact_tech else ''
+
+    def get_epp_id(self, domain_instance):
+        return str(domain_instance.epp_id)[:6] if domain_instance.epp_id else ''
+    get_epp_id.short_description = 'EPP ID'
 
     def get_owner_link(self, domain_instance):
         link = '{}?q={}'.format(reverse("admin:accounts_account_changelist"), domain_instance.owner.email)

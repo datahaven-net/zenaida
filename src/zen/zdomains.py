@@ -583,7 +583,9 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     Update given Domain object from epp domain_info response. 
     """
     current_domain_statuses = domain_object.epp_statuses or {}
+    current_domain_extensions = domain_object.extension_info or {}
     new_domain_statuses = {}
+    new_domain_extensions = {}
     try:
         epp_statuses = domain_info_response['epp']['response']['resData']['infData']['status']
     except:
@@ -594,6 +596,11 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     except:
         logger.exception('Failed to read domain epp id from domain_info response')
         return False
+    rgp_status = {}
+    try:
+        rgp_status = ((domain_info_response['epp']['response'].get('extension') or {}).get('infData') or {}).get('rgpStatus') or {}
+    except:
+        logger.exception('Failed to read domain rgpStatus from domain_info response')
     if not isinstance(epp_statuses, list):
         epp_statuses = [epp_statuses, ]
     for st in epp_statuses:
@@ -601,11 +608,20 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
             new_domain_statuses[str(st['@s'])] = st['#text']
         elif '@s' in st:
             new_domain_statuses[str(st['@s'])] = ''
+    if not isinstance(rgp_status, list):
+        rgp_status = [rgp_status, ]
+    for st in rgp_status:
+        if '@s' in st:
+            new_domain_extensions[str(st('@s'))] = ''
     modified = (sorted(current_domain_statuses.keys()) != sorted(new_domain_statuses.keys()))
+    extensions_modified = (sorted(current_domain_extensions.keys()) != sorted(new_domain_extensions.keys()))
     updated = False
     old_domain_status = domain_object.status
     if modified:
         domain_object.epp_statuses = new_domain_statuses
+        updated = True
+    if extensions_modified:
+        domain_object.extension_info = new_domain_extensions
         updated = True
     if epp_id and domain_object.epp_id != epp_id:
         domain_object.epp_id = epp_id
@@ -634,7 +650,10 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         if 'serverHold' in new_domain_statuses:
             new_domain_status = 'suspended'
         if 'pendingDelete' in new_domain_statuses:
-            new_domain_status = 'to_be_deleted'
+            if 'redemptionPeriod' in new_domain_extensions:
+                new_domain_status = 'to_be_deleted'
+            else:
+                new_domain_status = 'inactive'
         if 'pendingRestore' in new_domain_statuses:
             # TODO: check that flow
             new_domain_status = 'to_be_restored'
@@ -644,13 +663,17 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
     if updated:
         if save:
             domain_object.save()
-        logger.info('domain %r status updated from EPP response: %r -> %r',
-                    domain_object, old_domain_status, domain_object.status)
+        if old_domain_status != domain_object.status:
+            logger.info('domain %r status updated from EPP response: %r -> %r',
+                        domain_object, old_domain_status, domain_object.status)
     else:
         logger.info('no changes in domain status were detected for %r', domain_object)
     if modified:
         logger.info('domain %r new status is %r because EPP statuses modified:  %r -> %r',
                     domain_object, domain_object.status, current_domain_statuses, new_domain_statuses)
+    if extensions_modified:
+        logger.info('domain %r extensions modified:  %r -> %r',
+                    domain_object, current_domain_extensions, new_domain_extensions)
     return updated
 
 #------------------------------------------------------------------------------

@@ -390,6 +390,11 @@ def on_queue_message(msgQ):
         logger.info('received restore completed notification for domain %r', domain)
         return do_domain_restored(domain)
 
+    if msg_text.lower().count('delete completed: '):
+        domain = msg_text.lower().replace('delete completed: ', '')
+        logger.info('received delete completed notification for domain %r', domain)
+        return do_domain_deleted(domain)
+
     if msg_text.lower().count('pending delete: '):
         domain = msg_text.lower().replace('pending delete: ', '')
         logger.info('received pending delete notification for domain %r', domain)

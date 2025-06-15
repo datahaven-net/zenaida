@@ -412,7 +412,9 @@ def process_back_end_renew_notification(notification, domain_object):
     moment_now = timezone.now()
     accepted = False
     insufficient_balance = False
-    if notification.restore_order or domain_object.owner.profile.automatic_renewal_enabled or domain_object.auto_renew_enabled:
+    profile_renew_enabled = domain_object.owner.profile.automatic_renewal_enabled
+    domain_renew_enabled = domain_object.auto_renew_enabled
+    if notification.restore_order or profile_renew_enabled or domain_renew_enabled:
         if domain_object.owner.balance >= settings.ZENAIDA_DOMAIN_PRICE:
             accepted = True
         else:
@@ -484,6 +486,11 @@ def process_back_end_renew_notification(notification, domain_object):
         return False
     logger.info('domain renewal is rejected, sent domain %r delete EPP request', domain_object)
     notification.status = 'rejected'
+    notification.details = {
+        'insufficient_balance': insufficient_balance,
+        'profile_renew_enabled': profile_renew_enabled,
+        'domain_renew_enabled': domain_renew_enabled,
+    }
     notification.save()
     notifications.start_email_notification_domain_deleted(
         user=domain_object.owner,

@@ -31,12 +31,28 @@ if SENTRY_ENABLED:
     SENTRY_DSN = getattr(params, 'SENTRY_DSN', '')
     import sentry_sdk  # @UnresolvedImport
     from sentry_sdk.integrations.django import DjangoIntegration  # @UnresolvedImport
+    from sentry_sdk.types import Event, Hint
+    from pika.adapters.utils.connection_workflow import AMQPConnectorException
+
+    def _before_send(e: Event, h: Hint) -> Event | None:
+        try:
+            _m = e.get('message') or '?'
+        except Exception as exc:
+            _m = str(exc)
+        print('[SENTRY] %r %r with : %r' % (e, h, _m))
+        return e
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), ],
         traces_sample_rate=1.0,
         send_default_pii=True,
-        ignore_errors=["ConnectionResetError", ],
+        ignore_errors=[
+            "ConnectionResetError",
+            "ConnectionRefusedError",
+            "EPPConnectionAlreadyClosedError",
+            AMQPConnectorException,
+        ],
     )
 
 #------------------------------------------------------------------------------

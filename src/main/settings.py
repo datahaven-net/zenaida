@@ -31,10 +31,10 @@ if SENTRY_ENABLED:
     SENTRY_DSN = getattr(params, 'SENTRY_DSN', '')
     import sentry_sdk  # @UnresolvedImport
     from sentry_sdk.integrations.django import DjangoIntegration  # @UnresolvedImport
-    from sentry_sdk.types import Event, Hint
+    # from sentry_sdk.types import Event, Hint
     from pika.adapters.utils.connection_workflow import AMQPConnectorException
 
-    def _before_send(e: Event, h: Hint) -> Event | None:
+    def _before_send(e, h):
         try:
             _m = e.get('message') or '?'
         except Exception as exc:

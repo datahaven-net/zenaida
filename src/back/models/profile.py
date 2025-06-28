@@ -27,7 +27,9 @@ class Profile(models.Model):
 
     contact_voice = models.CharField(validators=[phone_regex], max_length=17, verbose_name='Mobile')
     contact_fax = models.CharField(validators=[phone_regex], max_length=17, blank=True, null=True, verbose_name='Fax')
-    contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email')
+    contact_email = models.CharField(validators=[validate_email], max_length=255, verbose_name='Email',
+                                     help_text='Click <a href="email-test/">here</a> to check the delivery of service messages, '
+                                     'we will send you a test email.')
 
     email_notifications_enabled = models.BooleanField(
         verbose_name='Email notifications',

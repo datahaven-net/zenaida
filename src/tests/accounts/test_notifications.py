@@ -25,7 +25,7 @@ def test_start_email_notification_domain_expiring():
 
 @pytest.mark.django_db
 def test_start_email_notification_domain_renewed():
-    tester = testsupport.prepare_tester_account()
+    tester = testsupport.prepare_tester_account(account_balance=123.45)
     new_notification = notifications.start_email_notification_domain_renewed(
         user=tester,
         domain_name='abcd.ai',
@@ -41,6 +41,7 @@ def test_start_email_notification_domain_renewed():
     assert new_notification.details == {
         'expiry_date': '2050-01-01',
         'old_expiry_date': '2048-01-01',
+        'current_balance': 123.45,
     }
 
 

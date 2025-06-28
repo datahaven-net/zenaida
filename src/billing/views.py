@@ -356,6 +356,9 @@ class OrderExecuteView(LoginRequiredMixin, View):
                 if not target_domain.contact_admin or not target_domain.contact_tech:
                     messages.error(request, 'Domain %s is missing a mandatory contact info. Please update domain info and confirm your order again.' % target_domain.name)
                     return False
+                if target_domain.status == 'to_be_deleted':
+                    messages.error(request, 'Domain %s is currently in pending deletion state. Please start a domain restore order instead.' % target_domain.name)
+                    return False
         return True
 
     def post(self, request, *args, **kwargs):

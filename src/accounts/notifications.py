@@ -49,6 +49,7 @@ def start_email_notification_domain_renewed(user, domain_name, expiry_date, old_
         details={
             'expiry_date': expiry_date,
             'old_expiry_date': old_expiry_date,
+            'current_balance': user.balance,
         },
     )
     logger.info('created new %r', new_notification)
@@ -171,6 +172,7 @@ def execute_email_notification(notification_object):
             'domain_expiry_date_prev': notification_object.details.get('old_expiry_date'),
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'duration_years': settings.ZENAIDA_DOMAIN_RENEW_YEARS,
+            'current_balance': notification_object.details.get('current_balance'),
             'subject': 'AI domain is automatically renewed',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
         })

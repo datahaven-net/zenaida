@@ -450,6 +450,17 @@ def process_back_end_renew_notification(notification, domain_object):
         logger.info('created and processed %r for %r', renewal_order, domain_object)
         return True
     #--- domain was not accepted for auto-renew
+    if 'pendingTransfer' in (domain_object.epp_statuses or {}):
+        logger.info('domain renewal is rejected, but domain %r has "pendingTransfer" status', domain_object)
+        notification.status = 'rejected'
+        notification.details = {
+            'insufficient_balance': insufficient_balance,
+            'profile_renew_enabled': profile_renew_enabled,
+            'domain_renew_enabled': domain_renew_enabled,
+            'pending_transfer': domain_object.epp_statuses.get('pendingTransfer'),
+        }
+        notification.save()
+        return True
     if 'clientUpdateProhibited' in (domain_object.epp_statuses or {}):
         logger.info('going to request to remove EPP status clientUpdateProhibited from %r', domain_object.name)
         try:

@@ -9,14 +9,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView, FormView
-
+from django.template.loader import render_to_string
+from django.views.generic import UpdateView, CreateView, DeleteView, ListView, TemplateView, FormView, RedirectView
 
 from back.models.domain import Domain
 from back.models.contact import Contact
@@ -404,6 +406,36 @@ class AccountProfileView(LoginRequiredMixin, UpdateView):
                 'Profile information successfully updated, you can register new domains now'
             )
         return super().form_valid(form)
+
+
+class AccountProfileEmailTestView(LoginRequiredMixin, RedirectView):
+
+    pattern_name = 'account_profile'
+
+    def get_redirect_url(self, *args, **kwargs):
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = self.request.user.profile.contact_email
+        context = {
+            'subject': 'Service email test from %s' % settings.SITE_BASE_URL,
+            'site_url': settings.SITE_BASE_URL,
+        }
+        email_template = 'email/test_email.html'
+        html_content = render_to_string(email_template, context=context, request=None)
+        text_content = strip_tags(html_content)
+        msg = EmailMultiAlternatives(
+            subject=context['subject'],
+            body=text_content,
+            from_email=from_email,
+            to=[to_email, ],
+            bcc=[to_email, ],
+            cc=[to_email, ],
+        )
+        msg.attach_alternative(html_content, 'text/html')
+        if msg.send():
+            messages.add_message(self.request, messages.SUCCESS, 'A test email has been sent to your email address.')
+        else:
+            messages.add_message(self.request, messages.ERROR, 'A test email dispatch failed. Please contact system administrator.')
+        return super().get_redirect_url()
 
 
 class AccountContactCreateView(LoginRequiredMixin, CreateView):

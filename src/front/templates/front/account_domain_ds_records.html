@@ -1,0 +1,128 @@
+{% extends 'base/container_sm_10.html' %}
+
+{% block content %}
+
+<h1 class="text-center">DS records for {{ domain_name }}</h1>
+<br />
+
+<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="pills-new-key-tag-tab" data-toggle="pill" href="#ds-new-key-tag" role="tab" aria-controls="ds-new-key-tag" aria-selected="true">new record</a>
+  </li>
+{% for key_tag in key_tags %}
+  <li class="nav-item">
+    <a class="nav-link" id="ds-{{ key_tag }}-tab" data-toggle="pill" href="#ds-{{ key_tag }}" role="tab" aria-controls="ds-{{ key_tag }}" aria-selected="false">{{ key_tag }}</a>
+  </li>
+{% endfor %}
+</ul>
+
+<div class="tab-content" id="pills-tabContent">
+
+  <div class="tab-pane fade show active" id="ds-new-key-tag" role="tabpanel" aria-labelledby="ds-new-key-tag-tab">
+
+    <form method="post">
+      {% csrf_token %}
+      {% bootstrap_form_errors form %}
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form.key_tag layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form.alg layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form.digest_type layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form.digest layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-12" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form.keydata_flags layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form.keydata_protocol layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form.keydata_alg layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form.keydata_pubkey layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-12" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col text-center">
+          <button type="submit" class="form-button btn btn-success">Create</button>
+        </div>
+      </div>
+      <input type="hidden" name="next_page" value="{{ next_page }}">
+    </form>
+
+  </div>
+
+{% for form_i in forms %}
+  <div class="tab-pane fade" id="ds-{{ form_i.ds_id }}" role="tabpanel" aria-labelledby="ds-{{ form_i.ds_id }}-tab">
+
+    <form method="post">
+      {% csrf_token %}
+      {% bootstrap_form_errors form_i %}
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form_i.key_tag layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form_i.alg layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form_i.digest_type layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form_i.digest layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-12" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form_i.keydata_flags layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form_i.keydata_protocol layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+        <div class="col">
+          {% bootstrap_field form_i.keydata_alg layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-6" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          {% bootstrap_field form_i.keydata_pubkey layout="floating" placeholder="" size="small" label_class="form-label col-sm-6 text-left text-nowrap" horizontal_field_class="col-sm-12" %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col text-center">
+          <button type="submit" class="form-button btn btn-danger">Delete</button>
+        </div>
+      </div>
+      <input type="hidden" name="next_page" value="{{ next_page }}">
+      <input type="hidden" name="record_delete" value="{{ form_i.ds_id }}">
+    </form>
+
+  </div>
+{% endfor %}
+
+</div>
+
+<br>
+
+<div class="row">
+  <div class="col-12 text-center">
+    <a class="card-link" href="{% url 'account_domain_edit' domain_id %}">[back]</a>
+  </div>
+</div>
+
+{% endblock %}

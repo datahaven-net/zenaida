@@ -887,6 +887,243 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
         mock_messages_error.assert_called_once()
 
 
+class TestAccountDomainDSRecordsView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('epp.rpc_client.cmd_domain_info')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_ds_records_get_successful(
+        self, mock_cmd_domain_info, mock_user_profile_complete, mock_list_contacts
+    ):
+        mock_cmd_domain_info.return_value = {'epp': {'response': {'extension': {'infData': {
+            'dsData': {
+                'alg': '3',
+                'digest': '1e2eba1550fc58732cfccd54490396d02b473859',
+                'digestType': '1',
+                'keyTag': '111',
+            }}},
+            'resData': {'infData': {'authInfo': {'pw': 'abrakatabra'}, 'clID': 'domain_epp_id_123',
+            'contact': [{'#text': 'contact_epp_id_123', '@type': 'admin'},
+                        {'#text': 'contact_epp_id_456', '@type': 'tech'}],
+            'crDate': '2017-12-16T03:16:50.0Z', 'crID': 'registrar_id_123', 'exDate': '2026-04-30T03:16:50.0Z',
+            'name': 'domain-name.com', 'ns': {'hostObj': ['dns1.srv.net', 'dns2.srv.net', 'dns3.srv.net']},
+            'registrant': 'registrant_epp_id_234', 'roid': 'another-row-1',
+            'status': {'#text': 'Sat Mar 22 16:26:12 2025 by customer', '@s': 'clientTransferProhibited'},
+            'trDate': '2024-12-31T16:38:26.832Z', 'upDate': '2025-07-27T15:36:11.177Z', 'upID': 'registrar_id_456'}},
+            'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'trID': {'clTRID': 'id1', 'svTRID': 'id2'}}},
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
+        test_domain = Domain.domains.create(
+            owner=self.account,
+            name='domain-name.com',
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+        )
+        response = self.client.get(f'/domains/{test_domain.id}/ds/')
+        assert response.status_code == 200
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.success')
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('epp.rpc_client.cmd_domain_info')
+    @mock.patch('epp.rpc_client.cmd_domain_update')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_ds_records_post_successful(
+        self, mock_cmd_domain_update, mock_cmd_domain_info, mock_user_profile_complete, mock_list_contacts, mock_success,
+    ):
+        mock_cmd_domain_update.return_value = {
+            'epp': 'success',
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
+        test_domain = Domain.domains.create(
+            owner=self.account,
+            name='domain-name.com',
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+        )
+        response = self.client.post(f'/domains/{test_domain.id}/ds/', data=dict(
+            key_tag='1',
+            alg='3',
+            digest_type='1',
+            digest='1234ABCD',
+        ))
+        assert response.status_code == 302
+        mock_success.assert_called_once()
+        mock_cmd_domain_info.assert_not_called()
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.error')
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('epp.rpc_client.cmd_domain_info')
+    @mock.patch('epp.rpc_client.cmd_domain_update')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_ds_records_post_failed(
+        self, mock_cmd_domain_update, mock_cmd_domain_info, mock_user_profile_complete, mock_list_contacts, mock_error,
+    ):
+        mock_cmd_domain_info.return_value = {'epp': {'response': {'extension': {'infData': {
+            'dsData': {
+                'alg': '3',
+                'digest': '1e2eba1550fc58732cfccd54490396d02b473859',
+                'digestType': '1',
+                'keyTag': '111',
+            }}},
+            'resData': {'infData': {'authInfo': {'pw': 'abrakatabra'}, 'clID': 'domain_epp_id_123',
+            'contact': [{'#text': 'contact_epp_id_123', '@type': 'admin'},
+                        {'#text': 'contact_epp_id_456', '@type': 'tech'}],
+            'crDate': '2017-12-16T03:16:50.0Z', 'crID': 'registrar_id_123', 'exDate': '2026-04-30T03:16:50.0Z',
+            'name': 'domain-name.com', 'ns': {'hostObj': ['dns1.srv.net', 'dns2.srv.net', 'dns3.srv.net']},
+            'registrant': 'registrant_epp_id_234', 'roid': 'another-row-1',
+            'status': {'#text': 'Sat Mar 22 16:26:12 2025 by customer', '@s': 'clientTransferProhibited'},
+            'trDate': '2024-12-31T16:38:26.832Z', 'upDate': '2025-07-27T15:36:11.177Z', 'upID': 'registrar_id_456'}},
+            'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'trID': {'clTRID': 'id1', 'svTRID': 'id2'}}},
+        }
+        mock_cmd_domain_update.side_effect = rpc_error.EPPCommandFailed
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
+        test_domain = Domain.domains.create(
+            owner=self.account,
+            name='domain-name.com',
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+        )
+        response = self.client.post(f'/domains/{test_domain.id}/ds/', data=dict(
+            key_tag='1',
+            alg='3',
+            digest_type='1',
+            digest='1234ABCD',
+        ))
+        assert response.status_code == 302
+        mock_error.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.success')
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('epp.rpc_client.cmd_domain_info')
+    @mock.patch('epp.rpc_client.cmd_domain_update')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_ds_records_delete_successful(
+        self, mock_cmd_domain_update, mock_cmd_domain_info, mock_user_profile_complete, mock_list_contacts, mock_success,
+    ):
+        mock_cmd_domain_info.return_value = {'epp': {'response': {'extension': {'infData': {
+            'dsData': {
+                'alg': '3',
+                'digest': '1e2eba1550fc58732cfccd54490396d02b473859',
+                'digestType': '1',
+                'keyTag': '111',
+            }}},
+            'resData': {'infData': {'authInfo': {'pw': 'abrakatabra'}, 'clID': 'domain_epp_id_123',
+            'contact': [{'#text': 'contact_epp_id_123', '@type': 'admin'},
+                        {'#text': 'contact_epp_id_456', '@type': 'tech'}],
+            'crDate': '2017-12-16T03:16:50.0Z', 'crID': 'registrar_id_123', 'exDate': '2026-04-30T03:16:50.0Z',
+            'name': 'domain-name.com', 'ns': {'hostObj': ['dns1.srv.net', 'dns2.srv.net', 'dns3.srv.net']},
+            'registrant': 'registrant_epp_id_234', 'roid': 'another-row-1',
+            'status': {'#text': 'Sat Mar 22 16:26:12 2025 by customer', '@s': 'clientTransferProhibited'},
+            'trDate': '2024-12-31T16:38:26.832Z', 'upDate': '2025-07-27T15:36:11.177Z', 'upID': 'registrar_id_456'}},
+            'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'trID': {'clTRID': 'id1', 'svTRID': 'id2'}}},
+        }
+        mock_cmd_domain_update.return_value = {
+            'epp': 'success',
+        }
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
+        test_domain = Domain.domains.create(
+            owner=self.account,
+            name='domain-name.com',
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+        )
+        response = self.client.post(f'/domains/{test_domain.id}/ds/', data=dict(
+            record_delete='record1',
+        ))
+        assert response.status_code == 302
+        mock_success.assert_called_once()
+
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.error')
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('epp.rpc_client.cmd_domain_info')
+    @mock.patch('epp.rpc_client.cmd_domain_update')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_ds_records_delete_failed(
+        self, mock_cmd_domain_update, mock_cmd_domain_info, mock_user_profile_complete, mock_list_contacts, mock_error,
+    ):
+        mock_cmd_domain_info.return_value = {'epp': {'response': {'extension': {'infData': {
+            'dsData': {
+                'alg': '3',
+                'digest': '1e2eba1550fc58732cfccd54490396d02b473859',
+                'digestType': '1',
+                'keyTag': '111',
+            }}},
+            'resData': {'infData': {'authInfo': {'pw': 'abrakatabra'}, 'clID': 'domain_epp_id_123',
+            'contact': [{'#text': 'contact_epp_id_123', '@type': 'admin'},
+                        {'#text': 'contact_epp_id_456', '@type': 'tech'}],
+            'crDate': '2017-12-16T03:16:50.0Z', 'crID': 'registrar_id_123', 'exDate': '2026-04-30T03:16:50.0Z',
+            'name': 'domain-name.com', 'ns': {'hostObj': ['dns1.srv.net', 'dns2.srv.net', 'dns3.srv.net']},
+            'registrant': 'registrant_epp_id_234', 'roid': 'another-row-1',
+            'status': {'#text': 'Sat Mar 22 16:26:12 2025 by customer', '@s': 'clientTransferProhibited'},
+            'trDate': '2024-12-31T16:38:26.832Z', 'upDate': '2025-07-27T15:36:11.177Z', 'upID': 'registrar_id_456'}},
+            'result': {'@code': '1000', 'msg': 'Command completed successfully'}, 'trID': {'clTRID': 'id1', 'svTRID': 'id2'}}},
+        }
+        mock_cmd_domain_update.side_effect = rpc_error.EPPConnectionFailed
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock(), ]
+        test_domain = Domain.domains.create(
+            owner=self.account,
+            name='domain-name.com',
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+        )
+        response = self.client.post(f'/domains/{test_domain.id}/ds/', data=dict(
+            record_delete='record1',
+        ))
+        assert response.status_code == 302
+        mock_error.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('epp.rpc_client.cmd_domain_info')
+    @mock.patch('django.contrib.messages.error')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_ds_records_get_not_authorized(
+        self, mock_messages_error, mock_cmd_domain_info, mock_user_profile_complete, mock_list_contacts,
+    ):
+        mock_messages_error.return_value = [
+            rpc_error.EPPAuthorizationError(),
+        ]
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        test_domain = Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2099, 1, 1, tzinfo=pytz.UTC),
+            create_date=datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+        )
+        response = self.client.get(f'/domains/{test_domain.id+1}/ds/')
+        assert response.status_code == 404
+
+
 class TestAccountProfileView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     def test_get_profile(self):

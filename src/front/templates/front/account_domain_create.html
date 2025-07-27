@@ -38,10 +38,8 @@
 
   <div class="row">
     <div class="col-12 text-center">
-      {% buttons %}
-        <a class="btn btn-danger" href="{% url 'domain_lookup' %}" role="button">Cancel</a>
-        <button type="submit" class="form-button btn btn-success" name=yes>Confirm</button>
-      {% endbuttons %}
+      <a class="btn btn-danger" href="{% url 'domain_lookup' %}" role="button">Cancel</a>
+      <button type="submit" class="form-button btn btn-success" name=yes>Confirm</button>
     </div>
   </div>
   <input type="hidden" name="next_page" value="{{ next_page }}">

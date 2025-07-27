@@ -28,6 +28,7 @@ from front import forms
 from front.decorators import validate_profile_exists, brute_force_protection
 
 from epp import rpc_error
+from epp import rpc_client
 
 from zen import zdomains
 from zen import zcontacts
@@ -82,7 +83,7 @@ class AccountDomainCreateView(FormView):
     template_name = 'front/account_domain_create.html'
     form_class = forms.DomainCreateForm
     pk_url_kwarg = 'domain_name'
-    success_message = 'Please confirm the payment to finish registering your domain.'
+    success_message = 'Please confirm the payment to finish registering your domain'
     success_url = reverse_lazy('account_domains')
 
     @validate_profile_exists
@@ -199,6 +200,11 @@ class AccountDomainUpdateView(UpdateView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['domain_id'] = self.kwargs.get('domain_id')
+        return context
 
     def get_form_kwargs(self):
         form_kwargs = super().get_form_kwargs()
@@ -365,6 +371,193 @@ class AccountDomainTransferTakeoverView(FormView):
         )
         messages.success(self.request, self.success_message)
         return shortcuts.redirect('billing_order_details', order_id=transfer_order.id)
+
+
+class AccountDomainDSRecordsView(FormView):
+    template_name = 'front/account_domain_ds_records.html'
+    form_class = forms.DomainDSRecordForm
+    pk_url_kwarg = 'domain_id'
+    success_message = 'Delegation Signer information successfully updated'
+    error_message = 'There is a technical problem with domain DNSSEC details processing, ' \
+                    'please try again later'
+    success_url = reverse_lazy('account_domains')
+
+    @validate_profile_exists
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        domain = shortcuts.get_object_or_404(Domain, pk=kwargs['domain_id'], owner=request.user)
+        self.kwargs['domain_name'] = domain.name
+        try:
+            epp_response = rpc_client.cmd_domain_info(
+                domain=domain.name,
+                raise_for_result=True,
+            )
+        except rpc_error.EPPError:
+            logger.exception('domain EPP info read failed')
+            messages.error(request, self.error_message)
+            return shortcuts.redirect('account_domains')
+        try:
+            infData = (epp_response['epp']['response'].get('extension') or {}).get('infData') or {}
+            dsData = infData.get('dsData') or []
+            if not isinstance(dsData, list):
+                dsData = [dsData, ]
+            self.kwargs['ds_data'] = dsData
+        except:
+            logger.exception('domain EPP info parse error')
+            messages.error(request, self.error_message)
+            return shortcuts.redirect('account_domains')
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        domain = shortcuts.get_object_or_404(Domain, pk=self.kwargs.get('domain_id'), owner=self.request.user)
+        self.kwargs['domain_name'] = domain.name
+        record_delete = request.POST.get('record_delete')
+        if record_delete:
+            try:
+                epp_response = rpc_client.cmd_domain_info(
+                    domain=domain.name,
+                    raise_for_result=True,
+                )
+            except rpc_error.EPPError:
+                logger.exception('domain EPP info read failed')
+                messages.error(request, self.error_message)
+                return shortcuts.redirect('account_domains')
+            try:
+                record_delete_index = int(record_delete.replace('record', ''))
+                infData = (epp_response['epp']['response'].get('extension') or {}).get('infData') or {}
+                dsData = infData.get('dsData') or []
+                if not isinstance(dsData, list):
+                    dsData = [dsData, ]
+                self.kwargs['ds_data'] = dsData
+                delete_ds_data = dsData[record_delete_index-1]
+            except:
+                logger.exception('domain EPP info parse error')
+                messages.error(request, self.error_message)
+                return shortcuts.redirect('account_domains')
+            try:
+                rem_secdns = dict(
+                    key_tag=delete_ds_data.get('keyTag') or '',
+                    alg=delete_ds_data.get('alg') or '',
+                    digest_type=delete_ds_data.get('digestType') or '',
+                    digest=delete_ds_data.get('digest') or '',
+                )
+                if 'keyData' in delete_ds_data:
+                    rem_secdns.update(dict(
+                        keydata_flags=(delete_ds_data.get('keyData') or {}).get('flags') or '',
+                        keydata_protocol=(delete_ds_data.get('keyData') or {}).get('protocol') or '',
+                        keydata_alg=(delete_ds_data.get('keyData') or {}).get('alg') or '',
+                        keydata_pubkey=(delete_ds_data.get('keyData') or {}).get('pubKey') or '',
+                    ))
+                epp_delete_response = rpc_client.cmd_domain_update(
+                    domain=domain.name,
+                    rem_secdns=rem_secdns,
+                    raise_for_result=True,
+                )
+            except rpc_error.EPPError:
+                logger.exception('domain EPP info read failed')
+                messages.error(request, self.error_message)
+                return shortcuts.redirect('account_domains')
+            logger.debug('EPP response: %r' % epp_delete_response)
+            messages.success(self.request, self.success_message)
+            return shortcuts.redirect('account_domain_edit', domain_id=domain.id)
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        domain = shortcuts.get_object_or_404(Domain, pk=self.kwargs.get('domain_id'), owner=self.request.user)
+        try:
+            add_secdns = dict(
+                key_tag=str(form.cleaned_data.get('key_tag')),
+                alg=form.cleaned_data.get('alg').strip(),
+                digest_type=form.cleaned_data.get('digest_type').strip(),
+                digest=form.cleaned_data.get('digest').strip(),
+            )
+            if form.cleaned_data.get('keydata_pubkey').strip():
+                add_secdns.update(dict(
+                    keydata_flags=form.cleaned_data.get('keydata_flags').strip(),
+                    keydata_protocol=form.cleaned_data.get('keydata_protocol').strip(),
+                    keydata_alg=form.cleaned_data.get('keydata_alg').strip(),
+                    keydata_pubkey=form.cleaned_data.get('keydata_pubkey').strip(),
+                ))
+            epp_add_response = rpc_client.cmd_domain_update(
+                domain=domain.name,
+                add_secdns=add_secdns,
+                raise_for_result=True,
+            )
+        except rpc_error.EPPError:
+            logger.exception('domain EPP info read failed')
+            messages.error(self.request, self.error_message)
+            return shortcuts.redirect('account_domains')
+        logger.debug('EPP response: %r' % epp_add_response)
+        messages.success(self.request, self.success_message)
+        return shortcuts.redirect('account_domain_edit', domain_id=domain.id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['domain_name'] = self.kwargs['domain_name']
+        context['domain_id'] = self.kwargs['domain_id']
+        context['key_tags'] = []
+        context['forms'] = []
+        for ds_index in range(len(self.kwargs['ds_data'])):
+            ds = self.kwargs['ds_data'][ds_index]
+            ds_form_data = dict(
+                key_tag=ds.get('keyTag') or '',
+                alg=ds.get('alg') or '',
+                digest_type=ds.get('digestType') or '',
+                digest=ds.get('digest') or '',
+                keydata_flags=(ds.get('keyData') or {}).get('flags') or '',
+                keydata_protocol=(ds.get('keyData') or {}).get('protocol') or '',
+                keydata_alg=(ds.get('keyData') or {}).get('alg') or '',
+                keydata_pubkey=(ds.get('keyData') or {}).get('pubKey') or '',
+            )
+            frm = forms.DomainDSRecordReadOnlyForm()
+            frm.ds_id = 'record%d' % (1 + ds_index)
+            for field_name in ds_form_data.keys():
+                if field_name == 'alg':
+                    ds_form_data[field_name] = dict((
+                        (0, ''),
+                        (1, '1: RSA/MD5 [RSAMD5]'),
+                        (3, '3: DSA/SHA-1'),
+                        (5, '5: RSA/SHA-1'),
+                        (6, '6: DSA-NSEC3-SHA1'),
+                        (7, '7: RSASHA1-NSEC3-SHA1'),
+                        (8, '8: RSA/SHA-256'),
+                        (10, '10: RSA/SHA-512'),
+                        (12, '12: GOST R 34.10-2001'),
+                        (13, '13: ECDSA/SHA-256'),
+                        (14, '14: ECDSA/SHA-384'),
+                        (15, '15: ED25519'),
+                        (16, '16: ED448'),
+                    )).get(int(ds_form_data[field_name] or 0))
+                elif field_name == 'digest_type':
+                    ds_form_data[field_name] = dict((
+                        (0, ''),
+                        (1, '1: SHA-1'),
+                        (2, '2: SHA-256'),
+                        (3, '3: GOST R 34.11-94'),
+                        (4, '4: SHA-384'),
+                    )).get(int(ds_form_data[field_name] or 0))
+                elif field_name == 'keydata_alg':
+                    ds_form_data[field_name] = dict((
+                        (0, ''),
+                        (1, '1: RSA/MD5 [RSAMD5]'),
+                        (3, '3: DSA/SHA-1'),
+                        (5, '5: RSA/SHA-1'),
+                        (7, '7: RSASHA1-NSEC3-SHA1'),
+                        (8, '8: RSA/SHA-256'),
+                        (10, '10: RSA/SHA-512'),
+                        (12, '12: GOST R 34.10-2001'),
+                        (13, '13: ECDSA/SHA-256'),
+                        (14, '14: ECDSA/SHA-384'),
+                        (15, '15: ED25519'),
+                        (16, '16: ED448'),
+                    )).get(int(ds_form_data[field_name] or 0))
+            frm.initial = ds_form_data
+            context['forms'].append(frm)
+            context['key_tags'].append(frm.ds_id)
+        return context
 
 
 class AccountProfileView(LoginRequiredMixin, UpdateView):

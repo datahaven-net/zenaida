@@ -266,6 +266,8 @@ INSTALLED_APPS = [
     'nested_admin',
     # html templates: https://django-bootstrap4.readthedocs.io/en/stable/quickstart.html
     'bootstrap4',
+    # https://django-bootstrap5.readthedocs.io/en/latest/quickstart.html
+    # 'django_bootstrap5',
     # useful things: https://django-extensions.readthedocs.io/en/latest/command_extensions.html
     'django_extensions',
     'logs',
@@ -302,7 +304,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            'builtins': ['bootstrap4.templatetags.bootstrap4'],
+            'builtins': [
+                'bootstrap4.templatetags.bootstrap4',
+            ],
         },
     },
 ]

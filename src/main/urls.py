@@ -63,7 +63,8 @@ patterns = [
     path('domains/create/<str:domain_name>/', front_views.AccountDomainCreateView.as_view(), name='account_domain_create'),
     path('domains/transfer/', front_views.AccountDomainTransferTakeoverView.as_view(), name='account_domain_transfer_takeover'),
     path('domains/edit/<int:domain_id>/', front_views.AccountDomainUpdateView.as_view(), name='account_domain_edit'),
-    path('domains/<str:domain_id>/transfer-code/', front_views.AccountDomainTransferCodeView.as_view(), name='account_domain_transfer_code'),
+    path('domains/<int:domain_id>/transfer-code/', front_views.AccountDomainTransferCodeView.as_view(), name='account_domain_transfer_code'),
+    path('domains/<int:domain_id>/ds/', front_views.AccountDomainDSRecordsView.as_view(), name='account_domain_dsrecord'),
 
     path('billing/orders/', billing_views.OrdersListView.as_view(), name='billing_orders'),
     path('billing/orders/receipts/download/', billing_views.OrderReceiptsDownloadView.as_view(), name='billing_receipts_download'),

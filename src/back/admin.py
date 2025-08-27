@@ -14,11 +14,13 @@ from nested_admin import NestedModelAdmin  # @UnresolvedImport
 from back.models.zone import Zone
 from back.models.registrar import Registrar
 from back.models.profile import Profile
-from back.models.domain import Domain
+from back.models.domain import Domain, BlockedTransfer
 from back.models.contact import Contact, Registrant
 from back.models.back_end_renew import BackEndRenew
 
 from billing import orders as billing_orders
+
+from epp import rpc_client
 
 from zen import zmaster
 
@@ -145,6 +147,7 @@ class DomainAdmin(NestedModelAdmin):
         'domain_download_auth_info_key',
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
+        'domain_block_transfer',
     )
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'get_epp_id', 'epp_statuses', 'extension_info',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', 'auto_renew_enabled' )
@@ -288,6 +291,21 @@ class DomainAdmin(NestedModelAdmin):
                 report.append('"%s": %d calls OK' % (domain_object.name, len(outputs), ))
         return report
 
+    def _do_domain_block_transfer(self, queryset):
+        report = []
+        for domain_object in queryset:
+            BlockedTransfer.blocked_transfers.create(name=domain_object.name)
+            try:
+                rpc_client.cmd_domain_update(
+                    domain=domain_object.name,
+                    add_statuses_list=[{'name': 'clientTransferProhibited', 'value': f'set by Admin on {time.asctime()}', }, ],
+                )
+            except Exception as exc:
+                report.append('"%s": %r' % (domain_object.name, str(exc), ))
+            else:
+                report.append('"%s": OK' % domain_object.name)
+        return report
+
     def domain_synchronize_from_backend(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
     domain_synchronize_from_backend.short_description = "Synchronize domain info only"
@@ -318,6 +336,10 @@ class DomainAdmin(NestedModelAdmin):
     def domain_deduplicate_contacts(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_deduplicate_contacts(queryset)))
     domain_deduplicate_contacts.short_description = "Deduplicate contacts"
+
+    def domain_block_transfer(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_domain_block_transfer(queryset)))
+    domain_block_transfer.short_description = "Block transfer"
 
 
 class ContactAdmin(NestedModelAdmin):
@@ -440,6 +462,10 @@ class BackEndRenewAdmin(NestedModelAdmin):
     reprocess_notification.short_description = "Re-process notifications"
 
 
+class BlockedTransferAdmin(NestedModelAdmin):
+    pass
+
+
 admin.site.register(Zone, ZoneAdmin)
 admin.site.register(Registrar, RegistrarAdmin)
 admin.site.register(Profile, ProfileAdmin)
@@ -447,3 +473,4 @@ admin.site.register(Domain, DomainAdmin)
 admin.site.register(Contact, ContactAdmin)
 admin.site.register(Registrant, RegistrantAdmin)
 admin.site.register(BackEndRenew, BackEndRenewAdmin)
+admin.site.register(BlockedTransfer, BlockedTransferAdmin)

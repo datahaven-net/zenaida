@@ -300,6 +300,15 @@ class DomainAdmin(NestedModelAdmin):
                     domain=domain_object.name,
                     add_statuses_list=[{'name': 'clientTransferProhibited', 'value': f'set by Admin on {time.asctime()}', }, ],
                 )
+                zmaster.domain_synchronize_from_backend(
+                    domain_name=domain_object.name,
+                    refresh_contacts=True,
+                    rewrite_contacts=False,
+                    change_owner_allowed=False,
+                    create_new_owner_allowed=False,
+                    soft_delete=True,
+                    raise_errors=False,
+                )
             except Exception as exc:
                 report.append('"%s": %r' % (domain_object.name, str(exc), ))
             else:

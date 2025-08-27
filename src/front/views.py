@@ -216,10 +216,11 @@ class AccountDomainUpdateView(UpdateView):
 
     def form_valid(self, form):
         if form.instance.epp_id:
-            if form.epp_statuses.get('clientTransferProhibited'):
-                if BlockedTransfer.blocked_transfers.filter(name=form.instance.name).first():
-                    messages.error(self.request, 'Domain transfer is blocked by administrator.')
-                    return super().form_invalid(form)
+            if (form.instance.epp_statuses or {}).get('clientTransferProhibited'):
+                if not form.epp_statuses.get('clientTransferProhibited'):
+                    if BlockedTransfer.blocked_transfers.filter(name=form.instance.name).first():
+                        messages.error(self.request, 'Domain transfer is blocked by administrator.')
+                        return super().form_invalid(form)
 
             outputs = zmaster.domain_check_create_update_renew(
                 domain_object=form.instance,

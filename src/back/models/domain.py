@@ -258,3 +258,9 @@ class BlockedTransfer(models.Model):
         default_manager_name = 'blocked_transfers'
 
     name = models.CharField(max_length=255, unique=True, validators=[validate_domain_name, ])
+
+    def __str__(self):
+        return 'BlockedTransfer({})'.format(self.name)
+
+    def __repr__(self):
+        return 'BlockedTransfer({})'.format(self.name)

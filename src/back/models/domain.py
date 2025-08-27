@@ -246,3 +246,15 @@ class Domain(models.Model):
     @property
     def is_transfer_prohibited(self):
         return 'serverTransferProhibited' in self.epp_statuses
+
+
+class BlockedTransfer(models.Model):
+
+    blocked_transfers = models.Manager()
+
+    class Meta:
+        app_label = 'back'
+        base_manager_name = 'blocked_transfers'
+        default_manager_name = 'blocked_transfers'
+
+    name = models.CharField(max_length=255, unique=True, validators=[validate_domain_name, ])

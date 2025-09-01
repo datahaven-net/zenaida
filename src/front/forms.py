@@ -103,7 +103,7 @@ class DomainCreateForm(models.ModelForm):
         invalid_nameservers = []
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
-                if not os.system("ping -c 1 " + ns) == 0:
+                if not os.system("ping -c 1 -W 3" + ns) == 0:
                     if not self.hostname_resolve(ns):
                         invalid_nameservers.append(ns)
 
@@ -207,7 +207,7 @@ class DomainDetailsForm(models.ModelForm):
         invalid_nameservers = []
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
-                if not os.system("ping -c 1 " + ns) == 0:
+                if not os.system("ping -c 1 -W 3" + ns) == 0:
                     if not self.hostname_resolve(ns):
                         invalid_nameservers.append(ns)
 

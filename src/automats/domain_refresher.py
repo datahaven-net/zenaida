@@ -31,6 +31,8 @@ from django.utils import timezone
 
 #------------------------------------------------------------------------------
 
+from lib import strng
+
 from automats import automat
 from automats import domain_contacts_synchronizer
 
@@ -669,13 +671,13 @@ class DomainRefresher(automat.Automat):
                 also_profile=True,
                 is_active=True,
                 is_approved=True,
-                person_name=self.current_registrant_address_info.get('name', 'unknown'),
-                organization_name=self.current_registrant_address_info.get('org', 'unknown'),
-                address_street=self.current_registrant_address_info.get('street', 'unknown'),
-                address_city=self.current_registrant_address_info.get('city', 'unknown'),
-                address_province=self.current_registrant_address_info.get('sp', 'unknown'),
-                address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
-                address_country=self.current_registrant_address_info.get('cc', 'AF'),
+                person_name=strng.safe_unescape(self.current_registrant_address_info.get('name', 'unknown')),
+                organization_name=strng.safe_unescape(self.current_registrant_address_info.get('org', 'unknown')),
+                address_street=strng.safe_unescape(self.current_registrant_address_info.get('street', 'unknown')),
+                address_city=strng.safe_unescape(self.current_registrant_address_info.get('city', 'unknown')),
+                address_province=strng.safe_unescape(self.current_registrant_address_info.get('sp', 'unknown')),
+                address_postal_code=strng.safe_unescape(self.current_registrant_address_info.get('pc', 'unknown')),
+                address_country=strng.safe_unescape(self.current_registrant_address_info.get('cc', 'AF')),
                 contact_voice=zcontacts.extract_phone_number(self.current_registrant_info.get('voice', '')),
                 contact_fax=zcontacts.extract_phone_number(self.current_registrant_info.get('fax', '')),
                 contact_email=self.current_registrant_info['email'],
@@ -683,13 +685,13 @@ class DomainRefresher(automat.Automat):
         if not hasattr(known_owner, 'profile'):
             zusers.create_profile(
                 known_owner,
-                person_name=self.current_registrant_address_info.get('name', 'unknown'),
-                organization_name=self.current_registrant_address_info.get('org', 'unknown'),
-                address_street=self.current_registrant_address_info.get('street', 'unknown'),
-                address_city=self.current_registrant_address_info.get('city', 'unknown'),
-                address_province=self.current_registrant_address_info.get('sp', 'unknown'),
-                address_postal_code=self.current_registrant_address_info.get('pc', 'unknown'),
-                address_country=self.current_registrant_address_info.get('cc', 'AF'),
+                person_name=strng.safe_unescape(self.current_registrant_address_info.get('name', 'unknown')),
+                organization_name=strng.safe_unescape(self.current_registrant_address_info.get('org', 'unknown')),
+                address_street=strng.safe_unescape(self.current_registrant_address_info.get('street', 'unknown')),
+                address_city=strng.safe_unescape(self.current_registrant_address_info.get('city', 'unknown')),
+                address_province=strng.safe_unescape(self.current_registrant_address_info.get('sp', 'unknown')),
+                address_postal_code=strng.safe_unescape(self.current_registrant_address_info.get('pc', 'unknown')),
+                address_country=strng.safe_unescape(self.current_registrant_address_info.get('cc', 'AF')),
                 contact_voice=zcontacts.extract_phone_number(self.current_registrant_info.get('voice', '')),
                 contact_fax=zcontacts.extract_phone_number(self.current_registrant_info.get('fax', '')),
                 contact_email=self.current_registrant_info['email'],

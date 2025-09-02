@@ -2,7 +2,7 @@ import logging
 
 from back.models.contact import Contact, Registrant
 
-from lib import iso_countries
+from lib import iso_countries, strng
 
 logger = logging.getLogger(__name__)
 
@@ -141,13 +141,13 @@ def contact_create(epp_id, owner, contact_info_response=None, raise_owner_exist=
         new_contact = Contact.contacts.create(
             epp_id=epp_id,
             owner=owner,
-            person_name=a['name'],
-            organization_name=a['org'],
-            address_street=a['street'],
-            address_city=a['city'],
-            address_province=a['sp'],
-            address_postal_code=a['pc'],
-            address_country=a['cc'],
+            person_name=strng.safe_unescape(a['name']),
+            organization_name=strng.safe_unescape(a['org']),
+            address_street=strng.safe_unescape(a['street']),
+            address_city=strng.safe_unescape(a['city']),
+            address_province=strng.safe_unescape(a['sp']),
+            address_postal_code=strng.safe_unescape(a['pc']),
+            address_country=strng.safe_unescape(a['cc']),
             contact_voice=extract_phone_number(d.get('voice', '')),
             contact_fax=extract_phone_number(d.get('fax', '')),
             contact_email=str(d['email']).lower(),
@@ -206,13 +206,13 @@ def contact_refresh(epp_id, contact_info_response):
     d = contact_info_response['epp']['response']['resData']['infData']
     a = extract_address_info(contact_info_response)
     updated = Contact.contacts.filter(pk=existing_contact.pk).update(
-        person_name=a['name'],
-        organization_name=a['org'],
-        address_street=a['street'],
-        address_city=a['city'],
-        address_province=a['sp'],
-        address_postal_code=a['pc'],
-        address_country=a['cc'],
+        person_name=strng.safe_unescape(a['name']),
+        organization_name=strng.safe_unescape(a['org']),
+        address_street=strng.safe_unescape(a['street']),
+        address_city=strng.safe_unescape(a['city']),
+        address_province=strng.safe_unescape(a['sp']),
+        address_postal_code=strng.safe_unescape(a['pc']),
+        address_country=strng.safe_unescape(a['cc']),
         contact_voice=extract_phone_number(d.get('voice', '')),
         contact_fax=extract_phone_number(d.get('fax', '')),
         contact_email=str(d['email']).lower(),
@@ -300,14 +300,14 @@ def to_dict(contact_object):
     info = {
         'email': contact_object.contact_email.lower(),
         'contacts': [{
-            'name': contact_object.person_name,
-            'org': contact_object.organization_name,
+            'name': strng.safe_escape(contact_object.person_name),
+            'org': strng.safe_escape(contact_object.organization_name),
             'address': {
-                'street': [contact_object.address_street, ],
-                'city': contact_object.address_city,
-                'sp': contact_object.address_province,
-                'pc': contact_object.address_postal_code,
-                'cc': contact_object.address_country,
+                'street': [strng.safe_escape(contact_object.address_street), ],
+                'city': strng.safe_escape(contact_object.address_city),
+                'sp': strng.safe_escape(contact_object.address_province),
+                'pc': strng.safe_escape(contact_object.address_postal_code),
+                'cc': strng.safe_escape(contact_object.address_country),
             },
         }, ],
     }

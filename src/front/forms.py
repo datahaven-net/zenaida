@@ -6,7 +6,6 @@ import socket
 from django.conf import settings
 from django.forms import forms, models, fields
 from django.utils.safestring import mark_safe
-from django.utils.html import escape
 
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
@@ -32,8 +31,6 @@ class ContactPersonForm(models.ModelForm):
     def clean(self):
         cleaned_data = super(ContactPersonForm, self).clean()
         encode_ascii_for_list_of_strings(cleaned_data.values())
-        for k in cleaned_data.keys():
-            cleaned_data[k] = escape(cleaned_data[k])
         return cleaned_data
 
 

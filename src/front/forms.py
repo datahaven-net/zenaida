@@ -6,6 +6,7 @@ import socket
 from django.conf import settings
 from django.forms import forms, models, fields
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 
 from back.models.profile import Profile
 from back.models.domain import Contact, Domain
@@ -31,6 +32,8 @@ class ContactPersonForm(models.ModelForm):
     def clean(self):
         cleaned_data = super(ContactPersonForm, self).clean()
         encode_ascii_for_list_of_strings(cleaned_data.values())
+        for k in cleaned_data.keys():
+            cleaned_data[k] = escape(cleaned_data[k])
         return cleaned_data
 
 
@@ -103,7 +106,7 @@ class DomainCreateForm(models.ModelForm):
         invalid_nameservers = []
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
-                if not os.system("ping -c 1 " + ns) == 0:
+                if not os.system("ping -c 1 -W 3" + ns) == 0:
                     if not self.hostname_resolve(ns):
                         invalid_nameservers.append(ns)
 
@@ -207,7 +210,7 @@ class DomainDetailsForm(models.ModelForm):
         invalid_nameservers = []
         if settings.ZENAIDA_PING_NAMESERVERS_ENABLED:
             for ns in filled_ns_list:
-                if not os.system("ping -c 1 " + ns) == 0:
+                if not os.system("ping -c 1 -W 3" + ns) == 0:
                     if not self.hostname_resolve(ns):
                         invalid_nameservers.append(ns)
 

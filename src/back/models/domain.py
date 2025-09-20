@@ -2,6 +2,7 @@ import logging
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils import timezone
 
 from accounts.models.account import Account
 
@@ -241,7 +242,17 @@ class Domain(models.Model):
     @property
     def can_be_renewed(self):
         # TODO: check expire date, back-end not allow to extend registration period more than 10 years
-        return bool(self.epp_id) and self.status in ['active', 'suspended', 'inactive', ]
+        # return bool(self.epp_id) and self.status in ['active', 'suspended', 'inactive', ]
+        if not bool(self.epp_id):
+            return False
+        if self.status in ['active', 'suspended', ]:
+            return True
+        if self.status != 'inactive':
+            return False
+        days_difference = (self.expiry_date - timezone.now()).days
+        if days_difference < -29:
+            return False
+        return True
 
     @property
     def is_transfer_prohibited(self):

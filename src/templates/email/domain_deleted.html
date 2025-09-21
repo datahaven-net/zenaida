@@ -31,6 +31,29 @@ After {{ domain_delete_end_date }}, domain <b>{{ domain_name }}</b> restore is n
 Domain will be automatically released by the domain registry system to the market and become available for new registration.
 </p>
 
+<p>
+Your current account balance is <b>${{ account_balance }} US</b>.
+</p>
+
+<p>
+Below is a list of all domains managed by your account, including registration period and auto-renewal features.
+</p>
+
+<table>
+<tr>
+<th>domain</th>
+<th>expiry date</th>
+<th>automatic renewal</th>
+</tr>
+{% for domain_info in domains_details %}
+    <tr>
+    <td>{{ domain_info.name }}</td>
+    <td>{{ domain_info.expiry_date }}</td>
+    <td>{{ domain_info.auto_renew_enabled }}</td>
+    </tr>
+{% endfor %}
+</table>
+
 <p>To stop receiving email notifications from AI domains registry please sign in to <a href="{{ site_url }}" target=_blank>{{ site_url }}</a>,
 go to your profile settings and disable "Email notifications enabled" checkbox.</p>
 

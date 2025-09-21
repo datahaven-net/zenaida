@@ -46,6 +46,50 @@ def test_list_domains():
 
 
 @pytest.mark.django_db
+def test_list_domains_details():
+    tester1 = testsupport.prepare_tester_account(email='tester1@zenaida.ai', automatic_renewal_enabled=True)
+    tester2 = testsupport.prepare_tester_account(email='tester2@zenaida.ai', automatic_renewal_enabled=False)
+    tester_domain1 = testsupport.prepare_tester_domain(
+        tester=tester1,
+        domain_name='abc.ai',
+        expiry_date=datetime.datetime(2020, 1, 1),
+        auto_renew_enabled=True,
+    )
+    tester_domain2 = testsupport.prepare_tester_domain(
+        tester=tester1,
+        domain_name='xyz.ai',
+        expiry_date=datetime.datetime(2020, 2, 1),
+        auto_renew_enabled=False,
+    )
+    tester_domain3 = testsupport.prepare_tester_domain(
+        tester=tester2,
+        domain_name='www.ai',
+        expiry_date=datetime.datetime(2020, 3, 1),
+        auto_renew_enabled=True,
+    )
+    tester_domain4 = testsupport.prepare_tester_domain(
+        tester=tester2,
+        domain_name='def.ai',
+        expiry_date=datetime.datetime(2020, 4, 1),
+        auto_renew_enabled=False,
+    )
+    results1 = zdomains.list_domains_details(tester1)
+    assert results1[0]['name'] == tester_domain1.name
+    assert results1[0]['expiry_date'] == '2020-01-01'
+    assert results1[0]['auto_renew_enabled'] is True
+    assert results1[1]['name'] == tester_domain2.name
+    assert results1[1]['expiry_date'] == '2020-02-01'
+    assert results1[1]['auto_renew_enabled'] is True
+    results2 = zdomains.list_domains_details(tester2)
+    assert results2[0]['name'] == tester_domain3.name
+    assert results2[0]['expiry_date'] == '2020-03-01'
+    assert results2[0]['auto_renew_enabled'] is True
+    assert results2[1]['name'] == tester_domain4.name
+    assert results2[1]['expiry_date'] == '2020-04-01'
+    assert results2[1]['auto_renew_enabled'] is False
+
+
+@pytest.mark.django_db
 def test_list_domains_by_status():
     testsupport.prepare_tester_domain(domain_name='abc.ai', expiry_date=datetime.datetime(2020, 1, 1))
     testsupport.prepare_tester_domain(domain_name='xyz.ai', expiry_date=datetime.datetime(2020, 2, 1))

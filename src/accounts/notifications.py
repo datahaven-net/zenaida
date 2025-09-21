@@ -10,6 +10,8 @@ from django.utils.html import strip_tags
 
 from accounts.models.notification import Notification
 
+from zen import zdomains
+
 logger = logging.getLogger(__name__)
 
 
@@ -118,6 +120,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain is expiring',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_expire_soon':
         email_template = 'email/domain_expire_soon.html'
@@ -126,6 +130,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain will expire after 30 days',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_expire_in_5_days':
         email_template = 'email/domain_expire_in_5_days.html'
@@ -134,6 +140,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain will expire in few days',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_expire_in_3_days':
         email_template = 'email/domain_expire_in_3_days.html'
@@ -142,6 +150,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain will expire in 3 days',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_expire_in_1_day':
         email_template = 'email/domain_expire_in_1_day.html'
@@ -150,6 +160,8 @@ def execute_email_notification(notification_object):
             'domain_expiry_date': notification_object.details.get('expiry_date'),
             'subject': 'AI domain will expire in 24 hours',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'low_balance':
         email_template = 'email/low_balance.html'
@@ -157,6 +169,8 @@ def execute_email_notification(notification_object):
             'expiring_domains_list': notification_object.details.get('expiring_domains_list', []),
             'subject': 'AI account balance insufficient for auto-renew',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'low_balance_back_end_renew':
         email_template = 'email/low_balance_back_end_renew.html'
@@ -164,6 +178,8 @@ def execute_email_notification(notification_object):
             'domains_list': notification_object.details.get('domains_list', []),
             'subject': 'AI account balance insufficient for domain auto-renew',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_renewed':
         email_template = 'email/domain_renewed.html'
@@ -175,6 +191,8 @@ def execute_email_notification(notification_object):
             'current_balance': notification_object.details.get('current_balance'),
             'subject': 'AI domain is automatically renewed',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_deleted':
         email_template = 'email/domain_deleted.html'
@@ -186,6 +204,8 @@ def execute_email_notification(notification_object):
             'insufficient_balance': 'insufficient account balance' if notification_object.details.get('insufficient_balance') else 'disabled auto-renewal configuration',
             'subject': 'AI domain expired',
             'person_name': notification_object.account.profile.person_name or 'dear Customer',
+            'account_balance': notification_object.account.balance,
+            'domains_details': zdomains.list_domains_details(notification_object.account),
         })
     elif notification_object.subject == 'domain_deactivated':
         email_template = 'email/domain_deactivated.html'

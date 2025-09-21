@@ -340,7 +340,7 @@ def get_last_registered_domain(registrant_email):
     return []
 
 
-def list_domains(registrant_email, domain_name_like=None):
+def list_domains(registrant_email, domain_name_like=None, as_dict=False):
     """
     List all domains for given user identified by email.
     """
@@ -350,6 +350,21 @@ def list_domains(registrant_email, domain_name_like=None):
     if domain_name_like is not None:
         return existing_account.domains.filter(Q(name__icontains=domain_name_like)).order_by('name')
     return existing_account.domains.all().order_by('expiry_date')
+
+
+def list_domains_details(existing_account):
+    try:
+        profile_automatic_renewal_enabled = existing_account.profile.automatic_renewal_enabled
+    except:
+        profile_automatic_renewal_enabled = True
+    results = []
+    for domain_obj in existing_account.domains.all().order_by('expiry_date'):
+        results.append({
+            'name': domain_obj.name,
+            'expiry_date': str(domain_obj.expiry_date.date()),
+            'auto_renew_enabled': profile_automatic_renewal_enabled or domain_obj.auto_renew_enabled,
+        })
+    return results
 
 
 def list_domains_by_status(status):

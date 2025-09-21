@@ -11,7 +11,30 @@
 
 <p>Hello, {{ person_name }}.</p>
 
-<p>Domain <b>{{ domain_name }}</b> will expire in 24 hours.</p>
+<p>The domain <b>{{ domain_name }}</b> will expire in 24 hours.</p>
+
+<p>
+Your current account balance is <b>${{ account_balance }} US</b>.
+</p>
+
+<p>
+Below is a list of all domains managed by your account, including registration period and auto-renewal features.
+</p>
+
+<table>
+<tr>
+<th>domain</th>
+<th>expiry date</th>
+<th>automatic renewal</th>
+</tr>
+{% for domain_info in domains_details %}
+    <tr>
+    <td>{{ domain_info.name }}</td>
+    <td>{{ domain_info.expiry_date }}</td>
+    <td>{{ domain_info.auto_renew_enabled }}</td>
+    </tr>
+{% endfor %}
+</table>
 
 <p>Please sign in to <a href="{{ site_url }}" target=_blank>{{ site_url }}</a> and <b>make a payment</b> for the domains you wish to keep.
 See <a href="{{ site_url }}/faq/" target=_blank>payments F.A.Q.</a> for more information.</p>

@@ -19,6 +19,25 @@ and the AI domains registry system automatically renewed the domain for {{ durat
 <p>The new expiration date for the domain <b>{{ domain_name }}</b> is <b>{{ domain_expiry_date }}</b>.</p>
 
 <p>
+Below is a list of all domains managed by your account, including registration period and auto-renewal features.
+</p>
+
+<table>
+<tr>
+<th>domain</th>
+<th>expiry date</th>
+<th>automatic renewal</th>
+</tr>
+{% for domain_info in domains_details %}
+    <tr>
+    <td>{{ domain_info.name }}</td>
+    <td>{{ domain_info.expiry_date }}</td>
+    <td>{{ domain_info.auto_renew_enabled }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+<p>
 To disable the automatic renewal of your domains by AI domains registry system
 please sign in to your account, go to your profile settings and switch off "Automatically renew expiring domains" checkbox.
 <br>

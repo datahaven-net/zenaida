@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>{{ subject }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+
+<body>
+
+<p>Hello!</p>
+
+<p>This is a testing email from AI domains registry system.</p>
+
+<p>
+Your current account balance is <b>${{ account_balance }} US</b>.
+</p>
+
+<p>
+Below is a list of all domains managed by your account, including registration period and auto-renewal status.
+</p>
+
+<table>
+<tr>
+<th>domain</th>
+<th>expiry date</th>
+<th>automatic renewal</th>
+</tr>
+{% for domain_info in domains_details %}
+    <tr>
+    <td>{{ domain_info.name }}</td>
+    <td>{{ domain_info.expiry_date }}</td>
+    <td>{{ domain_info.auto_renew_enabled }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+</body>
+
+</html>

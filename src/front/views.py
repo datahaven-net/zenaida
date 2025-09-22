@@ -617,8 +617,10 @@ class AccountProfileEmailTestView(LoginRequiredMixin, RedirectView):
         context = {
             'subject': 'Service email test from %s' % settings.SITE_BASE_URL,
             'site_url': settings.SITE_BASE_URL,
+            'account_balance': self.request.user.balance,
+            'domains_details': zdomains.list_domains_details(self.request.user),
         }
-        email_template = 'email/test_email.html'
+        email_template = 'email/test_email_extended.html'
         html_content = render_to_string(email_template, context=context, request=None)
         text_content = strip_tags(html_content)
         msg = EmailMultiAlternatives(

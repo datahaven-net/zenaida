@@ -76,17 +76,17 @@ def test_list_domains_details():
     results1 = zdomains.list_domains_details(tester1)
     assert results1[0]['name'] == tester_domain1.name
     assert results1[0]['expiry_date'] == '2020-01-01'
-    assert results1[0]['auto_renew_enabled'] is True
+    assert results1[0]['auto_renew_enabled'] == 'enabled'
     assert results1[1]['name'] == tester_domain2.name
     assert results1[1]['expiry_date'] == '2020-02-01'
-    assert results1[1]['auto_renew_enabled'] is True
+    assert results1[1]['auto_renew_enabled'] == 'enabled'
     results2 = zdomains.list_domains_details(tester2)
     assert results2[0]['name'] == tester_domain3.name
     assert results2[0]['expiry_date'] == '2020-03-01'
-    assert results2[0]['auto_renew_enabled'] is True
+    assert results2[0]['auto_renew_enabled'] == 'enabled'
     assert results2[1]['name'] == tester_domain4.name
     assert results2[1]['expiry_date'] == '2020-04-01'
-    assert results2[1]['auto_renew_enabled'] is False
+    assert results2[1]['auto_renew_enabled'] == 'disabled'
 
 
 @pytest.mark.django_db

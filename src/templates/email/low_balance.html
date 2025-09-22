@@ -36,14 +36,14 @@ See <a href="{{ site_url }}/faq/" target=_blank>payments F.A.Q.</a> for more inf
 Below is a list of all domains managed by your account, including registration period and auto-renewal status.
 </p>
 
-<table>
-<tr>
+<table cellspacing="8">
+<tr align="left">
 <th>domain</th>
 <th>expiry date</th>
 <th>automatic renewal</th>
 </tr>
 {% for domain_info in domains_details %}
-    <tr>
+    <tr align="left">
     <td>{{ domain_info.name }}</td>
     <td>{{ domain_info.expiry_date }}</td>
     <td>{{ domain_info.auto_renew_enabled }}</td>

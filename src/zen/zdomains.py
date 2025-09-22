@@ -362,7 +362,7 @@ def list_domains_details(existing_account):
         results.append({
             'name': domain_obj.name,
             'expiry_date': str(domain_obj.expiry_date.date()),
-            'auto_renew_enabled': profile_automatic_renewal_enabled or domain_obj.auto_renew_enabled,
+            'auto_renew_enabled': 'enabled' if (profile_automatic_renewal_enabled or domain_obj.auto_renew_enabled) else 'disabled',
         })
     return results
 

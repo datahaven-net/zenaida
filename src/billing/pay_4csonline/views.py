@@ -90,12 +90,14 @@ class VerifyPaymentView(View):
             100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0, 2)
 
         if float(amount) < expected_payment_amount:
-            logging.critical('invalid request, payment processing will raise SuspiciousOperation: '
-                             'transaction amount is not matching with existing record')
+            if not payments.finish_payment(transaction_id=transaction_id, status='declined', notes=f'payment amount {float(amount)} not matching expected {expected_payment_amount}'):
+                logging.critical(f'payment not found, transaction_id is {transaction_id}')
+                raise exceptions.SuspiciousOperation()
+            logging.critical(f'payment is declined because of not matching amount value, transaction_id is {transaction_id}')
             raise exceptions.SuspiciousOperation()
 
         if float(amount) > expected_payment_amount:
-            logging.warn('payment %r is overpaid: %r', payment_obj, amount)
+            logging.critical('payment %r is overpaid: %r', payment_obj, amount)
         else:
             logging.info('payment %r is valid', payment_obj)
 

@@ -129,7 +129,7 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         response = self.client.get(
             f'/billing/4csonline/verify/?result=miss&tid={transaction_id}&rc=OK&fc=APPROVED&app=&ref='
-            f'1909569671030425&invoice={transaction_id}&tran_id={transaction_id}&err=&av=&amt=1,001.00&curr=USD')
+            f'1909569671030425&invoice={transaction_id}&tran_id={transaction_id}&err=&av=&amt=1,001.00')
         assert response.status_code == 200
         assert response.context['redirect_url'] == '/billing/payments/'
 
@@ -241,37 +241,12 @@ class TestVerifyPaymentView(BaseAuthTesterMixin, TestCase):
 
         response = self.client.get(
             '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJA&rc=OK&fc=APPROVED&app=&ref='
-            '1909569671030425&invoice=BPXKV4LXWQHA8RJA&tran_id=BPXKV4LXWQHA8RJA&err=&av=&amt=100.10&curr=USD')
+            '1909569671030425&invoice=BPXKV4LXWQHA8RJA&tran_id=BPXKV4LXWQHA8RJA&err=&av=&amt=100.10')
 
         assert response.status_code == 400
         mock_logging.assert_called_once_with('payment is declined because of not matching amount value, transaction_id is %s' % p.transaction_id)
         assert Payment.payments.get(transaction_id='BPXKV4LXWQHA8RJA').status == 'declined'
         assert Payment.payments.get(transaction_id='BPXKV4LXWQHA8RJA').notes == 'payment amount 100.1 not matching expected 200.2'
-
-    @override_settings(ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE=0.1)
-    @mock.patch('logging.critical')
-    @mock.patch('billing.pay_4csonline.views.VerifyPaymentView._check_rc_usercan_is_incomplete')
-    @pytest.mark.django_db
-    def test_check_payment_returns_currency_not_usd(self, mock_usercan_is_incomplete, mock_logging):
-        mock_usercan_is_incomplete.return_value = False
-
-        p = Payment.payments.create(
-            owner=self.account,
-            amount=200,
-            method='pay_4csonline',
-            transaction_id='BPXKV4LXWQHA8RJB',
-            started_at=datetime.datetime(2019, 3, 23),
-            status='started',
-        )
-
-        response = self.client.get(
-            '/billing/4csonline/verify/?result=miss&tid=BPXKV4LXWQHA8RJB&rc=OK&fc=APPROVED&app=&ref='
-            '1909569671030425&invoice=BPXKV4LXWQHA8RJB&tran_id=BPXKV4LXWQHA8RJB&err=&av=&amt=200.20&curr=EUR')
-
-        assert response.status_code == 400
-        mock_logging.assert_called_once_with('payment is declined because currency value is not USD, transaction_id is %s' % p.transaction_id)
-        assert Payment.payments.get(transaction_id='BPXKV4LXWQHA8RJB').status == 'declined'
-        assert Payment.payments.get(transaction_id='BPXKV4LXWQHA8RJB').notes == 'payment currency value is not USD'
 
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION=False)
     @override_settings(ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_CONFIRMATION=False)

@@ -76,7 +76,7 @@ class VerifyPaymentView(View):
         return False
 
     @staticmethod
-    def _check_payment(payment_obj, transaction_id, amount, curr):
+    def _check_payment(payment_obj, transaction_id, amount):
         if not payment_obj:
             logging.critical(f'payment not found, transaction_id is {transaction_id}')
             raise exceptions.SuspiciousOperation()
@@ -88,13 +88,6 @@ class VerifyPaymentView(View):
 
         expected_payment_amount = round(payment_obj.amount * (
             100.0 + settings.ZENAIDA_BILLING_4CSONLINE_BANK_COMMISSION_RATE) / 100.0, 2)
-
-        if str(curr).lower() != 'usd':
-            if not payments.finish_payment(transaction_id=transaction_id, status='declined', notes='payment currency value is not USD'):
-                logging.critical(f'payment not found, transaction_id is {transaction_id}')
-                raise exceptions.SuspiciousOperation()
-            logging.critical(f'payment is declined because currency value is not USD, transaction_id is {transaction_id}')
-            raise exceptions.SuspiciousOperation()
 
         if float(amount) < expected_payment_amount:
             if not payments.finish_payment(transaction_id=transaction_id, status='declined', notes=f'payment amount {float(amount)} not matching expected {expected_payment_amount}'):
@@ -133,7 +126,6 @@ class VerifyPaymentView(View):
         reference = request_data.get('ref')
         transaction_id = request_data.get('tid')
         amount = request_data.get('amt', '').replace(',', '')
-        curr = request_data.get('curr', '')
 
         logging.info('verifying payment request: %r', request_data)
 
@@ -143,7 +135,7 @@ class VerifyPaymentView(View):
             })
 
         payment_object = payments.by_transaction_id(transaction_id=transaction_id)
-        self._check_payment(payment_object, transaction_id, amount, curr)
+        self._check_payment(payment_object, transaction_id, amount)
 
         if not settings.ZENAIDA_BILLING_4CSONLINE_BYPASS_PAYMENT_VERIFICATION:
             if self._check_rc_ok_is_incomplete(result, rc, fc, transaction_id, reference):

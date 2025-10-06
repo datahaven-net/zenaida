@@ -317,7 +317,7 @@ def on_queue_response(resData):
             logger.exception('can not process queue response: %s' % resData)
             return False
 
-        if trStatus.lower() != 'serverapproved':
+        if trStatus.lower() not in ['serverapproved', 'clientapproved', ]:
             logger.info('domain %s transfer status is: %s' % (domain, trStatus, ))
             return True
 

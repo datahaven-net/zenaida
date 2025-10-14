@@ -925,6 +925,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
                 started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
                 status='processed',
                 total_price=200,
+                maximum_price_total=200,
                 id=1,
             )
             order_id = order_mock().id

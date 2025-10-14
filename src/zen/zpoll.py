@@ -154,10 +154,11 @@ def do_domain_renewal(domain, ex_date=None, notify=False):
     existing_domain_object = zdomains.domain_find(domain_name=domain)
     next_expiry_date = existing_domain_object.expiry_date if existing_domain_object else None
     if not current_expiry_date:
-        logger.warn('current expiry date was not identified for %r', domain)
-        current_expiry_date = next_expiry_date - datetime.timedelta(days=365*2)
-    else:
-        if next_expiry_date == current_expiry_date:
+        logger.warn('new expiry date was not identified for %r, populate date from today', domain)
+        current_expiry_date = timezone.now()
+    if next_expiry_date and current_expiry_date:
+        renew_years = int(round((next_expiry_date - current_expiry_date).days / 365.0))
+        if not renew_years or renew_years < 0:
             logger.warn('renew duration was not correctly identified for %r, assuming renew durating of 2 years', domain)
         current_expiry_date = next_expiry_date - datetime.timedelta(days=365*2)
     from billing import orders as billing_orders

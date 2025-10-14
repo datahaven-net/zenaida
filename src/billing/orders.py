@@ -229,7 +229,7 @@ def order_multiple_items(owner, order_items):
     """
     items_by_type = {}
     if len(order_items) == 1:
-        description = '{}'.format(order_items[0]['item_type'].replace('_', ' '))
+        description = '{} {}'.format(order_items[0]['item_name'], order_items[0]['item_type'].replace('_', ' ').split(' ')[1])
     else:
         description = []
         for order_item in order_items:

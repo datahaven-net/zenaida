@@ -226,11 +226,11 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         new_order = context.get('order')
-        if context.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         if new_order and new_order.maximum_price_total > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(new_order.maximum_price_total - new_order.owner.balance)))
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         return self.render_to_response(context)
 
 
@@ -250,11 +250,11 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         new_order = context.get('order')
-        if context.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         if new_order and new_order.maximum_price_total > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(new_order.maximum_price_total - new_order.owner.balance)))
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         return self.render_to_response(context)
 
 
@@ -271,11 +271,11 @@ class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         new_order = context.get('order')
-        if context.get('has_existing_order'):
-            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         if new_order and new_order.maximum_price_total > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(new_order.maximum_price_total - new_order.owner.balance)))
+        if context.get('has_existing_order'):
+            return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
         return self.render_to_response(context)
 
 
@@ -369,10 +369,10 @@ class OrderExecuteView(LoginRequiredMixin, View):
             messages.error(request, self.error_message_balance)
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(existing_order.maximum_price_total - existing_order.owner.balance)))
-        # if existing_order.total_price > existing_order.owner.balance:
-        #     messages.error(request, self.error_message_balance)
-        #     return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
-        #         int(existing_order.total_price - existing_order.owner.balance)))
+        if existing_order.total_price > existing_order.owner.balance:
+            messages.error(request, self.error_message_balance)
+            return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
+                int(existing_order.total_price - existing_order.owner.balance)))
         if not self._verify_existing_order(request, existing_order):
             return shortcuts.redirect('account_domains')
         new_status = orders.execute_order(existing_order)

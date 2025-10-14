@@ -11,7 +11,7 @@ def create_or_update_single_order(item_type, item_price):
             started_orders = billing_orders.list_orders(
                 owner=self.request.user,
                 exclude_cancelled=True,
-                include_statuses=['started']
+                include_statuses=['started', ],
             )
             if started_orders:
                 order = started_orders[0]

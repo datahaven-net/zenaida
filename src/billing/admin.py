@@ -29,7 +29,7 @@ class BTCPayInvoiceAdmin(NestedModelAdmin):
 
 
 class OrderAdmin(NestedModelAdmin):
-    list_display = ('description', 'order_items', 'total_price', 'account', 'started_at', 'finished_at', 'retries' , 'status', )
+    list_display = ('description', 'order_items', 'total_price', 'maximum_price_total', 'account', 'started_at', 'finished_at', 'retries' , 'status', )
     search_fields = ('owner__email', 'description', )
     list_filter = ('status', 'retries', )
     actions = ('order_retry', )
@@ -57,7 +57,7 @@ class OrderAdmin(NestedModelAdmin):
 
 
 class OrderItemAdmin(NestedModelAdmin):
-    list_display = ('order', 'description', 'name', 'type', 'price', 'status', )
+    list_display = ('order', 'description', 'name', 'type', 'price', 'maximum_price', 'status', )
     list_filter = ('status', 'type', )
     search_fields = ('name', 'order__owner__email', 'order__id', )
     fields = (
@@ -68,7 +68,7 @@ class OrderItemAdmin(NestedModelAdmin):
         ('status', ),
         ('details_formatted', ),
     )
-    readonly_fields = ('price', 'type', 'name', 'status', 'order', 'details_formatted', )
+    readonly_fields = ('price', 'maximum_price', 'type', 'name', 'status', 'order', 'details_formatted', )
     exclude = ('details', )
 
     def description(self, order_item_instance):

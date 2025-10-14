@@ -569,7 +569,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
         assert response.context['order'].status == 'started'
-        assert response.context['order'].description == 'domain register'
+        assert response.context['order'].description == 'test.ai register'
         assert response.context['order'].owner == self.account
 
     @pytest.mark.django_db
@@ -586,7 +586,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
         assert response.context['order'].status == 'started'
-        assert response.context['order'].description == 'domain restore'
+        assert response.context['order'].description == 'test.ai restore'
         assert response.context['order'].owner == self.account
 
     @pytest.mark.django_db
@@ -603,7 +603,7 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
         assert response.status_code == 200
         assert response.context['order'].status == 'started'
-        assert response.context['order'].description == 'domain renew'
+        assert response.context['order'].description == 'test.ai renew'
         assert response.context['order'].owner == self.account
 
     def test_domain_not_available_to_order(self):
@@ -925,6 +925,7 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
                 started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
                 status='processed',
                 total_price=200,
+                maximum_price_total=200,
                 id=1,
             )
             order_id = order_mock().id

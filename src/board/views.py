@@ -132,7 +132,7 @@ class NotExistingDomainSyncView(StaffRequiredMixin, FormView):
         zmaster.domain_synchronize_from_backend(
             domain_name=domain_name,
             refresh_contacts=True,
-            rewrite_contacts=False,
+            rewrite_contacts=None,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
             soft_delete=True,

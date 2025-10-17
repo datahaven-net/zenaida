@@ -579,7 +579,7 @@ def load_from_csv(filename, dry_run=True, registrar_epp_id=None, sync_after=Fals
         try:
             outputs = zmaster.domain_synchronize_from_backend(
                 domain_name=domain,
-                refresh_contacts=True,
+                refresh_contacts=False,
                 rewrite_contacts=True,
                 change_owner_allowed=True,
                 create_new_owner_allowed=True,

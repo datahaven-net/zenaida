@@ -92,7 +92,7 @@ def domains_quick_sync(domain_objects_list, hours_passed=12, request_time_limit=
                 domain_name=domain_object.name,
                 skip_check=True,
                 refresh_contacts=False,
-                rewrite_contacts=False,
+                rewrite_contacts=None,
                 change_owner_allowed=False,
                 create_new_owner_allowed=False,
                 expected_owner=None,
@@ -167,6 +167,10 @@ def domain_synchronize_from_backend(domain_name,
     Skip any actions with domain contacts if `refresh_contacts=False`.
     If `rewrite_contacts=True` will actually first write current contact IDs is from DB to COCCA and
     then do the full contacts details synchronization, thus actually rewrite contacts on back-end.
+    When `rewrite_contacts is None` Zenaida will check for a pending domain transfer order and if such exists
+    it will take `rewrite_contacts` value from there - to be able to complete the transfer and assign domain
+    to another registrant on the back-end.
+    if `refresh_contacts=True` Zenaida will read contacts from back-end and update local DB
     """
     dr = domain_refresher.DomainRefresher(
         log_events=log_events,

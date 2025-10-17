@@ -35,7 +35,7 @@ def do_domain_transfer_in(domain):
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
-            rewrite_contacts=False,
+            rewrite_contacts=None,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
@@ -110,7 +110,7 @@ def do_domain_restored(domain, notify=False):
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
-            rewrite_contacts=False,
+            rewrite_contacts=None,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
@@ -144,7 +144,7 @@ def do_domain_renewal(domain, ex_date=None, notify=False):
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
-            rewrite_contacts=False,
+            rewrite_contacts=None,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )
@@ -265,7 +265,7 @@ def do_domain_contacts_changed(domain):
     try:
         outputs2 = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
-            refresh_contacts=True,
+            refresh_contacts=False,
             rewrite_contacts=True,
             change_owner_allowed=False,
         )
@@ -294,7 +294,7 @@ def do_domain_change_unknown(domain):
         outputs = zmaster.domain_synchronize_from_backend(
             domain_name=domain,
             refresh_contacts=True,
-            rewrite_contacts=False,
+            rewrite_contacts=None,
             change_owner_allowed=True,
             create_new_owner_allowed=True,
         )

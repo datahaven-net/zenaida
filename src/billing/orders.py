@@ -393,7 +393,7 @@ def execute_domain_transfer(order_item):
             outputs.extend(zmaster.domain_synchronize_from_backend(
                 domain_name=order_item.name,
                 refresh_contacts=True,
-                rewrite_contacts=False,
+                rewrite_contacts=None,
                 change_owner_allowed=True,
                 create_new_owner_allowed=True,
                 soft_delete=True,

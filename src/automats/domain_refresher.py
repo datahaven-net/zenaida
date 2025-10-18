@@ -189,6 +189,10 @@ class DomainRefresher(automat.Automat):
                 self.state = 'FAILED'
                 self.doReportContactsFailed(event, *args, **kwargs)
                 self.doDestroyMe(*args, **kwargs)
+            elif event == 'registrant-unknown':
+                self.state = 'CUR_REG?'
+                self.doReportDomainInfo(*args, **kwargs)
+                self.doEppCurrentRegistrantInfo(*args, **kwargs)
         #---CUR_REG?---
         elif self.state == 'CUR_REG?':
             if event == 'error' or ( event == 'response' and not self.isCode(1000, *args, **kwargs) ):
@@ -502,6 +506,26 @@ class DomainRefresher(automat.Automat):
                 'id': self.received_registrant_epp_id,
                 'response': response,
             }
+            # also check if registrant's email changed on back-end
+            # in that situation new account needs to be created and all domains and contacts re-attached to the new account
+            # this must be done separately, because that flow is only focused on single domain object
+            received_registrant_email = received_contacts_info['registrant']['response']['epp']['response']['resData']['infData']['email'].lower()
+            if self.target_domain and received_registrant_email != self.target_domain.registrant.contact_email.lower():
+                existing_registrant = zcontacts.registrant_find(contact_email=received_registrant_email)
+                if existing_registrant:
+                    logger.critical('registrant %r contact email changed to %r, but another registrant with same email already exist in local DB: %r',
+                                    self.target_domain.registrant, received_registrant_email, existing_registrant)
+                    self.automat('registrant-unknown')
+                    return
+                existing_account = zusers.find_account(email=received_registrant_email)
+                if existing_account:
+                    logger.critical('registrant %r contact email changed to %r, but another account already exist in local DB with same email: %r',
+                                    self.target_domain.registrant, received_registrant_email, existing_registrant)
+                    self.automat('registrant-unknown')
+                    return
+                logger.critical('registrant %r contact email changed to %s and needs to be synchronized', self.target_domain.registrant, received_registrant_email)
+                self.automat('registrant-unknown')
+                return
             self.event('all-contacts-received', received_contacts_info)
 
     def doEppCurrentRegistrantInfo(self, *args, **kwargs):
@@ -841,10 +865,7 @@ class DomainRefresher(automat.Automat):
         # also check if registrant's email changed on back-end
         # in that situation new account needs to be created and all domains and contacts re-attached to the new account
         # this must be done separately, because that flow is only focused on single domain object
-        try:
-            received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email'].lower()
-        except:
-            received_registrant_email = self.target_domain.registrant.contact_email.lower()
+        received_registrant_email = args[0]['registrant']['response']['epp']['response']['resData']['infData']['email'].lower()
         if received_registrant_email != self.target_domain.registrant.contact_email.lower():
             existing_registrant = zcontacts.registrant_find(contact_email=received_registrant_email)
             if existing_registrant:

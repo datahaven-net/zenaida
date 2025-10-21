@@ -61,6 +61,10 @@ class DomainCreateForm(models.ModelForm):
             return False
 
     def clean_ns(self, v):
+        v = v.replace('"', '').replace("'", '').replace('?', '').replace(':', '').replace('|', '').replace('~', '')
+        v = v.replace('#', '').replace('%', '').replace('^', '').replace('&', '').replace('*', '').replace('`', '')
+        v = v.replace('[', '').replace(']', '').replace('{', '').replace('}', '').replace('/', '').replace('\\', '')
+        v = v.replace('<', '').replace('>', '').replace(';', '').replace('#', '').replace('@', '').replace('$', '')
         return v.lower().replace(' ', '').replace('http:', '').replace('https:', '').strip('.').strip('/')
 
     def clean(self):

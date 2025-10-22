@@ -618,7 +618,13 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
             if not isinstance(extension_infos, list):
                 extension_infos = [extension_infos, ]
             for infData in extension_infos:
-                rgp_status.update(infData.get('rgpStatus') or {})
+                if 'rgpStatus' in infData:
+                    rgpStatusData = infData['rgpStatus']
+                    if not isinstance(rgpStatusData, list):
+                        rgpStatusData = [rgpStatusData, ]
+                    for st in rgpStatusData:
+                        if '@s' in st:
+                            rgp_status[str(st['@s'])] = ''
     except:
         logger.exception('Failed to read domain rgpStatus from domain_info response')
     if not isinstance(epp_statuses, list):

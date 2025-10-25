@@ -34,6 +34,7 @@ python-monkey-business==1.0.0
 pytz==2024.1
 Pygments==2.19.1
 qrcode==7.4.2
+redis==6.1.1
 requests==2.32.3
 sentry-sdk==2.20.0
 six==1.16.0

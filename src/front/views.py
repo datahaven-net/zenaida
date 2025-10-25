@@ -756,7 +756,6 @@ class EPPStatusView(TemplateView):
 
     def check_epp_status(self):
         try:
-            from epp import rpc_client
             rpc_client.cmd_domain_check(
                 domains=[settings.ZENAIDA_GATE_HEALTH_CHECK_DOMAIN_NAME, ],
                 raise_for_result=True,

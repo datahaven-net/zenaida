@@ -282,6 +282,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'logs.middleware.LogRequestsMiddleware',
+    'rate_limit.rate_limiter_middleware.RateLimiterMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -474,6 +475,17 @@ ALLOWED_ADMIN_IPS = getattr(params, 'ALLOWED_ADMIN_IPS', ['127.0.0.1', '::1'])
 ALLOWED_ADMIN_IP_RANGES = getattr(params, 'ALLOWED_ADMIN_IP_RANGES', ['127.0.0.0/24', '::/1'])
 RESTRICTED_APP_NAMES = ['admin']
 TRUST_PRIVATE_IP = getattr(params, 'TRUST_PRIVATE_IP', False)
+
+#------------------------------------------------------------------------------
+#--- RATE LIMIT RESTRICTIONS
+RATE_LIMIT_ENABLED = getattr(params, 'RATE_LIMIT_ENABLED', False)
+RATE_LIMIT_COUNT = getattr(params, 'RATE_LIMIT_COUNT', 5)
+RATE_LIMIT_WINDOW_SECONDS = getattr(params, 'RATE_LIMIT_WINDOW_SECONDS', 60)
+RATE_LIMIT_TARGET_PATHS = getattr(params, 'RATE_LIMIT_TARGET_PATHS', [
+    ('POST', '/admin/login'),
+    ('POST', '/accounts/login'),
+    ('POST', '/lookup'),
+])
 
 #------------------------------------------------------------------------------
 #--- LOGIN SETTINGS

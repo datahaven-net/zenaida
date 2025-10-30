@@ -679,7 +679,11 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
             if 'redemptionPeriod' in new_domain_extensions:
                 new_domain_status = 'to_be_deleted'
             else:
-                new_domain_status = 'inactive'
+                days_difference = (domain_object.expiry_date - timezone.now()).days
+                if days_difference < -29:
+                    new_domain_status = 'inactive'
+                else:
+                    new_domain_status = 'to_be_deleted'
         if 'pendingRestore' in new_domain_statuses:
             # TODO: check that flow
             new_domain_status = 'to_be_restored'

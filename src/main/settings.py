@@ -290,7 +290,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'admin_ip_restrictor.middleware.AdminIPRestrictorMiddleware',
+    'admin_ip_restrictor.admin_ip_whitelist_middleware.AdminIPRestrictorMiddleware',
 ]
 
 TEMPLATES = [

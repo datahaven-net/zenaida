@@ -7,7 +7,6 @@ requests
 psycopg2-binary
 uwsgi
 Django
-django-admin-ip-restrictor
 django-bootstrap4
 django-nested-admin
 django-grappelli

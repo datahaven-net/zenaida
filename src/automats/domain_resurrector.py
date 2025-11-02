@@ -201,12 +201,11 @@ class DomainResurrector(automat.Automat):
         """
         pending_delete_status = False
         if self.target_domain.epp_statuses:
-            if 'pendingDelete' in (self.target_domain.epp_statuses or {}):
-                if 'redemptionPeriod' in (self.target_domain.extension_info or {}):
-                    pending_delete_status = True
+            if 'pendingDelete' in (self.target_domain.epp_statuses or {}) or 'redemptionPeriod' in (self.target_domain.extension_info or {}):
+                pending_delete_status = True
         if not pending_delete_status:
-            logger.error('failed to restore domain, pendingDelete and redemptionPeriod statuses was not set')
-            self.event('error', Exception('failed to restore domain, pendingDelete and redemptionPeriod statuses was not set'))
+            logger.error('failed to restore domain, pendingDelete and/or redemptionPeriod statuses was not set')
+            self.event('error', Exception('failed to restore domain, pendingDelete and/or redemptionPeriod statuses was not set'))
             return
         pending_delete_status_info = self.target_domain.epp_statuses.get('pendingDelete')
         pending_delete_date = None

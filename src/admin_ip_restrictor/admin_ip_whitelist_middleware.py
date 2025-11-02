@@ -73,7 +73,7 @@ class AdminIPRestrictorMiddleware(MiddlewareMixin):
             if self.restrict_admin and is_restricted_app:
                 ip = self.get_ip(request)
                 if self.is_blocked(ip):
-                    logger.critical(f"Admin access was blocked from [{ip}]")
+                    logger.error(f"Admin access was blocked from [{ip}]")
                     raise Http404()
         except Exception as exc:
             logger.exception(str(exc))

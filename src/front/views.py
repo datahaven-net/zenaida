@@ -641,7 +641,7 @@ class AccountProfileEmailTestView(LoginRequiredMixin, RedirectView):
 
 class AccountContactCreateView(LoginRequiredMixin, CreateView):
     template_name = 'front/account_contact_create_update.html'
-    form_class = forms.ContactPersonForm
+    form_class = forms.ContactPersonCreateForm
     error_message = 'There is a technical problem with contact details processing, ' \
                     'please try again later'
     success_message = 'New contact person successfully created'
@@ -662,7 +662,7 @@ class AccountContactCreateView(LoginRequiredMixin, CreateView):
 class AccountContactUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'front/account_contact_create_update.html'
     model = Contact
-    form_class = forms.ContactPersonForm
+    form_class = forms.ContactPersonUpdateForm
     pk_url_kwarg = 'contact_id'
     error_message = 'There is a technical problem with contact details processing, ' \
                     'please try again later'

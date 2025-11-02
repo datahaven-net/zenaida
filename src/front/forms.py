@@ -21,7 +21,7 @@ def encode_ascii_for_list_of_strings(values):
     return
 
 
-class ContactPersonForm(models.ModelForm):
+class ContactPersonCreateForm(models.ModelForm):
 
     class Meta:
         model = Contact
@@ -29,7 +29,24 @@ class ContactPersonForm(models.ModelForm):
                   'address_postal_code', 'address_country', 'contact_voice', 'contact_fax', 'contact_email', )
 
     def clean(self):
-        cleaned_data = super(ContactPersonForm, self).clean()
+        cleaned_data = super(ContactPersonCreateForm, self).clean()
+        encode_ascii_for_list_of_strings(cleaned_data.values())
+        return cleaned_data
+
+
+class ContactPersonUpdateForm(models.ModelForm):
+
+    class Meta:
+        model = Contact
+        fields = ('person_name', 'organization_name', 'address_street', 'address_city', 'address_province',
+                  'address_postal_code', 'address_country', 'contact_voice', 'contact_fax', 'contact_email', )
+
+    def __init__(self, *args, **kwargs):
+        super(ContactPersonUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['contact_email'].disabled = True
+
+    def clean(self):
+        cleaned_data = super(ContactPersonUpdateForm, self).clean()
         encode_ascii_for_list_of_strings(cleaned_data.values())
         return cleaned_data
 

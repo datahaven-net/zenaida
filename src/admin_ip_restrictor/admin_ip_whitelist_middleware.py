@@ -67,15 +67,19 @@ class AdminIPRestrictorMiddleware(MiddlewareMixin):
         return client_ip
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        blocked = False
         try:
             app_name = request.resolver_match.app_name
             is_restricted_app = app_name in self.restricted_app_names
             if self.restrict_admin and is_restricted_app:
                 ip = self.get_ip(request)
                 if self.is_blocked(ip):
-                    logger.error(f"Admin access was blocked from [{ip}]")
-                    raise Http404()
+                    blocked = True
         except Exception as exc:
             logger.exception(str(exc))
+
+        if blocked:
+            logger.error(f"Admin access was blocked from [{ip}]")
+            raise Http404()
 
         return None

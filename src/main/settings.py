@@ -88,7 +88,7 @@ SITE_BASE_URL = getattr(params, 'SITE_BASE_URL', 'http://localhost:8000')
 SITE_NAME = getattr(params, 'SITE_NAME', 'Zenaida.Cate.AI')
 
 ROOT_URLCONF = 'main.urls'
-
+APPEND_SLASH = True
 
 #------------------------------------------------------------------------------
 #--- Logging configuration
@@ -281,12 +281,12 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django.middleware.common.CommonMiddleware',
     'logs.middleware.LogRequestsMiddleware',
     'rate_limit.rate_limiter_middleware.RateLimiterMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

@@ -64,11 +64,16 @@ class AccountDomainsListView(ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return zdomains.list_domains(self.request.user.email, domain_name_like=(self.request.GET.get("q") or None))
+        return zdomains.list_domains(
+            registrant_email=self.request.user.email,
+            domain_name_like=(self.request.GET.get("q") or None),
+            sort_by=(self.request.GET.get("s") or 'expiry date').replace(' ', '_'),
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['q'] = self.request.GET.get("q") or ''
+        context['s'] = self.request.GET.get("s") or 'expiry date'
         domain_objects_list = context.get('object_list', [])
         if settings.ZENAIDA_SYNC_ACCOUNT_DOMAINS_LIST and len(domain_objects_list) < 10:
             zmaster.domains_quick_sync(

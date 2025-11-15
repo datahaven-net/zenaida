@@ -340,16 +340,18 @@ def get_last_registered_domain(registrant_email):
     return []
 
 
-def list_domains(registrant_email, domain_name_like=None, as_dict=False):
+def list_domains(registrant_email, domain_name_like=None, as_dict=False, sort_by='expiry_date'):
     """
     List all domains for given user identified by email.
     """
     existing_account = zusers.find_account(registrant_email)
     if not existing_account:
         return []
+    if sort_by not in ['name', 'expiry_date']:
+        sort_by = 'name'
     if domain_name_like is not None:
-        return existing_account.domains.filter(Q(name__icontains=domain_name_like)).order_by('name')
-    return existing_account.domains.all().order_by('expiry_date')
+        return existing_account.domains.filter(Q(name__icontains=domain_name_like)).order_by(sort_by)
+    return existing_account.domains.all().order_by(sort_by)
 
 
 def list_domains_details(existing_account):

@@ -26,8 +26,24 @@
 
 {% else %}
 
-    <div class="text-right">
-        <form action="" method="get">
+    <form action="" method="get">
+
+    <table width="100%"><tr><td >
+
+	    <div class="text-left">
+            <div class="form-row justify-content-begin">
+                <div class="col-lg-4">
+                    <span class="text-secondary">sort by: </span>
+                    <input type="submit" class="btn btn-sm {% if s == "name" %}btn-secondary{% else %}btn-outline-secondary{% endif %} border-0" role="button" name="s" value="name">
+                    <input type="submit" class="btn btn-sm {% if s == "expiry date" %}btn-secondary{% else %}btn-outline-secondary{% endif %} border-0" role="button" name="s" value="expiry date">
+                </div>
+            </div>
+	    </div>
+
+    </td>
+    <td>
+
+	    <div class="text-right">
             <div class="form-row justify-content-end">
                 <div class="col-lg-2">
                     <input class="form-control form-control-sm" type="text" placeholder="Search by domain name" aria-label="Search" name="q" value="{{ q }}" autofocus>
@@ -36,11 +52,15 @@
                     <button class="btn btn-secondary btn-sm btn-block" type="submit">Search</button>
                 </div>
             </div>
-        </form>
-    </div>
+	    </div>
+
+    </td></tr></table>
+
+    </form>
 
     <form action="{% url 'billing_order_create' %}" method="post">
     {% csrf_token %}
+
     <div class="table-responsive">
         <table class="table table-hover">
             <tr>

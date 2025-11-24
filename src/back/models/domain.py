@@ -237,12 +237,16 @@ class Domain(models.Model):
 
     @property
     def can_be_restored(self):
-        return bool(self.epp_id) and self.status == 'to_be_deleted'
+        if self.expiry_date:
+            if bool(self.epp_id):
+                days_difference = (self.expiry_date - timezone.now()).days
+                if days_difference < 0:
+                    if self.status == 'inactive':
+                        return True
+        return bool(self.epp_id) and (self.status == 'to_be_deleted')
 
     @property
     def can_be_renewed(self):
-        # TODO: check expire date, back-end not allow to extend registration period more than 10 years
-        # return bool(self.epp_id) and self.status in ['active', 'suspended', 'inactive', ]
         if not bool(self.epp_id):
             return False
         if self.status in ['active', 'suspended', ]:

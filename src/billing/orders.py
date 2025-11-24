@@ -193,8 +193,10 @@ def prepare_register_renew_restore_item(domain_object):
     if domain_object.can_be_restored:
         item_type = 'domain_restore'
         item_price = settings.ZENAIDA_DOMAIN_RESTORE_PRICE
-    elif domain_object.is_registered:
+    elif domain_object.can_be_renewed:
         item_type = 'domain_renew'
+    elif domain_object.is_registered:
+        raise exceptions.DomainBlockedError()
     return item_type, item_price, item_name
 
 

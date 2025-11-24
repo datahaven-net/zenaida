@@ -32,7 +32,6 @@ if SENTRY_ENABLED:
     import sentry_sdk  # @UnresolvedImport
     from sentry_sdk.integrations.django import DjangoIntegration  # @UnresolvedImport
     # from sentry_sdk.types import Event, Hint
-    from pika.adapters.utils.connection_workflow import AMQPConnectorException
 
     def _before_send(e, h):
         try:
@@ -48,10 +47,14 @@ if SENTRY_ENABLED:
         traces_sample_rate=1.0,
         send_default_pii=True,
         ignore_errors=[
+            "StreamLostError",
             "ConnectionResetError",
             "ConnectionRefusedError",
             "EPPConnectionAlreadyClosedError",
-            AMQPConnectorException,
+            "AMQPConnectionError",
+            "AMQPConnectorException",
+            "AMQPConnectionWorkflowFailed",
+            "AMQPConnectorSocketConnectError",
         ],
     )
 

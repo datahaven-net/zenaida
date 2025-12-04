@@ -237,12 +237,12 @@ class Domain(models.Model):
 
     @property
     def can_be_restored(self):
-        if self.expiry_date:
-            if bool(self.epp_id):
-                days_difference = (self.expiry_date - timezone.now()).days
-                if days_difference < 0:
-                    if self.status == 'inactive':
-                        return True
+        # if self.expiry_date:
+        #     if bool(self.epp_id):
+        #         days_difference = (self.expiry_date - timezone.now()).days
+        #         if days_difference < 0:
+        #             if self.status == 'inactive':
+        #                 return True
         return bool(self.epp_id) and (self.status == 'to_be_deleted')
 
     @property

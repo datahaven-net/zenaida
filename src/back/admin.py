@@ -294,11 +294,12 @@ class DomainAdmin(NestedModelAdmin):
     def _do_domain_block_transfer(self, queryset):
         report = []
         for domain_object in queryset:
-            BlockedTransfer.blocked_transfers.create(name=domain_object.name)
+            BlockedTransfer.blocked_transfers.get_or_create(name=domain_object.name)
             try:
                 rpc_client.cmd_domain_update(
                     domain=domain_object.name,
                     add_statuses_list=[{'name': 'clientTransferProhibited', 'value': f'set by Admin on {time.asctime()}', }, ],
+                    raise_for_result=False,
                 )
                 zmaster.domain_synchronize_from_backend(
                     domain_name=domain_object.name,

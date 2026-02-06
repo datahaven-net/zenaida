@@ -2,7 +2,11 @@ import datetime
 import mock
 import pytest
 
+from dateutil.relativedelta import relativedelta  # @UnresolvedImport
+
+from django.conf import settings
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from back.models.contact import Registrant
 from back.models.domain import Domain
@@ -247,7 +251,7 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
     @pytest.mark.django_db
     @mock.patch('zen.zdomains.domain_find')
     def test_domain_renew_order_successful(self, mock_domain_search):
-        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=timezone.now() + relativedelta(years=2))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 100.0 to the balance of the user to renew a domain
             mock_payment_by_transaction_id.return_value = mock.MagicMock(
@@ -273,7 +277,7 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
     @mock.patch('django.contrib.messages.warning')
     @mock.patch('zen.zdomains.domain_find')
     def test_one_started_order_for_same_user(self, mock_domain_search, mock_messages_warning):
-        mock_domain_search.return_value = mock.MagicMock(expiry_date=datetime.datetime(2099, 1, 1))
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=timezone.now() + relativedelta(years=2))
         with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
             # Add 100.0 to the balance of the user to renew a domain
             mock_payment_by_transaction_id.return_value = mock.MagicMock(
@@ -294,6 +298,7 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         assert orders[0].status == 'started'
         assert orders[0].items.all()[0].name == 'test.ai'
         mock_messages_warning.assert_called_once()
+        assert mock_messages_warning.call_args_list[0][0][1] == 'There is an order you did not complete yet. Please confirm or cancel this order to create a new one'
 
     @pytest.mark.django_db
     def test_domain_renew_not_enough_balance(self):
@@ -302,8 +307,8 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=4),
             zone=Zone.zones.create(name='ai'),
         )
         response = self.client.get('/billing/order/create/renew/test.ai/')
@@ -312,6 +317,23 @@ class TestOrderDomainRenewView(BaseAuthTesterMixin, TestCase):
         orders = Order.orders.all()
         assert len(orders) == 1
         assert orders[0].status == 'started'
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.error')
+    @mock.patch('zen.zdomains.domain_find')
+    def test_domain_renew_max_duration_error(self, mock_domain_search, mock_messages_error):
+        max_expiry_date = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_MAX_YEARS)
+        mock_domain_search.return_value = mock.MagicMock(expiry_date=max_expiry_date - relativedelta(years=1))
+        with mock.patch('billing.payments.by_transaction_id') as mock_payment_by_transaction_id:
+            mock_payment_by_transaction_id.return_value = mock.MagicMock(
+                status='started',
+                amount=100.0,
+                owner=self.account,
+            )
+        response = self.client.get('/billing/order/create/renew/test.ai/')
+        assert response.status_code == 302
+        mock_messages_error.assert_called_once()
+        assert mock_messages_error.call_args_list[0][0][1] == 'Domain cannot be renewed due to reaching its maximum expiration date.'
 
 
 class TestOrderDomainRegisterView(BaseAuthTesterMixin, TestCase):
@@ -493,15 +515,15 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         Domain.domains.create(
             owner=self.account,
             name='test_not_registered.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
             zone=aizone,
         )
         Domain.domains.create(
             owner=self.account,
             name='test_to_be_deleted.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
             zone=aizone,
             epp_id='epp1',
             status='to_be_deleted',
@@ -509,8 +531,8 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         Domain.domains.create(
             owner=self.account,
             name='test_active.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
             zone=aizone,
             epp_id='epp2',
             status='active',
@@ -525,19 +547,18 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert response.context['order'].description == 'register 1 domain, restore 1 domain, renew 1 domain'
         assert response.context['order'].owner == self.account
         assert len(response.context['order'].items.all()) == 3
-
         Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
             zone=aizone,
         )
         Domain.domains.create(
             owner=self.account,
             name='test1_active.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
             zone=aizone,
             epp_id='epp10',
             status='active',
@@ -546,7 +567,6 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
             'test.ai',
             'test1_active.ai',
         ]})
-
         assert response.status_code == 302
         orders = Order.orders.all()
         assert len(orders) == 1
@@ -556,6 +576,47 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert len(orders[0].items.all()) == 3
         assert orders[0].items.filter(name='test_not_registered.ai').first().status == 'started'
         mock_messages_warning.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.warning')
+    def test_multiple_domains_order_renew_max_duration_error(self, mock_messages_warning):
+        aizone = Zone.zones.create(name='ai')
+        Domain.domains.create(
+            owner=self.account,
+            name='test_not_registered.ai',
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
+            zone=aizone,
+        )
+        Domain.domains.create(
+            owner=self.account,
+            name='test_to_be_deleted.ai',
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=2),
+            zone=aizone,
+            epp_id='epp1',
+            status='to_be_deleted',
+        )
+        Domain.domains.create(
+            owner=self.account,
+            name='test_active.ai',
+            expiry_date=timezone.now() + relativedelta(years=9),
+            create_date=timezone.now() - relativedelta(years=2),
+            zone=aizone,
+            epp_id='epp2',
+            status='active',
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': [
+            'test_not_registered.ai',
+            'test_to_be_deleted.ai',
+            'test_active.ai',
+        ]})
+        assert response.status_code == 200
+        assert response.context['order'].status == 'started'
+        assert response.context['order'].description == 'register 1 domain, restore 1 domain'
+        assert response.context['order'].owner == self.account
+        assert len(response.context['order'].items.all()) == 2
+        mock_messages_warning.assert_not_called()
 
     @pytest.mark.django_db
     def test_domain_register_order(self):
@@ -594,8 +655,8 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         Domain.domains.create(
             owner=self.account,
             name='test.ai',
-            expiry_date=datetime.datetime(2099, 1, 1),
-            create_date=datetime.datetime(1970, 1, 1),
+            expiry_date=timezone.now() + relativedelta(years=2),
+            create_date=timezone.now() - relativedelta(years=4),
             zone=Zone.zones.create(name='ai'),
             epp_id='12345',
             status='active',
@@ -605,6 +666,23 @@ class TestOrderCreateView(BaseAuthTesterMixin, TestCase):
         assert response.context['order'].status == 'started'
         assert response.context['order'].description == 'test.ai renew'
         assert response.context['order'].owner == self.account
+
+    @pytest.mark.django_db
+    @mock.patch('django.contrib.messages.warning')
+    def test_domain_renew_order_max_duration_error(self, mock_messages_warning):
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=timezone.now() + relativedelta(years=9),
+            create_date=timezone.now() - relativedelta(years=4),
+            zone=Zone.zones.create(name='ai'),
+            epp_id='12345',
+            status='active',
+        )
+        response = self.client.post('/billing/order/create/', data={'order_items': ['test.ai']})
+        assert response.status_code == 302
+        mock_messages_warning.assert_called_once()
+        assert mock_messages_warning.call_args_list[0][0][1] == 'At least one of the selected domains cannot be renewed due to reaching its maximum expiration date.'
 
     def test_domain_not_available_to_order(self):
         """

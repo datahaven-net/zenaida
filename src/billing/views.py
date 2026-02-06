@@ -242,9 +242,13 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context.update({'order': kwargs.get('order')})
         context['domain_expiry_date'] = ''
+        context['max_renew_period_error'] = ''
         domain = zdomains.domain_find(domain_name=kwargs.get('domain_name'))
         if domain:
             context['domain_expiry_date'] = domain.expiry_date + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_YEARS)
+            max_expiry_date = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_MAX_YEARS)
+            if context['domain_expiry_date'] >= max_expiry_date:
+                context['max_renew_period_error'] = 'Domain cannot be renewed due to reaching its maximum expiration date.'
         return context
 
     def get(self, request, *args, **kwargs):
@@ -253,8 +257,14 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
         if new_order and new_order.maximum_price_total > new_order.owner.balance:
             return HttpResponseRedirect(shortcuts.resolve_url('billing_new_payment') + "?amount={}".format(
                 int(new_order.maximum_price_total - new_order.owner.balance)))
+        max_renew_period_error = context['max_renew_period_error']
         if context.get('has_existing_order'):
+            if max_renew_period_error:
+                messages.error(request, max_renew_period_error)
             return shortcuts.redirect('billing_order_details', order_id=context.get('order').id)
+        if max_renew_period_error:
+            messages.error(request, max_renew_period_error)
+            return shortcuts.redirect('account_domains')
         return self.render_to_response(context)
 
 
@@ -295,6 +305,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
             return shortcuts.redirect('billing_order_details', order_id=started_orders[0].id)
 
         order_items = request.POST.getlist('order_items')
+        max_renew_period_error = None
 
         to_be_ordered = []
         for domain_name in order_items:
@@ -309,13 +320,22 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
             except exceptions.DomainBlockedError as err:
                 messages.error(request, str(err))
                 return shortcuts.redirect('account_domains')
+            if item_type == 'domain_renew':
+                new_expiry_date = domain_object.expiry_date + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_YEARS)
+                max_expiry_date = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_MAX_YEARS)
+                if new_expiry_date >= max_expiry_date:
+                    max_renew_period_error = 'At least one of the selected domains cannot be renewed due to reaching its maximum expiration date.'
+                    continue
             to_be_ordered.append(dict(
                 item_type=item_type,
                 item_price=item_price,
                 item_name=item_name,
             ))
         if not to_be_ordered:
-            messages.error(request, self.error_message)
+            if max_renew_period_error:
+                messages.warning(request, max_renew_period_error)
+            else:
+                messages.error(request, self.error_message)
             return shortcuts.redirect('account_domains')
         new_order = orders.order_multiple_items(
             owner=request.user,

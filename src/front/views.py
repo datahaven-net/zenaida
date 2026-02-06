@@ -320,6 +320,13 @@ class AccountDomainTransferTakeoverView(FormView):
             messages.warning(self.request, 'Domain name is not registered or transfer is not possible at the moment')
             return super().form_invalid(form)
 
+        if isinstance(outputs[-1], rpc_error.EPPAuthorizationInvalidError):
+            if outputs[-1].message.lower().count('invalid authorization information'):
+                messages.error(self.request, 'Invalid authorization information provided')
+            else:
+                messages.error(self.request, 'You are not authorized to transfer this domain')
+            return super().form_invalid(form)
+
         if isinstance(outputs[-1], rpc_error.EPPAuthorizationError):
             if outputs[-1].message.lower().count('incorrect authcode provided'):
                 messages.error(self.request, 'Incorrect authorization code provided')

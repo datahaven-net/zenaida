@@ -335,6 +335,12 @@ class BulkTransferView(StaffRequiredMixin, FormView, FormMixin):
                     else:
                         report.append((domain_name, 'you are not authorized to transfer this domain', ))
                     continue
+                if isinstance(outputs[-1], rpc_error.EPPAuthorizationInvalidError):
+                    if outputs[-1].message.lower().count('invalid authorization information'):
+                        report.append((domain_name, 'invalid authorization information provided', ))
+                    else:
+                        report.append((domain_name, 'you are not authorized to transfer this domain', ))
+                    continue
                 if isinstance(outputs[-1], rpc_error.EPPObjectNotExist):
                     report.append((domain_name, 'domain name is not registered', ))
                     continue

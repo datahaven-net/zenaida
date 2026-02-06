@@ -619,6 +619,8 @@ def domain_update_statuses(domain_object, domain_info_response, save=True):
         if extension_infos:
             if not isinstance(extension_infos, list):
                 extension_infos = [extension_infos, ]
+            if not isinstance(extension_infos, list):
+                extension_infos = [extension_infos, ]
             for infData in extension_infos:
                 if 'rgpStatus' in infData:
                     rgpStatusData = infData['rgpStatus']

@@ -748,6 +748,24 @@ class TestAccountDomainTransferTakeoverView(BaseAuthTesterMixin, TestCase):
     @mock.patch('zen.zcontacts.list_contacts')
     @mock.patch('back.models.profile.Profile.is_complete')
     @mock.patch('zen.zmaster.domain_read_info')
+    @mock.patch('django.contrib.messages.error')
+    @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
+    def test_domain_transfer_authorization_invalid(
+        self, mock_messages_error, mock_domain_info, mock_user_profile_complete, mock_list_contacts,
+    ):
+        mock_domain_info.return_value = [
+            rpc_error.EPPAuthorizationInvalidError(),
+        ]
+        mock_user_profile_complete.return_value = True
+        mock_list_contacts.return_value = [mock.MagicMock(), mock.MagicMock()]
+        response = self.client.post('/domains/transfer/', data=dict(domain_name='bitdust.ai', transfer_code='12345'))
+        assert response.status_code == 200
+        mock_messages_error.assert_called_once()
+
+    @pytest.mark.django_db
+    @mock.patch('zen.zcontacts.list_contacts')
+    @mock.patch('back.models.profile.Profile.is_complete')
+    @mock.patch('zen.zmaster.domain_read_info')
     @mock.patch('django.contrib.messages.warning')
     @override_settings(BRUTE_FORCE_PROTECTION_ENABLED=False)
     def test_domain_transfer_not_registered(

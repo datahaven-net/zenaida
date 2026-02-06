@@ -412,7 +412,15 @@ class AccountDomainDSRecordsView(FormView):
             return shortcuts.redirect('account_domains')
         try:
             infData = (epp_response['epp']['response'].get('extension') or {}).get('infData') or {}
-            dsData = infData.get('dsData') or []
+            dsData = []
+            if isinstance(infData, list):
+                for d in infData:
+                    if isinstance(d, dict):
+                        if 'dsData' in d:
+                            dsData = d['dsData']
+                            break
+            else:
+                dsData = infData.get('dsData') or []
             if not isinstance(dsData, list):
                 dsData = [dsData, ]
             self.kwargs['ds_data'] = dsData

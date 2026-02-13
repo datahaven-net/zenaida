@@ -38,7 +38,7 @@ requests==2.32.3
 sentry-sdk==2.20.0
 six==1.16.0
 soupsieve==2.5
-sqlparse==0.5.0
+sqlparse==0.5.4
 transliterate==1.10.2
 typing_extensions==4.12.2
 urllib3==2.2.1

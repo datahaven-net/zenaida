@@ -54,6 +54,20 @@ def get_order_by_id_and_owner(order_id, owner, log_action=None):
     return order
 
 
+def get_order_item_by_id_and_owner(order_item_id, owner=None, log_action=None):
+    """
+    Safe method to find order item for given user.
+    """
+    order_item = OrderItem.order_items.filter(id=order_item_id).first()
+    if not order_item:
+        logger.critical(f'user {owner or "?"} tried to {log_action or "?"} for non-existing order item')
+        raise SuspiciousOperation()
+    if owner and order_item.order.owner != owner:
+        logger.critical(f'user {owner or "?"} tried to {log_action or "?"} for an order item of another user')
+        raise SuspiciousOperation()
+    return order_item
+
+
 def list_orders(owner, exclude_cancelled=False, include_statuses=[]):
     """
     List orders for given user.
@@ -200,7 +214,7 @@ def prepare_register_renew_restore_item(domain_object):
     return item_type, item_price, item_name
 
 
-def order_single_item(owner, item_type, item_price, item_name, item_details=None):
+def order_single_item(owner, item_type, item_price, item_name, item_details=None, item_duration=None):
     """
     Create an Order with one item with given attributes.
     """
@@ -217,6 +231,7 @@ def order_single_item(owner, item_type, item_price, item_name, item_details=None
     new_order_item = OrderItem.order_items.create(
         order=new_order,
         type=item_type,
+        duration=item_duration,
         price=item_price,
         name=item_name,
         details=item_details,
@@ -340,7 +355,7 @@ def execute_domain_renew(order_item, target_domain):
         domain_object=target_domain,
         sync_contacts=False,
         sync_nameservers=True,
-        renew_years=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
+        renew_years=order_item.duration or settings.ZENAIDA_DOMAIN_RENEW_YEARS,
         log_events=True,
         log_transitions=True,
         raise_errors=False,

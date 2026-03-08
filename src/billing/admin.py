@@ -57,18 +57,19 @@ class OrderAdmin(NestedModelAdmin):
 
 
 class OrderItemAdmin(NestedModelAdmin):
-    list_display = ('order', 'description', 'name', 'type', 'price', 'maximum_price', 'status', )
-    list_filter = ('status', 'type', )
+    list_display = ('order', 'description', 'name', 'type', 'duration', 'price', 'maximum_price', 'status', )
+    list_filter = ('status', 'type', 'duration',  )
     search_fields = ('name', 'order__owner__email', 'order__id', )
     fields = (
         ('order', ),
         ('price', ),
         ('type', ),
+        ('duration', ),
         ('name', ),
         ('status', ),
         ('details_formatted', ),
     )
-    readonly_fields = ('price', 'maximum_price', 'type', 'name', 'status', 'order', 'details_formatted', )
+    readonly_fields = ('price', 'maximum_price', 'type', 'name', 'status', 'duration', 'order', 'details_formatted', )
     exclude = ('details', )
 
     def description(self, order_item_instance):

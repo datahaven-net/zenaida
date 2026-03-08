@@ -386,6 +386,7 @@ class AccountDomainTransferTakeoverView(FormView):
                 'rewrite_contacts': True,
                 'internal': internal,
             },
+            item_duration=None,
         )
         messages.success(self.request, self.success_message)
         return shortcuts.redirect('billing_order_details', order_id=transfer_order.id)

@@ -76,6 +76,8 @@ patterns = [
     path('billing/order/create/renew/<str:domain_name>/', billing_views.OrderDomainRenewView.as_view(), name='billing_order_renew'),
     path('billing/order/create/restore/<str:domain_name>/', billing_views.OrderDomainRestoreView.as_view(), name='billing_order_restore'),
     path('billing/order/create/', billing_views.OrderCreateView.as_view(), name='billing_order_create'),
+    path('billing/order_item/duration_increase/<int:order_item_id>/', billing_views.OrderItemDurationIncreaseView.as_view(), name='billing_order_item_duration_increase'),
+
     path('billing/payments/', billing_views.PaymentsListView.as_view(), name='billing_payments'),
     path('billing/payment/invoice/download/<str:transaction_id>/', billing_views.PaymentInvoiceDownloadView.as_view(), name='billing_invoice_download'),
     path('billing/pay/', billing_views.NewPaymentView.as_view(), name='billing_new_payment'),

@@ -433,6 +433,7 @@ def process_back_end_renew_notification(notification, domain_object):
             item_details={
                 'created_automatically': moment_now.isoformat(),
             },
+            item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
         )
         new_status = billing_orders.execute_order(renewal_order, already_processed=True)
         notification.renew_order = renewal_order

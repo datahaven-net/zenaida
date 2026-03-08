@@ -213,7 +213,7 @@ class OrderSingleReceiptDownloadView(View):
 class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
 
-    @create_or_update_single_order(item_type='domain_register', item_price=settings.ZENAIDA_DOMAIN_PRICE)
+    @create_or_update_single_order(item_type='domain_register', item_price=settings.ZENAIDA_DOMAIN_PRICE, item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({'order': kwargs.get('order')})
@@ -237,7 +237,7 @@ class OrderDomainRegisterView(LoginRequiredMixin, TemplateView):
 class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
 
-    @create_or_update_single_order(item_type='domain_renew', item_price=settings.ZENAIDA_DOMAIN_PRICE)
+    @create_or_update_single_order(item_type='domain_renew', item_price=settings.ZENAIDA_DOMAIN_PRICE, item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({'order': kwargs.get('order')})
@@ -271,7 +271,7 @@ class OrderDomainRenewView(LoginRequiredMixin, TemplateView):
 class OrderDomainRestoreView(LoginRequiredMixin, TemplateView):
     template_name = 'billing/order_details.html'
 
-    @create_or_update_single_order(item_type='domain_restore', item_price=settings.ZENAIDA_DOMAIN_RESTORE_PRICE)
+    @create_or_update_single_order(item_type='domain_restore', item_price=settings.ZENAIDA_DOMAIN_RESTORE_PRICE, item_duration=None)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({'order': kwargs.get('order')})
@@ -379,6 +379,11 @@ class OrderExecuteView(LoginRequiredMixin, View):
                 if target_domain.status == 'to_be_deleted':
                     messages.error(request, 'Domain %s is currently in pending deletion state. Please start a domain restore order instead.' % target_domain.name)
                     return False
+                new_expiry_date = target_domain.expiry_date + relativedelta(years=order_item_object.duration)
+                max_expiry_date = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_MAX_YEARS)
+                if new_expiry_date >= max_expiry_date:
+                    messages.error(request, 'Domain %s cannot be renewed for the specified period due to reaching its maximum expiration date.' % target_domain.name)
+                    return False
         return True
 
     def post(self, request, *args, **kwargs):
@@ -419,3 +424,29 @@ class OrderCancelView(LoginRequiredMixin, View):
         orders.cancel_and_remove_order(existing_order)
         messages.success(request, f'Order of {existing_order.description} is cancelled.')
         return shortcuts.redirect('billing_orders')
+
+
+class OrderItemDurationIncreaseView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        existing_order_item = orders.get_order_item_by_id_and_owner(
+            order_item_id=kwargs.get('order_item_id'), owner=request.user, log_action='increase duration',
+        )
+        if not existing_order_item:
+            return shortcuts.redirect('billing_orders')
+        domain_object = zdomains.domain_find(domain_name=existing_order_item.name)
+        if not domain_object:
+            return shortcuts.redirect('billing_orders')
+        current_renew_duration = existing_order_item.duration or settings.ZENAIDA_DOMAIN_RENEW_YEARS
+        try:
+            duration_increase_value = int(request.POST.get('action_duration_increase'))
+        except:
+            duration_increase_value = settings.ZENAIDA_DOMAIN_RENEW_YEARS
+        if not zdomains.check_renew_duration_increase_possible(domain_object, current_renew_duration, duration_increase_value):
+            messages.error(request, 'Domain %s cannot be renewed for the specified period due to reaching its maximum expiration date.' % domain_object.name)
+            return shortcuts.redirect('billing_order_details', order_id=existing_order_item.order.id)
+        existing_order_item.duration += duration_increase_value
+        existing_order_item.price += settings.ZENAIDA_DOMAIN_PRICE * int(duration_increase_value / 2)
+        existing_order_item.save()
+        messages.success(request, 'Order item duration updated successfully')
+        return shortcuts.redirect('billing_order_details', order_id=existing_order_item.order.id)

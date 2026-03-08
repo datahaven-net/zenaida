@@ -1010,3 +1010,95 @@ class TestOrderExecuteView(BaseAuthTesterMixin, TestCase):
             response = self.client.post(f'/billing/order/process/{order_id}/')
         assert response.status_code == 302
         assert response.url == '/billing/pay/?amount={}'.format(200 - 10)
+
+
+class TestOrderItemDurationIncreaseView(BaseAuthTesterMixin, TestCase):
+
+    @pytest.mark.django_db
+    def test_successful(self):
+        # First, create a domain in database without epp_id as there was no payment yet.
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2026, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            status='active'
+        )
+        assert Domain.domains.all().count() == 1
+        # Second, create an order for that domain to complete register.
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed',
+        )
+        order_item = OrderItem.order_items.create(
+            order=order,
+            type='domain_renew',
+            price=100.0,
+            name='test.ai',
+            duration=2,
+        )
+        # Third, cancel that order.
+        response = self.client.post(f'/billing/order_item/duration_increase/{order_item.id}/',
+                                    data={'action_duration_increase': 2})
+        assert response.status_code == 302
+        assert response.url == f'/billing/order/{order.id}/'
+        assert Domain.domains.all().count() == 1
+        assert OrderItem.order_items.get(id=order_item.id).duration == 4
+
+    @pytest.mark.django_db
+    def test_order_item_not_exist(self):
+        response = self.client.post(f'/billing/order_item/duration_increase/1111111/',
+                                    data={'action_duration_increase': 2})
+        assert response.status_code == 400
+
+    @pytest.mark.django_db
+    def test_domain_not_exist(self):
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed',
+        )
+        order_item = OrderItem.order_items.create(
+            order=order,
+            type='domain_renew',
+            price=100.0,
+            name='test_not_existing_domain.ai',
+            duration=2,
+        )
+        response = self.client.post(f'/billing/order_item/duration_increase/{order_item.id}/',
+                                    data={'action_duration_increase': 2})
+        assert response.status_code == 302
+        assert response.url == f'/billing/orders/'
+
+    @pytest.mark.django_db
+    def test_duration_increase_not_possible(self):
+        Domain.domains.create(
+            owner=self.account,
+            name='test.ai',
+            expiry_date=datetime.datetime(2028, 1, 1),
+            create_date=datetime.datetime(1970, 1, 1),
+            zone=Zone.zones.create(name='ai'),
+            status='active'
+        )
+        assert Domain.domains.all().count() == 1
+        order = Order.orders.create(
+            owner=self.account,
+            started_at=datetime.datetime(2019, 3, 23, 13, 34, 0),
+            status='processed',
+        )
+        order_item = OrderItem.order_items.create(
+            order=order,
+            type='domain_renew',
+            price=100.0,
+            name='test.ai',
+            duration=8,
+        )
+        # Third, cancel that order.
+        response = self.client.post(f'/billing/order_item/duration_increase/{order_item.id}/',
+                                    data={'action_duration_increase': 2})
+        assert response.status_code == 302
+        assert response.url == f'/billing/order/{order.id}/'
+        assert Domain.domains.all().count() == 1
+        assert OrderItem.order_items.get(id=order_item.id).duration == 8

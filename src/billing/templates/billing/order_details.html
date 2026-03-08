@@ -14,6 +14,7 @@
         <tr>
             <th>Domain Name</th>
             <th>Order Type</th>
+            <th>Duration</th>
             <th>Expiry Date</th>
             <th>Price</th>
         </tr>
@@ -22,13 +23,28 @@
         <tr>
             <td><i>{{ order_item.name }}</i></td>
             <td>{{ order_item.get_type_display }}</td>
-            <td>{{domain_expiry_date|date:'d N Y'}}</td>
+            <td style="white-space: nowrap;">
+                {% if order_item.is_duration_increase_possible_2 %}
+                <form action="{% url 'billing_order_item_duration_increase' order_item.id %}" method="post">
+                {% csrf_token %}
+                {{ order_item.duration_formatted }} &nbsp;
+                {% if order_item.is_duration_increase_possible_2 %} <button type="submit" class="btn btn-sm btn-success" name="action_duration_increase" value="2">+2</button> {% endif %}
+                {% if order_item.is_duration_increase_possible_4 %} <button type="submit" class="btn btn-sm btn-success" name="action_duration_increase" value="4">+4</button> {% endif %}
+                {% if order_item.is_duration_increase_possible_6 %} <button type="submit" class="btn btn-sm btn-success" name="action_duration_increase" value="6">+6</button> {% endif %}
+                {% if order_item.is_duration_increase_possible_8 %} <button type="submit" class="btn btn-sm btn-success" name="action_duration_increase" value="8">+8</button> {% endif %}
+                </form>
+                {% else %}
+                {{ order_item.duration_formatted }} &nbsp;
+                {% endif %}
+            </td>
+            <td>{{ domain_expiry_date|date:'d N Y' }}</td>
             <td>{{ order_item.price }} $ US</td>
         </tr>
 
     {% endfor %}
 
         <tr>
+            <th></th>
             <th></th>
             <th></th>
             <th></th>

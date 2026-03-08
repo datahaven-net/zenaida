@@ -387,6 +387,7 @@ class BulkTransferView(StaffRequiredMixin, FormView, FormMixin):
                         'rewrite_contacts': True,
                         'internal': internal,
                     },
+                    item_duration=None,
                 )
                 new_status = orders.execute_order(transfer_order)
                 report.append((domain_name, 'created and executed %r, order status is %r' % (transfer_order, new_status, ), ))

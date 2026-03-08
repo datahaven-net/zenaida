@@ -4,6 +4,8 @@ import datetime
 import random
 import string
 
+from dateutil.relativedelta import relativedelta  # @UnresolvedImport
+
 from django.db.models import Q
 from django.utils import timezone
 from django.conf import settings
@@ -80,6 +82,14 @@ def validate_domain_name(domain):
     if is_valid(domain):
         return True
     raise exceptions.ValidationError('value "{}" is not a valid domain name'.format(domain))
+
+
+def check_renew_duration_increase_possible(domain_object, current_renew_duration, duration_increase_value):
+    new_expiry_date = domain_object.expiry_date + relativedelta(years=current_renew_duration + duration_increase_value)
+    max_expiry_date = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_MAX_YEARS)
+    if new_expiry_date >= max_expiry_date:
+        return False
+    return True
 
 
 def is_exist(domain_name='', epp_id=None):

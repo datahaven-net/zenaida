@@ -3,7 +3,7 @@ from django.contrib import messages
 from billing import orders as billing_orders
 
 
-def create_or_update_single_order(item_type, item_price):
+def create_or_update_single_order(item_type, item_price, item_duration):
     def decorator(func):
         def wrapper(self, **kwargs):
             domain_name = kwargs.get('domain_name')
@@ -24,6 +24,7 @@ def create_or_update_single_order(item_type, item_price):
                     item_type=item_type,
                     item_price=item_price,
                     item_name=domain_name,
+                    item_duration=item_duration,
                 )
             kwargs['order'] = order
             return func(self, **kwargs)

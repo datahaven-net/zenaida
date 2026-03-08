@@ -263,6 +263,7 @@ class DomainAdmin(NestedModelAdmin):
                 item_type='domain_renew',
                 item_price=settings.ZENAIDA_DOMAIN_PRICE,
                 item_name=domain_object.name,
+                item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
             )
             if renewal_order.total_price > renewal_order.owner.balance:
                 report.append('"%s": %s' % (domain_object.name, 'not enough funds'))

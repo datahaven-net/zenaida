@@ -108,6 +108,7 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             item_details={
                 'created_automatically': moment_now.isoformat(),
             },
+            item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
         )
         # step 2: execute the order
         new_status = billing_orders.execute_order(renewal_order)
@@ -161,6 +162,7 @@ def auto_renew_expiring_domains(dry_run=True, min_days_before_expire=60, max_day
             item_details={
                 'created_automatically': moment_now.isoformat(),
             },
+            item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
         )
         # step 2: execute the order
         new_status = billing_orders.execute_order(renewal_order)
@@ -303,6 +305,7 @@ def complete_back_end_auto_renewals(critical_days_before_delete=15, dry_run=Fals
             item_details={
                 'created_automatically': moment_now.isoformat(),
             },
+            item_duration=settings.ZENAIDA_DOMAIN_RENEW_YEARS,
         )
         new_status = billing_orders.execute_order(renewal_order, already_processed=True)
         renewal.renew_order = renewal_order

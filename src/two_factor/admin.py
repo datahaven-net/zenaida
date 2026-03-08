@@ -3,7 +3,7 @@ from django.contrib.admin import AdminSite
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import resolve_url
-from django.utils.http import is_safe_url
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .utils import monkeypatch_method
 
@@ -31,7 +31,7 @@ class AdminSiteOTPRequiredMixin(object):
         """
         redirect_to = request.POST.get(REDIRECT_FIELD_NAME, request.GET.get(REDIRECT_FIELD_NAME))
 
-        if not redirect_to or not is_safe_url(url=redirect_to, allowed_hosts=['*', ]):
+        if not redirect_to or not url_has_allowed_host_and_scheme(url=redirect_to, allowed_hosts=['*', ]):
             redirect_to = resolve_url(settings.LOGIN_REDIRECT_URL)
 
         return redirect_to_login(redirect_to)
@@ -52,7 +52,7 @@ def patch_admin():
         """
         redirect_to = request.POST.get(REDIRECT_FIELD_NAME, request.GET.get(REDIRECT_FIELD_NAME))
 
-        if not redirect_to or not is_safe_url(url=redirect_to, allowed_hosts=['*', ]):
+        if not redirect_to or not url_has_allowed_host_and_scheme(url=redirect_to, allowed_hosts=['*', ]):
             redirect_to = resolve_url(settings.LOGIN_REDIRECT_URL)
 
         return redirect_to_login(redirect_to)
